@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard – SMX KITS</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      background: #181f25;
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .admin-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+    .admin-sidebar {
+      background: #002d62;
+      width: 260px;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 28px;
+    }
+    .admin-logo {
+      width: 180px;
+      margin-bottom: 36px;
+      filter: drop-shadow(0 2px 10px rgba(0,0,0,0.16));
+    }
+    .admin-nav {
+      list-style: none;
+      padding: 0;
+      width: 100%;
+    }
+    .admin-nav li {
+      padding: 15px 32px;
+      font-size: 1.13rem;
+      border-left: 4px solid transparent;
+      cursor: pointer;
+      transition: background 0.14s, border-color 0.17s;
+    }
+    .admin-nav li.active,
+    .admin-nav li:hover {
+      background: rgba(0,60,140,0.26);
+      border-left: 4px solid #1da1f2;
+    }
+    .admin-content {
+      flex: 1;
+      background: linear-gradient(120deg, #212e42 0%, #1e2738 100%);
+      padding: 36px 46px 36px 46px;
+      min-height: 100vh;
+    }
+    .dashboard-title {
+      font-size: 2.35rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 18px;
+      letter-spacing: 1.2px;
+      text-shadow: 0 3px 18px #002d6238;
+    }
+    .dashboard-tiles {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 26px;
+      margin-bottom: 36px;
+    }
+    .dashboard-tile {
+      background: linear-gradient(135deg, #192234c4 0%, #24344dbe 100%);
+      color: #fff;
+      min-width: 210px;
+      flex: 1 0 210px;
+      max-width: 270px;
+      border-radius: 24px;
+      box-shadow: 0 6px 28px rgba(0,34,75,0.11);
+      padding: 36px 20px 32px 20px;
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.17s, transform 0.13s, box-shadow 0.16s;
+      position: relative;
+      overflow: hidden;
+      border: 1.2px solid #1a345b55;
+    }
+    .dashboard-tile:hover {
+      background: linear-gradient(120deg, #22417e 0%, #1e2738 80%);
+      transform: translateY(-3px) scale(1.04);
+      box-shadow: 0 12px 34px 0 #0059b166;
+      border-color: #338bfc;
+    }
+    .tile-badge {
+      position: absolute;
+      top: 20px;
+      right: 28px;
+      background: #1da1f2;
+      color: #fff;
+      border-radius: 16px;
+      font-size: 0.89rem;
+      padding: 4px 11px;
+      font-weight: 700;
+      opacity: 0.88;
+    }
+    .dashboard-widgets {
+      display: flex;
+      gap: 36px;
+      flex-wrap: wrap;
+      align-items: flex-start;
+    }
+    .widget-card {
+      background: linear-gradient(120deg, #202c41 0%, #162132 100%);
+      border-radius: 20px;
+      box-shadow: 0 4px 24px rgba(0,34,75,0.13);
+      padding: 24px;
+      color: #fff;
+      flex: 1 0 320px;
+      min-width: 320px;
+      min-height: 360px;
+      margin-bottom: 24px;
+      border: 1.1px solid #2c426777;
+      display: flex;
+      flex-direction: column;
+    }
+    .widget-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #89bcf4;
+      margin-bottom: 18px;
+      letter-spacing: 1.1px;
+    }
+    @media (max-width: 1020px) {
+      .dashboard-widgets {
+        flex-direction: column;
+      }
+      .admin-content {
+        padding: 22px 8vw;
+      }
+      .dashboard-tiles {
+        gap: 13px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <img src="SMXKITS.png" alt="SMXKITS Logo" class="admin-logo" />
+      <ul class="admin-nav">
+        <li class="active">Dashboard</li>
+        <li>Training Hub</li>
+        <li>Calendar</li>
+        <li>Classes</li>
+        <li>Students</li>
+        <li>Student Grading</li>
+        <li>Lessons Learned</li>
+        <li>Inbox</li>
+        <li>Attendance Tracking</li>
+        <li>Reports & Analytics</li>
+        <li>Live Training Controls</li>
+        <li>Course Feedback</li>
+        <li>Templates / Resources</li>
+        <li>Certificate Generation</li>
+        <li>Bulk Upload / Import</li>
+        <li>Settings</li>
+        <li>Logout</li>
+      </ul>
+    </aside>
+    <!-- Main Content -->
+    <main class="admin-content">
+      <div class="dashboard-title">Admin / Instructor Dashboard</div>
+      <!-- Quick Action Tiles -->
+      <section class="dashboard-tiles">
+        <div class="dashboard-tile">Add New Student</div>
+        <div class="dashboard-tile">Manage Attendance</div>
+        <div class="dashboard-tile">Instructor Inbox <span class="tile-badge">3</span></div>
+        <div class="dashboard-tile">Course Feedback</div>
+        <div class="dashboard-tile">Live Training Controls</div>
+        <div class="dashboard-tile">Upload Templates</div>
+        <div class="dashboard-tile">Generate Certificates</div>
+        <div class="dashboard-tile">Bulk Upload</div>
+      </section>
+      <!-- Dashboard Widgets -->
+      <section class="dashboard-widgets">
+        <div class="widget-card">
+          <div class="widget-title">Calendar</div>
+          <!-- Add your calendar component here (FullCalendar or embed from your training hub style) -->
+          <div style="color:#bbb;font-size:1rem;opacity:.88; margin-top:18px;">[Calendar Widget]</div>
+        </div>
+        <div class="widget-card">
+          <div class="widget-title">Analytics & Progress</div>
+          <!-- Example placeholder; wire in charts, stats, etc. -->
+          <div style="color:#bbb;font-size:1rem;opacity:.88; margin-top:18px;">[Charts & Metrics]</div>
+        </div>
+        <div class="widget-card">
+          <div class="widget-title">Certificate Generation</div>
+          <div style="color:#bbb;font-size:1rem;opacity:.88; margin-top:18px;">[Certificate Actions]</div>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

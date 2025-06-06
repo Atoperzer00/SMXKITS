@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SMXStream – Timeline Mode</title>
+  <style>
+    :root {
+      --bg: #0e0e0e;
+      --fg: #f0f0f0;
+      --accent: #e91e63;
+      --track: #1c1c1c;
+      --hover: rgba(255, 255, 255, 0.1);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      height: 100vh;
+      overflow: hidden;
+    }
+    #playerContainer {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      position: relative;
+    }
+    video {
+      width: 100%;
+      max-height: calc(100vh - 160px);
+      background: black;
+      cursor: pointer;
+    }
+    #controls {
+      height: 60px;
+      background: var(--track);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      padding: 0 1rem;
+    }
+    .ctrl-btn {
+      font-size: 1.1rem;
+      background: rgba(255,255,255,0.05);
+      color: var(--fg);
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .ctrl-btn:hover {
+      background: var(--hover);
+    }
+    #timelineWrapper {
+      position: relative;
+      height: 100px;
+      background: var(--track);
+    }
+    #timelineCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    #hoverLabel {
+      position: absolute;
+      bottom: 105px;
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      background: rgba(0, 0, 0, 0.75);
+      color: white;
+      border-radius: 4px;
+      pointer-events: none;
+      transform: translateX(-50%);
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="playerContainer">
+    <video id="video" src="Drone.mp4" preload="auto"></video>
+    <div id="controls">
+      <button id="playBtn" class="ctrl-btn">▶️</button>
+      <button id="liveBtn" class="ctrl-btn" style="display: none;">LIVE</button>
+    </div>
+    <div id="timelineWrapper">
+      <canvas id="timelineCanvas"></canvas>
+      <div id="hoverLabel"></div>
+    </div>
+  </div>
+
+  <script>
+    const video = document.getElementById('video');
+    const playBtn = document.getElementById('playBtn');
+    const liveBtn = document.getElementById('liveBtn');
+    const timeline = document.getElementById('timelineCanvas');
+    const ctx = timeline.getContext('2d');
+    const hoverLabel = document.getElementById('hoverLabel');
+
+    const zoomLevels = [1, 2, 5, 10, 30]; // sec per 50px
+    let zoomIndex = 2;
+    const tickPx = 50;
+    let dragging = false;
+    let dragOffset = 0;
+
+    playBtn.onclick = () => {
+      if (video.paused) {
+        video.play(); playBtn.textContent = "⏸️";
+      } else {
+        video.pause(); playBtn.textContent = "▶️";
+      }
+    };
+
+    liveBtn.onclick = () => {
+      video.currentTime = video.duration - 0.05;
+    };
+
+    function formatTime(sec) {
+      sec = Math.max(0, sec);
+      const h = Math.floor(sec / 3600);
+      const m = Math.floor((sec % 3600) / 60);
+      const s = Math.floor(sec % 60);
+      return h ? `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}` : `${m}:${s.toString().padStart(2, '0')}`;
+    }
+
+    function drawTimeline() {
+      const w = timeline.width = timeline.offsetWidth;
+      const h = timeline.height = timeline.offsetHeight;
+      ctx.clearRect(0, 0, w, h);
+
+      const centerX = w / 2;
+      const now = video.currentTime;
+      const scale = zoomLevels[zoomIndex];
+      const totalTicks = Math.ceil(w / tickPx) + 4;
+
+      // Draw thumbnail strip behind
+      try {
+        const thumbCount = Math.floor(w / 50);
+        for (let i = 0; i < thumbCount; i++) {
+          const t = now - ((thumbCount / 2 - i) * scale);
+          if (t >= 0 && t <= video.duration) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 50; canvas.height = 28;
+            const tempCtx = canvas.getContext('2d');
+            tempCtx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            ctx.drawImage(canvas, i * 50, h - 30, 50, 30);
+          }
+        }
+      } catch {}
+
+      ctx.fillStyle = "#222";
+      ctx.fillRect(0, 0, w, h - 30);
+
+      // Ticks
+      ctx.strokeStyle = "#888";
+      ctx.fillStyle = "#aaa";
+      ctx.font = "11px monospace";
+      ctx.textAlign = "center";
+
+      for (let i = -totalTicks / 2; i < totalTicks / 2; i++) {
+        const t = now + i * scale;
+        if (t < 0 || t > video.duration) continue;
+        const x = centerX + i * tickPx;
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h * 0.2);
+        ctx.stroke();
+        ctx.fillText(formatTime(t), x, h * 0.25);
+      }
+
+      // Red Playhead
+      ctx.fillStyle = "#e91e63";
+      ctx.fillRect(centerX - 1 + dragOffset, 0, 2, h);
+
+      requestAnimationFrame(drawTimeline);
+    }
+
+    // Drag Playhead
+    timeline.addEventListener("mousedown", e => {
+      dragging = true;
+      const rect = timeline.getBoundingClientRect();
+      dragOffset = e.clientX - rect.width / 2;
+    });
+
+    window.addEventListener("mousemove", e => {
+      if (!dragging) return;
+      const rect = timeline.getBoundingClientRect();
+      const delta = e.clientX - rect.width / 2;
+      const scale = zoomLevels[zoomIndex];
+      const deltaTime = (delta / tickPx) * scale;
+      video.currentTime = Math.min(video.duration, Math.max(0, video.currentTime + deltaTime));
+    });
+
+    window.addEventListener("mouseup", () => {
+      dragging = false;
+      dragOffset = 0;
+    });
+
+    // Hover time
+    timeline.addEventListener("mousemove", e => {
+      const rect = timeline.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const centerX = rect.width / 2;
+      const deltaX = x - centerX;
+      const scale = zoomLevels[zoomIndex];
+      const hoverTime = video.currentTime + (deltaX / tickPx) * scale;
+
+      hoverLabel.style.left = `${e.clientX}px`;
+      hoverLabel.textContent = formatTime(hoverTime);
+      hoverLabel.style.display = "block";
+    });
+
+    timeline.addEventListener("mouseleave", () => hoverLabel.style.display = "none");
+
+    timeline.addEventListener("wheel", e => {
+      e.preventDefault();
+      zoomIndex += Math.sign(e.deltaY);
+      zoomIndex = Math.max(0, Math.min(zoomLevels.length - 1, zoomIndex));
+    }, { passive: false });
+
+    // LIVE button toggle
+    setInterval(() => {
+      const atLive = Math.abs(video.duration - video.currentTime) < 2;
+      liveBtn.style.display = atLive ? 'none' : 'inline-block';
+    }, 300);
+
+    video.addEventListener("loadedmetadata", () => drawTimeline());
+  </script>
+</body>
+</html>
