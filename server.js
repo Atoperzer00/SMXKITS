@@ -19,9 +19,11 @@ const io = socketio(server, { cors: { origin: "*" } });
 
 app.use(cors());
 app.use(express.json());
+
+// Serve static files from the public directory (primary)
 app.use(express.static('public'));
 
-
+// Serve static files from root as fallback
 app.use(express.static('.'));
 
 // Function to create default users
