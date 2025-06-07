@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SMX KITS - Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Authentication Check - This runs BEFORE any content loads -->
+  <script>
+    // Immediate authentication check
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    
+    if (!token || !role) {
+      // No authentication found, redirect immediately
+      window.location.replace('/login.html');
+      // Stop execution to prevent content from loading
+      throw new Error('Authentication required');
+    }
+    
+    // Optional: Verify token with server (for enhanced security)
+    // You can add an API call here to validate the token
+  </script>
+
+  <img id="logo" src="SE66806_logo_orig.png" alt="SMX Logo" />
+
+  <!-- Scrollable FMV overlay (hidden by default) -->
+  <div id="fmvOverlay" class="fmv-overlay">
+    <button id="closeFmvOverlay" class="close-overlay-btn">×</button>
+    <div class="fmv-window">
+      <div class="image-window">
+        <div class="scroll-container" id="scrollArea">
+          <img src="FMV_SAMPLE.jpg" alt="FMV Sample" class="scroll-image" />
+        </div>
+      </div>
+      <div class="hud-overlay">
+        <div class="hud-top">
+          <div class="hud-item">
+            <span class="hud-label">MISSION:</span>
+            <span class="hud-value" id="mission">OVERWATCH</span>
+          </div>
+          <div class="hud-item">
+            <span class="hud-label">GRID:</span>
+            <span class="hud-value" id="grid">38S MD 12345 67890</span>
+          </div>
+          <div class="hud-item">
+            <span class="hud-label">ELEV:</span>
+            <span class="hud-value" id="elevation">1,234 FT MSL</span>
+          </div>
+        </div>
+        <div class="hud-bottom">
+          <div class="hud-item">
+            <span class="hud-label">TIME:</span>
+            <span class="hud-value" id="clock-time">12:34:56</span>
+          </div>
+          <div class="hud-item">
+            <span class="hud-label">SENSOR:</span>
+            <span class="hud-value" id="sensor">EO/IR</span>
+          </div>
+          <div class="hud-item">
+            <span class="hud-label">MODE:</span>
+            <span class="hud-value" id="mode">WIDE</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Dashboard Content -->
+  <section id="screen-home" class="screen active">
+    <div class="top-bar">
+      <span onclick="logout()">← Logout</span>
+      <span id="user-info" style="margin-left: auto; color: #fff;"></span>
+    </div>
+    <h1 class="hub-title">Training HUB</h1>
+    <div class="home-container">
+      <div class="home-box" onclick="goToKITS()">
+        <img src="KIT CLICK LOGO.png" alt="KITS Logo" class="hub-logo" />
+        <h2>KITS</h2>
+        <p>Keyboarding Intelligence Training System</p>
+      </div>
+      <div class="home-box" onclick="goToCourseContent()">
+        <img src="COURSE CONTENT LOGO.png" alt="Course Content Logo" class="hub-logo" />
+        <h2>Course Content</h2>
+        <p>Training Materials & Resources</p>
+      </div>
+      <div class="home-box" onclick="goToISRTraining()">
+        <img src="ISR TRAINING LOGO.png" alt="ISR Training Logo" class="hub-logo" />
+        <h2>ISR Training</h2>
+        <p>Intelligence, Surveillance & Reconnaissance</p>
+      </div>
+      <div class="home-box" onclick="goToPEDTraining()">
+        <img src="PED TRAINING LOGO.png" alt="PED Training Logo" class="hub-logo" />
+        <h2>PED Training</h2>
+        <p>Processing, Exploitation & Dissemination</p>
+      </div>
+      <div class="home-box" onclick="goToOpsLog()">
+        <img src="Ops Log Logo.png" alt="Operations Log Logo" class="hub-logo" />
+        <h2>Operations Log</h2>
+        <p>Target Log Generator & Management</p>
+      </div>
+    </div>
+    <!-- Bottom bar for home screen -->
+    <div class="bottom-bar">
+      <div class="bottom-bar-left"></div>
+      <a id="insideKitLink" class="inside-kit-link center-link" href="#">Inside&nbsp;the&nbsp;Kit</a>
+      <a id="contactLink" class="inside-kit-link right-link" href="#">Contact&nbsp;SMXKITS</a>
+    </div>
+  </section>
+
+  <!-- All other sections from SMXKITS.html would go here -->
+  <!-- For brevity, I'm including just the structure. You would copy all the other sections from SMXKITS.html -->
+
+  <script>
+    // Display user information
+    document.addEventListener('DOMContentLoaded', function() {
+      const userName = localStorage.getItem('userName') || 'User';
+      const role = localStorage.getItem('role') || 'Student';
+      const userInfo = document.getElementById('user-info');
+      if (userInfo) {
+        userInfo.textContent = `${userName} (${role})`;
+      }
+    });
+
+    // Logout function
+    function logout() {
+      // Clear all authentication data
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      localStorage.removeItem('userName');
+      localStorage.removeItem('classId');
+      
+      // Redirect to login page
+      window.location.replace('/login.html');
+    }
+
+    // Placeholder functions - you would copy these from script.js
+    function goToKITS() {
+      alert('KITS module - implement navigation');
+    }
+    
+    function goToCourseContent() {
+      alert('Course Content - implement navigation');
+    }
+    
+    function goToISRTraining() {
+      alert('ISR Training - implement navigation');
+    }
+    
+    function goToPEDTraining() {
+      alert('PED Training - implement navigation');
+    }
+    
+    function goToOpsLog() {
+      window.open('/OpsLog.html', '_blank');
+    }
+  </script>
+  
+  <!-- Include the main script file -->
+  <script src="script.js"></script>
+</body>
+</html>

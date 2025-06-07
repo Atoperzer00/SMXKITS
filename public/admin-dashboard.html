@@ -143,6 +143,22 @@
   </style>
 </head>
 <body>
+  <!-- Authentication Check -->
+  <script>
+    // Check if user is authenticated and has admin/instructor role
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    
+    if (!token || !role) {
+      // No authentication found, redirect to login
+      window.location.replace('/login.html');
+    } else if (role !== 'admin' && role !== 'instructor') {
+      // User is authenticated but doesn't have admin/instructor privileges
+      alert('Access denied. Admin or Instructor privileges required.');
+      window.location.replace('/dashboard.html');
+    }
+  </script>
+
   <div class="admin-layout">
     <!-- Sidebar -->
     <aside class="admin-sidebar">
@@ -164,7 +180,7 @@
         <li>Certificate Generation</li>
         <li>Bulk Upload / Import</li>
         <li>Settings</li>
-        <li>Logout</li>
+        <li onclick="logout()">Logout</li>
       </ul>
     </aside>
     <!-- Main Content -->
@@ -174,6 +190,12 @@
       <section class="dashboard-tiles">
         <div class="dashboard-tile">Add New Student</div>
         <div class="dashboard-tile">Manage Attendance</div>
+        <div class="dashboard-tile" onclick="window.open('../SMXStream.html', '_blank')">
+          Stream Feed
+        </div>
+        <div class="dashboard-tile" onclick="window.open('../OpsLog.html', '_blank')">
+          Operations Log
+        </div>
         <div class="dashboard-tile">Instructor Inbox <span class="tile-badge">3</span></div>
         <div class="dashboard-tile">Course Feedback</div>
         <div class="dashboard-tile">Live Training Controls</div>
@@ -181,6 +203,11 @@
         <div class="dashboard-tile">Generate Certificates</div>
         <div class="dashboard-tile">Bulk Upload</div>
       </section>
+      <!-- Optionally, add instructions for instructors -->
+      <div class="dashboard-tile" style="background:#1e2738; color:#fff; font-size:0.98rem; cursor:default;">
+        <b>Stream Mode:</b> When opening SMX Stream, select <b>Live Stream</b> to broadcast the live feed, or <b>Local File</b> to play a video file.<br><br>
+        <span style="color:#89bcf4;">(Instructor: Push your live feed to the configured HLS server. Students: Select Live Stream to watch.)</span>
+      </div>
       <!-- Dashboard Widgets -->
       <section class="dashboard-widgets">
         <div class="widget-card">
@@ -200,5 +227,28 @@
       </section>
     </main>
   </div>
+
+  <script>
+    // Logout function
+    function logout() {
+      // Clear all authentication data
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      localStorage.removeItem('userName');
+      localStorage.removeItem('classId');
+      
+      // Redirect to login page
+      window.location.replace('/login.html');
+    }
+
+    // Display user information
+    document.addEventListener('DOMContentLoaded', function() {
+      const userName = localStorage.getItem('userName') || 'Admin';
+      const role = localStorage.getItem('role') || 'admin';
+      
+      // You can add user info display here if needed
+      console.log('Logged in as:', userName, '(' + role + ')');
+    });
+  </script>
 </body>
 </html>
