@@ -110,8 +110,34 @@
     </div>
   </section>
 
-  <!-- All other sections from SMXKITS.html would go here -->
-  <!-- For brevity, I'm including just the structure. You would copy all the other sections from SMXKITS.html -->
+  <!-- Import SMXKITS content sections -->
+  <script>
+    // Load SMXKITS.html content dynamically
+    document.addEventListener('DOMContentLoaded', function() {
+      fetch('/SMXKITS.html')
+        .then(response => response.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          
+          // Get all sections from SMXKITS.html except the first one (which would be screen-home)
+          const sections = doc.querySelectorAll('section:not(#screen-home)');
+          
+          // Append them to this document
+          sections.forEach(section => {
+            document.body.appendChild(document.importNode(section, true));
+          });
+          
+          // Now load any scripts that might be needed
+          if (typeof initializeAllSections === 'function') {
+            initializeAllSections();
+          }
+        })
+        .catch(error => {
+          console.error('Error loading SMXKITS content:', error);
+        });
+    });
+  </script>
 
   <script>
     // Display user information
