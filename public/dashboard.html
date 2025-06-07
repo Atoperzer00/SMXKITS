@@ -20,8 +20,8 @@
       throw new Error('Authentication required');
     }
     
-    // Optional: Verify token with server (for enhanced security)
-    // You can add an API call here to validate the token
+    // We are authenticated, continue loading dashboard
+    console.log('✅ Authentication verified - loading student dashboard');
   </script>
 
   <img id="logo" src="SE66806_logo_orig.png" alt="SMX Logo" />
@@ -120,8 +120,8 @@
           const parser = new DOMParser();
           const doc = parser.parseFromString(html, 'text/html');
           
-          // Get all sections from SMXKITS.html except the first one (which would be screen-home)
-          const sections = doc.querySelectorAll('section:not(#screen-home)');
+          // Get all sections from SMXKITS.html except screen-home and screen-login
+          const sections = doc.querySelectorAll('section:not(#screen-home):not(#screen-login)');
           
           // Append them to this document
           sections.forEach(section => {
