@@ -20,11 +20,8 @@ const io = socketio(server, { cors: { origin: "*" } });
 app.use(cors());
 app.use(express.json());
 
-// Serve static files from the public directory (primary)
+// Serve static files from the public directory
 app.use(express.static('public'));
-
-// Serve static files from root as fallback
-app.use(express.static('.'));
 
 // Function to create default users
 async function createDefaultUsers() {
@@ -166,10 +163,15 @@ function requireAuth(req, res, next) {
   }
 }
 
-// Serve protected dashboard (optional - for enhanced security)
+// Serve protected dashboard with server-side check
 app.get('/dashboard.html', (req, res) => {
-  // For now, just serve the file. In production, you might want to add server-side auth check
+  // Simply serve the file - client-side JS will handle authentication
   res.sendFile(__dirname + '/public/dashboard.html');
+});
+
+// Root route should always redirect to login
+app.get('/', (req, res) => {
+  res.redirect('/login.html');
 });
 
 // KitComm - real-time chat (simple, can expand as needed)
