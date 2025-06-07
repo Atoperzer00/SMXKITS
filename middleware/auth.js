@@ -7,9 +7,16 @@ module.exports = (roles = []) => (req, res, next) => {
   const token = authHeader.split(' ')[1];
   if (!token) return res.sendStatus(401);
   
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.sendStatus(403);
-    if (roles.length && !roles.includes(user.role)) return res.sendStatus(403);
+  const jwtSecret = process.env.JWT_SECRET || 'fallback-secret-key';
+  jwt.verify(token, jwtSecret, (err, user) => {
+    if (err) {
+      console.error('❌ JWT verification error:', err.message);
+      return res.sendStatus(403);
+    }
+    if (roles.length && !roles.includes(user.role)) {
+      console.log('❌ Role access denied. Required:', roles, 'User role:', user.role);
+      return res.sendStatus(403);
+    }
     req.user = user;
     next();
   });

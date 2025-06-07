@@ -63,11 +63,11 @@ global.usingInMemory = false;
 
 async function connectToDatabase() {
   const options = {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
     serverSelectionTimeoutMS: 10000,
-    bufferMaxEntries: 0, // Disable mongoose buffering
-    bufferCommands: false, // Disable mongoose buffering
+    // Remove any deprecated options
+    // Use unified topology (recommended for newer MongoDB versions)
+    useNewUrlParser: true,
+    useUnifiedTopology: true
   };
 
   try {
@@ -77,7 +77,7 @@ async function connectToDatabase() {
     await createDefaultUsers();
   } catch (err) {
     console.error('❌ MongoDB connection failed:', err.message);
-    console.log('� Switching to in-memory database for demo...');
+    console.log('🔄 Switching to in-memory database for demo...');
     
     // Use in-memory storage
     global.usingInMemory = true;

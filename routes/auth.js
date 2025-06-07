@@ -6,11 +6,29 @@ const jwt = require('jsonwebtoken');
 
 // POST /api/auth/register (admin only)
 router.post('/register', async (req, res) => {
-  const { username, password, role, classId, name } = req.body;
-  const hash = await bcrypt.hash(password, 10);
-  const user = new User({ username, password: hash, role, classId, name });
-  await user.save();
-  res.json({ success: true });
+  try {
+    const { username, password, role, classId, name } = req.body;
+    
+    if (!username || !password || !role) {
+      return res.status(400).json({ error: 'Username, password, and role are required' });
+    }
+    
+    // Check if user already exists
+    const existingUser = await User.findOne({ username });
+    if (existingUser) {
+      return res.status(400).json({ error: 'User already exists' });
+    }
+    
+    const hash = await bcrypt.hash(password, 10);
+    const user = new User({ username, password: hash, role, classId, name });
+    await user.save();
+    
+    console.log('✅ User registered:', username, 'as', role);
+    res.json({ success: true, message: 'User registered successfully' });
+  } catch (error) {
+    console.error('❌ Registration error:', error);
+    res.status(500).json({ error: 'Server error during registration' });
+  }
 });
 
 // POST /api/auth/login
