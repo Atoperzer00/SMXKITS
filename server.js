@@ -20,6 +20,17 @@ const io = socketio(server, { cors: { origin: "*" } });
 app.use(cors());
 app.use(express.json());
 
+// Define root route before static middleware to ensure it takes precedence
+app.get('/', (req, res) => {
+  console.log('Root route accessed - redirecting to login page');
+  res.redirect('/login.html');
+});
+
+// Explicitly handle /index.html and redirect to login
+app.get('/index.html', (req, res) => {
+  res.redirect('/login.html');
+});
+
 // Serve static files from the public directory (primary)
 app.use(express.static('public'));
 
@@ -172,9 +183,9 @@ app.get('/dashboard.html', (req, res) => {
   res.sendFile(__dirname + '/public/dashboard.html');
 });
 
-// Root route should always redirect to login
-app.get('/', (req, res) => {
-  res.redirect('/login.html');
+// Serve admin dashboard with client-side auth check
+app.get('/admin-dashboard.html', (req, res) => {
+  res.sendFile(__dirname + '/public/admin-dashboard.html');
 });
 
 // KitComm - real-time chat (simple, can expand as needed)
