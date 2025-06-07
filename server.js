@@ -172,6 +172,11 @@ app.get('/dashboard.html', (req, res) => {
   res.sendFile(__dirname + '/public/dashboard.html');
 });
 
+// Root route should redirect to login for security
+app.get('/', (req, res) => {
+  res.redirect('/login.html');
+});
+
 // KitComm - real-time chat (simple, can expand as needed)
 const channels = {}; // { channel: [msg, msg, ...] }
 
