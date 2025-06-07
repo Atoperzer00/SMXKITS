@@ -56,69 +56,26 @@ async function createDefaultUsers() {
 
 // MongoDB connection with fallback
 const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/smxkits';
-console.log('Connecting to MongoDB:', mongoURI.includes('mongodb+srv') ? 'MongoDB Atlas' : 'Local MongoDB');
+const options = {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 15000
+  // Uncomment the next line ONLY if you use a self-signed cert (not Atlas)
+  // tlsAllowInvalidCertificates: true,
+};
 
-// Try multiple connection strategies for MongoDB Atlas SSL issues
-async function connectToMongoDB() {
-  const connectionStrategies = [
-    // Strategy 1: Standard Atlas connection
-    {
-      name: 'Standard Atlas',
-      options: {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-        serverSelectionTimeoutMS: 15000,
-        retryWrites: true,
-        w: 'majority'
-      }
-    },
-    // Strategy 2: Disable SSL validation (for SSL certificate issues)
-    {
-      name: 'SSL Disabled',
-      options: {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-        serverSelectionTimeoutMS: 15000,
-        ssl: false
-      }
-    },
-    // Strategy 3: Allow invalid certificates
-    {
-      name: 'Allow Invalid Certs',
-      options: {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-        serverSelectionTimeoutMS: 15000,
-        tlsAllowInvalidCertificates: true,
-        tlsAllowInvalidHostnames: true
-      }
-    }
-  ];
-
-  for (const strategy of connectionStrategies) {
-    try {
-      console.log(`🔄 Trying ${strategy.name} connection...`);
-      await mongoose.connect(mongoURI, strategy.options);
-      console.log(`✅ MongoDB connected successfully using ${strategy.name}!`);
-      console.log('✅ Database name:', mongoose.connection.name);
-      await createDefaultUsers();
-      return;
-    } catch (err) {
-      console.log(`❌ ${strategy.name} failed:`, err.message);
-    }
-  }
-  
-  // If all strategies fail
-  console.error('❌ All MongoDB connection strategies failed');
-  console.log('💡 Troubleshooting steps:');
-  console.log('1. Check MongoDB Atlas IP whitelist (add 0.0.0.0/0 for testing)');
-  console.log('2. Verify MONGO_URI environment variable');
-  console.log('3. Ensure MongoDB Atlas cluster is running');
-  console.log('4. Check if your MongoDB Atlas cluster is paused');
-}
-
-// Start connection
-connectToMongoDB();
+mongoose.connect(mongoURI, options)
+  .then(() => {
+    console.log('✅ MongoDB connected!');
+    createDefaultUsers();
+  })
+  .catch(err => {
+    console.error('❌ MongoDB connection error:', err.message);
+    console.log('💡 Troubleshooting:');
+    console.log('1. Check your MONGO_URI (local or Atlas)');
+    console.log('2. For Atlas, ensure your cluster is running and IP is whitelisted');
+    console.log('3. For local, ensure MongoDB is running and no SSL is required');
+  });
 
 // Add connection event listeners for better monitoring
 mongoose.connection.on('connected', () => {
