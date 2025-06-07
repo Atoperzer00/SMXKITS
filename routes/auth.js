@@ -25,7 +25,15 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Username and password required' });
     }
     
-    const user = await User.findOne({ username });
+    let user = null;
+    
+    // Wait for mongoose connection before querying
+    if (require('mongoose').connection.readyState !== 1) {
+      console.log('❌ Mongoose not connected, cannot query users');
+      return res.status(503).json({ error: 'Database not connected. Please try again later.' });
+    }
+    user = await User.findOne({ username });
+    
     console.log('👤 User found:', user ? 'Yes' : 'No');
     
     if (!user) {

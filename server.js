@@ -54,28 +54,64 @@ async function createDefaultUsers() {
   }
 }
 
-// MongoDB connection with fallback
+// MongoDB connection with in-memory fallback
 const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/smxkits';
-const options = {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  serverSelectionTimeoutMS: 15000
-  // Uncomment the next line ONLY if you use a self-signed cert (not Atlas)
-  // tlsAllowInvalidCertificates: true,
-};
 
-mongoose.connect(mongoURI, options)
-  .then(() => {
-    console.log('✅ MongoDB connected!');
-    createDefaultUsers();
-  })
-  .catch(err => {
-    console.error('❌ MongoDB connection error:', err.message);
-    console.log('💡 Troubleshooting:');
-    console.log('1. Check your MONGO_URI (local or Atlas)');
-    console.log('2. For Atlas, ensure your cluster is running and IP is whitelisted');
-    console.log('3. For local, ensure MongoDB is running and no SSL is required');
-  });
+// In-memory user storage as fallback
+global.inMemoryUsers = [];
+global.usingInMemory = false;
+
+async function connectToDatabase() {
+  const options = {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 10000,
+    bufferMaxEntries: 0, // Disable mongoose buffering
+    bufferCommands: false, // Disable mongoose buffering
+  };
+
+  try {
+    console.log('🔄 Attempting MongoDB connection...');
+    await mongoose.connect(mongoURI, options);
+    console.log('✅ MongoDB connected successfully!');
+    await createDefaultUsers();
+  } catch (err) {
+    console.error('❌ MongoDB connection failed:', err.message);
+    console.log('� Switching to in-memory database for demo...');
+    
+    // Use in-memory storage
+    global.usingInMemory = true;
+    await createInMemoryUsers();
+    console.log('✅ In-memory database ready!');
+  }
+}
+
+// Create default users in memory
+async function createInMemoryUsers() {
+  const bcrypt = require('bcryptjs');
+  
+  const defaultUsers = [
+    { username: 'admin', password: 'admin123', role: 'admin', name: 'Administrator' },
+    { username: 'instructor', password: 'instructor123', role: 'instructor', name: 'Instructor' },
+    { username: 'student', password: 'student123', role: 'student', name: 'Student' }
+  ];
+
+  for (const userData of defaultUsers) {
+    const hashedPassword = await bcrypt.hash(userData.password, 10);
+    global.inMemoryUsers.push({
+      _id: userData.username,
+      username: userData.username,
+      password: hashedPassword,
+      role: userData.role,
+      name: userData.name,
+      classId: userData.role === 'student' ? 'demo-class' : null
+    });
+  }
+  
+  console.log('✅ Created in-memory users: admin, instructor, student');
+}
+
+connectToDatabase();
 
 // Add connection event listeners for better monitoring
 mongoose.connection.on('connected', () => {
