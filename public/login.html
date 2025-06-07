@@ -9,6 +9,11 @@
 <body>
   <!-- Your original SMX logo in top left -->
   <img id="logo" src="SE66806_logo_orig.png" alt="SMX Logo" />
+  
+  <!-- TEST BUBBLE - Shows new deployment is live -->
+  <div class="test-bubble">
+    ✅ SSL FIX v3
+  </div>
 
   <!-- Main login screen with your original design -->
   <section id="screen-login" class="screen active">
@@ -46,6 +51,29 @@
   </section>
 
   <style>
+    /* TEST BUBBLE - Shows deployment version */
+    .test-bubble {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(0, 255, 0, 0.8);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      z-index: 1000;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.7; }
+      100% { opacity: 1; }
+    }
+    
     /* Additional styles to ensure login form works with your glass-morphism design */
     .form-group {
       margin-bottom: 15px;
@@ -144,6 +172,8 @@
       }
       
       try {
+        console.log('🔄 Attempting login for:', username, 'as', role);
+        
         const response = await fetch('/api/auth/login', {
           method: 'POST',
           headers: {
@@ -152,9 +182,13 @@
           body: JSON.stringify({ username, password, role })
         });
         
+        console.log('📡 Response status:', response.status);
+        
         const data = await response.json();
+        console.log('📦 Response data:', data);
         
         if (response.ok) {
+          console.log('✅ Login successful!');
           // Store token and user info
           localStorage.setItem('token', data.token);
           localStorage.setItem('role', data.role);
@@ -163,18 +197,21 @@
           
           // Redirect based on role
           if (data.role === 'admin' || data.role === 'instructor') {
+            console.log('🔄 Redirecting to admin dashboard...');
             window.location.href = '/admin-dashboard.html';
           } else {
+            console.log('🔄 Redirecting to student dashboard...');
             window.location.href = '/dashboard.html';
           }
         } else {
+          console.log('❌ Login failed:', data.error);
           errorEl.textContent = data.error || 'Login failed';
           errorEl.classList.add('show');
         }
       } catch (error) {
-        errorEl.textContent = 'Connection error. Please try again.';
+        console.error('❌ Connection error:', error);
+        errorEl.textContent = `Connection error: ${error.message}. Server may be starting up...`;
         errorEl.classList.add('show');
-        console.error('Login error:', error);
       }
     });
   </script>
