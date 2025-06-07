@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Target Log Generator</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #1e1e1e;
+      color: white;
+    }
+    .container {
+      display: flex;
+      height: 100vh;
+    }
+    .sidebar {
+      width: 350px;
+      background: #2b2b2b;
+      padding: 20px;
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+    .menu-icon {
+      font-size: 24px;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+    .sidebar h2 {
+      margin: 10px 0 20px;
+      font-size: 20px;
+      color: #fff;
+    }
+    label {
+      display: block;
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+    input[type="text"],
+    input[type="number"],
+    input[type="time"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 6px;
+      margin-top: 4px;
+      background: #333;
+      color: white;
+      border: 1px solid #555;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    textarea {
+      resize: vertical;
+    }
+    .submit-btn {
+      width: 100%;
+      padding: 10px;
+      background-color: #22c55e;
+      border: none;
+      color: white;
+      font-weight: bold;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .log-panel {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      background-color: #111;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .bubble {
+      background-color: #000;
+      color: white;
+      padding: 15px;
+      border-radius: 8px;
+      max-width: 80%;
+      position: relative;
+      border-left: 6px solid orange;
+      transition: border-color 0.3s ease;
+      cursor: grab;
+    }
+    .bubble:hover::after {
+      content: "Ready for QC";
+      position: absolute;
+      top: -20px;
+      left: 10px;
+      background-color: #333;
+      color: white;
+      padding: 3px 8px;
+      font-size: 12px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+    .qc-orange { border-left-color: orange; }
+    .qc-yellow { border-left-color: yellow; }
+    .qc-green { border-left-color: limegreen; }
+    .qc-red { border-left-color: red; }
+    #lockToggle {
+      margin-top: 10px;
+    }
+    .sidebar.drag-over {
+      outline: 2px dashed #22c55e;
+      background: #1f1f1f;
+    }
+  </style>
+</head>
+<body>
+  <!-- Authentication Check -->
+  <script>
+    // Check authentication immediately
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    
+    if (!token || !role) {
+      // No authentication found, redirect to login
+      window.location.replace('/login.html');
+    }
+  </script>
+
+  <div class="container">
+    <aside class="sidebar" id="sidebar">
+      <div class="menu-icon" onclick="goBack()">← Back</div>
+      <div style="float: right; cursor: pointer; color: #ff6b6b;" onclick="logout()">Logout</div>
+      <h2>Target Log</h2>
+      <form id="logForm">
+        <label>Classification
+          <select name="classification">
+            <option>No Classification</option>
+          </select>
+        </label>
+        <label>Asset Name
+          <input type="text" name="asset"/>
+        </label>
+        <label>Sensor
+          <select name="sensor">
+            <option>FMV</option>
+          </select>
+        </label>
+        <label>Operation Name
+          <input type="text" name="operation" value="OBJ"/>
+        </label>
+        <label>Team Name
+          <input type="text" name="team"/>
+        </label>
+        <label>Zulu Time
+          <input type="time" name="zulu"/>
+        </label>
+        <label>MGRS
+          <input type="text" name="mgrs"/>
+        </label>
+        <label>Location Description
+          <input type="text" name="location"/>
+        </label>
+        <label>Target Description
+          <input type="text" name="target"/>
+        </label>
+        <label>Follow Callout Stage
+          <select name="followStage">
+            <option>START</option>
+            <option>STOP 1</option>
+            <option>STOP 2</option>
+            <option>END</option>
+          </select>
+        </label>
+        <label>Follow Narrative
+          <textarea name="followText" rows="2"></textarea>
+        </label>
+        <label>Activity
+          <input type="text" name="activity"/>
+        </label>
+        <label>Males
+          <input type="number" name="males" min="0"/>
+        </label>
+        <label>Females
+          <input type="number" name="females" min="0"/>
+        </label>
+        <label>Children
+          <input type="number" name="children" min="0"/>
+        </label>
+        <label>IA Notes
+          <textarea name="iaNotes" rows="3"></textarea>
+        </label>
+        <label id="lockToggle">
+          <input type="checkbox" id="lockForm"> Lock Input Data
+        </label>
+        <button type="submit" class="submit-btn">Submit</button>
+        <button type="button" class="submit-btn" onclick="exportLogs()" style="background-color: #3b82f6; margin-top: 5px;">Export Logs</button>
+        <button type="button" class="submit-btn" onclick="clearLogs()" style="background-color: #ef4444; margin-top: 5px;">Clear All</button>
+      </form>
+    </aside>
+    <main class="log-panel" id="logPanel"></main>
+  </div>
+  <script>
+    const form = document.getElementById('logForm');
+    const logPanel = document.getElementById('logPanel');
+    const lockInput = document.getElementById('lockForm');
+    const sidebar = document.getElementById('sidebar');
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const data = new FormData(form);
+      const bubble = document.createElement('div');
+      bubble.classList.add('bubble', 'qc-orange');
+      bubble.setAttribute('draggable', 'true');
+      const payload = {
+        asset: data.get('asset'),
+        sensor: data.get('sensor'),
+        operation: data.get('operation'),
+        team: data.get('team'),
+        zulu: data.get('zulu'),
+        mgrs: data.get('mgrs'),
+        location: data.get('location'),
+        target: data.get('target'),
+        followStage: data.get('followStage'),
+        followText: data.get('followText'),
+        activity: data.get('activity'),
+        males: data.get('males'),
+        females: data.get('females'),
+        children: data.get('children'),
+        iaNotes: data.get('iaNotes')
+      };
+      bubble.dataset.payload = JSON.stringify(payload);
+      bubble.innerHTML = `
+        <b>${payload.followStage}:</b> ${payload.followText}<br><br>
+        <b>Asset:</b> ${payload.asset} | <b>Sensor:</b> ${payload.sensor}<br>
+        <b>Op:</b> ${payload.operation} | <b>Team:</b> ${payload.team}<br>
+        <b>Time:</b> ${payload.zulu} | <b>MGRS:</b> ${payload.mgrs}<br>
+        <b>Location:</b> ${payload.location}<br>
+        <b>Target:</b> ${payload.target}<br>
+        <b>Activity:</b> ${payload.activity}<br>
+        <b>SLANT:</b> ${payload.males}/${payload.females}/${payload.children}<br>
+        <b>IA Notes:</b> ${payload.iaNotes}
+      `;
+      const qcStates = ['qc-orange', 'qc-yellow', 'qc-green', 'qc-red'];
+      let currentIndex = 0;
+      bubble.addEventListener('click', () => {
+        bubble.classList.remove(qcStates[currentIndex]);
+        currentIndex = (currentIndex + 1) % qcStates.length;
+        bubble.classList.add(qcStates[currentIndex]);
+      });
+      bubble.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('bubble', bubble.dataset.payload);
+      });
+      logPanel.prepend(bubble);
+      if (!lockInput.checked) form.reset();
+    });
+    sidebar.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      sidebar.classList.add('drag-over');
+    });
+    sidebar.addEventListener('dragleave', () => {
+      sidebar.classList.remove('drag-over');
+    });
+    sidebar.addEventListener('drop', (e) => {
+      e.preventDefault();
+      sidebar.classList.remove('drag-over');
+      const payload = JSON.parse(e.dataTransfer.getData('bubble'));
+      for (let key in payload) {
+        const input = form.elements.namedItem(key);
+        if (input) input.value = payload[key];
+      }
+    });
+
+    // Navigation functions
+    function goBack() {
+      const role = localStorage.getItem('role');
+      if (role === 'admin' || role === 'instructor') {
+        window.location.href = '/admin-dashboard.html';
+      } else {
+        window.location.href = '/dashboard.html';
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      localStorage.removeItem('userName');
+      localStorage.removeItem('classId');
+      window.location.replace('/login.html');
+    }
+
+    // Export logs function
+    function exportLogs() {
+      const bubbles = document.querySelectorAll('.bubble');
+      if (bubbles.length === 0) {
+        alert('No logs to export');
+        return;
+      }
+      
+      let exportData = 'SMX KITS - Operations Log Export\n';
+      exportData += '=====================================\n';
+      exportData += `Generated: ${new Date().toISOString()}\n`;
+      exportData += `User: ${localStorage.getItem('userName') || 'Unknown'}\n\n`;
+      
+      bubbles.forEach((bubble, index) => {
+        const payload = JSON.parse(bubble.dataset.payload);
+        exportData += `Entry ${index + 1}:\n`;
+        exportData += `Asset: ${payload.asset}\n`;
+        exportData += `Sensor: ${payload.sensor}\n`;
+        exportData += `Operation: ${payload.operation}\n`;
+        exportData += `Team: ${payload.team}\n`;
+        exportData += `Time: ${payload.zulu}\n`;
+        exportData += `MGRS: ${payload.mgrs}\n`;
+        exportData += `Location: ${payload.location}\n`;
+        exportData += `Target: ${payload.target}\n`;
+        exportData += `Stage: ${payload.followStage}\n`;
+        exportData += `Narrative: ${payload.followText}\n`;
+        exportData += `Activity: ${payload.activity}\n`;
+        exportData += `SLANT: ${payload.males}/${payload.females}/${payload.children}\n`;
+        exportData += `IA Notes: ${payload.iaNotes}\n`;
+        exportData += '---\n';
+      });
+      
+      const blob = new Blob([exportData], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ops-log-${new Date().toISOString().split('T')[0]}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Clear all logs function
+    function clearLogs() {
+      if (confirm('Are you sure you want to clear all logs? This cannot be undone.')) {
+        logPanel.innerHTML = '';
+      }
+    }
+
+    // Display user info
+    document.addEventListener('DOMContentLoaded', function() {
+      const userName = localStorage.getItem('userName') || 'User';
+      const role = localStorage.getItem('role') || 'Student';
+      console.log('OpsLog accessed by:', userName, '(' + role + ')');
+      
+      // Auto-populate current time
+      const now = new Date();
+      const zuluTime = now.toISOString().substr(11, 5);
+      const zuluInput = document.querySelector('input[name="zulu"]');
+      if (zuluInput && !zuluInput.value) {
+        zuluInput.value = zuluTime;
+      }
+    });
+  </script>
+</body>
+</html>

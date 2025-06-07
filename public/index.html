@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SMX KITS - Secure Access</title>
+  <script>
+    // Check if user is already authenticated
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    
+    if (token && role) {
+      // User is authenticated, redirect to appropriate dashboard
+      if (role === 'admin' || role === 'instructor') {
+        window.location.replace('/admin-dashboard.html');
+      } else {
+        window.location.replace('/dashboard.html');
+      }
+    } else {
+      // No authentication, redirect to login
+      window.location.replace('/login.html');
+    }
+  </script>
+</head>
+<body>
+  <div style="text-align: center; margin-top: 50px; font-family: Arial, sans-serif;">
+    <h2>SMX KITS - Secure Training System</h2>
+    <p>Checking authentication...</p>
+    <p>If you are not redirected automatically, <a href="/login.html">click here to login</a>.</p>
+  </div>
+</body>
+</html>

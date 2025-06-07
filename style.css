@@ -73,30 +73,7 @@ body {
   z-index: 10;
 }
 
-/* Instructor login - simple text link without bubble, now inside login card */
-.login-card .instructor-login-card {
-  background: none;
-  border: none;
-  box-shadow: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  color: #fff;
-  text-align: center;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-decoration: underline;
-  padding: 0.5rem;
-  margin: 0;
-  position: static;
-  transform: none;
-}
 
-.login-card .instructor-login-card:hover {
-  color: rgba(255, 255, 255, 0.8);
-  transform: none;
-}
 
 /* 3️⃣  A little polish for the contents */
 .login-card .logo {

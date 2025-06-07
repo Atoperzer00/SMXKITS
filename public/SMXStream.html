@@ -80,13 +80,6 @@
 <body>
   <div id="playerContainer">
     <video id="video" src="Drone.mp4" preload="auto"></video>
-    <div style="margin: 10px 0; text-align: center;">
-      <label for="streamMode" style="color: var(--fg); font-size: 1rem;">Video Source:</label>
-      <select id="streamMode" style="margin-left: 8px; padding: 4px 10px; border-radius: 5px;">
-        <option value="local">Local File</option>
-        <option value="live">Live Stream</option>
-      </select>
-    </div>
     <div id="controls">
       <button id="playBtn" class="ctrl-btn">▶️</button>
       <button id="liveBtn" class="ctrl-btn" style="display: none;">LIVE</button>
@@ -104,7 +97,6 @@
     const timeline = document.getElementById('timelineCanvas');
     const ctx = timeline.getContext('2d');
     const hoverLabel = document.getElementById('hoverLabel');
-    const streamMode = document.getElementById('streamMode');
 
     const zoomLevels = [1, 2, 5, 10, 30]; // sec per 50px
     let zoomIndex = 2;
@@ -234,42 +226,6 @@
     }, 300);
 
     video.addEventListener("loadedmetadata", () => drawTimeline());
-
-    // Optional: HLS.js CDN
-    let hlsScriptLoaded = false;
-    function loadHlsJs(callback) {
-      if (hlsScriptLoaded) return callback();
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/hls.js@latest';
-      script.onload = () => { hlsScriptLoaded = true; callback(); };
-      document.body.appendChild(script);
-    }
-
-    function setVideoSource(mode) {
-      if (mode === 'local') {
-        if (window.hlsInstance) { window.hlsInstance.destroy(); window.hlsInstance = null; }
-        video.src = 'Drone.mp4';
-        video.load();
-      } else if (mode === 'live') {
-        loadHlsJs(() => {
-          if (window.Hls && Hls.isSupported()) {
-            if (window.hlsInstance) window.hlsInstance.destroy();
-            window.hlsInstance = new Hls();
-            window.hlsInstance.loadSource('https://your-hls-server/live/stream.m3u8'); // <-- Replace with your live stream URL
-            window.hlsInstance.attachMedia(video);
-          } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            video.src = 'https://your-hls-server/live/stream.m3u8';
-          } else {
-            alert('HLS not supported in this browser.');
-          }
-        });
-      }
-    }
-
-    streamMode.addEventListener('change', e => setVideoSource(e.target.value));
-
-    // Set initial mode
-    setVideoSource(streamMode.value);
   </script>
 </body>
 </html>

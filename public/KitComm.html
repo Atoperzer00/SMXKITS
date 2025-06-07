@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KitComm – Live PED Chatroom</title>
+  <!-- Tailwind via CDN for rapid styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Custom scrollbar for channel list */
+    .scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.25);
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="h-screen w-screen bg-zinc-900 text-zinc-100 flex">
+  <!-- Channel Sidebar -->
+  <aside id="channelSidebar" class="w-56 bg-zinc-800/70 backdrop-blur-md p-4 flex flex-col">
+    <h2 class="text-lg font-semibold mb-4">Channels</h2>
+    <nav id="channelList" class="space-y-2 overflow-y-auto scrollbar flex-1">
+      <!-- Channels populated by JS -->
+    </nav>
+    <button id="addChannelBtn" class="mt-4 py-2 px-3 rounded-md bg-zinc-700 hover:bg-zinc-600 text-sm">+ New Channel</button>
+  </aside>
+  <!-- Main Chat Area -->
+  <main class="flex-1 flex flex-col">
+    <!-- Header -->
+    <header class="flex items-center justify-between px-6 py-3 bg-zinc-800/70 backdrop-blur-md">
+      <div class="flex items-center gap-3">
+        <span id="activeChannel" class="text-xl font-semibold">Global</span>
+        <span class="text-xs opacity-70">/</span>
+        <select id="roleSelect" class="bg-zinc-700 text-zinc-100 rounded-md py-1 px-2 text-sm focus:outline-none">
+          <option value="ITC">ITC</option>
+          <option value="SCR" selected>SCR</option>
+          <option value="IA">IA</option>
+          <option value="Pilot">Pilot</option>
+          <option value="JTAC">JTAC</option>
+          <option value="SA">SA</option>
+        </select>
+      </div>
+      <button id="toggleSidebar" class="text-sm bg-zinc-700 px-3 py-1.5 rounded-md hover:bg-zinc-600 hidden md:inline">Toggle Channels</button>
+    </header>
+    <!-- Messages -->
+    <section id="messagePane" class="flex-1 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-zinc-900 via-zinc-900/80 to-zinc-900">
+      <!-- Messages injected by JS -->
+    </section>
+    <!-- Message Input -->
+    <form id="chatForm" class="flex gap-3 p-4 bg-zinc-800/70 backdrop-blur-md">
+      <input type="text" id="chatInput" class="flex-1 bg-zinc-700 rounded-md py-2 px-3 text-sm focus:outline-none" placeholder="Type your message…" autocomplete="off" />
+      <button class="bg-blue-600 hover:bg-blue-500 px-4 rounded-md text-sm">Send</button>
+    </form>
+  </main>
+  <!-- Socket & UI Logic -->
+  <script>
+    // ===== Configuration =====
+    const WEBSOCKET_URL = "wss://YOUR-SERVER-URL"; // <-- Replace with your backend endpoint
+    const DEFAULT_CHANNELS = ["Global", "Team-1", "Team-2", "Instructor"];
+    // ===== State =====
+    let currentChannel = "Global";
+    let socket;
+    // ===== DOM =====
+    const channelListEl = document.getElementById("channelList");
+    const activeChannelEl = document.getElementById("activeChannel");
+    const messagePaneEl = document.getElementById("messagePane");
+    const chatInputEl = document.getElementById("chatInput");
+    const chatFormEl = document.getElementById("chatForm");
+    const roleSelectEl = document.getElementById("roleSelect");
+    // ===== Helpers =====
+    function escapeHtml(text) {
+      return text.replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch]));
+    }
+    function addMessage({ author, role, content, timestamp }) {
+      const time = new Date(timestamp).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"});
+      const msg = document.createElement("div");
+      msg.innerHTML = `
+        <div class="flex flex-col gap-1">
+          <div class="text-xs opacity-70"><span class="font-semibold">${escapeHtml(author)}</span> • ${escapeHtml(role)} • ${time}</div>
+          <div>${escapeHtml(content)}</div>
+        </div>`;
+      messagePaneEl.appendChild(msg);
+      messagePaneEl.scrollTop = messagePaneEl.scrollHeight;
+    }
+    function switchChannel(name) {
+      currentChannel = name;
+      activeChannelEl.textContent = name;
+      messagePaneEl.innerHTML = ""; // Clear messages (could fetch history)
+    }
+    // ===== Channel Sidebar =====
+    function renderChannels() {
+      channelListEl.innerHTML = "";
+      DEFAULT_CHANNELS.forEach(ch => {
+        const btn = document.createElement("button");
+        btn.textContent = ch;
+        btn.className = "w-full text-left py-1 px-2 rounded-md hover:bg-zinc-700 text-sm";
+        btn.onclick = () => switchChannel(ch);
+        channelListEl.appendChild(btn);
+      });
+    }
+    document.getElementById("addChannelBtn").onclick = () => {
+      const name = prompt("Channel name?");
+      if (name) {
+        DEFAULT_CHANNELS.push(name);
+        renderChannels();
+      }
+    };
+    // ===== WebSocket =====
+    function initSocket() {
+      socket = new WebSocket(WEBSOCKET_URL);
+      socket.addEventListener("open", () => {
+        console.log("Connected to KitComm server");
+      });
+      socket.addEventListener("message", ev => {
+        const data = JSON.parse(ev.data);
+        if (data.channel === currentChannel) addMessage(data);
+      });
+      socket.addEventListener("close", () => {
+        console.warn("Socket closed, retrying in 3s");
+        setTimeout(initSocket, 3000);
+      });
+    }
+    // ===== Form =====
+    chatFormEl.addEventListener("submit", e => {
+      e.preventDefault();
+      const content = chatInputEl.value.trim();
+      if (!content) return;
+      const msg = {
+        channel: currentChannel,
+        author: "You", // Replace with username from auth layer
+        role: roleSelectEl.value,
+        content,
+        timestamp: Date.now()
+      };
+      addMessage(msg);
+      socket?.send(JSON.stringify(msg));
+      chatInputEl.value = "";
+    });
+    // ===== Init =====
+    renderChannels();
+    switchChannel(currentChannel);
+    initSocket();
+  </script>
+</body>
+</html>
