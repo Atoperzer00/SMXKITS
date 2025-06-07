@@ -4,6 +4,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const socketio = require('socket.io');
 const bcrypt = require('bcryptjs');
+const User = require('./models/User');
 require('dotenv').config();
 
 // Debug environment variables
@@ -22,6 +23,36 @@ app.use(express.static('public'));
 
 
 app.use(express.static('.'));
+
+// Function to create default users
+async function createDefaultUsers() {
+  try {
+    const defaultUsers = [
+      { username: 'admin', password: 'admin123', role: 'admin', name: 'System Administrator' },
+      { username: 'instructor', password: 'instructor123', role: 'instructor', name: 'Demo Instructor' },
+      { username: 'student', password: 'student123', role: 'student', name: 'Demo Student' }
+    ];
+
+    for (const userData of defaultUsers) {
+      const existingUser = await User.findOne({ username: userData.username });
+      if (!existingUser) {
+        const hashedPassword = await bcrypt.hash(userData.password, 10);
+        const user = new User({
+          username: userData.username,
+          password: hashedPassword,
+          role: userData.role,
+          name: userData.name
+        });
+        await user.save();
+        console.log(`✅ Created default ${userData.role}: ${userData.username}`);
+      } else {
+        console.log(`ℹ️ Default ${userData.role} already exists: ${userData.username}`);
+      }
+    }
+  } catch (error) {
+    console.error('❌ Error creating default users:', error);
+  }
+}
 
 // MongoDB connection with fallback
 const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/smxkits';
@@ -46,11 +77,13 @@ mongoose.connect(mongoURI, {
     family: 4
   })
 })
-  .then(() => {
+  .then(async () => {
     console.log('✅ MongoDB Atlas connected successfully!');
     console.log('✅ Database name:', mongoose.connection.name);
     console.log('✅ Connection state:', mongoose.connection.readyState);
-    console.log('ℹ️ To create admin user, run: node setup-admin.js');
+    
+    // Create default users if they don't exist
+    await createDefaultUsers();
   })
   .catch(err => {
     console.error('❌ MongoDB connection error:', err.message);
