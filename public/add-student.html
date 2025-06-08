@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Add Student – SMX KITS</title>
+  <style>
+    body { background:#181f25; color:#fff; font-family:'Segoe UI',sans-serif; padding:24px; }
+    h2 { color:#89bcf4; }
+    label { display:block; margin-top:18px; }
+    input, select { padding:7px 12px; border-radius:8px; border:1px solid #25344a; margin-top:7px; background:#232e3c; color:#fff; }
+    button { background:#1da1f2; color:#fff; padding:9px 24px; border:none; border-radius:8px; margin-top:28px; font-weight:600; }
+  </style>
+</head>
+<body>
+  <!-- Authentication Check -->
+  <script>
+    // Check if user is authenticated and has admin/instructor role
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    
+    if (!token || !role) {
+      // No authentication found, redirect to login
+      window.location.replace('/login.html');
+    } else if (role !== 'admin' && role !== 'instructor') {
+      // User is authenticated but doesn't have admin/instructor privileges
+      alert('Access denied. Admin or Instructor privileges required.');
+      window.location.replace('/dashboard.html');
+    }
+  </script>
+  
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <h2>Add Student</h2>
+    <a href="admin-dashboard.html" style="color: #89bcf4; text-decoration: none;">← Back to Dashboard</a>
+  </div>
+  <form id="studentForm" onsubmit="addStudent(event)">
+    <label>Name <input required id="studentName" /></label>
+    <label>Email <input required type="email" id="studentEmail" /></label>
+    <label>Assign to Class
+      <select id="studentClass"></select>
+    </label>
+    <button type="submit">Add Student</button>
+  </form>
+  <div id="studentResult" style="margin-top:32px;"></div>
+  <script>
+    // Mock classes data – replace with real fetch in production
+    const classes = [
+      {classId:'CLS-20240607-001', name:'Alpha 1'},
+      {classId:'CLS-20240608-002', name:'Bravo 2'}
+    ];
+    function fillClassDropdown() {
+      document.getElementById('studentClass').innerHTML =
+        classes.map(c => `<option value="${c.classId}">${c.name}</option>`).join('');
+    }
+    fillClassDropdown();
+    function addStudent(e) {
+      e.preventDefault();
+      const studentId = `STU-${document.getElementById('studentClass').value}-${Math.floor(Math.random()*900+100)}`;
+      const obj = {
+        studentId,
+        name: document.getElementById('studentName').value,
+        email: document.getElementById('studentEmail').value,
+        classId: document.getElementById('studentClass').value
+      };
+      document.getElementById('studentResult').innerText = 'Student Added: ' + JSON.stringify(obj, null, 2);
+      document.getElementById('studentForm').reset();
+      fillClassDropdown();
+    }
+  </script>
+</body>
+</html>

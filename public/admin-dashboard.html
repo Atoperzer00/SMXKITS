@@ -191,7 +191,15 @@
       <div class="dashboard-title">Admin / Instructor Dashboard</div>
       <!-- Quick Action Tiles -->
       <section class="dashboard-tiles">
-        <div class="dashboard-tile">Add New Student</div>
+        <div class="dashboard-tile" onclick="window.location.href='users-roles.html'">
+          Users & Roles
+        </div>
+        <div class="dashboard-tile" onclick="window.location.href='add-class.html'">
+          Add New Class
+        </div>
+        <div class="dashboard-tile" onclick="window.location.href='add-student.html'">
+          Add New Student
+        </div>
         <div class="dashboard-tile">Manage Attendance</div>
         <div class="dashboard-tile" onclick="window.open('../SMXStream.html', '_blank')">
           Stream Feed
@@ -204,7 +212,6 @@
         <div class="dashboard-tile">Live Training Controls</div>
         <div class="dashboard-tile">Upload Templates</div>
         <div class="dashboard-tile">Generate Certificates</div>
-        <div class="dashboard-tile">Bulk Upload</div>
       </section>
       <!-- Optionally, add instructions for instructors -->
       <div class="dashboard-tile" style="background:#1e2738; color:#fff; font-size:0.98rem; cursor:default;">
