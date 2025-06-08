@@ -6,6 +6,7 @@
   <title>KitComm – Live PED Chatroom</title>
   <!-- Tailwind via CDN for rapid styling -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/socket.io/socket.io.js"></script>
   <style>
     /* Custom scrollbar for channel list */
     .scrollbar::-webkit-scrollbar {
@@ -15,17 +16,49 @@
       background: rgba(255, 255, 255, 0.25);
       border-radius: 3px;
     }
+    .scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.25);
+      border-radius: 3px;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .message-appear {
+      animation: fadeIn 0.3s ease;
+    }
+    .self-message {
+      @apply bg-blue-900/40 border-l-2 border-blue-500;
+    }
   </style>
 </head>
 <body class="h-screen w-screen bg-zinc-900 text-zinc-100 flex">
+  <!-- Authentication Check -->
+  <script>
+    // Check if user is authenticated
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    const userName = localStorage.getItem('userName') || 'Anonymous';
+    
+    if (!token) {
+      // No authentication found, redirect to login
+      window.location.replace('/login.html');
+    }
+  </script>
+
   <!-- Channel Sidebar -->
   <aside id="channelSidebar" class="w-56 bg-zinc-800/70 backdrop-blur-md p-4 flex flex-col">
     <h2 class="text-lg font-semibold mb-4">Channels</h2>
     <nav id="channelList" class="space-y-2 overflow-y-auto scrollbar flex-1">
       <!-- Channels populated by JS -->
+      <div class="text-center text-sm text-zinc-500 py-3">Loading channels...</div>
     </nav>
     <button id="addChannelBtn" class="mt-4 py-2 px-3 rounded-md bg-zinc-700 hover:bg-zinc-600 text-sm">+ New Channel</button>
   </aside>
+  
   <!-- Main Chat Area -->
   <main class="flex-1 flex flex-col">
     <!-- Header -->
@@ -42,26 +75,53 @@
           <option value="SA">SA</option>
         </select>
       </div>
-      <button id="toggleSidebar" class="text-sm bg-zinc-700 px-3 py-1.5 rounded-md hover:bg-zinc-600 hidden md:inline">Toggle Channels</button>
+      <div class="flex items-center gap-2">
+        <span class="text-sm text-zinc-400">Logged in as: <span class="text-white font-semibold" id="userNameDisplay"></span></span>
+        <button id="toggleSidebar" class="text-sm bg-zinc-700 px-3 py-1.5 rounded-md hover:bg-zinc-600 hidden md:inline">Toggle Channels</button>
+      </div>
     </header>
+    
     <!-- Messages -->
-    <section id="messagePane" class="flex-1 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-zinc-900 via-zinc-900/80 to-zinc-900">
-      <!-- Messages injected by JS -->
+    <section id="messagePane" class="flex-1 overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-zinc-900 via-zinc-900/80 to-zinc-900 scrollbar">
+      <div class="text-center text-zinc-500 py-8">Loading messages...</div>
     </section>
-    <!-- Message Input -->
-    <form id="chatForm" class="flex gap-3 p-4 bg-zinc-800/70 backdrop-blur-md">
-      <input type="text" id="chatInput" class="flex-1 bg-zinc-700 rounded-md py-2 px-3 text-sm focus:outline-none" placeholder="Type your message…" autocomplete="off" />
-      <button class="bg-blue-600 hover:bg-blue-500 px-4 rounded-md text-sm">Send</button>
-    </form>
+    
+    <!-- Message Input Area -->
+    <div class="bg-zinc-800/70 backdrop-blur-md p-4">
+      <!-- File Upload Preview -->
+      <div id="filePreview" class="hidden mb-3 p-2 bg-zinc-700/50 rounded-md flex items-center justify-between">
+        <div class="flex items-center">
+          <span class="text-sm font-medium file-name"></span>
+          <span class="text-xs text-zinc-400 ml-2 file-size"></span>
+        </div>
+        <button id="cancelUpload" class="text-zinc-400 hover:text-white">✕</button>
+      </div>
+      
+      <!-- Message Form -->
+      <div class="flex gap-3 items-center">
+        <button id="attachButton" class="p-2 bg-zinc-700 rounded-md hover:bg-zinc-600 text-zinc-300" title="Attach File">
+          📎
+        </button>
+        <form id="chatForm" class="flex-1 flex gap-3">
+          <input type="text" id="chatInput" class="flex-1 bg-zinc-700 rounded-md py-2 px-3 text-sm focus:outline-none" placeholder="Type your message…" autocomplete="off" />
+          <button type="submit" class="bg-blue-600 hover:bg-blue-500 px-4 rounded-md text-sm">Send</button>
+        </form>
+        <input type="file" id="fileInput" class="hidden" />
+      </div>
+    </div>
   </main>
+  
   <!-- Socket & UI Logic -->
   <script>
     // ===== Configuration =====
-    const WEBSOCKET_URL = "wss://YOUR-SERVER-URL"; // <-- Replace with your backend endpoint
     const DEFAULT_CHANNELS = ["Global", "Team-1", "Team-2", "Instructor"];
+    
     // ===== State =====
     let currentChannel = "Global";
     let socket;
+    let channels = [];
+    let selectedFile = null;
+    
     // ===== DOM =====
     const channelListEl = document.getElementById("channelList");
     const activeChannelEl = document.getElementById("activeChannel");
@@ -69,79 +129,320 @@
     const chatInputEl = document.getElementById("chatInput");
     const chatFormEl = document.getElementById("chatForm");
     const roleSelectEl = document.getElementById("roleSelect");
+    const fileInputEl = document.getElementById("fileInput");
+    const attachButtonEl = document.getElementById("attachButton");
+    const filePreviewEl = document.getElementById("filePreview");
+    const cancelUploadEl = document.getElementById("cancelUpload");
+    const userNameDisplayEl = document.getElementById("userNameDisplay");
+    
+    // Display user name
+    userNameDisplayEl.textContent = userName;
+    
     // ===== Helpers =====
     function escapeHtml(text) {
-      return text.replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch]));
+      if (!text) return '';
+      return text.toString().replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch]));
     }
-    function addMessage({ author, role, content, timestamp }) {
+    
+    function formatBytes(bytes, decimals = 2) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const dm = decimals < 0 ? 0 : decimals;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    }
+    
+    function addMessage({ author, role, content, timestamp, attachment }) {
       const time = new Date(timestamp).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"});
       const msg = document.createElement("div");
-      msg.innerHTML = `
+      msg.className = "p-3 rounded-md message-appear " + (author === userName ? "self-message" : "bg-zinc-800/70");
+      
+      // Basic message content
+      let messageHTML = `
         <div class="flex flex-col gap-1">
-          <div class="text-xs opacity-70"><span class="font-semibold">${escapeHtml(author)}</span> • ${escapeHtml(role)} • ${time}</div>
-          <div>${escapeHtml(content)}</div>
+          <div class="flex justify-between">
+            <div class="text-xs opacity-70"><span class="font-semibold">${escapeHtml(author)}</span> • ${escapeHtml(role)}</div>
+            <div class="text-xs opacity-70">${time}</div>
+          </div>
+          <div class="mt-1">${escapeHtml(content)}</div>
         </div>`;
+      
+      // Add attachment if present
+      if (attachment) {
+        if (attachment.type && attachment.type.startsWith('image/')) {
+          // Image attachment
+          messageHTML += `
+            <div class="mt-3 p-2 bg-zinc-800/70 rounded border border-zinc-700">
+              <a href="${attachment.path}" target="_blank" class="block">
+                <img src="${attachment.path}" alt="${attachment.filename}" class="max-w-full max-h-48 rounded">
+              </a>
+              <div class="text-xs text-zinc-400 mt-2">📎 ${attachment.filename}</div>
+            </div>`;
+        } else {
+          // Non-image attachment
+          messageHTML += `
+            <div class="mt-3 p-2 bg-zinc-800/70 rounded border border-zinc-700">
+              <a href="${attachment.path}" target="_blank" class="flex items-center text-blue-400 hover:text-blue-300">
+                <span class="mr-2">📎</span>
+                <span>${attachment.filename}</span>
+              </a>
+            </div>`;
+        }
+      }
+      
+      msg.innerHTML = messageHTML;
+      
+      // Add to message pane
       messagePaneEl.appendChild(msg);
       messagePaneEl.scrollTop = messagePaneEl.scrollHeight;
     }
+    
     function switchChannel(name) {
+      // Update UI
       currentChannel = name;
       activeChannelEl.textContent = name;
-      messagePaneEl.innerHTML = ""; // Clear messages (could fetch history)
+      messagePaneEl.innerHTML = '<div class="text-center text-zinc-500 py-8">Loading messages...</div>';
+      
+      // Leave previous channel and join new one
+      if (socket) {
+        socket.emit('kitcomm:join', name);
+      }
+      
+      // Highlight active channel in sidebar
+      document.querySelectorAll('#channelList button').forEach(btn => {
+        if (btn.textContent === name) {
+          btn.classList.add('bg-blue-900/30', 'border-l-2', 'border-blue-500', 'pl-3');
+        } else {
+          btn.classList.remove('bg-blue-900/30', 'border-l-2', 'border-blue-500', 'pl-3');
+        }
+      });
     }
-    // ===== Channel Sidebar =====
+    
+    // ===== Channel Management =====
+    async function fetchChannels() {
+      try {
+        const response = await fetch('/api/kitcomm/channels');
+        if (response.ok) {
+          const fetchedChannels = await response.json();
+          channels = fetchedChannels.length > 0 ? fetchedChannels : DEFAULT_CHANNELS;
+        } else {
+          channels = DEFAULT_CHANNELS;
+        }
+      } catch (error) {
+        console.error('Error fetching channels:', error);
+        channels = DEFAULT_CHANNELS;
+      }
+      
+      renderChannels();
+    }
+    
     function renderChannels() {
       channelListEl.innerHTML = "";
-      DEFAULT_CHANNELS.forEach(ch => {
+      channels.forEach(ch => {
         const btn = document.createElement("button");
         btn.textContent = ch;
         btn.className = "w-full text-left py-1 px-2 rounded-md hover:bg-zinc-700 text-sm";
+        
+        if (ch === currentChannel) {
+          btn.classList.add('bg-blue-900/30', 'border-l-2', 'border-blue-500', 'pl-3');
+        }
+        
         btn.onclick = () => switchChannel(ch);
         channelListEl.appendChild(btn);
       });
     }
-    document.getElementById("addChannelBtn").onclick = () => {
-      const name = prompt("Channel name?");
-      if (name) {
-        DEFAULT_CHANNELS.push(name);
-        renderChannels();
+    
+    document.getElementById("addChannelBtn").onclick = async () => {
+      const name = prompt("New channel name:");
+      if (name && name.trim()) {
+        if (!channels.includes(name.trim())) {
+          channels.push(name.trim());
+          renderChannels();
+          
+          // Let's create the channel by sending a welcome message
+          try {
+            const response = await fetch('/api/kitcomm/message', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                author: "System",
+                role: "System",
+                content: `Channel "${name.trim()}" created`,
+                channel: name.trim()
+              })
+            });
+            
+            if (response.ok) {
+              switchChannel(name.trim());
+            }
+          } catch (error) {
+            console.error('Error creating channel:', error);
+          }
+        } else {
+          alert("Channel already exists");
+        }
       }
     };
-    // ===== WebSocket =====
+    
+    // ===== File Upload Handling =====
+    attachButtonEl.addEventListener('click', () => {
+      fileInputEl.click();
+    });
+    
+    fileInputEl.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        selectedFile = file;
+        const fileNameEl = filePreviewEl.querySelector('.file-name');
+        const fileSizeEl = filePreviewEl.querySelector('.file-size');
+        
+        fileNameEl.textContent = file.name;
+        fileSizeEl.textContent = formatBytes(file.size);
+        filePreviewEl.classList.remove('hidden');
+      }
+    });
+    
+    cancelUploadEl.addEventListener('click', () => {
+      selectedFile = null;
+      fileInputEl.value = '';
+      filePreviewEl.classList.add('hidden');
+    });
+    
+    // ===== Socket.io Connection =====
     function initSocket() {
-      socket = new WebSocket(WEBSOCKET_URL);
-      socket.addEventListener("open", () => {
-        console.log("Connected to KitComm server");
+      socket = io();
+      
+      socket.on('connect', () => {
+        console.log('Connected to KitComm server');
+        socket.emit('kitcomm:join', currentChannel);
       });
-      socket.addEventListener("message", ev => {
-        const data = JSON.parse(ev.data);
-        if (data.channel === currentChannel) addMessage(data);
+      
+      socket.on('kitcomm:history', (messages) => {
+        messagePaneEl.innerHTML = '';
+        if (messages.length === 0) {
+          messagePaneEl.innerHTML = '<div class="text-center text-zinc-500 py-8">No messages yet. Start the conversation!</div>';
+        } else {
+          messages.forEach(msg => addMessage(msg));
+        }
+        messagePaneEl.scrollTop = messagePaneEl.scrollHeight;
       });
-      socket.addEventListener("close", () => {
-        console.warn("Socket closed, retrying in 3s");
-        setTimeout(initSocket, 3000);
+      
+      socket.on('kitcomm:message', (message) => {
+        if (message.channel === currentChannel) {
+          addMessage(message);
+          messagePaneEl.scrollTop = messagePaneEl.scrollHeight;
+        }
+      });
+      
+      socket.on('kitcomm:error', (error) => {
+        console.error('KitComm error:', error);
+        alert(`Error: ${error.message}`);
+      });
+      
+      socket.on('disconnect', () => {
+        console.warn('Socket disconnected, will auto-reconnect');
       });
     }
-    // ===== Form =====
-    chatFormEl.addEventListener("submit", e => {
+    
+    // ===== Message Sending =====
+    async function sendMessage(text) {
+      if ((!text || !text.trim()) && !selectedFile) return;
+      
+      try {
+        if (selectedFile) {
+          // Send message with file attachment
+          const formData = new FormData();
+          formData.append('file', selectedFile);
+          formData.append('author', userName);
+          formData.append('role', roleSelectEl.value);
+          formData.append('channel', currentChannel);
+          
+          if (text && text.trim()) {
+            formData.append('content', text.trim());
+          } else {
+            formData.append('content', `Shared a file: ${selectedFile.name}`);
+          }
+          
+          const response = await fetch('/api/kitcomm/upload', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            },
+            body: formData
+          });
+          
+          if (!response.ok) {
+            throw new Error('Failed to upload file');
+          }
+          
+          // Reset file upload UI
+          selectedFile = null;
+          fileInputEl.value = '';
+          filePreviewEl.classList.add('hidden');
+          
+        } else {
+          // Send text-only message
+          const response = await fetch('/api/kitcomm/message', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              author: userName,
+              role: roleSelectEl.value,
+              content: text.trim(),
+              channel: currentChannel
+            })
+          });
+          
+          if (!response.ok) {
+            throw new Error('Failed to send message');
+          }
+        }
+        
+      } catch (error) {
+        console.error('Error sending message:', error);
+        alert(`Error: ${error.message}`);
+      }
+    }
+    
+    // ===== Form Handling =====
+    chatFormEl.addEventListener('submit', async (e) => {
       e.preventDefault();
       const content = chatInputEl.value.trim();
-      if (!content) return;
-      const msg = {
-        channel: currentChannel,
-        author: "You", // Replace with username from auth layer
-        role: roleSelectEl.value,
-        content,
-        timestamp: Date.now()
-      };
-      addMessage(msg);
-      socket?.send(JSON.stringify(msg));
-      chatInputEl.value = "";
+      
+      await sendMessage(content);
+      chatInputEl.value = '';
+      chatInputEl.focus();
     });
-    // ===== Init =====
-    renderChannels();
-    switchChannel(currentChannel);
-    initSocket();
+    
+    // Allow sending with Enter key
+    chatInputEl.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        chatFormEl.dispatchEvent(new Event('submit'));
+      }
+    });
+    
+    // Toggle sidebar on mobile
+    document.getElementById('toggleSidebar').addEventListener('click', () => {
+      const sidebar = document.getElementById('channelSidebar');
+      sidebar.classList.toggle('hidden');
+    });
+    
+    // ===== Initialization =====
+    window.addEventListener('DOMContentLoaded', () => {
+      fetchChannels();
+      initSocket();
+      
+      // Auto-focus chat input
+      setTimeout(() => chatInputEl.focus(), 500);
+    });
   </script>
 </body>
 </html>
