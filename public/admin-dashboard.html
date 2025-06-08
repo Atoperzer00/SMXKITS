@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin Dashboard – SMX KITS</title>
   <link rel="stylesheet" href="style.css" />
+  <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
+  <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
   <style>
     body {
       /* Remove the login page background for dashboard */
@@ -211,28 +213,114 @@
         <div class="dashboard-tile">Course Feedback</div>
         <div class="dashboard-tile">Live Training Controls</div>
         <div class="dashboard-tile">Upload Templates</div>
-        <div class="dashboard-tile">Generate Certificates</div>
       </section>
       <!-- Optionally, add instructions for instructors -->
       <div class="dashboard-tile" style="background:#1e2738; color:#fff; font-size:0.98rem; cursor:default;">
         <b>Stream Mode:</b> When opening SMX Stream, select <b>Live Stream</b> to broadcast the live feed, or <b>Local File</b> to play a video file.<br><br>
         <span style="color:#89bcf4;">(Instructor: Push your live feed to the configured HLS server. Students: Select Live Stream to watch.)</span>
       </div>
+      
+      <!-- Full-width Calendar Widget -->
+      <div class="widget-card" style="width: 100%; max-width: 100%; margin-top: 25px;">
+        <div class="widget-title">Course Calendar</div>
+        <div id="calendar" style="margin-top: 24px; width:100%; max-width:1300px; min-height: 650px;"></div>
+      </div>
+      
+      <script>
+        // Example: Your class events fetched from backend
+        const classEvents = [
+          {
+            id: 'CLS-01',
+            title: 'Alpha 1',
+            start: '2025-06-10',
+            end: '2025-06-15',
+            display: 'background', // makes it a thin colored bar, can customize
+            color: '#1da1f2',      // accent color for classes
+            textColor: '#fff'
+          },
+          {
+            id: 'CLS-02',
+            title: 'Bravo 2',
+            start: '2025-06-12',
+            end: '2025-06-19',
+            display: 'background',
+            color: '#ffab00',
+            textColor: '#fff'
+          }
+        ];
+        
+        document.addEventListener('DOMContentLoaded', function() {
+          var calendarEl = document.getElementById('calendar');
+          var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            height: 'auto',
+            selectable: true,
+            select: function(info) {
+              // Open a prompt or modal to add a custom event
+              const eventTitle = prompt('New calendar event title?');
+              if (eventTitle) {
+                calendar.addEvent({
+                  title: eventTitle,
+                  start: info.startStr,
+                  end: info.endStr,
+                  allDay: true,
+                  color: '#8bc34a'
+                });
+                // TODO: Save to backend
+              }
+            },
+            events: classEvents,
+            eventDidMount: function(info) {
+              // For thin lines with small text
+              if (info.event.display === 'background') {
+                info.el.style.borderRadius = '7px';
+                info.el.style.opacity = 0.75;
+                // Optionally, add label overlay
+                const label = document.createElement('span');
+                label.style.position = 'absolute';
+                label.style.left = '8px';
+                label.style.top = '2px';
+                label.style.fontSize = '0.75em';
+                label.style.color = info.event.extendedProps.textColor || '#fff';
+                label.textContent = info.event.title;
+                info.el.appendChild(label);
+              }
+            }
+          });
+          calendar.render();
+        });
+      </script>
+      
       <!-- Dashboard Widgets -->
-      <section class="dashboard-widgets">
-        <div class="widget-card">
-          <div class="widget-title">Calendar</div>
-          <!-- Add your calendar component here (FullCalendar or embed from your training hub style) -->
-          <div style="color:#bbb;font-size:1rem;opacity:.88; margin-top:18px;">[Calendar Widget]</div>
-        </div>
+      <section class="dashboard-widgets" style="margin-top: 25px;">
         <div class="widget-card">
           <div class="widget-title">Analytics & Progress</div>
           <!-- Example placeholder; wire in charts, stats, etc. -->
-          <div style="color:#bbb;font-size:1rem;opacity:.88; margin-top:18px;">[Charts & Metrics]</div>
+          <div style="color:#bbb;font-size:1rem;opacity:.88; margin-top:18px;">
+            <div style="background: #1c2837; padding: 15px; border-radius: 8px;">
+              <h4 style="margin-top: 0;">Student Progress</h4>
+              <div style="height: 20px; background: #1a2535; border-radius: 10px; margin: 15px 0;">
+                <div style="width: 65%; height: 100%; background: linear-gradient(90deg, #1da1f2, #0078d4); border-radius: 10px;"></div>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span>Alpha Class: 65% Complete</span>
+                <span>26/40 Students</span>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="widget-card">
-          <div class="widget-title">Certificate Generation</div>
-          <div style="color:#bbb;font-size:1rem;opacity:.88; margin-top:18px;">[Certificate Actions]</div>
+          <div class="widget-title">Upcoming Sessions</div>
+          <div style="color:#fff;font-size:0.9rem; margin-top:18px;">
+            <div style="padding: 12px; border-left: 3px solid #1da1f2; margin-bottom: 12px; background: #1c2837;">
+              <div style="font-weight: bold;">Alpha Class - Module 3</div>
+              <div>October 9, 2023 • 09:00 - 12:00</div>
+            </div>
+            <div style="padding: 12px; border-left: 3px solid #1da1f2; margin-bottom: 12px; background: #1c2837;">
+              <div style="font-weight: bold;">Bravo Class - Module 1</div>
+              <div>October 15, 2023 • 13:00 - 16:00</div>
+            </div>
+          </div>
         </div>
       </section>
     </main>
