@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Add Class – SMX KITS</title>
+  <style>
+    body { background:#181f25; color:#fff; font-family:'Segoe UI',sans-serif; padding:24px; }
+    h2 { color:#89bcf4; }
+    label { display:block; margin-top:18px; }
+    input, select { padding:7px 12px; border-radius:8px; border:1px solid #25344a; margin-top:7px; background:#232e3c; color:#fff; }
+    button { background:#1da1f2; color:#fff; padding:9px 24px; border:none; border-radius:8px; margin-top:28px; font-weight:600; }
+  </style>
+</head>
+<body>
+  <!-- Authentication Check -->
+  <script>
+    // Check if user is authenticated and has admin/instructor role
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    
+    if (!token || !role) {
+      // No authentication found, redirect to login
+      window.location.replace('/login.html');
+    } else if (role !== 'admin' && role !== 'instructor') {
+      // User is authenticated but doesn't have admin/instructor privileges
+      alert('Access denied. Admin or Instructor privileges required.');
+      window.location.replace('/dashboard.html');
+    }
+  </script>
+  
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <h2>Add Class</h2>
+    <a href="admin-dashboard.html" style="color: #89bcf4; text-decoration: none;">← Back to Dashboard</a>
+  </div>
+  <form id="classForm" onsubmit="addClass(event)">
+    <label>Class Name <input required id="className" /></label>
+    <label>Organization <input required id="org" /></label>
+    <label>Country
+      <select id="country">
+        <option>United States</option><option>United Kingdom</option>
+        <option>Canada</option><option>Australia</option>
+        <option>Other</option>
+      </select>
+    </label>
+    <label>Instructor
+      <select id="instructor"></select>
+    </label>
+    <label>Course Start Date <input type="date" id="startDate" required /></label>
+    <label>Course End Date <input type="date" id="endDate" required /></label>
+    <button type="submit">Add Class</button>
+  </form>
+  <div id="result" style="margin-top:32px;"></div>
+  <script>
+    // You'd fetch this from backend in production
+    const users = [
+      {id:1, name:'Jane Smith', role:'Instructor', status:'Active'},
+      {id:2, name:'John Brown', role:'Admin', status:'Active'},
+      {id:3, name:'Alex Doe', role:'Student', status:'Active'}
+    ];
+    // Populate instructor dropdown (only instructors/admins)
+    function fillInstructorDropdown() {
+      let options = users.filter(u => 
+        (u.role === 'Instructor' || u.role === 'Admin') && u.status === 'Active'
+      ).map(u => `<option value="${u.id}">${u.name} ✔️</option>`).join('');
+      document.getElementById('instructor').innerHTML = options || '<option>No instructor available</option>';
+    }
+    fillInstructorDropdown();
+    function addClass(e) {
+      e.preventDefault();
+      // Generate unique class ID and show data for demo
+      const classId = `CLS-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${Math.floor(Math.random()*900+100)}`;
+      const obj = {
+        classId,
+        name: document.getElementById('className').value,
+        organization: document.getElementById('org').value,
+        country: document.getElementById('country').value,
+        instructorId: document.getElementById('instructor').value,
+        startDate: document.getElementById('startDate').value,
+        endDate: document.getElementById('endDate').value,
+        students: []
+      };
+      document.getElementById('result').innerText = 'Class Created: ' + JSON.stringify(obj, null, 2);
+      document.getElementById('classForm').reset();
+      fillInstructorDropdown();
+    }
+  </script>
+</body>
+</html>

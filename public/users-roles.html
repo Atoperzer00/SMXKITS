@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Users & Roles – SMX KITS</title>
+  <style>
+    body { background: #181f25; color: #fff; font-family: 'Segoe UI', sans-serif; padding: 24px; }
+    h2 { color: #89bcf4; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 32px; }
+    th, td { border: 1px solid #25344a; padding: 12px 10px; text-align: left; }
+    th { background: #202c41; }
+    tr:nth-child(even) { background: #232e3c; }
+    .actions button { margin-right: 8px; }
+    .add-user { background: #1da1f2; color: #fff; padding: 7px 16px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <!-- Authentication Check -->
+  <script>
+    // Check if user is authenticated and has admin/instructor role
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    
+    if (!token || !role) {
+      // No authentication found, redirect to login
+      window.location.replace('/login.html');
+    } else if (role !== 'admin' && role !== 'instructor') {
+      // User is authenticated but doesn't have admin/instructor privileges
+      alert('Access denied. Admin or Instructor privileges required.');
+      window.location.replace('/dashboard.html');
+    }
+  </script>
+  
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <h2>Users & Roles</h2>
+    <a href="admin-dashboard.html" style="color: #89bcf4; text-decoration: none;">← Back to Dashboard</a>
+  </div>
+  <button class="add-user" onclick="showAddUserForm()">+ Add User</button>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="userTable"></tbody>
+  </table>
+  <!-- Add/Edit User Modal -->
+  <div id="userModal" style="display:none; position:fixed; top:12%; left:33%; background:#222d38; border-radius:12px; padding:32px; box-shadow:0 0 28px #000a; min-width:320px; z-index:10;">
+    <h3 id="modalTitle">Add User</h3>
+    <form id="userForm" onsubmit="saveUser(event)">
+      <input type="hidden" id="userId" />
+      <label>Name: <input type="text" id="userName" required /></label><br><br>
+      <label>Email: <input type="email" id="userEmail" required /></label><br><br>
+      <label>Role: 
+        <select id="userRole">
+          <option>Admin</option>
+          <option>Instructor</option>
+          <option>Student</option>
+        </select>
+      </label><br><br>
+      <label>Status: 
+        <select id="userStatus">
+          <option>Active</option>
+          <option>Inactive</option>
+        </select>
+      </label><br><br>
+      <button type="submit" style="background:#1da1f2;color:#fff;padding:6px 18px;border:none;border-radius:8px;">Save</button>
+      <button type="button" onclick="hideUserForm()" style="margin-left:18px;">Cancel</button>
+    </form>
+  </div>
+  <script>
+    let users = [
+      {id: 1, name:'Jane Smith', email:'jane@email.com', role:'Instructor', status:'Active'},
+      {id: 2, name:'John Brown', email:'john@email.com', role:'Admin', status:'Active'},
+      {id: 3, name:'Alex Doe', email:'alex@email.com', role:'Student', status:'Active'}
+    ];
+    function renderUsers() {
+      document.getElementById('userTable').innerHTML = users.map(u => `
+        <tr>
+          <td>${u.name}</td>
+          <td>${u.email}</td>
+          <td>${u.role}</td>
+          <td>${u.status}</td>
+          <td class="actions">
+            <button onclick="editUser(${u.id})">Edit</button>
+            <button onclick="removeUser(${u.id})" style="color:#e57373;">Remove</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+    function showAddUserForm() {
+      document.getElementById('modalTitle').innerText = 'Add User';
+      document.getElementById('userId').value = '';
+      document.getElementById('userName').value = '';
+      document.getElementById('userEmail').value = '';
+      document.getElementById('userRole').value = 'Instructor';
+      document.getElementById('userStatus').value = 'Active';
+      document.getElementById('userModal').style.display = 'block';
+    }
+    function editUser(id) {
+      const u = users.find(x => x.id === id);
+      document.getElementById('modalTitle').innerText = 'Edit User';
+      document.getElementById('userId').value = u.id;
+      document.getElementById('userName').value = u.name;
+      document.getElementById('userEmail').value = u.email;
+      document.getElementById('userRole').value = u.role;
+      document.getElementById('userStatus').value = u.status;
+      document.getElementById('userModal').style.display = 'block';
+    }
+    function saveUser(e) {
+      e.preventDefault();
+      const id = document.getElementById('userId').value;
+      const name = document.getElementById('userName').value;
+      const email = document.getElementById('userEmail').value;
+      const role = document.getElementById('userRole').value;
+      const status = document.getElementById('userStatus').value;
+      if(id) {
+        const idx = users.findIndex(u => u.id == id);
+        users[idx] = {id: +id, name, email, role, status};
+      } else {
+        users.push({id: Date.now(), name, email, role, status});
+      }
+      hideUserForm(); renderUsers();
+    }
+    function hideUserForm() {
+      document.getElementById('userModal').style.display = 'none';
+    }
+    function removeUser(id) {
+      if(confirm('Remove this user?')) {
+        users = users.filter(u => u.id !== id);
+        renderUsers();
+      }
+    }
+    renderUsers();
+  </script>
+</body>
+</html>
