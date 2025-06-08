@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="style.css" />
   <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
   <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
+  <script src="/socket.io/socket.io.js"></script>
   <style>
     body {
       /* Remove the login page background for dashboard */
@@ -134,6 +135,110 @@
       margin-bottom: 18px;
       letter-spacing: 1.1px;
     }
+    /* Chatbox styles */
+    .chatbox {
+      background: #1c2837;
+      border: 1px solid #2e3c4d;
+      border-radius: 12px;
+      padding: 18px;
+      color: #e0e6ed;
+      margin-top: 36px;
+      max-width: 100%;
+    }
+    .chatbox h3 {
+      margin-top: 0;
+      margin-bottom: 14px;
+      color: #89bcf4;
+    }
+    .chatbox-messages {
+      height: 300px;
+      overflow-y: auto;
+      background: #121c2b;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      font-size: 0.95rem;
+    }
+    .chatbox-inputs input, .chatbox-inputs button {
+      padding: 10px;
+      border-radius: 6px;
+      border: none;
+    }
+    .chatbox-inputs input[type="file"] {
+      color: white;
+      max-width: 200px;
+    }
+    .chatbox-inputs input[type="text"] {
+      flex-grow: 1;
+      margin-right: 12px;
+      background: #232e3c;
+      color: #fff;
+      border: 1px solid #2e3c4d;
+    }
+    .chatbox-inputs {
+      display: flex;
+      gap: 10px;
+    }
+    .chatbox-inputs button {
+      background: #1da1f2;
+      color: #fff;
+      cursor: pointer;
+    }
+    .chat-message {
+      margin-bottom: 14px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: #1a2c3f;
+      animation: fadeIn 0.3s ease;
+    }
+    .chat-message.current-user {
+      background: #1a3a5e;
+    }
+    .chat-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+    .chat-time {
+      font-size: 0.8em;
+      color: #8faac7;
+    }
+    .chat-content {
+      word-break: break-word;
+    }
+    .chat-attachment {
+      margin-top: 10px;
+      padding: 8px;
+      background: #1e2f41;
+      border-radius: 6px;
+    }
+    .attachment-name {
+      margin-top: 5px;
+      font-size: 0.85em;
+      color: #8faac7;
+    }
+    .file-link {
+      display: flex;
+      align-items: center;
+      color: #70b8ff;
+      text-decoration: none;
+    }
+    .attachment-icon {
+      margin-right: 8px;
+      font-size: 1.2em;
+    }
+    .chat-loading, .chat-empty, .chat-error {
+      color: #8faac7;
+      text-align: center;
+      padding: 20px;
+    }
+    .chat-error {
+      color: #e57373;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
     @media (max-width: 1020px) {
       .dashboard-widgets {
         flex-direction: column;
@@ -203,14 +308,14 @@
           Add New Student
         </div>
         <div class="dashboard-tile">Manage Attendance</div>
+        <div class="dashboard-tile">Instructor Inbox <span class="tile-badge">3</span></div>
         <div class="dashboard-tile" onclick="window.open('../SMXStream.html', '_blank')">
           Stream Feed
         </div>
         <div class="dashboard-tile" onclick="window.open('../OpsLog.html', '_blank')">
           Operations Log
         </div>
-        <div class="dashboard-tile">Instructor Inbox <span class="tile-badge">3</span></div>
-        <div class="dashboard-tile">Course Feedback</div>
+        <div class="dashboard-tile">Grading</div>
         <div class="dashboard-tile">Live Training Controls</div>
         <div class="dashboard-tile">Upload Templates</div>
       </section>
@@ -291,6 +396,22 @@
         });
       </script>
       
+      <!-- Instructor Chat Box -->
+      <div class="chatbox">
+        <h3>Instructor Chat</h3>
+        <div class="chatbox-messages" id="chatMessages">
+          <div class="chat-loading">Loading messages...</div>
+        </div>
+        <div class="chatbox-inputs">
+          <input type="text" id="chatInput" placeholder="Type your message..." />
+          <form id="fileUploadForm" style="display: flex; align-items: center;">
+            <input type="file" id="chatFile" name="file" />
+            <button type="button" onclick="sendChatMessage()" style="margin-left: 10px;">Send</button>
+          </form>
+        </div>
+        <div id="uploadStatus" style="margin-top: 8px; color: #aaa; font-size: 0.9em;"></div>
+      </div>
+      
       <!-- Dashboard Widgets -->
       <section class="dashboard-widgets" style="margin-top: 25px;">
         <div class="widget-card">
@@ -346,6 +467,231 @@
       
       // You can add user info display here if needed
       console.log('Logged in as:', userName, '(' + role + ')');
+    });
+    
+    // Socket.io chat implementation
+    let socket;
+    let userName = localStorage.getItem('userName') || 'Admin';
+    let userRole = localStorage.getItem('role') || 'admin';
+    const chatChannel = 'instructor'; // Default channel
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize Socket.io connection
+      socket = io();
+      
+      // Join the instructor chat channel
+      socket.emit('join', chatChannel);
+      
+      // Listen for chat history
+      socket.on('history', function(messages) {
+        const container = document.getElementById('chatMessages');
+        container.innerHTML = '';
+        if (messages.length === 0) {
+          container.innerHTML = '<div class="chat-empty">No messages yet. Start the conversation!</div>';
+        } else {
+          messages.forEach(displayMessage);
+        }
+        container.scrollTop = container.scrollHeight;
+      });
+      
+      // Listen for new messages
+      socket.on('message', function(message) {
+        displayMessage(message);
+        const container = document.getElementById('chatMessages');
+        container.scrollTop = container.scrollHeight;
+      });
+      
+      // Listen for errors
+      socket.on('error', function(error) {
+        console.error('Socket error:', error);
+        alert('Chat error: ' + error.message);
+      });
+      
+      // Initialize chat history from API
+      fetchChatHistory();
+    });
+    
+    // Fetch chat history from the API
+    async function fetchChatHistory() {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        
+        const response = await fetch(`/api/chat/${chatChannel}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) throw new Error('Failed to load chat history');
+        
+        const messages = await response.json();
+        const container = document.getElementById('chatMessages');
+        container.innerHTML = '';
+        
+        if (messages.length === 0) {
+          container.innerHTML = '<div class="chat-empty">No messages yet. Start the conversation!</div>';
+        } else {
+          messages.forEach(displayMessage);
+        }
+        
+        container.scrollTop = container.scrollHeight;
+      } catch (error) {
+        console.error('Error fetching chat history:', error);
+        document.getElementById('chatMessages').innerHTML = 
+          '<div class="chat-error">Failed to load chat history. Please refresh.</div>';
+      }
+    }
+    
+    // Display a message in the chat container
+    function displayMessage(message) {
+      const container = document.getElementById('chatMessages');
+      const div = document.createElement('div');
+      div.className = 'chat-message';
+      
+      // Format the timestamp
+      const timestamp = new Date(message.timestamp);
+      const timeStr = timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      
+      // Check if message is from current user
+      const isCurrentUser = message.sender?.id === localStorage.getItem('userId') || 
+                           message.sender?.name === userName;
+      
+      const senderName = isCurrentUser ? 'You' : message.sender?.name || 'Unknown';
+      
+      // Handle message with or without attachment
+      if (message.attachment) {
+        // Message with attachment
+        let attachmentHtml = '';
+        const filename = message.attachment.filename;
+        const path = message.attachment.path;
+        
+        if (message.attachment.type.startsWith('image/')) {
+          attachmentHtml = `<div class="chat-attachment">
+            <a href="${path}" target="_blank">
+              <img src="${path}" alt="${filename}" style="max-width: 200px; max-height: 150px;">
+            </a>
+            <div class="attachment-name">📎 ${filename}</div>
+          </div>`;
+        } else {
+          attachmentHtml = `<div class="chat-attachment">
+            <a href="${path}" target="_blank" class="file-link">
+              <div class="attachment-icon">📎</div>
+              <div class="attachment-name">${filename}</div>
+            </a>
+          </div>`;
+        }
+        
+        div.innerHTML = `
+          <div class="chat-header">
+            <strong>${senderName}:</strong>
+            <span class="chat-time">${timeStr}</span>
+          </div>
+          <div class="chat-content">${message.content}</div>
+          ${attachmentHtml}
+        `;
+      } else {
+        // Simple text message
+        div.innerHTML = `
+          <div class="chat-header">
+            <strong>${senderName}:</strong>
+            <span class="chat-time">${timeStr}</span>
+          </div>
+          <div class="chat-content">${message.content}</div>
+        `;
+      }
+      
+      // Apply special styling for current user's messages
+      if (isCurrentUser) {
+        div.classList.add('current-user');
+      }
+      
+      container.appendChild(div);
+    }
+    
+    // Send a chat message
+    async function sendChatMessage() {
+      const input = document.getElementById('chatInput');
+      const file = document.getElementById('chatFile');
+      const msg = input.value.trim();
+      
+      if (!msg && file.files.length === 0) {
+        return; // Nothing to send
+      }
+      
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          alert('Authentication token missing. Please log in again.');
+          return;
+        }
+        
+        if (file.files.length > 0) {
+          // File upload with optional message
+          const formData = new FormData();
+          formData.append('file', file.files[0]);
+          if (msg) {
+            formData.append('content', msg);
+          }
+          formData.append('channel', chatChannel);
+          
+          // Show upload status
+          document.getElementById('uploadStatus').textContent = 'Uploading file...';
+          
+          const response = await fetch('/api/chat/upload', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            },
+            body: formData
+          });
+          
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to upload file');
+          }
+          
+          document.getElementById('uploadStatus').textContent = 'File uploaded successfully!';
+          setTimeout(() => {
+            document.getElementById('uploadStatus').textContent = '';
+          }, 3000);
+          
+          file.value = '';
+        } else {
+          // Text message only
+          const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              content: msg,
+              channel: chatChannel
+            })
+          });
+          
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to send message');
+          }
+        }
+        
+        // Clear input after successful send
+        input.value = '';
+        
+      } catch (error) {
+        console.error('Error sending message:', error);
+        alert(`Error: ${error.message}`);
+      }
+    }
+    
+    // Allow sending message with Enter key
+    document.getElementById('chatInput')?.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        sendChatMessage();
+      }
     });
   </script>
 </body>

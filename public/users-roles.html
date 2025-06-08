@@ -51,6 +51,9 @@
       <input type="hidden" id="userId" />
       <label>Name: <input type="text" id="userName" required /></label><br><br>
       <label>Email: <input type="email" id="userEmail" required /></label><br><br>
+      <label>Username: <input type="text" id="userUsername" required /></label><br><br>
+      <label>Password: <input type="password" id="userPassword" /></label>
+      <small style="color:#aaa;display:block;margin-top:5px;">Leave blank to keep existing password when editing</small><br><br>
       <label>Role: 
         <select id="userRole">
           <option>Admin</option>
@@ -69,21 +72,48 @@
     </form>
   </div>
   <script>
-    let users = [
-      {id: 1, name:'Jane Smith', email:'jane@email.com', role:'Instructor', status:'Active'},
-      {id: 2, name:'John Brown', email:'john@email.com', role:'Admin', status:'Active'},
-      {id: 3, name:'Alex Doe', email:'alex@email.com', role:'Student', status:'Active'}
-    ];
+    let users = []; // Will be populated from the API
+    // Fetch users from API
+    async function fetchUsers() {
+      try {
+        document.getElementById('userTable').innerHTML = '<tr><td colspan="5">Loading users...</td></tr>';
+        
+        const token = localStorage.getItem('token');
+        if (!token) {
+          alert('Authentication token missing. Please log in again.');
+          window.location.href = '/login.html';
+          return;
+        }
+        
+        const response = await fetch('/api/users', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch users');
+        }
+        
+        users = await response.json();
+        renderUsers();
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        document.getElementById('userTable').innerHTML = 
+          `<tr><td colspan="5">Error loading users: ${error.message}. Try refreshing the page.</td></tr>`;
+      }
+    }
+    
     function renderUsers() {
       document.getElementById('userTable').innerHTML = users.map(u => `
         <tr>
-          <td>${u.name}</td>
-          <td>${u.email}</td>
-          <td>${u.role}</td>
-          <td>${u.status}</td>
+          <td>${u.name || ''}</td>
+          <td>${u.email || ''}</td>
+          <td>${u.role || ''}</td>
+          <td>${u.status ? 'Active' : 'Inactive'}</td>
           <td class="actions">
-            <button onclick="editUser(${u.id})">Edit</button>
-            <button onclick="removeUser(${u.id})" style="color:#e57373;">Remove</button>
+            <button onclick="editUser('${u._id}')" style="background:#1e88e5;color:#fff;border:none;padding:4px 8px;border-radius:4px;margin-right:5px;">Edit</button>
+            <button onclick="removeUser('${u._id}')" style="background:#e53935;color:#fff;border:none;padding:4px 8px;border-radius:4px;">Remove</button>
           </td>
         </tr>
       `).join('');
@@ -93,45 +123,136 @@
       document.getElementById('userId').value = '';
       document.getElementById('userName').value = '';
       document.getElementById('userEmail').value = '';
+      document.getElementById('userUsername').value = '';
+      document.getElementById('userPassword').value = '';
       document.getElementById('userRole').value = 'Instructor';
       document.getElementById('userStatus').value = 'Active';
       document.getElementById('userModal').style.display = 'block';
     }
     function editUser(id) {
-      const u = users.find(x => x.id === id);
+      const u = users.find(x => x._id === id);
+      if (!u) {
+        alert('User not found');
+        return;
+      }
+      
       document.getElementById('modalTitle').innerText = 'Edit User';
-      document.getElementById('userId').value = u.id;
-      document.getElementById('userName').value = u.name;
-      document.getElementById('userEmail').value = u.email;
-      document.getElementById('userRole').value = u.role;
-      document.getElementById('userStatus').value = u.status;
+      document.getElementById('userId').value = u._id;
+      document.getElementById('userName').value = u.name || '';
+      document.getElementById('userEmail').value = u.email || '';
+      document.getElementById('userUsername').value = u.username || '';
+      document.getElementById('userPassword').value = ''; // Don't show password for security
+      document.getElementById('userRole').value = u.role.charAt(0).toUpperCase() + u.role.slice(1);
+      document.getElementById('userStatus').value = u.status ? 'Active' : 'Inactive';
       document.getElementById('userModal').style.display = 'block';
     }
-    function saveUser(e) {
+    async function saveUser(e) {
       e.preventDefault();
-      const id = document.getElementById('userId').value;
-      const name = document.getElementById('userName').value;
-      const email = document.getElementById('userEmail').value;
-      const role = document.getElementById('userRole').value;
-      const status = document.getElementById('userStatus').value;
-      if(id) {
-        const idx = users.findIndex(u => u.id == id);
-        users[idx] = {id: +id, name, email, role, status};
-      } else {
-        users.push({id: Date.now(), name, email, role, status});
+      
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          alert('Authentication token missing. Please log in again.');
+          window.location.href = '/login.html';
+          return;
+        }
+        
+        const id = document.getElementById('userId').value;
+        const userData = {
+          name: document.getElementById('userName').value,
+          email: document.getElementById('userEmail').value,
+          username: document.getElementById('userUsername').value,
+          role: document.getElementById('userRole').value.toLowerCase(),
+          status: document.getElementById('userStatus').value === 'Active' ? true : false
+        };
+        
+        // Only include password if it's provided (for both new and existing users)
+        const password = document.getElementById('userPassword').value;
+        if (password) {
+          userData.password = password;
+        }
+        
+        let response;
+        
+        if (id) {
+          // Update existing user
+          response = await fetch(`/api/users/${id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(userData)
+          });
+        } else {
+          // Create new user
+          if (!userData.password) {
+            alert('Password is required for new users');
+            return;
+          }
+          
+          response = await fetch('/api/users', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(userData)
+          });
+        }
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to save user');
+        }
+        
+        // Refresh user list
+        hideUserForm();
+        await fetchUsers();
+        
+      } catch (error) {
+        console.error('Error saving user:', error);
+        alert(`Error: ${error.message}`);
       }
-      hideUserForm(); renderUsers();
     }
     function hideUserForm() {
       document.getElementById('userModal').style.display = 'none';
     }
-    function removeUser(id) {
-      if(confirm('Remove this user?')) {
-        users = users.filter(u => u.id !== id);
-        renderUsers();
+    
+    async function removeUser(id) {
+      if (confirm('Are you sure you want to remove this user?')) {
+        try {
+          const token = localStorage.getItem('token');
+          if (!token) {
+            alert('Authentication token missing. Please log in again.');
+            window.location.href = '/login.html';
+            return;
+          }
+          
+          const response = await fetch(`/api/users/${id}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to delete user');
+          }
+          
+          // Refresh user list
+          await fetchUsers();
+          
+        } catch (error) {
+          console.error('Error deleting user:', error);
+          alert(`Error: ${error.message}`);
+        }
       }
     }
-    renderUsers();
+    
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', fetchUsers);
   </script>
 </body>
 </html>

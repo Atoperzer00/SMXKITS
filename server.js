@@ -1,5 +1,6 @@
 const express = require('express');
 const http = require('http');
+const path = require('path');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const socketio = require('socket.io');
@@ -156,6 +157,11 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/classes', require('./routes/classes'));
 app.use('/api/progress', require('./routes/progress'));
+app.use('/api/chat', require('./routes/chat'));
+app.use('/api/kitcomm', require('./routes/kitcomm'));
+
+// Serve uploaded files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Protected routes - require authentication
 const jwt = require('jsonwebtoken');
@@ -188,21 +194,102 @@ app.get('/admin-dashboard.html', (req, res) => {
   res.sendFile(__dirname + '/public/admin-dashboard.html');
 });
 
-// KitComm - real-time chat (simple, can expand as needed)
-const channels = {}; // { channel: [msg, msg, ...] }
+// Make io available to routes
+app.set('io', io);
 
+// Real-time chat with MongoDB storage
 io.on('connection', socket => {
-  socket.on('join', channel => {
+  console.log('🔌 New socket connection established');
+  
+  // ===== INSTRUCTOR CHAT HANDLERS =====
+  socket.on('join', async (channel) => {
     socket.join(channel);
-    if (channels[channel]) {
-      socket.emit('history', channels[channel]);
+    console.log(`👤 User joined instructor channel: ${channel}`);
+    
+    try {
+      // Load message history from database
+      const Message = require('./models/Message');
+      const messages = await Message.find({ channel })
+        .sort({ timestamp: -1 })
+        .limit(50);
+      
+      socket.emit('history', messages.reverse());
+    } catch (error) {
+      console.error('❌ Error loading instructor chat history:', error);
     }
   });
   
-  socket.on('message', data => {
-    if (!channels[data.channel]) channels[data.channel] = [];
-    channels[data.channel].push(data);
-    io.to(data.channel).emit('message', data);
+  socket.on('message', async (data) => {
+    try {
+      // Store the message in database
+      const Message = require('./models/Message');
+      const message = new Message({
+        sender: data.sender,
+        content: data.content,
+        attachment: data.attachment,
+        channel: data.channel || 'instructor',
+        timestamp: new Date()
+      });
+      
+      await message.save();
+      
+      // Broadcast to all clients in the channel
+      io.to(data.channel || 'instructor').emit('message', message);
+    } catch (error) {
+      console.error('❌ Error saving instructor chat message:', error);
+      socket.emit('error', { message: 'Failed to save message' });
+    }
+  });
+  
+  // ===== KITCOMM CHAT HANDLERS =====
+  socket.on('kitcomm:join', async (channel) => {
+    const roomName = `kitcomm:${channel}`;
+    socket.join(roomName);
+    console.log(`👤 User joined KitComm channel: ${channel}`);
+    
+    try {
+      // Load KitComm message history from database
+      const KitCommMessage = require('./models/KitCommMessage');
+      const messages = await KitCommMessage.find({ channel })
+        .sort({ timestamp: -1 })
+        .limit(50);
+      
+      socket.emit('kitcomm:history', messages.reverse());
+    } catch (error) {
+      console.error('❌ Error loading KitComm chat history:', error);
+    }
+  });
+  
+  socket.on('kitcomm:message', async (data) => {
+    try {
+      if (!data.author || !data.role || !data.content || !data.channel) {
+        socket.emit('kitcomm:error', { message: 'Missing required fields' });
+        return;
+      }
+      
+      // Store the KitComm message in database
+      const KitCommMessage = require('./models/KitCommMessage');
+      const message = new KitCommMessage({
+        author: data.author,
+        role: data.role,
+        content: data.content,
+        channel: data.channel,
+        attachment: data.attachment,
+        timestamp: new Date()
+      });
+      
+      await message.save();
+      
+      // Broadcast to all clients in the KitComm channel
+      io.to(`kitcomm:${data.channel}`).emit('kitcomm:message', message);
+    } catch (error) {
+      console.error('❌ Error saving KitComm message:', error);
+      socket.emit('kitcomm:error', { message: 'Failed to save message' });
+    }
+  });
+  
+  socket.on('disconnect', () => {
+    console.log('🔌 Socket disconnected');
   });
 });
 

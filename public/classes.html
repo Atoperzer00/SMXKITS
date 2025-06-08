@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Classes – SMX KITS</title>
+  <style>
+    body {
+      background-color: #121820;
+      color: #e0e6ed;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 40px;
+    }
+    h2 {
+      color: #70b8ff;
+      font-size: 26px;
+      margin-bottom: 20px;
+    }
+    .class-card {
+      background-color: #1e2a35;
+      padding: 24px;
+      border-radius: 12px;
+      margin-bottom: 28px;
+      border: 1px solid #2e3c4d;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .class-info {
+      flex-grow: 1;
+    }
+    .class-name {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 6px;
+      color: #a8d1ff;
+    }
+    .class-dates {
+      font-size: 15px;
+      color: #9db4c9;
+    }
+    .remove-btn {
+      background: #e57373;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 14px;
+      color: white;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background-color 0.3s ease;
+    }
+    .remove-btn:hover {
+      background: #cf4d4d;
+    }
+  </style>
+</head>
+<body>
+  <h2>Active Classes</h2>
+  <div id="classContainer"></div>
+  <script>
+    let classes = [
+      { classId: 'CLS-001', name: 'Alpha 1', startDate: '2025-06-01', endDate: '2025-07-15' },
+      { classId: 'CLS-002', name: 'Bravo 2', startDate: '2025-06-10', endDate: '2025-08-01' },
+      { classId: 'CLS-003', name: 'Charlie 3', startDate: '2025-05-01', endDate: '2025-05-30' } // expired
+    ];
+    function isActive(dateStr) {
+      const today = new Date();
+      const end = new Date(dateStr);
+      return today <= end;
+    }
+    function renderClasses() {
+      const container = document.getElementById('classContainer');
+      container.innerHTML = '';
+      const activeClasses = classes.filter(cls => isActive(cls.endDate));
+      if (activeClasses.length === 0) {
+        container.innerHTML = '<p>No active classes at this time.</p>';
+        return;
+      }
+      activeClasses.forEach(c => {
+        const card = document.createElement('div');
+        card.className = 'class-card';
+        card.innerHTML = `
+          <div class="class-info">
+            <div class="class-name">${c.name}</div>
+            <div class="class-dates">Start: ${c.startDate} &nbsp;&nbsp; End: ${c.endDate}</div>
+          </div>
+          <button class="remove-btn" onclick="removeClass('${c.classId}')">Remove</button>
+        `;
+        container.appendChild(card);
+      });
+    }
+    function removeClass(classId) {
+      if (confirm("Are you sure you want to remove this class?")) {
+        classes = classes.filter(c => c.classId !== classId);
+        renderClasses();
+      }
+    }
+    renderClasses();
+  </script>
+</body>
+</html>
