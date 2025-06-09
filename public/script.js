@@ -209,6 +209,25 @@ function loadModules() {
         { id: 'practice1', title: 'Practice 1: Military Ranks', text: 'Private Corporal Sergeant Lieutenant Captain Major Colonel General Admiral Commander' },
         { id: 'practice2', title: 'Practice 2: Military Acronyms', text: 'USAF USA USN USMC USCG DOD NATO CENTCOM SOCOM STRATCOM NORTHCOM' }
       ]
+    },
+    // POL Typing Modules
+    {
+      id: 'pol-module1',
+      title: 'POL Module 1: Basic Descriptors',
+      description: 'Practice typing basic POL descriptors',
+      practices: [
+        { id: 'practice1', title: 'Practice 1: Personnel Counting', text: 'One adult male, One adult female, one child. Two adult males, two adult females, two children, One adult male, One adult female, one child. Two adult males, two adult females, two children.' },
+        { id: 'practice2', title: 'Practice 2: Basic Description', text: 'One adult male in dark traditional wear. One adult male in light traditional wear. One adult male in dark traditional wear. One adult male in light traditional wear.' }
+      ]
+    },
+    {
+      id: 'pol-module2',
+      title: 'POL Module 2: SITREP Format',
+      description: 'Practice typing in SITREP format',
+      practices: [
+        { id: 'practice1', title: 'Practice 1: Basic SITREP', text: 'SITREP: At 0630Z, one adult male in black traditional wear departed from the E gate on a red motorcycle and rode S out of FOV 0635Z. No nefarious or other EEI-related activity was observed. SLANT 1/0/0' },
+        { id: 'practice2', title: 'Practice 2: Complex SITREP', text: 'SITREP: At 0745Z, a white sedan with at least one adult male internal entered the compound through the W gate and parked on the E side of the compound. No nefarious or other EEI-related activity was observed. SLANT 1/0/0' }
+      ]
     }
   ];
   
@@ -353,6 +372,14 @@ function showResults() {
   } else {
     starElement.textContent = '★';
     starElement.classList.add('bronze-star');
+  }
+  
+  // Record the results for dashboard tracking
+  if (typeof window.recordTypingResult === 'function') {
+    window.recordTypingResult(wpm, accuracy);
+    console.log('Recorded typing result:', wpm, accuracy);
+  } else {
+    console.warn('recordTypingResult function not available');
   }
   
   showScreen('screen-results');
