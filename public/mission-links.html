@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SMX KITS - Mission Links</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Dark Theme for Mission Links */
+    .dark-link-tree-container {
+      min-height: 100vh;
+      background-color: #111827;
+      color: white;
+      padding: 1rem;
+    }
+    
+    .dark-top-bar {
+      display: flex;
+      align-items: center;
+      padding: 1rem;
+      background-color: rgba(0, 0, 0, 0.4);
+      border-radius: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .dark-back-link {
+      color: #94a3b8;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    
+    .dark-back-link:hover {
+      color: #e2e8f0;
+    }
+    
+    .dark-reference-section {
+      background-color: rgba(30, 41, 59, 0.7);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .dark-section-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      color: #e2e8f0;
+    }
+    
+    .dark-reference-description {
+      color: #94a3b8;
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+    }
+    
+    .dark-reference-controls {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+    
+    .dark-dropdown {
+      background-color: #1e293b;
+      color: white;
+      border: 1px solid #475569;
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+      flex-grow: 1;
+      outline: none;
+    }
+    
+    .dark-output-link {
+      background-color: #2563eb;
+      color: white;
+      padding: 0.75rem 1.25rem;
+      border-radius: 0.5rem;
+      text-decoration: none;
+      font-weight: 500;
+      transition: background-color 0.2s;
+    }
+    
+    .dark-output-link:hover {
+      background-color: #1d4ed8;
+    }
+    
+    .dark-main-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+    
+    .dark-mission-links {
+      background-color: rgba(30, 41, 59, 0.7);
+      border-radius: 0.75rem;
+      padding: 2rem;
+    }
+    
+    .dark-hub-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      color: white;
+      text-align: center;
+    }
+    
+    .dark-links-container {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+    }
+    
+    .dark-link-box {
+      background-color: rgba(15, 23, 42, 0.8);
+      border-radius: 0.75rem;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      transition: transform 0.2s, background-color 0.2s;
+    }
+    
+    .dark-link-box:hover {
+      transform: translateY(-5px);
+      background-color: rgba(15, 23, 42, 1);
+    }
+    
+    .dark-hub-logo {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 1rem;
+    }
+    
+    .dark-upload-vaults {
+      background-color: rgba(30, 41, 59, 0.7);
+      border-radius: 0.75rem;
+      padding: 2rem;
+    }
+    
+    .dark-vaults-column {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+    
+    .dark-vault {
+      background-color: rgba(15, 23, 42, 0.8);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      position: relative;
+      border: 2px dashed #475569;
+      cursor: pointer;
+      transition: border-color 0.2s, background-color 0.2s;
+    }
+    
+    .dark-vault:hover {
+      border-color: #64748b;
+      background-color: rgba(15, 23, 42, 1);
+    }
+    
+    .dark-vault input[type="file"] {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+    
+    .dark-vault h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #e2e8f0;
+    }
+    
+    .dark-vault p {
+      color: #94a3b8;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+    
+    @media (max-width: 768px) {
+      .dark-main-content {
+        grid-template-columns: 1fr;
+      }
+      
+      .dark-links-container {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body class="bg-[#0f172a] text-white">
+  <!-- Authentication Check -->
+  <script>
+    // Immediate authentication check
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    
+    if (!token || !role) {
+      // No authentication found, redirect immediately
+      window.location.replace('/login.html');
+      // Stop execution to prevent content from loading
+      throw new Error('Authentication required');
+    }
+    
+    // We are authenticated, continue loading
+    console.log('✅ Authentication verified - loading mission links');
+  </script>
+
+  <!-- Mission Links Page -->
+  <div class="dark-link-tree-container">
+    <div class="dark-top-bar">
+      <a href="dashboard.html" class="dark-back-link">&larr; Return to Dashboard</a>
+    </div>
+    
+    <!-- Mission Reference at top -->
+    <div class="dark-reference-section">
+      <h3 class="dark-section-title">Mission Reference</h3>
+      <p class="dark-reference-description">Select the exercise from the dropdown. Click it to open the document in a new tab for side-by-side viewing.</p>
+      <div class="dark-reference-controls">
+        <select id="mission-ref-dropdown" class="dark-dropdown">
+          <option value="">Choose Mission Reference Sheet</option>
+          <option value="mission1.pdf">Mission 1 Reference</option>
+          <option value="mission2.pdf">Mission 2 Reference</option>
+          <option value="mission3.pdf">Mission 3 Reference</option>
+        </select>
+        <a id="output-file-link" class="dark-output-link" href="#" target="_blank">Output File</a>
+      </div>
+    </div>
+
+    <div class="dark-main-content">
+      <!-- Mission Links Section -->
+      <div class="dark-mission-links">
+        <h1 class="dark-hub-title">Access Mission Links</h1>
+        <div class="dark-links-container">
+          <div class="dark-link-box" onclick="window.open('SMXStream.html', '_blank')">
+            <img src="Play Button Logo.png" alt="SMX Stream Logo" class="dark-hub-logo" />
+            <h3>SMX Stream</h3>
+          </div>
+          <div class="dark-link-box" onclick="window.open('OpsLog.html', '_blank')">
+            <img src="Ops Log Logo.png" alt="Ops Log Logo" class="dark-hub-logo" />
+            <h3>Ops Log</h3>
+          </div>
+          <div class="dark-link-box" onclick="window.open('KitComm.html', '_blank')">
+            <img src="KitComm Logo.png" alt="KitComm Logo" class="dark-hub-logo" />
+            <h3>KitComm</h3>
+          </div>
+          <div class="dark-link-box">
+            <img src="Templates Logo.png" alt="Templates Logo" class="dark-hub-logo" />
+            <h3>Templates</h3>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upload Vaults Section on the right -->
+      <div class="dark-upload-vaults">
+        <h3 class="dark-section-title">Upload Briefs & Data</h3>
+        <div class="dark-vaults-column">
+          <div class="dark-vault" id="slideVault">
+            <input type="file" accept=".ppt,.pptx,.pdf" multiple>
+            <h2>SlideVault</h2>
+            <p>Drop PowerPoint / PDF<br>or click to browse</p>
+          </div>
+          <div class="dark-vault" id="sheetVault">
+            <input type="file" accept=".xlsx,.xls,.csv" multiple>
+            <h2>SheetVault</h2>
+            <p>Drop Excel files<br>or click to browse</p>
+          </div>
+          <div class="dark-vault" id="imageVault">
+            <input type="file" accept=".jpg,.jpeg,.png,.gif" multiple>
+            <h2>ImageVault</h2>
+            <p>Drop image files<br>or click to browse</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript for Mission Reference -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const missionRefDropdown = document.getElementById('mission-ref-dropdown');
+      const outputFileLink = document.getElementById('output-file-link');
+      
+      // Update output file link when dropdown changes
+      missionRefDropdown.addEventListener('change', function() {
+        const selectedValue = this.value;
+        if (selectedValue) {
+          outputFileLink.href = selectedValue;
+          outputFileLink.textContent = 'Open ' + selectedValue;
+          outputFileLink.style.opacity = '1';
+        } else {
+          outputFileLink.href = '#';
+          outputFileLink.textContent = 'Output File';
+          outputFileLink.style.opacity = '0.5';
+        }
+      });
+      
+      // Vault drag and drop functionality
+      const vaults = document.querySelectorAll('.dark-vault');
+      
+      vaults.forEach(vault => {
+        vault.addEventListener('dragover', e => {
+          e.preventDefault();
+          vault.style.borderColor = '#3b82f6';
+          vault.style.backgroundColor = 'rgba(30, 58, 138, 0.3)';
+        });
+        
+        vault.addEventListener('dragleave', e => {
+          e.preventDefault();
+          vault.style.borderColor = '#475569';
+          vault.style.backgroundColor = 'rgba(15, 23, 42, 0.8)';
+        });
+        
+        vault.addEventListener('drop', e => {
+          e.preventDefault();
+          vault.style.borderColor = '#475569';
+          vault.style.backgroundColor = 'rgba(15, 23, 42, 0.8)';
+          
+          // Here you would typically handle file uploads
+          // For demo purposes, we'll just show an alert
+          const files = e.dataTransfer.files;
+          if (files.length > 0) {
+            alert(`${files.length} file(s) selected for upload to ${vault.id}`);
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>

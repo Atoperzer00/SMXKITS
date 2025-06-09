@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SMX KITS - Course Content</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .slide-container {
+      position: relative;
+      width: 100%;
+      height: 70vh;
+      background-color: #222;
+      border-radius: 1rem;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    }
+    
+    .slide-image {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      transition: transform 0.3s ease;
+    }
+    
+    .slide-controls {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(10px);
+    }
+    
+    .slide-control-btn {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: none;
+      border-radius: 0.5rem;
+      padding: 0.5rem 1.5rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .slide-control-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+    
+    .slide-counter {
+      color: white;
+      font-size: 1rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+    }
+    
+    .thumbnail-container {
+      display: flex;
+      overflow-x: auto;
+      padding: 1rem 0;
+      gap: 0.5rem;
+      scrollbar-width: thin;
+      scrollbar-color: #444 #222;
+    }
+    
+    .thumbnail {
+      width: 120px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 0.5rem;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .thumbnail.active {
+      border-color: #3b82f6;
+      transform: scale(1.05);
+    }
+    
+    .thumbnail:hover {
+      transform: translateY(-4px);
+    }
+  </style>
+</head>
+<body class="bg-[#0f172a] text-white">
+  <!-- Authentication Check -->
+  <script>
+    // Immediate authentication check
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    
+    if (!token || !role) {
+      // No authentication found, redirect immediately
+      window.location.replace('/login.html');
+      // Stop execution to prevent content from loading
+      throw new Error('Authentication required');
+    }
+    
+    // We are authenticated, continue loading
+    console.log('✅ Authentication verified - loading course content');
+  </script>
+
+  <!-- Main Content -->
+  <div class="min-h-screen flex flex-col font-sans">
+    <!-- Header with Back button -->
+    <header class="bg-black/60 p-4">
+      <div class="container mx-auto flex items-center justify-between">
+        <a href="dashboard.html" class="flex items-center gap-2 text-white hover:text-blue-300 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Back to Dashboard
+        </a>
+        <div class="flex items-center gap-3">
+          <span id="studentName" class="text-zinc-300">Student</span>
+          <img src="SE66806_logo_orig.png" alt="SMXKITS Logo" class="h-8 w-8" />
+        </div>
+      </div>
+    </header>
+
+    <!-- Course Content Main Area -->
+    <main class="flex-1 container mx-auto p-6">
+      <h1 class="text-3xl font-bold mb-6">Course Content</h1>
+      
+      <!-- Course Module Selector -->
+      <div class="mb-8">
+        <label for="moduleSelect" class="block text-sm font-medium text-zinc-400 mb-2">Select Module:</label>
+        <select id="moduleSelect" class="bg-zinc-800 text-white rounded-lg px-4 py-2 w-full max-w-md">
+          <option value="module1">Module 1: Introduction to ISR</option>
+          <option value="module2">Module 2: PED Fundamentals</option>
+          <option value="module3">Module 3: Advanced Techniques</option>
+          <option value="module4">Module 4: Mission Planning</option>
+        </select>
+      </div>
+      
+      <!-- Slide Viewer -->
+      <div class="slide-container">
+        <img id="currentSlide" class="slide-image" src="slides/module1/slide1.jpg" alt="Current Slide" />
+        <div class="slide-controls">
+          <button id="prevSlide" class="slide-control-btn">Previous</button>
+          <div class="slide-counter">
+            Slide <span id="currentSlideNum">1</span> of <span id="totalSlides">20</span>
+          </div>
+          <button id="nextSlide" class="slide-control-btn">Next</button>
+        </div>
+      </div>
+      
+      <!-- Thumbnails -->
+      <div class="thumbnail-container mt-6" id="thumbnailContainer">
+        <!-- Thumbnails will be generated here via JavaScript -->
+      </div>
+      
+      <!-- Additional Materials -->
+      <div class="mt-8 bg-zinc-800/60 rounded-xl p-6">
+        <h2 class="text-xl font-bold mb-4">Additional Resources</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <a href="#" class="bg-zinc-700/60 hover:bg-zinc-600/60 transition rounded-lg p-4 flex items-center gap-3">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+            <span>Module 1 PDF Handbook</span>
+          </a>
+          <a href="#" class="bg-zinc-700/60 hover:bg-zinc-600/60 transition rounded-lg p-4 flex items-center gap-3">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>Introduction Video</span>
+          </a>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- JavaScript for Slide Viewer -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Set student name if available
+      const studentName = localStorage.getItem('studentName');
+      if (studentName) {
+        document.getElementById('studentName').textContent = studentName;
+      }
+
+      // Slide configuration - this would typically come from a JSON file or API
+      const modules = {
+        module1: {
+          title: 'Introduction to ISR',
+          slideCount: 20,
+          basePath: 'slides/module1/'
+        },
+        module2: {
+          title: 'PED Fundamentals',
+          slideCount: 15,
+          basePath: 'slides/module2/'
+        },
+        module3: {
+          title: 'Advanced Techniques',
+          slideCount: 18,
+          basePath: 'slides/module3/'
+        },
+        module4: {
+          title: 'Mission Planning',
+          slideCount: 12,
+          basePath: 'slides/module4/'
+        }
+      };
+
+      // Current state
+      let currentModule = 'module1';
+      let currentSlide = 1;
+      
+      // DOM elements
+      const currentSlideEl = document.getElementById('currentSlide');
+      const currentSlideNumEl = document.getElementById('currentSlideNum');
+      const totalSlidesEl = document.getElementById('totalSlides');
+      const moduleSelectEl = document.getElementById('moduleSelect');
+      const prevBtn = document.getElementById('prevSlide');
+      const nextBtn = document.getElementById('nextSlide');
+      const thumbnailContainer = document.getElementById('thumbnailContainer');
+      
+      // Initialize the viewer
+      updateModuleInfo();
+      generateThumbnails();
+      updateSlideDisplay();
+      
+      // Event Listeners
+      moduleSelectEl.addEventListener('change', function() {
+        currentModule = this.value;
+        currentSlide = 1;
+        updateModuleInfo();
+        generateThumbnails();
+        updateSlideDisplay();
+      });
+      
+      prevBtn.addEventListener('click', function() {
+        if (currentSlide > 1) {
+          currentSlide--;
+          updateSlideDisplay();
+        }
+      });
+      
+      nextBtn.addEventListener('click', function() {
+        if (currentSlide < modules[currentModule].slideCount) {
+          currentSlide++;
+          updateSlideDisplay();
+        }
+      });
+      
+      // Key navigation
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'ArrowLeft') {
+          prevBtn.click();
+        } else if (e.key === 'ArrowRight') {
+          nextBtn.click();
+        }
+      });
+      
+      // Functions
+      function updateModuleInfo() {
+        const module = modules[currentModule];
+        totalSlidesEl.textContent = module.slideCount;
+        currentSlideNumEl.textContent = currentSlide;
+      }
+      
+      function updateSlideDisplay() {
+        const module = modules[currentModule];
+        currentSlideEl.src = `${module.basePath}slide${currentSlide}.jpg`;
+        currentSlideNumEl.textContent = currentSlide;
+        
+        // Update thumbnails active state
+        const thumbnails = thumbnailContainer.querySelectorAll('.thumbnail');
+        thumbnails.forEach((thumb, index) => {
+          if (index + 1 === currentSlide) {
+            thumb.classList.add('active');
+          } else {
+            thumb.classList.remove('active');
+          }
+        });
+        
+        // Scroll active thumbnail into view
+        const activeThumb = thumbnailContainer.querySelector('.thumbnail.active');
+        if (activeThumb) {
+          activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+      }
+      
+      function generateThumbnails() {
+        const module = modules[currentModule];
+        thumbnailContainer.innerHTML = '';
+        
+        for (let i = 1; i <= module.slideCount; i++) {
+          const thumb = document.createElement('img');
+          thumb.classList.add('thumbnail');
+          if (i === currentSlide) {
+            thumb.classList.add('active');
+          }
+          thumb.src = `${module.basePath}slide${i}.jpg`;
+          thumb.alt = `Slide ${i} thumbnail`;
+          thumb.addEventListener('click', function() {
+            currentSlide = i;
+            updateSlideDisplay();
+          });
+          thumbnailContainer.appendChild(thumb);
+        }
+      }
+    });
+  </script>
+</body>
+</html>

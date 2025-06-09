@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="keyboard-training.css" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="typing-progress.js"></script>
 </head>
 <body class="bg-[#0f172a] text-white">
   <!-- Authentication Check - This runs BEFORE any content loads -->
@@ -179,20 +178,16 @@
         
         <!-- Course Progression -->
         <div class="bg-zinc-900/90 rounded-3xl p-8 shadow-2xl grid grid-cols-3 gap-8">
-          <!-- Typing Progress -->
+          <!-- Keyboard Training Link -->
           <div>
             <div class="font-semibold text-white mb-2">Keyboard Input Training</div>
-            <div class="w-full bg-zinc-700 rounded-full h-4 mb-2 overflow-hidden">
-              <div id="typing-progress-bar" class="bg-yellow-400 h-4" style="width: 60%;"></div>
-            </div>
-            <div id="typing-progress-text" class="text-xs text-zinc-400">3 of 5 typing tests completed</div>
-            
-            <!-- WPM Stats -->
             <div class="mt-4 grid grid-cols-1 gap-4">
               <div class="bg-zinc-800/80 hover:bg-zinc-700/80 transition-all duration-200 rounded-xl p-4 flex flex-col items-center">
-                <div class="font-bold text-lg text-green-400" id="dashboard-best-wpm">Best WPM: --</div>
-                <div class="text-base text-blue-200" id="dashboard-avg-wpm">Average WPM: --</div>
-                <div class="text-base text-blue-200" id="dashboard-accuracy">Accuracy: --</div>
+                <div class="text-base text-blue-200">
+                  <a href="keyboard-training.html" class="text-blue-400 hover:text-blue-300 underline">
+                    Go to Keyboard Training
+                  </a>
+                </div>
               </div>
             </div>
           </div>
@@ -363,19 +358,18 @@ function goToIATraining() {
 
     // Navigation functions to ensure proper loading
     function goToKITS() {
-      localStorage.setItem('activeSection', 'screen-dashboard');
-      localStorage.setItem('forceModuleReload', 'true'); // Flag for forcing module reload
-      window.location.href = "/SMXKITS.html#screen-dashboard";
+      // Redirect directly to keyboard-training.html
+      window.location.href = "keyboard-training.html";
     }
     
     function goToCourseContent() {
-      localStorage.setItem('activeSection', 'screen-course-content');
-      window.location.href = "/SMXKITS.html#screen-course-content";
+      // Redirect directly to course-content.html
+      window.location.href = "course-content.html";
     }
     
     function goToISRTraining() {
-      localStorage.setItem('activeSection', 'screen-isr-training');
-      window.location.href = "/SMXKITS.html#screen-isr-training";
+      // Redirect directly to mission-links.html
+      window.location.href = "mission-links.html";
     }
     
     function goToPEDTraining() {
