@@ -114,20 +114,61 @@
         classes.map(c => `<option value="${c.classId}">${c.name}</option>`).join('');
     }
     fillClassDropdown();
-    function addStudent(e) {
+    async function addStudent(e) {
       e.preventDefault();
-      const studentId = `STU-${document.getElementById('studentClass').value}-${Math.floor(Math.random() * 900 + 100)}`;
-      const obj = {
-        studentId,
-        name: document.getElementById('studentName').value,
-        email: document.getElementById('studentEmail').value,
-        username: document.getElementById('studentUsername').value,
-        password: document.getElementById('studentPassword').value,
-        classId: document.getElementById('studentClass').value
-      };
-      document.getElementById('studentResult').innerText = 'Student Added:\n' + JSON.stringify(obj, null, 2);
-      document.getElementById('studentForm').reset();
-      fillClassDropdown();
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          alert('Authentication token missing. Please log in again.');
+          window.location.href = '/login.html';
+          return;
+        }
+        
+        // Prepare student data
+        const studentData = {
+          name: document.getElementById('studentName').value,
+          email: document.getElementById('studentEmail').value,
+          username: document.getElementById('studentUsername').value,
+          password: document.getElementById('studentPassword').value,
+          classId: document.getElementById('studentClass').value,
+          role: 'student'
+        };
+        
+        // Send to backend API
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(studentData)
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to add student');
+        }
+        
+        const result = await response.json();
+        
+        // Display success
+        document.getElementById('studentResult').innerText = 'Student Added Successfully:\n' + 
+          JSON.stringify({
+            name: studentData.name,
+            email: studentData.email,
+            username: studentData.username,
+            classId: studentData.classId,
+            role: 'student'
+          }, null, 2);
+          
+        // Reset form
+        document.getElementById('studentForm').reset();
+        fillClassDropdown();
+        
+      } catch (error) {
+        document.getElementById('studentResult').innerText = `Error: ${error.message}`;
+        console.error('Failed to add student:', error);
+      }
     }
   </script>
 </body>
