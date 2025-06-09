@@ -260,6 +260,37 @@ io.on('connection', socket => {
     }
   });
   
+  // Join class-specific room for user status updates
+  socket.on('kitcomm:joinClass', async (data) => {
+    const { classId, userId, userName } = data;
+    const roomName = `class:${classId || 'default'}`;
+    
+    // Join the class room
+    socket.join(roomName);
+    console.log(`👤 User ${userName} (${userId}) joined class: ${classId || 'default'}`);
+    
+    // Store user data with socket for disconnect handling
+    socket.userData = { 
+      userId,
+      userName,
+      classId: classId || 'default',
+      status: 'online'
+    };
+    
+    // Update user status to online
+    try {
+      // This would usually be a database update
+      // For now, we'll broadcast the status change
+      io.to(roomName).emit('kitcomm:userStatus', {
+        userId,
+        userName,
+        status: 'online'
+      });
+    } catch (error) {
+      console.error('❌ Error updating user status:', error);
+    }
+  });
+  
   socket.on('kitcomm:message', async (data) => {
     try {
       if (!data.author || !data.role || !data.content || !data.channel) {
@@ -287,9 +318,35 @@ io.on('connection', socket => {
       socket.emit('kitcomm:error', { message: 'Failed to save message' });
     }
   });
+  // Update user status
+  socket.on('kitcomm:updateStatus', (status) => {
+    if (socket.userData) {
+      const { userId, userName, classId } = socket.userData;
+      socket.userData.status = status;
+      
+      // Broadcast status update to class
+      io.to(`class:${classId}`).emit('kitcomm:userStatus', {
+        userId,
+        userName,
+        status
+      });
+    }
+  });
   
   socket.on('disconnect', () => {
     console.log('🔌 Socket disconnected');
+    
+    // If we have user data, update their status to offline
+    if (socket.userData) {
+      const { userId, userName, classId } = socket.userData;
+      
+      // Broadcast offline status to class
+      io.to(`class:${classId}`).emit('kitcomm:userStatus', {
+        userId,
+        userName,
+        status: 'offline'
+      });
+    }
   });
 });
 

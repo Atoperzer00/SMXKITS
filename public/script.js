@@ -49,6 +49,9 @@ document.addEventListener('DOMContentLoaded', function() {
   loadCourseContent();
   loadPowerPointLessons();
   
+  // Handle hash-based navigation
+  handleHashChange();
+  
   // Set up PDF.js worker
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.worker.min.js';
 });
@@ -64,7 +67,31 @@ function showScreen(screenId) {
 
 function goToScreen(screenId) {
   showScreen(screenId);
+  // Update URL hash without triggering a new hashchange event
+  history.pushState(null, null, `#${screenId}`);
 }
+
+// Handle hash-based navigation
+function handleHashChange() {
+  // Check if there's a hash in the URL
+  if (window.location.hash) {
+    const screenId = window.location.hash.substring(1); // Remove the # character
+    if (document.getElementById(screenId)) {
+      showScreen(screenId);
+      // Store the active section
+      localStorage.setItem('activeSection', screenId);
+    }
+  } else {
+    // Check if we have a stored section
+    const storedSection = localStorage.getItem('activeSection');
+    if (storedSection && document.getElementById(storedSection)) {
+      showScreen(storedSection);
+    }
+  }
+}
+
+// Listen for hash changes
+window.addEventListener('hashchange', handleHashChange);
 
 // Screen-specific navigation functions
 function goToKITS() {
