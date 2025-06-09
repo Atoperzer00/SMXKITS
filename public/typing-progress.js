@@ -81,6 +81,56 @@ function updateDashboardProgress() {
   if (avgWpmEl) {
     avgWpmEl.textContent = typingData.avgWPM;
   }
+  
+  // Update the new dashboard stats display
+  showDashboardStats();
+}
+
+// Show dashboard stats from smx_user_progress
+function showDashboardStats() {
+  // Skip if elements don't exist (not on dashboard page)
+  if (!document.getElementById('dashboard-best-wpm')) return;
+  
+  // Get progress data
+  let progress = {};
+  try {
+    progress = JSON.parse(localStorage.getItem('smx_user_progress') || '{}');
+  } catch (e) {
+    console.error('Error parsing user progress:', e);
+    return;
+  }
+  
+  let wpmArr = [], accArr = [], complete = 0, total = 0;
+  
+  // Extract stats from all modules and practices
+  (progress.modules || []).forEach(mod => {
+    if (!mod) return;
+    (mod.practices || []).forEach(pr => {
+      if (!pr) return;
+      if (pr?.wpm) wpmArr.push(pr.wpm);
+      if (pr?.accuracy) accArr.push(pr.accuracy);
+      if (pr?.completed) complete++;
+      total++;
+    });
+  });
+  
+  // Update the display elements
+  document.getElementById('dashboard-best-wpm').innerText = 'Best WPM: ' + 
+    (wpmArr.length ? Math.max(...wpmArr) : '--');
+  
+  document.getElementById('dashboard-avg-wpm').innerText = 'Average WPM: ' + 
+    (wpmArr.length ? (wpmArr.reduce((a, b) => a + b, 0) / wpmArr.length).toFixed(1) : '--');
+  
+  document.getElementById('dashboard-accuracy').innerText = 'Accuracy: ' + 
+    (accArr.length ? (accArr.reduce((a, b) => a + b, 0) / accArr.length).toFixed(1) + '%' : '--');
+  
+  // If we have a progress bar, update it too
+  if (document.getElementById('typing-progress-bar') && total > 0) {
+    const percentage = (complete / total) * 100;
+    document.getElementById('typing-progress-bar').style.width = `${percentage}%`;
+    document.getElementById('typing-progress-text').textContent = 
+      `${complete} of ${total} typing tests completed`;
+  }
 }
 
 // Integrate with the showResults function in script.js
