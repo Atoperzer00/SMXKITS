@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SMX KITS - Feedback</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Week content styling */
+    .week-content {
+      display: none;
+    }
+    .week-content.active {
+      display: block;
+    }
+    
+    /* Course evaluation form styling */
+    .evaluation-form {
+      background: #181f25;
+      color: #e0e6ed;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      padding: 36px;
+      border-radius: 12px;
+      max-width: 650px;
+      margin: 0 auto;
+    }
+    .evaluation-form h2 {
+      color: #70b8ff;
+      margin-top: 28px;
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+    }
+    .evaluation-form label, .evaluation-form .section-title {
+      font-weight: 600;
+      display: block;
+      margin-top: 22px;
+      margin-bottom: 8px;
+    }
+    .evaluation-form textarea, .evaluation-form input[type="text"], .evaluation-form select {
+      width: 100%;
+      max-width: 100%;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      border: 1px solid #2e3c4d;
+      background: #232e3c;
+      color: #e0e6ed;
+      font-size: 16px;
+      resize: vertical;
+    }
+    .evaluation-form .radio-group, .evaluation-form .checkbox-group {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 12px;
+    }
+    .evaluation-form .radio-group label, .evaluation-form .checkbox-group label {
+      font-weight: 400;
+      margin: 0;
+      cursor: pointer;
+    }
+    .evaluation-form button {
+      margin-top: 36px;
+      padding: 14px 34px;
+      background: #1da1f2;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 17px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      box-shadow: 0 2px 10px #1da1f230;
+    }
+    .evaluation-form button:hover { background: #0d8ddb; }
+
+    /* Custom dropdown styling */
+    .custom-dropdown {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+      max-width: 400px;
+      margin: 20px auto;
+    }
+    .dropdown-select {
+      display: block;
+      width: 100%;
+      padding: 12px 16px;
+      background: #232e3c;
+      color: white;
+      border: 1px solid #2e3c4d;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      outline: none;
+    }
+    .dropdown-select:hover {
+      background: #2c3b4e;
+    }
+  </style>
+</head>
+<body class="bg-[#0f172a] text-white">
+  <!-- Authentication Check - This runs BEFORE any content loads -->
+  <script>
+    // Immediate authentication check
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    
+    if (!token || !role) {
+      // No authentication found, redirect immediately
+      window.location.replace('/login.html');
+      // Stop execution to prevent content from loading
+      throw new Error('Authentication required');
+    }
+    
+    // We are authenticated, continue loading dashboard
+    console.log('✅ Authentication verified - loading feedback page');
+  </script>
+
+  <!-- Main Dashboard Content -->
+  <div class="min-h-screen flex font-sans overflow-auto">
+    <!-- Sidebar -->
+    <aside class="flex flex-col w-60 bg-black/60 rounded-3xl m-6 p-4 shadow-2xl">
+      <div class="flex flex-col items-center mb-8">
+        <div class="w-16 h-16 rounded-full bg-gradient-to-br from-zinc-900 via-zinc-700 to-zinc-900 flex items-center justify-center shadow-lg mb-2">
+          <img src="SE66806_logo_orig.png" alt="SMXKITS Logo" class="w-12 h-12" />
+        </div>
+      </div>
+      <nav class="flex-1 space-y-5 text-zinc-200 font-medium">
+        <a href="dashboard.html" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>🏠</span>Dashboard</a>
+        <a href="#" onclick="goToPEDTraining();" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>🛫</span>Live PED Exercise</a>
+        <a href="keyboard-training.html" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>⌨️</span>Keyboard Input Training</a>
+        <a href="#" onclick="goToPEDTraining();" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>🧑‍💻</span>Screener Training</a>
+        <a href="mission-links.html" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>📡</span>IA Training</a>
+        <a href="#" onclick="goToOpsLog();" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>📝</span>Grading</a>
+        <a href="#" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>📅</span>Schedule</a>
+        <a href="feedback.html" class="flex items-center gap-3 px-4 py-2 rounded-xl bg-blue-900/30 text-blue-300 transition"><span>💬</span>Feedback</a>
+      </nav>
+      <a href="#" onclick="logout();" class="mt-auto flex items-center gap-3 px-4 py-2 rounded-xl bg-zinc-900/80 text-red-400 hover:bg-red-900/50 transition">Logout</a>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="flex-1 p-8 overflow-y-auto">
+      <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="mb-10 text-center">
+          <h1 class="text-3xl font-bold text-white mb-3">Course Feedback</h1>
+          <p class="text-zinc-400">Your feedback helps us improve the course experience for future students.</p>
+        </div>
+        
+        <!-- Week Selection Dropdown -->
+        <div class="text-center mb-8">
+          <div class="custom-dropdown">
+            <select id="weekSelect" class="dropdown-select">
+              <option value="week1">Week One</option>
+              <option value="week2">Week Two</option>
+              <option value="week3">Week Three</option>
+            </select>
+          </div>
+        </div>
+        
+        <!-- Week Content Areas -->
+        <div id="weekContents" class="mt-6">
+          <!-- Week 1 Content -->
+          <div id="week1Content" class="week-content active">
+            <div class="bg-zinc-800/70 rounded-xl p-8 shadow-xl">
+              <h2 class="text-xl font-semibold text-blue-300 mb-4">Week One Feedback</h2>
+              <p class="text-zinc-300 mb-6">Please share your thoughts on the first week of training.</p>
+              
+              <form class="space-y-6">
+                <div>
+                  <label class="block text-zinc-300 mb-2">How would you rate the first week of training?</label>
+                  <select class="w-full bg-zinc-700 text-white rounded-md p-3 border border-zinc-600">
+                    <option>Select a rating</option>
+                    <option>Excellent</option>
+                    <option>Good</option>
+                    <option>Average</option>
+                    <option>Below Average</option>
+                    <option>Poor</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label class="block text-zinc-300 mb-2">What aspects of the training were most valuable?</label>
+                  <textarea class="w-full bg-zinc-700 text-white rounded-md p-3 border border-zinc-600 min-h-[100px]"></textarea>
+                </div>
+                
+                <div>
+                  <label class="block text-zinc-300 mb-2">What could be improved?</label>
+                  <textarea class="w-full bg-zinc-700 text-white rounded-md p-3 border border-zinc-600 min-h-[100px]"></textarea>
+                </div>
+                
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition">Submit Feedback</button>
+              </form>
+            </div>
+          </div>
+          
+          <!-- Week 2 Content -->
+          <div id="week2Content" class="week-content">
+            <div class="bg-zinc-800/70 rounded-xl p-8 shadow-xl">
+              <h2 class="text-xl font-semibold text-blue-300 mb-4">Week Two Feedback</h2>
+              <p class="text-zinc-300 mb-6">Please share your thoughts on the second week of training.</p>
+              
+              <form class="space-y-6">
+                <div>
+                  <label class="block text-zinc-300 mb-2">How would you rate the second week of training?</label>
+                  <select class="w-full bg-zinc-700 text-white rounded-md p-3 border border-zinc-600">
+                    <option>Select a rating</option>
+                    <option>Excellent</option>
+                    <option>Good</option>
+                    <option>Average</option>
+                    <option>Below Average</option>
+                    <option>Poor</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label class="block text-zinc-300 mb-2">Was the pace of instruction appropriate?</label>
+                  <select class="w-full bg-zinc-700 text-white rounded-md p-3 border border-zinc-600">
+                    <option>Select an option</option>
+                    <option>Too fast</option>
+                    <option>Slightly fast</option>
+                    <option>Just right</option>
+                    <option>Slightly slow</option>
+                    <option>Too slow</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label class="block text-zinc-300 mb-2">Additional comments:</label>
+                  <textarea class="w-full bg-zinc-700 text-white rounded-md p-3 border border-zinc-600 min-h-[100px]"></textarea>
+                </div>
+                
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition">Submit Feedback</button>
+              </form>
+            </div>
+          </div>
+          
+          <!-- Week 3 Content -->
+          <div id="week3Content" class="week-content">
+            <div class="evaluation-form">
+              <form id="evaluationForm">
+                <h2>Course Evaluation</h2>
+                <!-- 1. Overall Experience -->
+                <label>1. How would you rate your overall experience with the course?</label>
+                <div class="radio-group">
+                  <label><input type="radio" name="courseExperience" value="1" required> Very Poor</label>
+                  <label><input type="radio" name="courseExperience" value="2"> Poor</label>
+                  <label><input type="radio" name="courseExperience" value="3"> Average</label>
+                  <label><input type="radio" name="courseExperience" value="4"> Good</label>
+                  <label><input type="radio" name="courseExperience" value="5"> Excellent</label>
+                </div>
+                <!-- 2. Most Helpful -->
+                <label>2. Which aspects of the course were most helpful to your learning?</label>
+                <textarea name="mostHelpful" rows="2"></textarea>
+                <!-- 3. Least Helpful -->
+                <label>3. Which aspects of the course were least helpful to your learning?</label>
+                <textarea name="leastHelpful" rows="2"></textarea>
+                <!-- 5. Course Statements -->
+                <label>4. Please rate the degree to which you agree with the following statements:</label>
+                <div style="margin-bottom:18px;">
+                  <div>
+                    <span>The course was well organized.</span><br>
+                    <div class="radio-group">
+                      <label><input type="radio" name="organized" value="1" required> Strongly Disagree</label>
+                      <label><input type="radio" name="organized" value="2"> Disagree</label>
+                      <label><input type="radio" name="organized" value="3"> Neutral</label>
+                      <label><input type="radio" name="organized" value="4"> Agree</label>
+                      <label><input type="radio" name="organized" value="5"> Strongly Agree</label>
+                    </div>
+                  </div>
+                  <div>
+                    <span>The course materials helped me understand the content.</span><br>
+                    <div class="radio-group">
+                      <label><input type="radio" name="materialsHelpful" value="1" required> Strongly Disagree</label>
+                      <label><input type="radio" name="materialsHelpful" value="2"> Disagree</label>
+                      <label><input type="radio" name="materialsHelpful" value="3"> Neutral</label>
+                      <label><input type="radio" name="materialsHelpful" value="4"> Agree</label>
+                      <label><input type="radio" name="materialsHelpful" value="5"> Strongly Agree</label>
+                    </div>
+                  </div>
+                  <div>
+                    <span>Feedback on my work was helpful.</span><br>
+                    <div class="radio-group">
+                      <label><input type="radio" name="feedbackHelpful" value="1" required> Strongly Disagree</label>
+                      <label><input type="radio" name="feedbackHelpful" value="2"> Disagree</label>
+                      <label><input type="radio" name="feedbackHelpful" value="3"> Neutral</label>
+                      <label><input type="radio" name="feedbackHelpful" value="4"> Agree</label>
+                      <label><input type="radio" name="feedbackHelpful" value="5"> Strongly Agree</label>
+                    </div>
+                  </div>
+                </div>
+                <!-- Instructor Section -->
+                <h2>Instructor Evaluation</h2>
+                <!-- 6. Overall Experience with Instructor -->
+                <label>5. How would you rate your overall experience with the instructor?</label>
+                <div class="radio-group">
+                  <label><input type="radio" name="instructorExperience" value="1" required> Very Poor</label>
+                  <label><input type="radio" name="instructorExperience" value="2"> Poor</label>
+                  <label><input type="radio" name="instructorExperience" value="3"> Average</label>
+                  <label><input type="radio" name="instructorExperience" value="4"> Good</label>
+                  <label><input type="radio" name="instructorExperience" value="5"> Excellent</label>
+                </div>
+                <!-- 7. Most Helpful by Instructor -->
+                <label>6. What did the instructor do that was most helpful for your learning?</label>
+                <textarea name="instructorHelpful" rows="2"></textarea>
+                <!-- 8. Improvements by Instructor -->
+                <label>7. What might the instructor have done differently to help you learn more?</label>
+                <textarea name="instructorImprove" rows="2"></textarea>
+                <!-- Student Info -->
+                <h2>Student Information</h2>
+                <!-- 14. Reason for Enrolling -->
+                <label>8. What were your reasons for enrolling in the course? <span style="font-weight:400;">(Check all that apply)</span></label>
+                <div class="checkbox-group">
+                  <label><input type="checkbox" name="reason" value="learn"> To learn more about the subject</label>
+                  <label><input type="checkbox" name="reason" value="skills"> To gain new skills</label>
+                  <label><input type="checkbox" name="reason" value="requirement"> To fulfill a requirement</label>
+                  <label><input type="checkbox" name="reason" value="prerequisite"> To meet a prerequisite</label>
+                </div>
+                <input type="text" name="reasonOther" placeholder="Other reason (optional)" />
+                <!-- 15. Hours per Week -->
+                <label>9. On average, how many hours did you spend per week on this course?</label>
+                <select name="hoursPerWeek" required>
+                  <option value="">Select…</option>
+                  <option value="1-3">1-3</option>
+                  <option value="4-7">4-7</option>
+                  <option value="8-11">8-11</option>
+                  <option value="12-15">12-15</option>
+                  <option value="16+">16 or more</option>
+                </select>
+                <!-- 16. Difficulty -->
+                <label>10. How difficult did you find this course?</label>
+                <div class="radio-group">
+                  <label><input type="radio" name="difficulty" value="1" required> Not at all difficult</label>
+                  <label><input type="radio" name="difficulty" value="2"> A bit difficult</label>
+                  <label><input type="radio" name="difficulty" value="3"> Average</label>
+                  <label><input type="radio" name="difficulty" value="4"> Difficult</label>
+                  <label><input type="radio" name="difficulty" value="5"> Very Difficult</label>
+                </div>
+                <!-- 17. Skills Expected and Learned -->
+                <label>11. What skills or knowledge did you expect to learn from the course?</label>
+                <textarea name="skillsExpected" rows="2"></textarea>
+                <label>11a. Did you feel you learned those skills and/or obtained that knowledge?</label>
+                <div class="radio-group">
+                  <label><input type="radio" name="skillsLearned" value="yes" required> Yes</label>
+                  <label><input type="radio" name="skillsLearned" value="no"> No</label>
+                </div>
+                <!-- Additional Feedback -->
+                <label>Additional Feedback (optional):</label>
+                <textarea name="additionalFeedback" rows="3"></textarea>
+                <button type="submit">Submit Evaluation</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- JavaScript for functionality -->
+  <script>
+    // Week selection functionality
+    document.getElementById('weekSelect').addEventListener('change', function() {
+      // Hide all week content
+      const weekContents = document.querySelectorAll('.week-content');
+      weekContents.forEach(content => content.classList.remove('active'));
+      
+      // Show selected week content
+      const selectedWeek = this.value;
+      document.getElementById(selectedWeek + 'Content').classList.add('active');
+    });
+    
+    // Form submission handling
+    document.getElementById('evaluationForm').onsubmit = function(e) {
+      e.preventDefault();
+      alert('Thank you for submitting your evaluation!');
+      // Here you could send the data to your backend with fetch/AJAX
+    };
+    
+    // Navigation functions
+    function logout() {
+      // Clear local storage
+      localStorage.clear();
+      // Redirect to login page
+      window.location.href = '/login.html';
+    }
+    
+    function goToPEDTraining() {
+      localStorage.setItem('activeSection', 'screen-ped-training');
+      window.location.href = "/SMXKITS.html#screen-ped-training";
+    }
+    
+    function goToOpsLog() {
+      window.open('/OpsLog.html', '_blank');
+    }
+  </script>
+</body>
+</html>

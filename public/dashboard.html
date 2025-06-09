@@ -7,6 +7,122 @@
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="keyboard-training.css" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Instructor Bubbles CSS */
+    #instructor-list {
+      display: flex;
+      gap: 24px;
+      justify-content: center;
+      margin: 20px 0;
+    }
+    
+    .instructor-bubble {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+    
+    .instructor-bubble img {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      border: 3px solid #70b8ff;
+      background: #222;
+      object-fit: cover;
+    }
+    
+    .instructor-bubble:hover {
+      transform: scale(1.07);
+    }
+    
+    .instructor-bubble div {
+      margin-top: 10px;
+      color: #fff;
+      font-weight: 600;
+      text-align: center;
+    }
+    
+    /* Instructor Bio Modal */
+    .instructor-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    
+    .instructor-modal.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    
+    .instructor-modal-content {
+      background-color: #1e293b;
+      border-radius: 12px;
+      padding: 30px;
+      max-width: 600px;
+      width: 90%;
+      position: relative;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+    }
+    
+    .instructor-modal-close {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      font-size: 24px;
+      cursor: pointer;
+      color: #94a3b8;
+      background: none;
+      border: none;
+      transition: color 0.2s;
+    }
+    
+    .instructor-modal-close:hover {
+      color: #e2e8f0;
+    }
+    
+    .instructor-bio-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+      gap: 20px;
+    }
+    
+    .instructor-bio-avatar {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      border: 3px solid #70b8ff;
+      object-fit: cover;
+    }
+    
+    .instructor-bio-name {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    
+    .instructor-bio-title {
+      color: #94a3b8;
+      font-size: 16px;
+    }
+    
+    .instructor-bio-content {
+      line-height: 1.6;
+      color: #e2e8f0;
+    }
+  </style>
 </head>
 <body class="bg-[#0f172a] text-white">
   <!-- Authentication Check - This runs BEFORE any content loads -->
@@ -83,10 +199,10 @@
           <a href="#" onclick="goToPEDTraining();" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>🛫</span>Live PED Exercise</a>
           <a href="#" onclick="goToKITS();" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>⌨️</span>Keyboard Input Training</a>
           <a href="#" onclick="goToPEDTraining();" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>🧑‍💻</span>Screener Training</a>
-          <a href="#" onclick="goToISRTraining();" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>📡</span>IA Training</a>
+          <a href="mission-links.html" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>📡</span>IA Training</a>
           <a href="#" onclick="goToOpsLog();" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>📝</span>Grading</a>
-          <a href="#" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>📅</span>Schedule</a>
-          <a href="#" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>💬</span>Feedback</a>
+          <a href="calendar.html" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>📅</span>Schedule</a>
+          <a href="feedback.html" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>💬</span>Feedback</a>
         </nav>
         <a href="#" onclick="logout();" class="mt-auto flex items-center gap-3 px-4 py-2 rounded-xl bg-zinc-900/80 text-red-400 hover:bg-red-900/50 transition">Logout</a>
       </aside>
@@ -133,20 +249,39 @@
           </div>
         </div>
         
+        <!-- Instructor Bubbles Section -->
+        <div class="bg-zinc-800/60 rounded-3xl p-5 shadow-xl mb-8">
+          <h2 class="text-xl font-semibold text-center mb-3 text-blue-300">Course Instructors</h2>
+          <div id="instructor-list">
+            <!-- Instructor bubbles will be loaded here -->
+            <div class="text-center text-zinc-400">Loading instructors...</div>
+          </div>
+        </div>
+        
+        <!-- Instructor Bio Modal -->
+        <div id="instructorModal" class="instructor-modal">
+          <div class="instructor-modal-content">
+            <button id="closeInstructorModal" class="instructor-modal-close">×</button>
+            <div id="instructorBioContent">
+              <!-- Instructor bio will be loaded here -->
+            </div>
+          </div>
+        </div>
+        
         <!-- Training Links (bubble cards) -->
         <!-- First row of training cards -->
         <div class="grid grid-cols-3 gap-8 mb-10">
-          <div onclick="goToKITS();" class="bg-zinc-800/80 rounded-3xl p-7 flex flex-col items-center shadow-xl cursor-pointer hover:scale-105 transition group">
+          <div onclick="window.location.href='keyboard-training.html';" class="bg-zinc-800/80 rounded-3xl p-7 flex flex-col items-center shadow-xl cursor-pointer hover:scale-105 transition group">
             <img src="KIT CLICK LOGO.png" class="w-16 h-16 mb-2" alt="KITS" />
             <div class="font-semibold text-xl text-white mb-1">Resume Keyboard Input Training</div>
             <div class="text-zinc-400 text-sm group-hover:text-white">Pick up where you left off</div>
           </div>
-          <div onclick="goToCourseContent();" class="bg-zinc-800/80 rounded-3xl p-7 flex flex-col items-center shadow-xl cursor-pointer hover:scale-105 transition group">
+          <div onclick="window.location.href='course-content.html';" class="bg-zinc-800/80 rounded-3xl p-7 flex flex-col items-center shadow-xl cursor-pointer hover:scale-105 transition group">
             <img src="COURSE REFERENCES LOGO.png" class="w-16 h-16 mb-2" alt="Course Content" />
             <div class="font-semibold text-xl text-white mb-1">Course Content</div>
             <div class="text-zinc-400 text-sm group-hover:text-white">View all training modules</div>
           </div>
-          <div onclick="goToISRTraining();" class="bg-zinc-800/80 rounded-3xl p-7 flex flex-col items-center shadow-xl cursor-pointer hover:scale-105 transition group">
+          <div onclick="window.location.href='mission-links.html';" class="bg-zinc-800/80 rounded-3xl p-7 flex flex-col items-center shadow-xl cursor-pointer hover:scale-105 transition group">
             <img src="ISR CLICK LOGO.png" class="w-16 h-16 mb-2" alt="Live ISR" />
             <div class="font-semibold text-xl text-white mb-1">Live ISR Training</div>
             <div class="text-zinc-400 text-sm group-hover:text-white">Access live operations & exercises</div>
@@ -181,6 +316,10 @@
           <!-- Keyboard Training Link -->
           <div>
             <div class="font-semibold text-white mb-2">Keyboard Input Training</div>
+            <div class="w-full bg-zinc-700 rounded-full h-4 mb-2 overflow-hidden">
+              <div class="bg-blue-500 h-4" style="width: 65%;"></div>
+            </div>
+            <div class="text-xs text-zinc-400">3 of 5 modules complete</div>
             <div class="mt-4 grid grid-cols-1 gap-4">
               <div class="bg-zinc-800/80 hover:bg-zinc-700/80 transition-all duration-200 rounded-xl p-4 flex flex-col items-center">
                 <div class="text-base text-blue-200">
@@ -358,18 +497,13 @@ function goToIATraining() {
 
     // Navigation functions to ensure proper loading
     function goToKITS() {
-      // Redirect directly to keyboard-training.html
+      // Redirect directly to keyboard-training.html without tracking progress
       window.location.href = "keyboard-training.html";
     }
     
     function goToCourseContent() {
-      // Redirect directly to course-content.html
+      // Redirect directly to course-content.html without tracking progress
       window.location.href = "course-content.html";
-    }
-    
-    function goToISRTraining() {
-      // Redirect directly to mission-links.html
-      window.location.href = "mission-links.html";
     }
     
     function goToPEDTraining() {
@@ -461,7 +595,167 @@ function goToIATraining() {
       if (studentNameEl && userName) {
         studentNameEl.textContent = userName;
       }
+      
+      // Get the current class ID from localStorage
+      const classId = localStorage.getItem('classId');
+      if (classId) {
+        // Load instructors for this class
+        loadInstructors(classId);
+      } else {
+        // Fallback if no class ID is available
+        document.getElementById('instructor-list').innerHTML = 
+          '<div class="text-center text-zinc-400">No class assigned or class information unavailable.</div>';
+      }
+      
+      // Set up instructor modal close button
+      const closeBtn = document.getElementById('closeInstructorModal');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', function() {
+          document.getElementById('instructorModal').classList.remove('active');
+        });
+      }
+      
+      // Close modal when clicking outside content
+      const modal = document.getElementById('instructorModal');
+      if (modal) {
+        modal.addEventListener('click', function(e) {
+          if (e.target === this) {
+            this.classList.remove('active');
+          }
+        });
+      }
     });
+    
+    /**
+     * Load instructors for the specified course
+     * @param {string} courseId - The ID of the course
+     */
+    async function loadInstructors(courseId) {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          console.error('Authentication token missing');
+          return;
+        }
+        
+        document.getElementById('instructor-list').innerHTML = 
+          '<div class="text-center text-zinc-400">Loading instructors...</div>';
+        
+        // For demonstration, we'll use mock data instead of API calls
+        // In a real application, you would use:
+        // const response = await fetch(`/api/classes/${courseId}/instructors`, {
+        //   headers: { 'Authorization': `Bearer ${token}` }
+        // });
+        // const instructors = await response.json();
+        
+        // Mock data for demonstration
+        const instructors = [
+          {
+            _id: "instructor1",
+            name: "Captain Sarah Johnson",
+            avatar: "instructor1.jpg",
+            title: "Senior ISR Instructor",
+            bio: "Captain Sarah Johnson is an experienced intelligence, surveillance, and reconnaissance (ISR) instructor with 10+ years of expertise in Processing, Exploitation, and Dissemination (PED) operations. With a background in military intelligence, Sarah specializes in training analysts to effectively interpret and utilize intelligence data from various collection platforms."
+          },
+          {
+            _id: "instructor2",
+            name: "Major David Wilson",
+            avatar: "instructor2.jpg",
+            title: "Lead FMV Analyst",
+            bio: "Major David Wilson brings over 15 years of experience in Full Motion Video (FMV) analysis and operational intelligence. A recognized expert in pattern-of-life development and threat detection, David has served in multiple combat deployments before joining the training cadre."
+          }
+        ];
+        
+        if (!instructors || instructors.length === 0) {
+          document.getElementById('instructor-list').innerHTML = 
+            '<div class="text-center text-zinc-400">No instructors assigned to this course.</div>';
+          return;
+        }
+        
+        // Display instructor bubbles
+        const container = document.getElementById('instructor-list');
+        container.innerHTML = instructors.map(inst => `
+          <div class="instructor-bubble" onclick="showInstructorBio('${inst._id}')">
+            <img src="${inst.avatar || 'default-instructor.png'}" alt="${inst.name}" />
+            <div>${inst.name.split(' ').slice(-1)[0]}</div>
+          </div>
+        `).join('');
+        
+      } catch (error) {
+        console.error('Error loading instructors:', error);
+        document.getElementById('instructor-list').innerHTML = 
+          `<div class="text-center text-zinc-400">Error loading instructors: ${error.message}</div>`;
+      }
+    }
+    
+    /**
+     * Show detailed bio for an instructor
+     * @param {string} instructorId - The ID of the instructor
+     */
+    function showInstructorBio(instructorId) {
+      try {
+        // For demonstration, we'll use mock data instead of API calls
+        // In a real application, you would use:
+        // const response = await fetch(`/api/instructors/${instructorId}/bio`, {
+        //   headers: { 'Authorization': `Bearer ${token}` }
+        // });
+        // const instructor = await response.json();
+        
+        // Mock data for demonstration
+        const instructors = {
+          "instructor1": {
+            _id: "instructor1",
+            name: "Captain Sarah Johnson",
+            avatar: "instructor1.jpg",
+            title: "Senior ISR Instructor",
+            experience: "10+ years",
+            contact: "s.johnson@smxkits.mil",
+            bio: "Captain Sarah Johnson is an experienced intelligence, surveillance, and reconnaissance (ISR) instructor with expertise in Processing, Exploitation, and Dissemination (PED) operations. With a background in military intelligence, Sarah specializes in training analysts to effectively interpret and utilize intelligence data from various collection platforms.<br><br>Her expertise includes Full Motion Video (FMV) analysis, pattern-of-life development, and tactical decision-making processes. Captain Johnson has received multiple commendations for her contributions to intelligence training programs."
+          },
+          "instructor2": {
+            _id: "instructor2",
+            name: "Major David Wilson",
+            avatar: "instructor2.jpg",
+            title: "Lead FMV Analyst",
+            experience: "15+ years",
+            contact: "d.wilson@smxkits.mil",
+            bio: "Major David Wilson brings over 15 years of experience in Full Motion Video (FMV) analysis and operational intelligence. A recognized expert in pattern-of-life development and threat detection, David has served in multiple combat deployments before joining the training cadre.<br><br>He specializes in advanced ISR techniques, multi-INT fusion, and intelligence report writing. Major Wilson has developed several of the training modules used in the current curriculum and continues to enhance the program with real-world operational insights."
+          }
+        };
+        
+        const instructor = instructors[instructorId];
+        
+        if (!instructor) {
+          throw new Error("Instructor not found");
+        }
+        
+        // Show modal with instructor bio
+        const bioContent = document.getElementById('instructorBioContent');
+        bioContent.innerHTML = `
+          <div class="instructor-bio-header">
+            <img src="${instructor.avatar || 'default-instructor.png'}" alt="${instructor.name}" class="instructor-bio-avatar" />
+            <div>
+              <div class="instructor-bio-name">${instructor.name}</div>
+              <div class="instructor-bio-title">${instructor.title || 'Instructor'}</div>
+              <div class="text-zinc-400 text-sm">${instructor.experience || ''}</div>
+            </div>
+          </div>
+          <div class="instructor-bio-content">
+            ${instructor.bio || 'No bio information available for this instructor.'}
+            ${instructor.contact ? `<p class="mt-4 text-blue-300">Contact: ${instructor.contact}</p>` : ''}
+          </div>
+        `;
+        
+        document.getElementById('instructorModal').classList.add('active');
+        
+      } catch (error) {
+        console.error('Error loading instructor bio:', error);
+        const bioContent = document.getElementById('instructorBioContent');
+        bioContent.innerHTML = 
+          `<div class="text-center py-4 text-red-400">Error loading instructor information: ${error.message}</div>`;
+        document.getElementById('instructorModal').classList.add('active');
+      }
+    }
   </script>
 </body>
 </html>
