@@ -124,10 +124,38 @@
           </div>
         </div>
         
-        <!-- Course Progress -->
-        <div class="grid grid-cols-3 gap-6 mb-8">
+        <!-- Main bubble card -->
+        <div class="w-full bg-zinc-900/90 rounded-3xl p-8 shadow-2xl flex items-center gap-8 mb-8">
+          <img src="SE66806_logo_orig.png" class="w-28 h-28 rounded-3xl shadow-xl border-4 border-zinc-800" alt="Student Avatar" />
+          <div>
+            <div class="text-2xl font-bold text-white mb-2">Welcome to SMX KITS!</div>
+            <div class="text-zinc-400 text-lg">Your student portal for real-time ISR training. Dive into live PED, practice with KITS, and monitor your course progress all in one place.</div>
+          </div>
+        </div>
+        
+        <!-- Training Links (bubble cards) -->
+        <div class="grid grid-cols-3 gap-8 mb-10">
+          <div onclick="goToKITS();" class="bg-zinc-800/80 rounded-3xl p-7 flex flex-col items-center shadow-xl cursor-pointer hover:scale-105 transition group">
+            <img src="KIT CLICK LOGO.png" class="w-16 h-16 mb-2" alt="KITS" />
+            <div class="font-semibold text-xl text-white mb-1">Resume Keyboard Input Training</div>
+            <div class="text-zinc-400 text-sm group-hover:text-white">Pick up where you left off</div>
+          </div>
+          <div onclick="goToCourseContent();" class="bg-zinc-800/80 rounded-3xl p-7 flex flex-col items-center shadow-xl cursor-pointer hover:scale-105 transition group">
+            <img src="COURSE REFERENCES LOGO.png" class="w-16 h-16 mb-2" alt="Course Content" />
+            <div class="font-semibold text-xl text-white mb-1">Course Content</div>
+            <div class="text-zinc-400 text-sm group-hover:text-white">View all training modules</div>
+          </div>
+          <div onclick="goToISRTraining();" class="bg-zinc-800/80 rounded-3xl p-7 flex flex-col items-center shadow-xl cursor-pointer hover:scale-105 transition group">
+            <img src="ISR CLICK LOGO.png" class="w-16 h-16 mb-2" alt="Live ISR" />
+            <div class="font-semibold text-xl text-white mb-1">Live ISR Training</div>
+            <div class="text-zinc-400 text-sm group-hover:text-white">Access live operations & exercises</div>
+          </div>
+        </div>
+        
+        <!-- Course Progression -->
+        <div class="bg-zinc-900/90 rounded-3xl p-8 shadow-2xl grid grid-cols-3 gap-8">
           <!-- Typing Progress -->
-          <div class="bg-zinc-900/90 rounded-2xl p-6 shadow-2xl">
+          <div>
             <div class="font-semibold text-white mb-2">Keyboard Input Training</div>
             <div class="w-full bg-zinc-700 rounded-full h-4 mb-2 overflow-hidden">
               <div id="typing-progress-bar" class="bg-yellow-400 h-4" style="width: 60%;"></div>
@@ -147,21 +175,20 @@
             </div>
           </div>
           
-          <!-- Other Course Progression Items -->
-          <div class="bg-zinc-900/90 rounded-2xl p-6 shadow-2xl">
-            <div class="font-semibold text-white mb-2">Course Content</div>
+          <div>
+            <div class="font-semibold text-white mb-2">Screener Training</div>
             <div class="w-full bg-zinc-700 rounded-full h-4 mb-2 overflow-hidden">
               <div class="bg-blue-500 h-4" style="width: 40%;"></div>
             </div>
-            <div class="text-xs text-zinc-400">2 of 5 modules completed</div>
+            <div class="text-xs text-zinc-400">2 of 5 modules complete</div>
           </div>
           
-          <div class="bg-zinc-900/90 rounded-2xl p-6 shadow-2xl">
+          <div>
             <div class="font-semibold text-white mb-2">POL Typing Tests</div>
             <div class="w-full bg-zinc-700 rounded-full h-4 mb-2 overflow-hidden">
-              <div class="bg-green-500 h-4" style="width: 20%;"></div>
+              <div class="bg-green-400 h-4" style="width: 20%;"></div>
             </div>
-            <div class="text-xs text-zinc-400">1 of 5 modules completed</div>
+            <div class="text-xs text-zinc-400">1 of 5 modules complete</div>
           </div>
         </div>
         
@@ -199,18 +226,6 @@ document.getElementById('notifBtn')?.addEventListener('click', function() {
   popup.style.display = popup.style.display === 'none' ? 'block' : 'none';
 });
 </script>
-        <p>Intelligence, Surveillance & Reconnaissance</p>
-      </div>
-      <div class="home-box" onclick="goToPEDTraining()">
-        <img src="CONTACT LOGO.png" alt="PED Training Logo" class="hub-logo" />
-        <h2>PED Training</h2>
-        <p>Processing, Exploitation & Dissemination</p>
-      </div>
-      <div class="home-box" onclick="goToOpsLog()">
-        <img src="Ops Log Logo.png" alt="Operations Log Logo" class="hub-logo" />
-        <h2>Operations Log</h2>
-        <p>Target Log Generator & Management</p>
-      </div>
     </div>
     <!-- Bottom bar for home screen -->
     <div class="bottom-bar">
