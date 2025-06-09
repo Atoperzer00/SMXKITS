@@ -154,11 +154,11 @@
         <!-- Course Progression -->
         <div class="bg-zinc-900/90 rounded-3xl p-8 shadow-2xl grid grid-cols-3 gap-8">
           <div>
-            <div class="font-semibold text-white mb-2">Stars</div>
+            <div class="font-semibold text-white mb-2">Keyboard Input Training</div>
             <div class="w-full bg-zinc-700 rounded-full h-4 mb-2 overflow-hidden">
               <div class="bg-yellow-400 h-4" style="width: 60%;"></div>
             </div>
-            <div class="text-xs text-zinc-400">3 of 5 stars earned</div>
+            <div class="text-xs text-zinc-400">3 of 5 typing tests completed</div>
           </div>
           <div>
             <div class="font-semibold text-white mb-2">Screener Training</div>
@@ -252,6 +252,14 @@ document.getElementById('notifBtn')?.addEventListener('click', function() {
           if (typeof initializeAllSections === 'function') {
             initializeAllSections();
           }
+          
+          // Force reload modules after dynamic content is loaded
+          console.log('SMXKITS content loaded, forcing module reload');
+          if (typeof loadModules === 'function') {
+            setTimeout(loadModules, 1000);
+          } else {
+            console.error('loadModules function not available');
+          }
         })
         .catch(error => {
           console.error('Error loading SMXKITS content:', error);
@@ -285,6 +293,7 @@ document.getElementById('notifBtn')?.addEventListener('click', function() {
     // Navigation functions to ensure proper loading
     function goToKITS() {
       localStorage.setItem('activeSection', 'screen-dashboard');
+      localStorage.setItem('forceModuleReload', 'true'); // Flag for forcing module reload
       window.location.href = "/SMXKITS.html#screen-dashboard";
     }
     
