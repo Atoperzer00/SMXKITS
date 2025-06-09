@@ -6,8 +6,9 @@
   <title>SMX KITS - Dashboard</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="keyboard-training.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body style="background: #202a36; color: #fff;">
+<body class="bg-[#0f172a] text-white">
   <!-- Authentication Check - This runs BEFORE any content loads -->
   <script>
     // Immediate authentication check
@@ -24,8 +25,6 @@
     // We are authenticated, continue loading dashboard
     console.log('✅ Authentication verified - loading student dashboard');
   </script>
-
-  <img id="logo" src="SE66806_logo_orig.png" alt="SMX Logo" />
 
   <!-- Scrollable FMV overlay (hidden by default) -->
   <div id="fmvOverlay" class="fmv-overlay">
@@ -71,133 +70,123 @@
 
   <!-- Main Dashboard Content -->
   <section id="screen-home" class="screen active">
-    <div class="top-bar">
-      <span onclick="logout()">← Logout</span>
-      <span id="user-info" style="margin-left: auto; color: #fff;"></span>
-    </div>
-    <h1 class="hub-title">Training HUB</h1>
-    <div class="home-container">
-      <div class="home-box" onclick="goToKITS()">
-        <img src="KIT CLICK LOGO.png" alt="KITS Logo" class="hub-logo" />
-        <h2>KITS</h2>
-        <p>Keyboarding Intelligence Training System</p>
-      </div>
-      <div class="home-box" onclick="goToCourseContent()">
-        <img src="COURSE REFERENCES LOGO.png" alt="Course Content Logo" class="hub-logo" />
-        <h2>Course Content</h2>
-        <p>Training Materials & Resources</p>
-      </div>
-      <div class="home-box" onclick="goToISRTraining()">
-        <img src="ISR CLICK LOGO.png" alt="ISR Training Logo" class="hub-logo" />
-        <h2>ISR Training</h2>
-<!-- Main Dashboard Content -->
-<section id="screen-home" class="screen active" style="display: flex; min-height: 100vh; background: none;">
-  <!-- Sidebar -->
-  <aside style="width: 270px; min-width: 220px; margin: 32px 32px 32px 0; border-radius: 2rem; background: rgba(10,10,10,0.82); box-shadow: 0 8px 32px #0008; display: flex; flex-direction: column; align-items: center; padding: 2.5rem 1rem;">
-    <div style="background: linear-gradient(135deg, #232931 60%, #232931aa 100%); border-radius: 50%; box-shadow: 0 4px 16px #2227; margin-bottom: 2rem; display: flex; align-items: center; justify-content: center; width: 96px; height: 96px;">
-      <img src="SE66806_logo_orig.png" alt="SMXKITS Logo" style="width: 60px; height: 60px;">
-    </div>
-    <nav style="width: 100%; flex: 1;">
-      <a href="#" onclick="event.preventDefault(); window.location.reload();" style="display: flex; align-items: center; gap: 1rem; color: #fff; font-weight: bold; margin-bottom: 1rem; background: #23293170; border-radius: 1rem; padding: 0.8rem 1.2rem;">🏠 Dashboard</a>
-      <a href="#" onclick="goToPEDTraining();" style="display: flex; align-items: center; gap: 1rem; color: #fff; margin-bottom: 1rem; border-radius: 1rem; padding: 0.8rem 1.2rem; transition: background 0.2s;" onmouseover="this.style.background='#23293188'" onmouseout="this.style.background='none'">🛫 Live PED Exercise</a>
-      <a href="#" onclick="goToKITS();" style="display: flex; align-items: center; gap: 1rem; color: #fff; margin-bottom: 1rem; border-radius: 1rem; padding: 0.8rem 1.2rem; transition: background 0.2s;" onmouseover="this.style.background='#23293188'" onmouseout="this.style.background='none'">⌨️ Keyboard Input Training</a>
-      <a href="#" onclick="goToPEDTraining();" style="display: flex; align-items: center; gap: 1rem; color: #fff; margin-bottom: 1rem; border-radius: 1rem; padding: 0.8rem 1.2rem; transition: background 0.2s;" onmouseover="this.style.background='#23293188'" onmouseout="this.style.background='none'">🧑‍💻 Screener Training</a>
-      <a href="#" onclick="goToISRTraining();" style="display: flex; align-items: center; gap: 1rem; color: #fff; margin-bottom: 1rem; border-radius: 1rem; padding: 0.8rem 1.2rem; transition: background 0.2s;" onmouseover="this.style.background='#23293188'" onmouseout="this.style.background='none'">📡 IA Training</a>
-      <a href="#" onclick="goToOpsLog();" style="display: flex; align-items: center; gap: 1rem; color: #fff; margin-bottom: 1rem; border-radius: 1rem; padding: 0.8rem 1.2rem; transition: background 0.2s;" onmouseover="this.style.background='#23293188'" onmouseout="this.style.background='none'">📝 Grading</a>
-      <a href="#" style="display: flex; align-items: center; gap: 1rem; color: #fff; margin-bottom: 1rem; border-radius: 1rem; padding: 0.8rem 1.2rem; transition: background 0.2s;" onmouseover="this.style.background='#23293188'" onmouseout="this.style.background='none'">📅 Schedule</a>
-      <a href="#" style="display: flex; align-items: center; gap: 1rem; color: #fff; margin-bottom: 1rem; border-radius: 1rem; padding: 0.8rem 1.2rem; transition: background 0.2s;" onmouseover="this.style.background='#23293188'" onmouseout="this.style.background='none'">💬 Feedback</a>
-    </nav>
-    <a href="#" onclick="logout();" style="margin-top: auto; color: #fa4949; font-weight: bold; padding: 0.9rem 1.2rem; border-radius: 1rem; background: #2b2323cc; width: 100%; text-align: center; transition: background 0.2s;" onmouseover="this.style.background='#411a1acc'" onmouseout="this.style.background='#2b2323cc'">Logout</a>
-  </aside>
-
-  <!-- Main Content -->
-  <main style="flex: 1; display: flex; flex-direction: column; padding: 4rem 2.5rem 2rem 0; position: relative; min-width: 0;">
-    <!-- Top bar -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.7rem;">
-      <div>
-        <div style="font-size: 2rem; font-weight: 700; color: #fff;">Welcome back, <span id="studentName">Student</span>!</div>
-        <div style="font-size: 1.08rem; color: #b8bdc7; margin-top: 0.5rem;">
-          Your student portal for real-time ISR training.<br>
-          Dive into live PED, practice with KITS, and monitor your course progress all in one place.
-        </div>
-      </div>
-      <div style="display: flex; align-items: center; gap: 1.5rem;">
-        <!-- Notification bell -->
-        <div style="position: relative;">
-          <button id="notifBtn" style="width: 48px; height: 48px; border-radius: 50%; background: rgba(39,45,51,0.92); border: none; color: #fff; font-size: 1.45rem; box-shadow: 0 4px 18px #1118; cursor: pointer;">🔔</button>
-          <!-- Notification popout (hidden by default) -->
-          <div id="notifPopup" style="display:none; position: absolute; right: 0; margin-top: 0.9rem; width: 340px; background: #191a1fcf; border-radius: 1.2rem; box-shadow: 0 6px 32px #000a; padding: 1.2rem;">
-            <div style="color: #fff; font-weight: bold; font-size: 1.08rem; margin-bottom: 0.5rem;">Notifications</div>
-            <div style="color: #b8bdc7; font-size: 0.97rem;">No new notifications.</div>
+    <div class="min-h-screen flex font-sans">
+      <!-- Sidebar -->
+      <aside class="flex flex-col w-60 bg-black/60 rounded-3xl m-6 p-4 shadow-2xl">
+        <div class="flex flex-col items-center mb-8">
+          <div class="w-16 h-16 rounded-full bg-gradient-to-br from-zinc-900 via-zinc-700 to-zinc-900 flex items-center justify-center shadow-lg mb-2">
+            <img src="SE66806_logo_orig.png" alt="SMXKITS Logo" class="w-12 h-12" />
           </div>
         </div>
-        <!-- Day & instructor avatars -->
-        <div style="display: flex; flex-direction: column; align-items: end;">
-          <span id="studentDay" style="font-weight: 600; color: #fff;">Day 3/7</span>
-          <div style="display: flex; gap: 0.5rem; margin-top: 0.7rem;">
-            <!-- Instructor avatars (clickable for popup bio) -->
-            <img src="instructor1.jpg" onclick="showInstructorBio('Instructor 1')" title="Instructor 1" style="width: 38px; height: 38px; border-radius: 50%; border: 2px solid #fff; cursor: pointer; box-shadow: 0 2px 8px #0005;">
-            <img src="instructor2.jpg" onclick="showInstructorBio('Instructor 2')" title="Instructor 2" style="width: 38px; height: 38px; border-radius: 50%; border: 2px solid #fff; cursor: pointer; box-shadow: 0 2px 8px #0005;">
-            <!-- Add as many as needed -->
+        <nav class="flex-1 space-y-3 text-zinc-200 font-medium">
+          <a href="#" onclick="event.preventDefault(); window.location.reload();" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>🏠</span>Dashboard</a>
+          <a href="#" onclick="goToPEDTraining();" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>🛫</span>Live PED Exercise</a>
+          <a href="#" onclick="goToKITS();" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>⌨️</span>Keyboard Input Training</a>
+          <a href="#" onclick="goToPEDTraining();" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>🧑‍💻</span>Screener Training</a>
+          <a href="#" onclick="goToISRTraining();" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>📡</span>IA Training</a>
+          <a href="#" onclick="goToOpsLog();" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>📝</span>Grading</a>
+          <a href="#" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>📅</span>Schedule</a>
+          <a href="#" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>💬</span>Feedback</a>
+        </nav>
+        <a href="#" onclick="logout();" class="mt-auto flex items-center gap-3 px-4 py-2 rounded-xl bg-zinc-900/80 text-red-400 hover:bg-red-900/50 transition">Logout</a>
+      </aside>
+      
+      <!-- Main Content -->
+      <main class="flex-1 p-8 pr-16">
+        <!-- Top bar -->
+        <div class="flex justify-between items-center mb-8">
+          <div>
+            <div class="text-2xl font-bold text-white mb-1">Welcome back, <span id="studentName">Student</span>!</div>
+            <div class="text-base text-zinc-400">Access live training, modules, progress, and instructor info here.</div>
+          </div>
+          <div class="flex items-center gap-6">
+            <!-- Notification bell -->
+            <div class="relative">
+              <button id="notifBtn" class="w-11 h-11 bg-zinc-900/80 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-blue-700/70 transition text-xl">
+                🔔
+              </button>
+              <!-- Notification popup (hidden by default) -->
+              <div id="notifPopup" class="hidden absolute right-0 mt-3 w-80 bg-zinc-900/95 rounded-xl shadow-2xl p-4">
+                <div class="font-semibold text-white mb-2">Notifications</div>
+                <div class="text-zinc-400 text-sm">No new notifications.</div>
+              </div>
+            </div>
+            <!-- User info / day -->
+            <div class="flex flex-col items-end">
+              <span class="font-semibold text-white" id="studentDay">Day 3/7</span>
+              <div class="flex items-center gap-1 mt-2">
+                <!-- Course instructors avatars -->
+                <img src="instructor1.jpg" onclick="showInstructorBio('Instructor 1')" title="Instructor 1" class="w-9 h-9 rounded-full border-2 border-white cursor-pointer hover:ring-4 hover:ring-blue-500 transition" />
+                <img src="instructor2.jpg" onclick="showInstructorBio('Instructor 2')" title="Instructor 2" class="w-9 h-9 rounded-full border-2 border-white cursor-pointer hover:ring-4 hover:ring-blue-500 transition" />
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
-
-    <!-- Bubbly Training Links -->
-    <div style="display: flex; gap: 2.7rem; margin-bottom: 2.7rem;">
-      <div onclick="goToKITS();" style="background: rgba(36,41,51,0.85); border-radius: 2rem; padding: 2.5rem 2rem; box-shadow: 0 8px 32px #0007; display: flex; flex-direction: column; align-items: center; cursor: pointer; flex:1; transition: transform 0.16s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='none'">
-        <img src="KIT CLICK LOGO.png" style="width: 58px; height: 58px; margin-bottom: 1rem;" />
-        <div style="font-weight: 600; color: #fff; font-size: 1.16rem; margin-bottom: 0.45rem;">Resume Keyboard Input Training</div>
-        <div style="color: #b8bdc7; font-size: 0.98rem;">Pick up where you left off</div>
-      </div>
-      <div onclick="goToCourseContent();" style="background: rgba(36,41,51,0.85); border-radius: 2rem; padding: 2.5rem 2rem; box-shadow: 0 8px 32px #0007; display: flex; flex-direction: column; align-items: center; cursor: pointer; flex:1; transition: transform 0.16s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='none'">
-        <img src="COURSE REFERENCES LOGO.png" style="width: 58px; height: 58px; margin-bottom: 1rem;" />
-        <div style="font-weight: 600; color: #fff; font-size: 1.16rem; margin-bottom: 0.45rem;">Course Content</div>
-        <div style="color: #b8bdc7; font-size: 0.98rem;">View all training modules</div>
-      </div>
-      <div onclick="goToISRTraining();" style="background: rgba(36,41,51,0.85); border-radius: 2rem; padding: 2.5rem 2rem; box-shadow: 0 8px 32px #0007; display: flex; flex-direction: column; align-items: center; cursor: pointer; flex:1; transition: transform 0.16s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='none'">
-        <img src="ISR CLICK LOGO.png" style="width: 58px; height: 58px; margin-bottom: 1rem;" />
-        <div style="font-weight: 600; color: #fff; font-size: 1.16rem; margin-bottom: 0.45rem;">Live ISR Training</div>
-        <div style="color: #b8bdc7; font-size: 0.98rem;">Access live operations & exercises</div>
-      </div>
-    </div>
-
-    <!-- Course Progression Bars -->
-    <div style="display: flex; gap: 2.5rem; margin-bottom: 2.3rem;">
-      <div style="background: rgba(31,36,43,0.9); border-radius: 1.6rem; padding: 2rem 1.5rem; box-shadow: 0 8px 32px #0007; flex:1;">
-        <div style="font-weight: 600; color: #fff; margin-bottom: 0.7rem;">Stars</div>
-        <div style="background: #1b1d20; border-radius: 1rem; height: 1.2rem; margin-bottom: 0.5rem; overflow: hidden;">
-          <div style="background: linear-gradient(90deg, #facc15 80%, #fbcf31 100%); height: 100%; width: 60%;"></div>
+        
+        <!-- Main bubble card -->
+        <div class="w-full bg-zinc-900/90 rounded-3xl p-8 shadow-2xl flex items-center gap-8 mb-8">
+          <img src="SE66806_logo_orig.png" class="w-28 h-28 rounded-3xl shadow-xl border-4 border-zinc-800" alt="Student Avatar" />
+          <div>
+            <div class="text-2xl font-bold text-white mb-2">Welcome to SMX KITS!</div>
+            <div class="text-zinc-400 text-lg">Your student portal for real-time ISR training. Dive into live PED, practice with KITS, and monitor your course progress all in one place.</div>
+          </div>
         </div>
-        <div style="font-size: 0.96rem; color: #b8bdc7;">3 of 5 stars earned</div>
-      </div>
-      <div style="background: rgba(31,36,43,0.9); border-radius: 1.6rem; padding: 2rem 1.5rem; box-shadow: 0 8px 32px #0007; flex:1;">
-        <div style="font-weight: 600; color: #fff; margin-bottom: 0.7rem;">Screener Training</div>
-        <div style="background: #1b1d20; border-radius: 1rem; height: 1.2rem; margin-bottom: 0.5rem; overflow: hidden;">
-          <div style="background: linear-gradient(90deg, #38bdf8 80%, #5eead4 100%); height: 100%; width: 40%;"></div>
+        
+        <!-- Training Links (bubble cards) -->
+        <div class="grid grid-cols-3 gap-8 mb-10">
+          <div onclick="goToKITS();" class="bg-zinc-800/80 rounded-3xl p-7 flex flex-col items-center shadow-xl cursor-pointer hover:scale-105 transition group">
+            <img src="KIT CLICK LOGO.png" class="w-16 h-16 mb-2" alt="KITS" />
+            <div class="font-semibold text-xl text-white mb-1">Resume Keyboard Input Training</div>
+            <div class="text-zinc-400 text-sm group-hover:text-white">Pick up where you left off</div>
+          </div>
+          <div onclick="goToCourseContent();" class="bg-zinc-800/80 rounded-3xl p-7 flex flex-col items-center shadow-xl cursor-pointer hover:scale-105 transition group">
+            <img src="COURSE REFERENCES LOGO.png" class="w-16 h-16 mb-2" alt="Course Content" />
+            <div class="font-semibold text-xl text-white mb-1">Course Content</div>
+            <div class="text-zinc-400 text-sm group-hover:text-white">View all training modules</div>
+          </div>
+          <div onclick="goToISRTraining();" class="bg-zinc-800/80 rounded-3xl p-7 flex flex-col items-center shadow-xl cursor-pointer hover:scale-105 transition group">
+            <img src="ISR CLICK LOGO.png" class="w-16 h-16 mb-2" alt="Live ISR" />
+            <div class="font-semibold text-xl text-white mb-1">Live ISR Training</div>
+            <div class="text-zinc-400 text-sm group-hover:text-white">Access live operations & exercises</div>
+          </div>
         </div>
-        <div style="font-size: 0.96rem; color: #b8bdc7;">2 of 5 modules complete</div>
-      </div>
-      <div style="background: rgba(31,36,43,0.9); border-radius: 1.6rem; padding: 2rem 1.5rem; box-shadow: 0 8px 32px #0007; flex:1;">
-        <div style="font-weight: 600; color: #fff; margin-bottom: 0.7rem;">IA Training</div>
-        <div style="background: #1b1d20; border-radius: 1rem; height: 1.2rem; margin-bottom: 0.5rem; overflow: hidden;">
-          <div style="background: linear-gradient(90deg, #4ade80 80%, #22d3ee 100%); height: 100%; width: 80%;"></div>
+        
+        <!-- Course Progression -->
+        <div class="bg-zinc-900/90 rounded-3xl p-8 shadow-2xl grid grid-cols-3 gap-8">
+          <div>
+            <div class="font-semibold text-white mb-2">Stars</div>
+            <div class="w-full bg-zinc-700 rounded-full h-4 mb-2 overflow-hidden">
+              <div class="bg-yellow-400 h-4" style="width: 60%;"></div>
+            </div>
+            <div class="text-xs text-zinc-400">3 of 5 stars earned</div>
+          </div>
+          <div>
+            <div class="font-semibold text-white mb-2">Screener Training</div>
+            <div class="w-full bg-zinc-700 rounded-full h-4 mb-2 overflow-hidden">
+              <div class="bg-blue-500 h-4" style="width: 40%;"></div>
+            </div>
+            <div class="text-xs text-zinc-400">2 of 5 modules complete</div>
+          </div>
+          <div>
+            <div class="font-semibold text-white mb-2">IA Training</div>
+            <div class="w-full bg-zinc-700 rounded-full h-4 mb-2 overflow-hidden">
+              <div class="bg-green-400 h-4" style="width: 80%;"></div>
+            </div>
+            <div class="text-xs text-zinc-400">4 of 5 modules complete</div>
+          </div>
         </div>
-        <div style="font-size: 0.96rem; color: #b8bdc7;">4 of 5 modules complete</div>
-      </div>
+        
+        <!-- Daily Notice (right floating card) -->
+        <div class="fixed right-16 top-40 w-80 bg-zinc-900/95 rounded-2xl p-6 shadow-2xl">
+          <div class="font-semibold text-white mb-2">Daily Notice</div>
+          <div class="text-zinc-400 text-sm">
+            <b>Assignment due:</b> Upload all mission briefs by 1800Z.<br>
+            <b>Schedule:</b> Live PED at 1300Z, IA review at 1530Z.
+          </div>
+        </div>
+      </main>
     </div>
-
-    <!-- Daily Notice (fixed right side) -->
-    <div style="position: fixed; right: 3vw; top: 8vw; width: 330px; background: #191a1fda; border-radius: 1.7rem; box-shadow: 0 6px 36px #000c; padding: 2rem;">
-      <div style="font-weight: 600; color: #fff; margin-bottom: 0.8rem;">Daily Notice</div>
-      <div style="color: #b8bdc7; font-size: 1rem;">
-        <b>Assignment due:</b> Upload all mission briefs by 1800Z.<br>
-        <b>Schedule:</b> Live PED at 1300Z, IA review at 1530Z.
-      </div>
-    </div>
-  </main>
-</section>
+  </section>
 
 <!-- Instructor bio popup logic -->
 <script>
@@ -321,5 +310,84 @@ document.getElementById('notifBtn')?.addEventListener('click', function() {
   
   <!-- Include the main script file -->
   <script src="script.js"></script>
+  
+  <!-- Dashboard Specific Scripts -->
+  <script>
+    // Notification Bell Toggle
+    document.getElementById('notifBtn')?.addEventListener('click', function() {
+      const popup = document.getElementById('notifPopup');
+      popup.classList.toggle('hidden');
+    });
+    
+    // Close notification when clicking outside
+    document.addEventListener('click', function(event) {
+      const popup = document.getElementById('notifPopup');
+      const btn = document.getElementById('notifBtn');
+      
+      if (!popup?.classList.contains('hidden') && 
+          !popup?.contains(event.target) && 
+          event.target !== btn) {
+        popup?.classList.add('hidden');
+      }
+    });
+    
+    // Instructor Bio Popup
+    function showInstructorBio(name) {
+      // Create overlay
+      if(document.getElementById('bioOverlay')) return;
+      const overlay = document.createElement('div');
+      overlay.id = 'bioOverlay';
+      overlay.className = 'fixed inset-0 bg-black/80 z-50 flex items-center justify-center';
+      
+      // Create bio card
+      const card = document.createElement('div');
+      card.className = 'bg-zinc-900 rounded-2xl shadow-2xl p-8 max-w-md';
+      
+      // Placeholder content - replace with actual instructor data
+      card.innerHTML = `
+        <div class="flex items-start justify-between mb-4">
+          <h2 class="text-xl font-bold text-white">${name}</h2>
+          <button class="text-zinc-400 hover:text-white text-xl" id="closeBioBtn">×</button>
+        </div>
+        <div class="flex gap-4 mb-4">
+          <img src="${name === 'Instructor 1' ? 'instructor1.jpg' : 'instructor2.jpg'}" 
+               class="w-24 h-24 rounded-xl border-2 border-zinc-700" />
+          <div>
+            <div class="text-white font-semibold">Senior ISR Instructor</div>
+            <div class="text-zinc-400 text-sm">10+ years experience</div>
+          </div>
+        </div>
+        <p class="text-zinc-300 mb-4">
+          Specialized in teaching advanced intelligence gathering techniques and real-time 
+          surveillance operations. Former military intelligence officer with field experience.
+        </p>
+        <div class="text-blue-400 text-sm">Contact: instructor@smxkits.mil</div>
+      `;
+      
+      overlay.appendChild(card);
+      document.body.appendChild(overlay);
+      
+      // Add close functionality
+      document.getElementById('closeBioBtn').addEventListener('click', () => {
+        document.body.removeChild(overlay);
+      });
+      
+      // Close on outside click
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          document.body.removeChild(overlay);
+        }
+      });
+    }
+    
+    // Set student name from localStorage if available
+    document.addEventListener('DOMContentLoaded', function() {
+      const studentNameEl = document.getElementById('studentName');
+      const userName = localStorage.getItem('userName');
+      if (studentNameEl && userName) {
+        studentNameEl.textContent = userName;
+      }
+    });
+  </script>
 </body>
 </html>
