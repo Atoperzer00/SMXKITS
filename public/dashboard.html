@@ -79,7 +79,7 @@
             <img src="SE66806_logo_orig.png" alt="SMXKITS Logo" class="w-12 h-12" />
           </div>
         </div>
-        <nav class="flex-1 space-y-3 text-zinc-200 font-medium">
+        <nav class="flex-1 space-y-5 text-zinc-200 font-medium">
           <a href="#" onclick="event.preventDefault(); window.location.reload();" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>🏠</span>Dashboard</a>
           <a href="#" onclick="goToPEDTraining();" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>🛫</span>Live PED Exercise</a>
           <a href="#" onclick="goToKITS();" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>⌨️</span>Keyboard Input Training</a>
@@ -112,14 +112,15 @@
                 <div class="text-zinc-400 text-sm">No new notifications.</div>
               </div>
             </div>
+            
+            <!-- Daily Notice Pop-out Button -->
+            <button id="dailyNoticeBtn" class="w-11 h-11 bg-zinc-900/80 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-blue-700/70 transition text-xl ml-2" title="Show Daily Notice">
+              🗒️
+            </button>
             <!-- User info / day -->
             <div class="flex flex-col items-end">
               <span class="font-semibold text-white" id="studentDay">Day 3/7</span>
-              <div class="flex items-center gap-1 mt-2">
-                <!-- Course instructors avatars -->
-                <img src="instructor1.jpg" onclick="showInstructorBio('Instructor 1')" title="Instructor 1" class="w-9 h-9 rounded-full border-2 border-white cursor-pointer hover:ring-4 hover:ring-blue-500 transition" />
-                <img src="instructor2.jpg" onclick="showInstructorBio('Instructor 2')" title="Instructor 2" class="w-9 h-9 rounded-full border-2 border-white cursor-pointer hover:ring-4 hover:ring-blue-500 transition" />
-              </div>
+              <span class="text-sm text-zinc-400 mt-1">Your progress is on track</span>
             </div>
           </div>
         </div>
@@ -134,6 +135,7 @@
         </div>
         
         <!-- Training Links (bubble cards) -->
+        <!-- First row of training cards -->
         <div class="grid grid-cols-3 gap-8 mb-10">
           <div onclick="goToKITS();" class="bg-zinc-800/80 rounded-3xl p-7 flex flex-col items-center shadow-xl cursor-pointer hover:scale-105 transition group">
             <img src="KIT CLICK LOGO.png" class="w-16 h-16 mb-2" alt="KITS" />
@@ -149,6 +151,29 @@
             <img src="ISR CLICK LOGO.png" class="w-16 h-16 mb-2" alt="Live ISR" />
             <div class="font-semibold text-xl text-white mb-1">Live ISR Training</div>
             <div class="text-zinc-400 text-sm group-hover:text-white">Access live operations & exercises</div>
+          </div>
+        </div>
+        
+        <!-- Second row of training cards -->
+        <div class="grid grid-cols-3 gap-8 mb-10">
+          <div onclick="goToScreenerTraining();" class="bg-zinc-800/80 rounded-3xl p-7 flex flex-col items-center shadow-xl cursor-pointer hover:scale-105 transition group">
+            <img src="SCREENER LOGO.png" class="w-16 h-16 mb-2" alt="Screener Training" />
+            <div class="font-semibold text-xl text-white mb-1">Screener Training</div>
+            <div class="text-zinc-400 text-sm group-hover:text-white">Master real-time video analysis</div>
+          </div>
+          <div onclick="goToIATraining();" class="bg-zinc-800/80 rounded-3xl p-7 flex flex-col items-center shadow-xl cursor-pointer hover:scale-105 transition group">
+            <img src="IA LOGO.png" class="w-16 h-16 mb-2" alt="IA Training" />
+            <div class="font-semibold text-xl text-white mb-1">IA Training</div>
+            <div class="text-zinc-400 text-sm group-hover:text-white">Enhance imagery analysis skills</div>
+          </div>
+          <div class="bg-zinc-800/80 rounded-3xl p-7 flex flex-col items-center shadow-xl group">
+            <img src="INSTRUCTORS LOGO.png" class="w-16 h-16 mb-2" alt="Instructors" />
+            <div class="font-semibold text-xl text-white mb-1">Instructors</div>
+            <div class="flex items-center gap-2 mt-3">
+              <img src="instructor1.jpg" onclick="showInstructorBio('Instructor 1')" title="Instructor 1" class="w-10 h-10 rounded-full border-2 border-white cursor-pointer hover:ring-4 hover:ring-blue-500 transition" />
+              <img src="instructor2.jpg" onclick="showInstructorBio('Instructor 2')" title="Instructor 2" class="w-10 h-10 rounded-full border-2 border-white cursor-pointer hover:ring-4 hover:ring-blue-500 transition" />
+            </div>
+            <div class="text-zinc-400 text-xs mt-2">Click an instructor for bio</div>
           </div>
         </div>
         
@@ -192,9 +217,15 @@
           </div>
         </div>
         
-        <!-- Daily Notice (right floating card) -->
-        <div class="fixed right-16 top-40 w-80 bg-zinc-900/95 rounded-2xl p-6 shadow-2xl">
-          <div class="font-semibold text-white mb-2">Daily Notice</div>
+        <!-- Daily Notice Popup (hidden by default) -->
+        <div id="dailyNoticePopup" class="hidden fixed right-16 top-32 w-96 bg-zinc-900/95 rounded-2xl p-6 shadow-2xl z-50">
+          <div class="flex justify-between items-center mb-2">
+            <div class="font-semibold text-white">Daily Notice</div>
+            <div>
+              <button id="pinNotice" class="text-blue-400 mr-2" title="Pin Notice">📌</button>
+              <button id="closeNotice" class="text-zinc-400 hover:text-white text-lg" title="Close">×</button>
+            </div>
+          </div>
           <div class="text-zinc-400 text-sm">
             <b>Assignment due:</b> Upload all mission briefs by 1800Z.<br>
             <b>Schedule:</b> Live PED at 1300Z, IA review at 1530Z.
@@ -220,11 +251,50 @@ function showInstructorBio(name) {
   overlay.appendChild(bubble);
   document.body.appendChild(overlay);
 }
+
+// Notification popup logic
 document.getElementById('notifBtn')?.addEventListener('click', function() {
   const popup = document.getElementById('notifPopup');
   if(!popup) return;
   popup.style.display = popup.style.display === 'none' ? 'block' : 'none';
 });
+
+// Daily Notice Pop-up Logic
+const dailyNoticeBtn = document.getElementById('dailyNoticeBtn');
+const dailyNoticePopup = document.getElementById('dailyNoticePopup');
+const closeNotice = document.getElementById('closeNotice');
+const pinNotice = document.getElementById('pinNotice');
+
+dailyNoticeBtn?.addEventListener('click', () => {
+  dailyNoticePopup.classList.toggle('hidden');
+});
+
+closeNotice?.addEventListener('click', () => {
+  dailyNoticePopup.classList.add('hidden');
+});
+
+pinNotice?.addEventListener('click', () => {
+  if (dailyNoticePopup.classList.contains('fixed')) {
+    dailyNoticePopup.classList.remove('fixed');
+    dailyNoticePopup.classList.add('absolute');
+    pinNotice.textContent = "📌";
+  } else {
+    dailyNoticePopup.classList.remove('absolute');
+    dailyNoticePopup.classList.add('fixed');
+    pinNotice.textContent = "📍";
+  }
+});
+
+// Advanced Training Navigation functions
+function goToScreenerTraining() {
+  localStorage.setItem('activeSection', 'screen-ped-training');
+  window.location.href = "/SMXKITS.html#screen-ped-training";
+}
+
+function goToIATraining() {
+  localStorage.setItem('activeSection', 'screen-isr-training');
+  window.location.href = "/SMXKITS.html#screen-isr-training";
+}
 </script>
     </div>
     <!-- Bottom bar for home screen -->

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SMX KITS - Keyboard Input Training</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="keyboard-training.css" />
+  <script src="typing-progress.js"></script>
+  <script src="keyboard-training.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#0f172a] text-white">
+  <!-- Authentication Check - This runs BEFORE any content loads -->
+  <script>
+    // Immediate authentication check
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    
+    if (!token || !role) {
+      // No authentication found, redirect immediately
+      window.location.replace('/login.html');
+      // Stop execution to prevent content from loading
+      throw new Error('Authentication required');
+    }
+    
+    // We are authenticated, continue loading keyboard training
+    console.log('✅ Authentication verified - loading keyboard training');
+  </script>
+
+  <!-- Main Dashboard Content -->
+  <div class="min-h-screen flex font-sans">
+    <!-- Sidebar -->
+    <aside class="flex flex-col w-60 bg-black/60 rounded-3xl m-6 p-4 shadow-2xl">
+      <div class="flex flex-col items-center mb-8">
+        <div class="w-16 h-16 rounded-full bg-gradient-to-br from-zinc-900 via-zinc-700 to-zinc-900 flex items-center justify-center shadow-lg mb-2">
+          <img src="SE66806_logo_orig.png" alt="SMXKITS Logo" class="w-12 h-12" />
+        </div>
+      </div>
+      <nav class="flex-1 space-y-3 text-zinc-200 font-medium">
+        <a href="dashboard.html" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>🏠</span>Dashboard</a>
+        <a href="#" class="flex items-center gap-3 px-4 py-2 rounded-xl bg-blue-600/40 text-white"><span>⌨️</span>Keyboard Input Training</a>
+        <a href="#" onclick="goToPEDTraining();" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>🛫</span>Live PED Exercise</a>
+        <a href="#" onclick="goToPEDTraining();" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>🧑‍💻</span>Screener Training</a>
+        <a href="#" onclick="goToISRTraining();" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>📡</span>IA Training</a>
+        <a href="#" onclick="goToOpsLog();" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>📝</span>Grading</a>
+      </nav>
+      <a href="#" onclick="logout();" class="mt-auto flex items-center gap-3 px-4 py-2 rounded-xl bg-zinc-900/80 text-red-400 hover:bg-red-900/50 transition">Logout</a>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="flex-1 p-8 pr-16">
+      <!-- Top bar -->
+      <div class="flex justify-between items-center mb-8">
+        <div>
+          <div class="text-2xl font-bold text-white mb-1">Keyboard Input Training</div>
+          <div class="text-base text-zinc-400">Practice your typing skills with industry-standard terminology and formats.</div>
+        </div>
+        <div id="studentInfo" class="text-right">
+          <div class="font-semibold text-white" id="studentName">Student</div>
+          <div class="text-sm text-zinc-400" id="studentDay">Day 3/7</div>
+        </div>
+      </div>
+      
+      <!-- Progress Section -->
+      <div class="bg-zinc-900/90 rounded-3xl p-6 shadow-2xl mb-8">
+        <div class="flex justify-between items-center mb-4">
+          <div class="font-semibold text-white text-lg">Your Progress</div>
+          <div class="text-sm text-zinc-400">Training Course</div>
+        </div>
+        
+        <div class="grid grid-cols-3 gap-6">
+          <!-- Typing Progress -->
+          <div>
+            <div class="font-semibold text-white mb-2">Standard Modules</div>
+            <div class="w-full bg-zinc-700 rounded-full h-4 mb-2 overflow-hidden">
+              <div id="typing-progress-bar" class="bg-yellow-400 h-4" style="width: 60%;"></div>
+            </div>
+            <div id="typing-progress-text" class="text-xs text-zinc-400">3 of 5 typing tests completed</div>
+          </div>
+          
+          <div>
+            <div class="font-semibold text-white mb-2">POL Typing Tests</div>
+            <div class="w-full bg-zinc-700 rounded-full h-4 mb-2 overflow-hidden">
+              <div class="bg-green-400 h-4" style="width: 20%;"></div>
+            </div>
+            <div class="text-xs text-zinc-400">1 of 5 modules complete</div>
+          </div>
+          
+          <!-- WPM Stats -->
+          <div>
+            <div class="font-semibold text-white mb-2">Your Metrics</div>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="bg-zinc-800/80 rounded-xl p-3">
+                <div class="text-xs text-zinc-500 mb-1">Last WPM</div>
+                <div class="text-2xl font-bold text-white"><span id="last-wpm">0</span></div>
+              </div>
+              <div class="bg-zinc-800/80 rounded-xl p-3">
+                <div class="text-xs text-zinc-500 mb-1">Avg WPM</div>
+                <div class="text-2xl font-bold text-white"><span id="avg-wpm">0</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Modules Section -->
+      <div class="bg-zinc-900/90 rounded-3xl p-6 shadow-2xl">
+        <div class="font-semibold text-white text-lg mb-4">Available Modules</div>
+        <div class="module-list" id="module-list"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- The remaining content is loaded from SMXKITS.html -->
+  <div id="dynamic-content" style="display: none;">
+    <!-- This will hold the typing interface screens when needed -->
+  </div>
+
+  <!-- Import navigation and module loading scripts -->
+  <script>
+    // Load student info
+    document.addEventListener('DOMContentLoaded', function() {
+      const studentName = localStorage.getItem('userName') || 'Student';
+      document.getElementById('studentName').textContent = studentName;
+      
+      // Load typing progress
+      loadTypingData();
+      updateDashboardProgress();
+    });
+    
+    // Logout function
+    function logout() {
+      // Clear auth tokens
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      localStorage.removeItem('userName');
+      localStorage.removeItem('classId');
+      
+      // Redirect to login page
+      window.location.replace('/login.html');
+    }
+    
+    // Load the modules from SMXKITS directly
+    document.addEventListener('DOMContentLoaded', function() {
+      // We'll load the dynamic content from SMXKITS.html
+      fetch('/SMXKITS.html')
+        .then(response => response.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          
+          // Add the typing screens to our dynamic content
+          const typingScreens = [
+            doc.getElementById('screen-dashboard'),
+            doc.getElementById('screen-practice'),
+            doc.getElementById('screen-typing'),
+            doc.getElementById('screen-results')
+          ];
+          
+          const dynamicContent = document.getElementById('dynamic-content');
+          typingScreens.forEach(screen => {
+            if (screen) {
+              dynamicContent.appendChild(document.importNode(screen, true));
+            }
+          });
+          
+          // Now load the script.js to initialize everything
+          const scriptEl = document.createElement('script');
+          scriptEl.src = 'script.js';
+          document.body.appendChild(scriptEl);
+          
+          // Once script is loaded, show module list
+          scriptEl.onload = function() {
+            if (typeof loadModules === 'function') {
+              loadModules();
+              console.log('Modules loaded successfully');
+            }
+          };
+        })
+        .catch(error => {
+          console.error('Error loading SMXKITS content:', error);
+        });
+    });
+    
+    // Function to go back to dashboard
+    function goToDashboard() {
+      window.location.href = '/dashboard.html';
+    }
+  </script>
+</body>
+</html>
