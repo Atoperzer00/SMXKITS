@@ -92,7 +92,17 @@
         });
         
         if (!response.ok) {
-          throw new Error('Failed to fetch users');
+          // Handle specific error codes
+          if (response.status === 401) {
+            alert('Session expired. Please login again.');
+            window.location.href = '/login.html';
+            return;
+          } else if (response.status === 403) {
+            throw new Error('You do not have permission to view users');
+          } else {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to fetch users');
+          }
         }
         
         users = await response.json();
@@ -203,7 +213,19 @@
         
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to save user');
+          
+          // Handle specific error codes
+          if (response.status === 401) {
+            alert('Session expired. Please login again.');
+            window.location.href = '/login.html';
+            return;
+          } else if (response.status === 403) {
+            throw new Error('You do not have permission to perform this action');
+          } else if (response.status === 409) {
+            throw new Error('Username already exists. Please choose a different username.');
+          } else {
+            throw new Error(errorData.error || 'Failed to save user');
+          }
         }
         
         // Refresh user list
@@ -238,7 +260,19 @@
           
           if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to delete user');
+            
+            // Handle specific error codes
+            if (response.status === 401) {
+              alert('Session expired. Please login again.');
+              window.location.href = '/login.html';
+              return;
+            } else if (response.status === 403) {
+              throw new Error('You do not have permission to perform this action');
+            } else if (response.status === 404) {
+              throw new Error('User not found. It may have been already deleted.');
+            } else {
+              throw new Error(errorData.error || 'Failed to delete user');
+            }
           }
           
           // Refresh user list
