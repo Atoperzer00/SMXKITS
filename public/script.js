@@ -44,12 +44,20 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize the clock for FMV overlay
   startClock();
   
-  // Load modules and content
-  loadModules();
-  loadCourseContent();
-  loadPowerPointLessons();
+  // Load modules and content - with error handling
+  try {
+    console.log('Loading modules...');
+    loadModules();
+    console.log('Loading course content...');
+    loadCourseContent();
+    console.log('Loading PowerPoint lessons...');
+    loadPowerPointLessons();
+  } catch (error) {
+    console.error('Error during content loading:', error);
+  }
   
   // Handle hash-based navigation
+  console.log('Handling hash change...');
   handleHashChange();
   
   // Set up PDF.js worker
@@ -80,12 +88,30 @@ function handleHashChange() {
       showScreen(screenId);
       // Store the active section
       localStorage.setItem('activeSection', screenId);
+      
+      // Check if we need to force module reload (when coming from dashboard)
+      if (screenId === 'screen-dashboard' && localStorage.getItem('forceModuleReload') === 'true') {
+        console.log('Force module reload flag detected, reloading modules');
+        setTimeout(() => {
+          loadModules();
+          localStorage.removeItem('forceModuleReload'); // Clear the flag
+        }, 800);
+      }
     }
   } else {
     // Check if we have a stored section
     const storedSection = localStorage.getItem('activeSection');
     if (storedSection && document.getElementById(storedSection)) {
       showScreen(storedSection);
+      
+      // Same check for forced module reload
+      if (storedSection === 'screen-dashboard' && localStorage.getItem('forceModuleReload') === 'true') {
+        console.log('Force module reload flag detected, reloading modules');
+        setTimeout(() => {
+          loadModules();
+          localStorage.removeItem('forceModuleReload'); // Clear the flag
+        }, 800);
+      }
     }
   }
 }
@@ -95,7 +121,38 @@ window.addEventListener('hashchange', handleHashChange);
 
 // Screen-specific navigation functions
 function goToKITS() {
+  console.log('Going to KITS screen-dashboard');
   showScreen('screen-dashboard');
+  
+  // Force reload modules - for debugging
+  setTimeout(() => {
+    console.log('Forcing module reload...');
+    reloadModules();
+  }, 300);
+}
+
+// Debug function to reload modules
+function reloadModules() {
+  const moduleListEl = document.getElementById('module-list');
+  console.log('Module list element exists:', !!moduleListEl);
+  
+  if (!moduleListEl) {
+    console.error('Module list element not found!');
+    console.log('Available elements with ID containing "module":');
+    document.querySelectorAll('[id*="module"]').forEach(el => {
+      console.log('- Element ID:', el.id);
+    });
+    return;
+  }
+  
+  // Try rendering modules again
+  moduleListEl.innerHTML = modules.map(module => `
+    <div class="module-item" onclick="showPractices('${module.id}')">
+      <h3>${module.title}</h3>
+      <p>${module.description}</p>
+    </div>
+  `).join('');
+  console.log('Modules reloaded');
 }
 
 function goToCourseContent() {
@@ -155,16 +212,22 @@ function loadModules() {
     }
   ];
   
-  // Render modules list
-  const moduleListEl = document.getElementById('module-list');
-  if (moduleListEl) {
-    moduleListEl.innerHTML = modules.map(module => `
-      <div class="module-item" onclick="showPractices('${module.id}')">
-        <h3>${module.title}</h3>
-        <p>${module.description}</p>
-      </div>
-    `).join('');
-  }
+  // Render modules list - delay to ensure DOM is ready
+  setTimeout(() => {
+    const moduleListEl = document.getElementById('module-list');
+    console.log('Rendering modules, element exists:', !!moduleListEl);
+    
+    if (moduleListEl) {
+      moduleListEl.innerHTML = modules.map(module => `
+        <div class="module-item" onclick="showPractices('${module.id}')">
+          <h3>${module.title}</h3>
+          <p>${module.description}</p>
+        </div>
+      `).join('');
+    } else {
+      console.error('Module list element not found in the DOM');
+    }
+  }, 500); // Small delay to ensure the DOM is ready
 }
 
 function showPractices(moduleId) {
