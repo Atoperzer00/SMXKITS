@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>IA Training - SMX KITS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .zoom-in { transform: scale(1.5); transition: transform .3s; }
+    .zoom-out { transform: scale(1); transition: transform .3s; }
+    .video-container { overflow: hidden; border-radius: 1rem; }
+    /* You can expand styling as needed */
+  </style>
+</head>
+<body class="bg-[#0f172a] text-white min-h-screen font-sans">
+  <div class="flex min-h-screen">
+    <!-- Sidebar (copy/adapted from OpsLog) -->
+    <aside class="w-80 bg-[#2b2b2b] rounded-3xl m-6 p-4 shadow-2xl flex flex-col" id="opsSidebar">
+      <div class="flex items-center mb-6 justify-between">
+        <div class="text-2xl font-bold">IA Training</div>
+        <button onclick="goBack()" class="text-zinc-400 hover:text-blue-400 text-lg">← Back</button>
+      </div>
+      <!-- You can simplify fields for IA Training if needed -->
+      <form id="iaForm" class="flex-1 flex flex-col gap-2">
+        <label>IA Notes
+          <textarea name="iaNotes" rows="4" class="rounded-md bg-zinc-800/60 border border-zinc-700 p-2 text-white"></textarea>
+        </label>
+        <!-- Add more fields if desired -->
+        <button type="button" id="generateCall" class="mt-auto bg-green-500 hover:bg-green-700 text-white font-bold py-2 rounded-xl transition">
+          Generate Call
+        </button>
+      </form>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="flex-1 p-10">
+      <h1 class="text-3xl font-extrabold mb-6 text-white">IA Training Modules</h1>
+      <!-- Modules/Practices List -->
+      <div class="bg-zinc-900/90 rounded-3xl p-8 shadow-2xl mb-8">
+        <div class="font-semibold text-white text-lg mb-6">Modules</div>
+        <div id="modules-list" class="flex gap-6">
+          <!-- Modules rendered here by JS -->
+        </div>
+      </div>
+      <!-- Practices for selected module -->
+      <div id="practices-list" class="mb-8"></div>
+    </main>
+  </div>
+  
+  <!-- Overlay: Video Player, Sidebar, and Callout Entry -->
+  <div id="iaOverlay" class="fixed inset-0 bg-[#10131b]/90 flex items-center justify-center z-50 hidden">
+    <div class="flex bg-zinc-900/95 rounded-2xl shadow-2xl overflow-hidden w-[1000px] max-w-full">
+      <!-- Left: Sidebar (same as left, with fewer fields if desired) -->
+      <div class="w-80 bg-[#23272e] p-6 flex flex-col">
+        <div class="text-lg font-bold mb-2">Ops Log (Demo)</div>
+        <textarea id="overlayIaNotes" rows="8" class="rounded-md bg-zinc-800/60 border border-zinc-700 p-2 text-white mb-4" placeholder="Write your call here..."></textarea>
+        <button onclick="generateCallout()" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 rounded-xl transition mt-auto">
+          Generate Call
+        </button>
+      </div>
+      <!-- Right: Video Player + Entry -->
+      <div class="flex-1 flex flex-col items-center justify-center p-8">
+        <div class="video-container w-[480px] h-[270px] mb-4 bg-black relative">
+          <video id="iaVideo" src="demo-loop.mp4" autoplay loop muted class="rounded-xl w-full h-full object-cover zoom-out"></video>
+          <button id="zoomBtn" class="absolute top-3 right-3 bg-zinc-800/70 rounded-lg px-3 py-1 text-xs text-white shadow" onclick="toggleZoom()">Toggle Zoom</button>
+        </div>
+        <textarea class="w-full bg-zinc-800/60 border border-zinc-700 rounded-lg p-2 text-white mb-2" rows="3" placeholder="Type a call or note here..."></textarea>
+      </div>
+    </div>
+    <!-- Close overlay -->
+    <button onclick="closeOverlay()" class="absolute top-6 right-8 bg-zinc-800/70 px-4 py-2 rounded-lg text-white font-bold text-xl hover:bg-red-700">✕</button>
+  </div>
+
+  <script>
+    // Render modules and practices dynamically
+    const NUM_MODULES = 5, PRACTICES_PER_MODULE = 10;
+    let currentModule = null, currentPractice = null;
+    function renderModules() {
+      const modulesDiv = document.getElementById('modules-list');
+      modulesDiv.innerHTML = '';
+      for (let i = 1; i <= NUM_MODULES; i++) {
+        const btn = document.createElement('button');
+        btn.className = "bg-blue-800/80 hover:bg-blue-600 text-white rounded-xl px-6 py-3 font-bold text-lg shadow transition";
+        btn.textContent = "Module " + i;
+        btn.onclick = () => renderPractices(i);
+        modulesDiv.appendChild(btn);
+      }
+    }
+    function renderPractices(moduleNum) {
+      currentModule = moduleNum;
+      const practicesDiv = document.getElementById('practices-list');
+      practicesDiv.innerHTML = `<div class="font-semibold text-white text-lg mb-3">Practices for Module ${moduleNum}</div><div class="flex gap-4 flex-wrap">`;
+      for (let p = 1; p <= PRACTICES_PER_MODULE; p++) {
+        const btn = document.createElement('button');
+        btn.className = "bg-zinc-700/90 hover:bg-blue-600 text-white rounded-xl px-4 py-2 font-bold shadow transition mb-2";
+        btn.textContent = "Practice " + p;
+        btn.onclick = () => openOverlay(moduleNum, p);
+        practicesDiv.appendChild(btn);
+      }
+      practicesDiv.innerHTML += '</div>';
+    }
+    // Overlay controls
+    function openOverlay(module, practice) {
+      currentModule = module;
+      currentPractice = practice;
+      document.getElementById('iaOverlay').classList.remove('hidden');
+      // Optionally load a different video per module/practice
+      // document.getElementById('iaVideo').src = `video-mod${module}-prac${practice}.mp4`;
+    }
+    function closeOverlay() {
+      document.getElementById('iaOverlay').classList.add('hidden');
+    }
+    // Zoom button
+    function toggleZoom() {
+      const vid = document.getElementById('iaVideo');
+      if (vid.classList.contains('zoom-in')) {
+        vid.classList.remove('zoom-in');
+        vid.classList.add('zoom-out');
+      } else {
+        vid.classList.remove('zoom-out');
+        vid.classList.add('zoom-in');
+      }
+    }
+    // Demo: generate callout
+    function generateCallout() {
+      const note = document.getElementById('overlayIaNotes').value;
+      // Here, send to instructor grading (backend needed)
+      alert(`Sent for grading:\n\nIA TRAINING: Module ${currentModule}/Practice ${currentPractice}\n\n${note}`);
+      closeOverlay();
+    }
+    // Navigation
+    function goBack() {
+      window.location.href = '/dashboard.html';
+    }
+    // Init
+    renderModules();
+  </script>
+</body>
+</html>

@@ -73,6 +73,44 @@
   </div>
   <script>
     let users = []; // Will be populated from the API
+    let classes = []; // Will be populated from the API
+    
+    // Initialize the page
+    document.addEventListener('DOMContentLoaded', async () => {
+      await Promise.all([fetchUsers(), fetchClasses()]);
+    });
+    
+    // Fetch classes from the backend
+    async function fetchClasses() {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          alert('Authentication token missing. Please log in again.');
+          window.location.href = '/login.html';
+          return;
+        }
+        
+        const response = await fetch('/api/classes', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+          if (response.status === 401) {
+            alert('Session expired. Please login again.');
+            window.location.href = '/login.html';
+            return;
+          }
+          throw new Error('Failed to fetch classes');
+        }
+        
+        classes = await response.json();
+      } catch (error) {
+        console.error('Error fetching classes:', error);
+      }
+    }
+    
     // Fetch users from API
     async function fetchUsers() {
       try {
@@ -115,18 +153,29 @@
     }
     
     function renderUsers() {
-      document.getElementById('userTable').innerHTML = users.map(u => `
-        <tr>
-          <td>${u.name || ''}</td>
-          <td>${u.email || ''}</td>
-          <td>${u.role || ''}</td>
-          <td>${u.status ? 'Active' : 'Inactive'}</td>
-          <td class="actions">
-            <button onclick="editUser('${u._id}')" style="background:#1e88e5;color:#fff;border:none;padding:4px 8px;border-radius:4px;margin-right:5px;">Edit</button>
-            <button onclick="removeUser('${u._id}')" style="background:#e53935;color:#fff;border:none;padding:4px 8px;border-radius:4px;">Remove</button>
-          </td>
-        </tr>
-      `).join('');
+      document.getElementById('userTable').innerHTML = users.map(u => {
+        // Find class name if user has a classId
+        let className = '';
+        if (u.classId) {
+          const classObj = classes.find(c => c._id === u.classId);
+          if (classObj) {
+            className = ` (${classObj.name})`;
+          }
+        }
+        
+        return `
+          <tr>
+            <td>${u.name || ''}</td>
+            <td>${u.email || ''}</td>
+            <td>${u.role || ''}${className}</td>
+            <td>${u.status ? 'Active' : 'Inactive'}</td>
+            <td class="actions">
+              <button onclick="editUser('${u._id}')" style="background:#1e88e5;color:#fff;border:none;padding:4px 8px;border-radius:4px;margin-right:5px;">Edit</button>
+              <button onclick="removeUser('${u._id}')" style="background:#e53935;color:#fff;border:none;padding:4px 8px;border-radius:4px;">Remove</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
     }
     function showAddUserForm() {
       document.getElementById('modalTitle').innerText = 'Add User';
@@ -137,7 +186,45 @@
       document.getElementById('userPassword').value = '';
       document.getElementById('userRole').value = 'Instructor';
       document.getElementById('userStatus').value = 'Active';
+      
+      // Remove class field if it exists
+      const classSelect = document.getElementById('userClass');
+      if (classSelect) {
+        classSelect.parentNode.remove();
+      }
+      
+      // Event listener for role change
+      const roleSelect = document.getElementById('userRole');
+      roleSelect.addEventListener('change', function() {
+        handleRoleChange(this.value);
+      });
+      
       document.getElementById('userModal').style.display = 'block';
+    }
+    
+    // Handle showing/hiding class selection based on role
+    function handleRoleChange(role) {
+      const formElement = document.getElementById('userForm');
+      const statusLabel = document.querySelector('label:nth-last-of-type(1)');
+      
+      // Remove existing class field if it exists
+      const existingClassField = document.getElementById('userClass');
+      if (existingClassField) {
+        existingClassField.parentNode.remove();
+      }
+      
+      // Add class field if role is student
+      if (role.toLowerCase() === 'student') {
+        const classLabel = document.createElement('label');
+        classLabel.innerHTML = `Class: 
+          <select id="userClass">
+            <option value="">-- No Class --</option>
+            ${classes.map(c => `<option value="${c._id}">${c.name}</option>`).join('')}
+          </select>`;
+        
+        // Insert before the status field
+        formElement.insertBefore(classLabel, statusLabel);
+      }
     }
     function editUser(id) {
       const u = users.find(x => x._id === id);
@@ -155,6 +242,35 @@
       document.getElementById('userRole').value = u.role.charAt(0).toUpperCase() + u.role.slice(1);
       document.getElementById('userStatus').value = u.status ? 'Active' : 'Inactive';
       document.getElementById('userModal').style.display = 'block';
+      
+      // If we're editing a student, we should populate class information
+      if (u.role === 'student' && u.classId) {
+        // Add class field if it doesn't exist
+        if (!document.getElementById('userClass')) {
+          const classLabel = document.createElement('label');
+          classLabel.innerHTML = `Class: 
+            <select id="userClass">
+              <option value="">-- No Class --</option>
+              ${classes.map(c => `<option value="${c._id}">${c.name}</option>`).join('')}
+            </select>`;
+          
+          // Insert before the status field
+          const statusLabel = document.querySelector('label:nth-last-of-type(1)');
+          statusLabel.parentNode.insertBefore(classLabel, statusLabel);
+        }
+        
+        // Set the selected class
+        const classSelect = document.getElementById('userClass');
+        if (classSelect) {
+          classSelect.value = u.classId;
+        }
+      } else {
+        // Remove class field if it exists and we're not editing a student
+        const classSelect = document.getElementById('userClass');
+        if (classSelect) {
+          classSelect.parentNode.remove();
+        }
+      }
     }
     async function saveUser(e) {
       e.preventDefault();
@@ -182,7 +298,24 @@
           userData.password = password;
         }
         
+        // Get class ID if it exists and user is a student
+        const classSelect = document.getElementById('userClass');
+        let classId = null;
+        if (classSelect && userData.role === 'student') {
+          classId = classSelect.value || null;
+        }
+        
+        // For students, check if there's a change in class assignment
+        let oldClassId = null;
+        if (id && userData.role === 'student') {
+          const existingUser = users.find(u => u._id === id);
+          if (existingUser) {
+            oldClassId = existingUser.classId;
+          }
+        }
+        
         let response;
+        let savedUser;
         
         if (id) {
           // Update existing user
@@ -228,9 +361,58 @@
           }
         }
         
-        // Refresh user list
+        savedUser = await response.json();
+        
+        // Handle class assignment for students
+        if (userData.role === 'student') {
+          // If editing a user and class assignment changed
+          if (id && oldClassId !== classId) {
+            // Remove from old class if needed
+            if (oldClassId) {
+              try {
+                await fetch(`/api/classes/${oldClassId}/students/${id}`, {
+                  method: 'DELETE',
+                  headers: {
+                    'Authorization': `Bearer ${token}`
+                  }
+                });
+              } catch (error) {
+                console.warn('Could not remove student from previous class:', error);
+              }
+            }
+            
+            // Add to new class if selected
+            if (classId) {
+              try {
+                await fetch(`/api/classes/${classId}/students/${id || savedUser._id}`, {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${token}`
+                  }
+                });
+              } catch (error) {
+                console.warn('Could not add student to new class:', error);
+              }
+            }
+          }
+          // If creating a new student with class assignment
+          else if (!id && classId) {
+            try {
+              await fetch(`/api/classes/${classId}/students/${savedUser._id}`, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${token}`
+                }
+              });
+            } catch (error) {
+              console.warn('Could not add new student to class:', error);
+            }
+          }
+        }
+        
+        // Refresh user list and classes
         hideUserForm();
-        await fetchUsers();
+        await Promise.all([fetchUsers(), fetchClasses()]);
         
       } catch (error) {
         console.error('Error saving user:', error);

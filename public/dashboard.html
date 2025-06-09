@@ -124,7 +124,7 @@
     }
   </style>
 </head>
-<body class="bg-[#0f172a] text-white">
+<body class="bg-[#0f172a] text-white min-h-screen overflow-y-auto">
   <!-- Authentication Check - This runs BEFORE any content loads -->
   <script>
     // Immediate authentication check
@@ -186,7 +186,7 @@
 
   <!-- Main Dashboard Content -->
   <section id="screen-home" class="screen active">
-    <div class="min-h-screen flex font-sans overflow-auto">
+    <div class="min-h-screen flex font-sans" style="overflow: auto;">
       <!-- Sidebar -->
       <aside class="flex flex-col w-60 bg-black/60 rounded-3xl m-6 p-4 shadow-2xl">
         <div class="flex flex-col items-center mb-8">
@@ -194,21 +194,21 @@
             <img src="SE66806_logo_orig.png" alt="SMXKITS Logo" class="w-12 h-12" />
           </div>
         </div>
-        <nav class="flex-1 space-y-5 text-zinc-200 font-medium">
+        <nav class="flex-1 space-y-3 text-zinc-200 font-medium">
           <a href="#" onclick="event.preventDefault(); window.location.reload();" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>🏠</span>Dashboard</a>
           <a href="#" onclick="goToPEDTraining();" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>🛫</span>Live PED Exercise</a>
           <a href="#" onclick="goToKITS();" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>⌨️</span>Keyboard Input Training</a>
-          <a href="#" onclick="goToPEDTraining();" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>🧑‍💻</span>Screener Training</a>
-          <a href="mission-links.html" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>📡</span>IA Training</a>
+          <a href="Screener Training.html" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>🧑‍💻</span>Screener Training</a>
+          <a href="IA Training.html" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>📡</span>IA Training</a>
           <a href="#" onclick="goToOpsLog();" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>📝</span>Grading</a>
-          <a href="calendar.html" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>📅</span>Schedule</a>
-          <a href="feedback.html" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>💬</span>Feedback</a>
+          <a href="#" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>📅</span>Schedule</a>
+          <a href="#" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>💬</span>Feedback</a>
         </nav>
         <a href="#" onclick="logout();" class="mt-auto flex items-center gap-3 px-4 py-2 rounded-xl bg-zinc-900/80 text-red-400 hover:bg-red-900/50 transition">Logout</a>
       </aside>
       
       <!-- Main Content -->
-      <main class="flex-1 p-8 pr-16 overflow-y-auto">
+      <main class="flex-1 p-8 pr-16 overflow-y-auto" style="min-height: 0;">
         <!-- Top bar -->
         <div class="flex justify-between items-center mb-8">
           <div>
@@ -496,10 +496,6 @@ function goToIATraining() {
     }
 
     // Navigation functions to ensure proper loading
-    function goToKITS() {
-      // Redirect directly to keyboard-training.html without tracking progress
-      window.location.href = "keyboard-training.html";
-    }
     
     function goToCourseContent() {
       // Redirect directly to course-content.html without tracking progress
