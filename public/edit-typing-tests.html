@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Edit Typing Tests - Admin Controls</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .fade-in { animation: fade-in .2s cubic-bezier(.4,0,.2,1); }
+    @keyframes fade-in { from { opacity: 0; transform: translateY(12px);} to {opacity:1; transform:translateY(0);} }
+    .save-bubble {
+      box-shadow: 0 4px 24px #0ff5, 0 2px 8px #000a;
+      background: rgba(34, 197, 94, 0.95); /* green glassy */
+      color: white;
+    }
+    .saved-msg {
+      background: #22c55e;
+      color: #fff;
+      border-radius: 0.75rem;
+      font-weight: bold;
+      padding: 0.35rem 1.2rem;
+      box-shadow: 0 2px 16px #22c55e44;
+      margin-left: 0.5rem;
+    }
+  </style>
+</head>
+<body class="bg-[#0f172a] text-white min-h-screen font-sans">
+  <!-- Authentication Check -->
+  <script>
+    // Check if user is authenticated and has admin role
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    
+    if (!token || !role) {
+      // No authentication found, redirect to login
+      window.location.replace('/login.html');
+    } else if (role !== 'admin') {
+      // User is authenticated but doesn't have admin privileges
+      alert('Access denied. Administrator privileges required.');
+      window.location.replace('/dashboard.html');
+    }
+  </script>
+
+  <div class="flex min-h-screen">
+    <!-- Sidebar -->
+    <aside class="flex flex-col w-64 bg-[#002d62] rounded-3xl m-6 p-4 shadow-2xl">
+      <div class="flex flex-col items-center mb-10">
+        <img src="SMXKITS.png" alt="SMXKITS Logo" class="w-24 h-24 rounded-full shadow-lg mb-2" />
+        <div class="font-bold text-xl text-white">Admin Controls</div>
+      </div>
+      <nav class="flex-1 space-y-4 text-zinc-200 font-medium">
+        <a href="admin-dashboard.html" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-[#003c8c42] transition"><span>🏠</span>Admin Dashboard</a>
+        <a href="edit-typing-tests.html" class="flex items-center gap-3 px-4 py-2 rounded-xl bg-blue-600/40 text-white border-l-4 border-[#1da1f2]"><span>✏️</span>Edit Typing Tests</a>
+        <a href="users-roles.html" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-[#003c8c42] transition"><span>👥</span>Users & Roles</a>
+      </nav>
+      <a href="#" onclick="logout();" class="mt-auto flex items-center gap-3 px-4 py-2 rounded-xl bg-zinc-900/80 text-red-400 hover:bg-red-900/50 transition">Logout</a>
+    </aside>
+    <!-- Main Content -->
+    <main class="flex-1 p-8 pr-8">
+      <h1 class="text-3xl font-extrabold mb-6 text-white tracking-tight">Edit Typing Tests</h1>
+      <p class="text-blue-300 mb-6">Customize typing test content for all trainees. Changes will be immediately available in the typing trainer.</p>
+      <div id="modules-accordion" class="space-y-5"></div>
+    </main>
+  </div>
+  <!-- Save Bubble (hidden by default, appears next to edited textarea) -->
+  <button id="saveBubble" class="save-bubble px-6 py-2 rounded-xl text-lg font-bold absolute z-40 fade-in hidden transition"
+    style="top:0;left:0;">Save changes</button>
+  <span id="savedMsg" class="saved-msg absolute z-50 hidden fade-in">Saved!</span>
+  <script>
+    // Demo data, replace with your backend if needed
+    const NUM_MODULES = 5, PRACTICES_PER_MODULE = 20;
+    // Load typing tests from localStorage, or create default
+    function getTypingTests() {
+      let d = localStorage.getItem('smx_typing_tests');
+      if (d) return JSON.parse(d);
+      // Default dummy text
+      return Array.from({length:NUM_MODULES}, (_,m) =>
+        Array.from({length:PRACTICES_PER_MODULE}, (_,p) => `Module ${m+1} Practice ${p+1}: Enter typing text here.`)
+      );
+    }
+    function saveTypingTests(tests) {
+      localStorage.setItem('smx_typing_tests', JSON.stringify(tests));
+    }
+    // Render accordion
+    function renderEditor() {
+      const modules = getTypingTests();
+      const cont = document.getElementById('modules-accordion');
+      cont.innerHTML = '';
+      modules.forEach((practices, mIdx) => {
+        // Module header
+        const modWrap = document.createElement('div');
+        modWrap.className = "rounded-2xl shadow-lg bg-zinc-900/85";
+        const head = document.createElement('button');
+        head.className = "w-full text-left flex items-center justify-between p-5 text-xl font-bold rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 hover:bg-blue-900/30 transition";
+        
+        // Module titles based on index
+        let moduleTitle = "Module " + (mIdx+1);
+        if (mIdx === 0) moduleTitle = "Module 1: Basic Typing";
+        if (mIdx === 1) moduleTitle = "Module 2: Numbers and Symbols";
+        if (mIdx === 2) moduleTitle = "Module 3: Military Terminology";
+        if (mIdx === 3) moduleTitle = "Module 4: POL Basic Descriptors";
+        if (mIdx === 4) moduleTitle = "Module 5: POL SITREP Format";
+        
+        head.innerHTML = `<span>${moduleTitle}</span><svg class="w-6 h-6 ml-3 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>`;
+        // Practices container
+        const pCont = document.createElement('div');
+        pCont.className = "pl-8 pr-3 pb-6 pt-2 space-y-6 hidden";
+        practices.forEach((txt, pIdx) => {
+          const prWrap = document.createElement('div');
+          prWrap.className = "mb-2";
+          prWrap.innerHTML = `
+            <div class="text-lg font-semibold text-blue-300 mb-1">Practice ${pIdx+1}</div>
+            <textarea class="practice-box w-full rounded-xl p-4 text-base text-zinc-200 bg-zinc-800/70 border-2 border-zinc-700 focus:border-blue-500 transition outline-none resize-vertical"
+              data-module="${mIdx}" data-practice="${pIdx}" rows="3">${txt || ""}</textarea>
+          `;
+          pCont.appendChild(prWrap);
+        });
+        // Accordion expand/collapse
+        head.addEventListener('click', () => {
+          pCont.classList.toggle('hidden');
+          head.querySelector('svg').classList.toggle('rotate-180');
+        });
+        modWrap.appendChild(head);
+        modWrap.appendChild(pCont);
+        cont.appendChild(modWrap);
+      });
+    }
+    // Show/hide save bubble, track edits
+    let currentEditing = null;
+    document.addEventListener('focusin', function(e) {
+      if (e.target.matches('.practice-box')) {
+        const box = e.target;
+        currentEditing = box;
+        const rect = box.getBoundingClientRect();
+        const saveBubble = document.getElementById('saveBubble');
+        saveBubble.style.top = (window.scrollY + rect.top + rect.height/2 - 22) + 'px';
+        saveBubble.style.left = (window.scrollX + rect.right + 18) + 'px';
+        saveBubble.classList.remove('hidden');
+        saveBubble.classList.add('fade-in');
+        saveBubble.disabled = true;
+        saveBubble.style.opacity = 0.65;
+      }
+    });
+    document.addEventListener('input', function(e) {
+      if (e.target.matches('.practice-box')) {
+        document.getElementById('saveBubble').disabled = false;
+        document.getElementById('saveBubble').style.opacity = 1;
+      }
+    });
+    document.addEventListener('focusout', function(e) {
+      if (e.target.matches('.practice-box')) {
+        setTimeout(() => {
+          if (document.activeElement !== document.getElementById('saveBubble')) {
+            document.getElementById('saveBubble').classList.add('hidden');
+          }
+        }, 120);
+      }
+    });
+    // Save changes
+    document.getElementById('saveBubble').addEventListener('click', function() {
+      if (!currentEditing) return;
+      const mod = parseInt(currentEditing.dataset.module);
+      const prac = parseInt(currentEditing.dataset.practice);
+      let tests = getTypingTests();
+      tests[mod][prac] = currentEditing.value;
+      saveTypingTests(tests);
+      // Animate "Saved!" msg
+      const rect = currentEditing.getBoundingClientRect();
+      const msg = document.getElementById('savedMsg');
+      msg.style.top = (window.scrollY + rect.top + rect.height/2 - 20) + 'px';
+      msg.style.left = (window.scrollX + rect.right + 22) + 'px';
+      msg.innerText = "Saved!";
+      msg.classList.remove('hidden');
+      setTimeout(()=>msg.classList.add('hidden'), 1100);
+      // Hide bubble after save
+      setTimeout(()=>document.getElementById('saveBubble').classList.add('hidden'), 600);
+    });
+    
+    // Initial render
+    renderEditor();
+    
+    // Logout function
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      localStorage.removeItem('userName');
+      localStorage.removeItem('classId');
+      window.location.replace('/login.html');
+    }
+  </script>
+</body>
+</html>
