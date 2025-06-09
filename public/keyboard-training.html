@@ -107,7 +107,7 @@
       <!-- Modules Section -->
       <div class="bg-zinc-900/90 rounded-3xl p-6 shadow-2xl">
         <div class="font-semibold text-white text-lg mb-4">Available Modules</div>
-        <div class="module-list" id="module-list"></div>
+        <div id="module-list" class="flex flex-col gap-4 w-full"></div>
       </div>
     </main>
   </div>
@@ -207,6 +207,18 @@
     </div>
   </div>
   
+  <!-- Typing Overlay for per-character feedback -->
+  <div id="typingOverlay" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center hidden">
+    <div class="bg-zinc-900 rounded-2xl shadow-2xl p-8 max-w-xl w-full">
+      <div class="mb-4 text-lg font-bold text-white" id="typingOverlayTitle"></div>
+      <div class="mb-4 text-xl font-mono bg-zinc-800 rounded-xl p-4" id="typingTextDisplay"></div>
+      <input id="typingInput" class="w-full p-3 rounded-xl bg-zinc-800 text-white font-mono text-lg outline-none" autocomplete="off" />
+      <div class="flex justify-end mt-4">
+        <button onclick="closeTypingOverlay()" class="bg-red-500 text-white px-4 py-2 rounded-xl">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <style>
     @keyframes fade-in {
       from { opacity:0; transform: scale(0.95);}
@@ -216,5 +228,91 @@
       animation: fade-in 0.35s cubic-bezier(.4,0,.2,1);
     }
   </style>
+
+  <script>
+    // --- MODULES/RESULTS RENDERING ---
+    function renderModuleList() {
+      const typingTests = JSON.parse(localStorage.getItem('smx_typing_tests') || '[]');
+      const userName = localStorage.getItem('userName') || 'student';
+      const results = JSON.parse(localStorage.getItem('smx_typing_results_' + userName) || '{}');
+      const moduleList = document.getElementById('module-list');
+      moduleList.innerHTML = '';
+      typingTests.forEach((module, mIdx) => {
+        const modDiv = document.createElement('div');
+        modDiv.className = 'flex flex-col gap-2 w-full mb-6';
+        module.forEach((practice, pIdx) => {
+          const row = document.createElement('div');
+          row.className = 'flex justify-between items-center bg-zinc-800/70 rounded-xl px-4 py-3';
+          // Left: Practice title
+          const left = document.createElement('button');
+          left.className = 'text-left w-full font-semibold text-white';
+          left.textContent = `Practice ${pIdx + 1}: ${practice.substring(0, 32)}...`;
+          left.onclick = () => startTypingTest(mIdx, pIdx);
+          // Right: Results summary
+          const right = document.createElement('div');
+          right.className = 'text-right min-w-[120px]';
+          const res = results?.[mIdx]?.[pIdx];
+          if (res) {
+            right.innerHTML = `<div class="text-green-400 font-bold">WPM: ${res.wpm}</div>
+              <div class="text-blue-400">Acc: ${res.accuracy}%</div>
+              <div class="text-zinc-400 text-xs">${res.time}s</div>`;
+          } else {
+            right.innerHTML = `<div class="text-zinc-500 text-xs">Not completed</div>`;
+          }
+          row.appendChild(left);
+          row.appendChild(right);
+          modDiv.appendChild(row);
+        });
+        moduleList.appendChild(modDiv);
+      });
+    }
+    // --- TYPING OVERLAY LOGIC ---
+    function startTypingTest(moduleIdx, practiceIdx) {
+      const typingTests = JSON.parse(localStorage.getItem('smx_typing_tests') || '[]');
+      const reference = typingTests[moduleIdx][practiceIdx];
+      let userInput = '';
+      document.getElementById('typingOverlay').classList.remove('hidden');
+      document.getElementById('typingOverlayTitle').textContent = `Practice ${practiceIdx + 1}`;
+      renderTypingText(reference, userInput);
+      const input = document.getElementById('typingInput');
+      input.value = '';
+      input.focus();
+      input.oninput = function() {
+        userInput = input.value;
+        renderTypingText(reference, userInput);
+        if (userInput === reference) {
+          // Save result, close overlay, update UI
+          saveTypingResult(moduleIdx, practiceIdx, { wpm: 50, accuracy: 100, time: 30 }); // Replace with real values
+          closeTypingOverlay();
+          renderModuleList();
+        }
+      };
+    }
+    function renderTypingText(reference, userInput) {
+      let html = '';
+      for (let i = 0; i < reference.length; i++) {
+        if (userInput[i] === undefined) {
+          html += `<span>${reference[i]}</span>`;
+        } else if (userInput[i] === reference[i]) {
+          html += `<span class="text-green-400">${reference[i]}</span>`;
+        } else {
+          html += `<span class="text-red-400">${reference[i]}</span>`;
+        }
+      }
+      document.getElementById('typingTextDisplay').innerHTML = html;
+    }
+    function closeTypingOverlay() {
+      document.getElementById('typingOverlay').classList.add('hidden');
+    }
+    function saveTypingResult(moduleIdx, practiceIdx, result) {
+      const userName = localStorage.getItem('userName') || 'student';
+      let results = JSON.parse(localStorage.getItem('smx_typing_results_' + userName) || '{}');
+      if (!results[moduleIdx]) results[moduleIdx] = {};
+      results[moduleIdx][practiceIdx] = result;
+      localStorage.setItem('smx_typing_results_' + userName, JSON.stringify(results));
+    }
+    // Render modules on load
+    document.addEventListener('DOMContentLoaded', renderModuleList);
+  </script>
 </body>
 </html>

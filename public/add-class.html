@@ -51,37 +51,120 @@
   </form>
   <div id="result" style="margin-top:32px;"></div>
   <script>
-    // You'd fetch this from backend in production
-    const users = [
-      {id:1, name:'Jane Smith', role:'Instructor', status:'Active'},
-      {id:2, name:'John Brown', role:'Admin', status:'Active'},
-      {id:3, name:'Alex Doe', role:'Student', status:'Active'}
-    ];
-    // Populate instructor dropdown (only instructors/admins)
-    function fillInstructorDropdown() {
-      let options = users.filter(u => 
-        (u.role === 'Instructor' || u.role === 'Admin') && u.status === 'Active'
-      ).map(u => `<option value="${u.id}">${u.name} ✔️</option>`).join('');
-      document.getElementById('instructor').innerHTML = options || '<option>No instructor available</option>';
+    // Fetch instructors from backend
+    async function fetchInstructors() {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          alert('Authentication token missing. Please log in again.');
+          window.location.href = '/login.html';
+          return;
+        }
+        
+        document.getElementById('instructor').innerHTML = '<option>Loading instructors...</option>';
+        
+        const response = await fetch('/api/users?role=instructor', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+          if (response.status === 401) {
+            alert('Session expired. Please login again.');
+            window.location.href = '/login.html';
+            return;
+          }
+          throw new Error('Failed to fetch instructors');
+        }
+        
+        const users = await response.json();
+        
+        // Populate instructor dropdown (only instructors/admins with Active status)
+        const options = users
+          .filter(u => (u.role === 'instructor' || u.role === 'admin') && u.status === true)
+          .map(u => `<option value="${u._id}">${u.name} ✔️</option>`)
+          .join('');
+          
+        document.getElementById('instructor').innerHTML = options || '<option value="">No instructor available</option>';
+      } catch (error) {
+        console.error('Error fetching instructors:', error);
+        document.getElementById('instructor').innerHTML = '<option value="">Error loading instructors</option>';
+        document.getElementById('result').innerText = `Error: ${error.message}`;
+      }
     }
-    fillInstructorDropdown();
-    function addClass(e) {
+    
+    // Call function to populate dropdown when page loads
+    document.addEventListener('DOMContentLoaded', fetchInstructors);
+    
+    // Function to add a class
+    async function addClass(e) {
       e.preventDefault();
-      // Generate unique class ID and show data for demo
-      const classId = `CLS-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${Math.floor(Math.random()*900+100)}`;
-      const obj = {
-        classId,
-        name: document.getElementById('className').value,
-        organization: document.getElementById('org').value,
-        country: document.getElementById('country').value,
-        instructorId: document.getElementById('instructor').value,
-        startDate: document.getElementById('startDate').value,
-        endDate: document.getElementById('endDate').value,
-        students: []
-      };
-      document.getElementById('result').innerText = 'Class Created: ' + JSON.stringify(obj, null, 2);
-      document.getElementById('classForm').reset();
-      fillInstructorDropdown();
+      
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          alert('Authentication token missing. Please log in again.');
+          window.location.href = '/login.html';
+          return;
+        }
+        
+        // Prepare class data
+        const classData = {
+          name: document.getElementById('className').value,
+          organization: document.getElementById('org').value,
+          country: document.getElementById('country').value,
+          instructorId: document.getElementById('instructor').value,
+          startDate: document.getElementById('startDate').value,
+          endDate: document.getElementById('endDate').value
+        };
+        
+        // Make API call to create class
+        const response = await fetch('/api/classes', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(classData)
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          
+          if (response.status === 401) {
+            alert('Session expired. Please login again.');
+            window.location.href = '/login.html';
+            return;
+          }
+          
+          throw new Error(errorData.error || 'Failed to create class');
+        }
+        
+        const createdClass = await response.json();
+        
+        // Display success message
+        document.getElementById('result').innerHTML = `
+          <div style="background:#162536; padding:16px; border-radius:8px; border:1px solid #28425e;">
+            <h3 style="color:#70b8ff; margin-top:0;">✅ Class Created Successfully</h3>
+            <p><strong>Name:</strong> ${createdClass.name}</p>
+            <p><strong>Organization:</strong> ${createdClass.organization || 'N/A'}</p>
+            <p><strong>Dates:</strong> ${new Date(createdClass.startDate).toLocaleDateString()} to ${new Date(createdClass.endDate).toLocaleDateString()}</p>
+            <p><strong>ID:</strong> ${createdClass._id}</p>
+          </div>
+        `;
+        
+        // Reset form
+        document.getElementById('classForm').reset();
+      } catch (error) {
+        console.error('Error creating class:', error);
+        document.getElementById('result').innerHTML = `
+          <div style="background:#362021; padding:16px; border-radius:8px; border:1px solid #5e2828;">
+            <h3 style="color:#ff7070; margin-top:0;">❌ Error</h3>
+            <p>${error.message}</p>
+          </div>
+        `;
+      }
     }
   </script>
 </body>
