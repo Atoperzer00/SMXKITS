@@ -51,12 +51,28 @@
 
   <!-- Channel Sidebar -->
   <aside id="channelSidebar" class="w-56 bg-zinc-800/70 backdrop-blur-md p-4 flex flex-col">
-    <h2 class="text-lg font-semibold mb-4">Channels</h2>
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-lg font-semibold">Channels</h2>
+      <input id="searchChannels" class="bg-zinc-700 text-zinc-100 rounded-md py-1 px-2 text-xs w-24" placeholder="Search...">
+    </div>
     <nav id="channelList" class="space-y-2 overflow-y-auto scrollbar flex-1">
       <!-- Channels populated by JS -->
       <div class="text-center text-sm text-zinc-500 py-3">Loading channels...</div>
     </nav>
     <button id="addChannelBtn" class="mt-4 py-2 px-3 rounded-md bg-zinc-700 hover:bg-zinc-600 text-sm">+ New Channel</button>
+  </aside>
+  
+  <!-- Users Sidebar -->
+  <aside id="userSidebar" class="w-56 bg-zinc-800/70 backdrop-blur-md p-4 flex flex-col hidden">
+    <h2 class="text-lg font-semibold mb-4">Users</h2>
+    <div id="onlineUsers" class="mb-2">
+      <div class="font-semibold text-green-400 text-sm mb-2">Online</div>
+      <!-- Online users here -->
+    </div>
+    <div id="offlineUsers">
+      <div class="font-semibold text-zinc-400 text-sm mb-2">Offline</div>
+      <!-- Offline users here -->
+    </div>
   </aside>
   
   <!-- Main Chat Area -->
@@ -78,6 +94,7 @@
       <div class="flex items-center gap-2">
         <span class="text-sm text-zinc-400">Logged in as: <span class="text-white font-semibold" id="userNameDisplay"></span></span>
         <button id="toggleSidebar" class="text-sm bg-zinc-700 px-3 py-1.5 rounded-md hover:bg-zinc-600 hidden md:inline">Toggle Channels</button>
+        <button id="toggleUsers" class="text-sm bg-zinc-700 px-3 py-1.5 rounded-md hover:bg-zinc-600 hidden md:inline">Toggle Users</button>
       </div>
     </header>
     
@@ -154,7 +171,7 @@
     }
     
     function addMessage({ author, role, content, timestamp, attachment }) {
-      const time = new Date(timestamp).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"});
+      const time = new Date(timestamp).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit", second: "2-digit"});
       const msg = document.createElement("div");
       msg.className = "p-3 rounded-md message-appear " + (author === userName ? "self-message" : "bg-zinc-800/70");
       
@@ -162,8 +179,8 @@
       let messageHTML = `
         <div class="flex flex-col gap-1">
           <div class="flex justify-between">
-            <div class="text-xs opacity-70"><span class="font-semibold">${escapeHtml(author)}</span> • ${escapeHtml(role)}</div>
-            <div class="text-xs opacity-70">${time}</div>
+            <div class="text-xs opacity-70">${time} • <span class="font-semibold">${escapeHtml(author)}</span> • ${escapeHtml(role)}</div>
+            <button class="copy-btn text-xs opacity-60 hover:opacity-100" title="Copy message">📋</button>
           </div>
           <div class="mt-1">${escapeHtml(content)}</div>
         </div>`;
@@ -237,19 +254,55 @@
       renderChannels();
     }
     
-    function renderChannels() {
+    function renderChannels(filteredChannels = null) {
       channelListEl.innerHTML = "";
-      channels.forEach(ch => {
+      const displayChannels = filteredChannels || channels;
+      
+      displayChannels.forEach(ch => {
+        const wrapper = document.createElement("div");
+        wrapper.className = "flex items-center group mb-1";
+        
         const btn = document.createElement("button");
         btn.textContent = ch;
-        btn.className = "w-full text-left py-1 px-2 rounded-md hover:bg-zinc-700 text-sm";
+        btn.className = "flex-1 text-left py-1 px-2 rounded-md hover:bg-zinc-700 text-sm";
         
         if (ch === currentChannel) {
           btn.classList.add('bg-blue-900/30', 'border-l-2', 'border-blue-500', 'pl-3');
         }
         
         btn.onclick = () => switchChannel(ch);
-        channelListEl.appendChild(btn);
+        
+        // Don't allow removing default channels
+        if (!DEFAULT_CHANNELS.includes(ch) || ch !== 'Global') {
+          // Remove Button (trash icon)
+          const removeBtn = document.createElement("button");
+          removeBtn.innerHTML = "🗑️";
+          removeBtn.className = "ml-2 text-xs text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100";
+          removeBtn.onclick = (e) => {
+            e.stopPropagation();
+            if (confirm(`Remove channel "${ch}"?`)) {
+              // Call API to remove channel
+              fetch(`/api/kitcomm/channels/${encodeURIComponent(ch)}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+              }).then(response => {
+                if (response.ok) {
+                  channels = channels.filter(x => x !== ch);
+                  renderChannels();
+                  if (currentChannel === ch) switchChannel('Global');
+                }
+              }).catch(error => {
+                console.error('Error removing channel:', error);
+              });
+            }
+          };
+          wrapper.appendChild(btn);
+          wrapper.appendChild(removeBtn);
+        } else {
+          wrapper.appendChild(btn);
+        }
+        
+        channelListEl.appendChild(wrapper);
       });
     }
     
@@ -318,7 +371,19 @@
       
       socket.on('connect', () => {
         console.log('Connected to KitComm server');
+        
+        // Join the current channel
         socket.emit('kitcomm:join', currentChannel);
+        
+        // Join class-specific room for user status updates
+        const classId = localStorage.getItem('classId') || 'default';
+        const userId = localStorage.getItem('userId') || Date.now().toString();
+        
+        socket.emit('kitcomm:joinClass', {
+          classId,
+          userId,
+          userName
+        });
       });
       
       socket.on('kitcomm:history', (messages) => {
@@ -345,6 +410,20 @@
       
       socket.on('disconnect', () => {
         console.warn('Socket disconnected, will auto-reconnect');
+      });
+      
+      // Listen for user status updates
+      socket.on('kitcomm:userStatus', (data) => {
+        updateUserList();
+      });
+      
+      // Listen for channel deletion
+      socket.on('kitcomm:channelDeleted', (data) => {
+        if (data.channel === currentChannel) {
+          switchChannel('Global');
+        }
+        channels = channels.filter(ch => ch !== data.channel);
+        renderChannels();
       });
     }
     
@@ -429,20 +508,126 @@
       }
     });
     
-    // Toggle sidebar on mobile
+    // Toggle channel sidebar
     document.getElementById('toggleSidebar').addEventListener('click', () => {
       const sidebar = document.getElementById('channelSidebar');
       sidebar.classList.toggle('hidden');
+    });
+    
+    // Toggle user sidebar
+    document.getElementById('toggleUsers').addEventListener('click', () => {
+      const userSidebar = document.getElementById('userSidebar');
+      userSidebar.classList.toggle('hidden');
+    });
+    
+    // Channel search functionality
+    document.getElementById('searchChannels').addEventListener('input', function() {
+      const query = this.value.toLowerCase().trim();
+      if (query) {
+        const filtered = channels.filter(ch => ch.toLowerCase().includes(query));
+        renderChannels(filtered);
+      } else {
+        renderChannels();
+      }
+    });
+    
+    // Enable copy button functionality
+    document.addEventListener('click', function(e) {
+      if (e.target.classList.contains('copy-btn')) {
+        // Find the message content
+        const messageDiv = e.target.closest('div.message-appear');
+        if (messageDiv) {
+          const contentDiv = messageDiv.querySelector('div.mt-1');
+          if (contentDiv) {
+            navigator.clipboard.writeText(contentDiv.textContent);
+            
+            // Visual feedback
+            const originalText = e.target.textContent;
+            e.target.textContent = '✓';
+            e.target.classList.add('text-green-400');
+            
+            setTimeout(() => {
+              e.target.textContent = originalText;
+              e.target.classList.remove('text-green-400');
+            }, 1000);
+          }
+        }
+      }
     });
     
     // ===== Initialization =====
     window.addEventListener('DOMContentLoaded', () => {
       fetchChannels();
       initSocket();
+      updateUserList();
       
       // Auto-focus chat input
       setTimeout(() => chatInputEl.focus(), 500);
     });
+    
+    // ===== User Online/Offline Status =====
+    function updateUserList() {
+      const classId = localStorage.getItem('classId') || 'default';
+      
+      // In a real implementation, this would be fetched from the server
+      fetch(`/api/kitcomm/users?class=${classId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        const onlineUsersEl = document.getElementById('onlineUsers');
+        const offlineUsersEl = document.getElementById('offlineUsers');
+        
+        let onlineHTML = '<div class="font-semibold text-green-400 text-sm mb-2">Online</div>';
+        let offlineHTML = '<div class="font-semibold text-zinc-400 text-sm mb-2">Offline</div>';
+        
+        if (data.online && data.online.length) {
+          onlineHTML += data.online.map(user => 
+            `<div class="text-sm mb-1 flex items-center">
+              <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+              ${user.name}
+            </div>`
+          ).join('');
+        } else {
+          onlineHTML += '<div class="text-sm text-zinc-500">No users online</div>';
+        }
+        
+        if (data.offline && data.offline.length) {
+          offlineHTML += data.offline.map(user => 
+            `<div class="text-sm mb-1 flex items-center">
+              <span class="w-2 h-2 bg-zinc-500 rounded-full mr-2"></span>
+              ${user.name}
+            </div>`
+          ).join('');
+        } else {
+          offlineHTML += '<div class="text-sm text-zinc-500">No users offline</div>';
+        }
+        
+        onlineUsersEl.innerHTML = onlineHTML;
+        offlineUsersEl.innerHTML = offlineHTML;
+      })
+      .catch(error => {
+        console.error('Error fetching user list:', error);
+        // Fallback with just the current user
+        const onlineUsersEl = document.getElementById('onlineUsers');
+        const offlineUsersEl = document.getElementById('offlineUsers');
+        
+        onlineUsersEl.innerHTML = `
+          <div class="font-semibold text-green-400 text-sm mb-2">Online</div>
+          <div class="text-sm mb-1 flex items-center">
+            <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+            ${userName} (You)
+          </div>
+        `;
+        
+        offlineUsersEl.innerHTML = `
+          <div class="font-semibold text-zinc-400 text-sm mb-2">Offline</div>
+          <div class="text-sm text-zinc-500">No users offline</div>
+        `;
+      });
+    }
   </script>
 </body>
 </html>

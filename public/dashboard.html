@@ -90,6 +90,137 @@
       <div class="home-box" onclick="goToISRTraining()">
         <img src="ISR CLICK LOGO.png" alt="ISR Training Logo" class="hub-logo" />
         <h2>ISR Training</h2>
+<!-- Main Dashboard Content -->
+<section id="screen-home" class="screen active" style="display: flex; min-height: 100vh; background: none;">
+  <!-- Sidebar -->
+  <aside style="width: 270px; min-width: 220px; margin: 32px 32px 32px 0; border-radius: 2rem; background: rgba(10,10,10,0.82); box-shadow: 0 8px 32px #0008; display: flex; flex-direction: column; align-items: center; padding: 2.5rem 1rem;">
+    <div style="background: linear-gradient(135deg, #232931 60%, #232931aa 100%); border-radius: 50%; box-shadow: 0 4px 16px #2227; margin-bottom: 2rem; display: flex; align-items: center; justify-content: center; width: 96px; height: 96px;">
+      <img src="SE66806_logo_orig.png" alt="SMXKITS Logo" style="width: 60px; height: 60px;">
+    </div>
+    <nav style="width: 100%; flex: 1;">
+      <a href="#" onclick="event.preventDefault(); window.location.reload();" style="display: flex; align-items: center; gap: 1rem; color: #fff; font-weight: bold; margin-bottom: 1rem; background: #23293170; border-radius: 1rem; padding: 0.8rem 1.2rem;">🏠 Dashboard</a>
+      <a href="#" onclick="goToPEDTraining();" style="display: flex; align-items: center; gap: 1rem; color: #fff; margin-bottom: 1rem; border-radius: 1rem; padding: 0.8rem 1.2rem; transition: background 0.2s;" onmouseover="this.style.background='#23293188'" onmouseout="this.style.background='none'">🛫 Live PED Exercise</a>
+      <a href="#" onclick="goToKITS();" style="display: flex; align-items: center; gap: 1rem; color: #fff; margin-bottom: 1rem; border-radius: 1rem; padding: 0.8rem 1.2rem; transition: background 0.2s;" onmouseover="this.style.background='#23293188'" onmouseout="this.style.background='none'">⌨️ Keyboard Input Training</a>
+      <a href="#" onclick="goToPEDTraining();" style="display: flex; align-items: center; gap: 1rem; color: #fff; margin-bottom: 1rem; border-radius: 1rem; padding: 0.8rem 1.2rem; transition: background 0.2s;" onmouseover="this.style.background='#23293188'" onmouseout="this.style.background='none'">🧑‍💻 Screener Training</a>
+      <a href="#" onclick="goToISRTraining();" style="display: flex; align-items: center; gap: 1rem; color: #fff; margin-bottom: 1rem; border-radius: 1rem; padding: 0.8rem 1.2rem; transition: background 0.2s;" onmouseover="this.style.background='#23293188'" onmouseout="this.style.background='none'">📡 IA Training</a>
+      <a href="#" onclick="goToOpsLog();" style="display: flex; align-items: center; gap: 1rem; color: #fff; margin-bottom: 1rem; border-radius: 1rem; padding: 0.8rem 1.2rem; transition: background 0.2s;" onmouseover="this.style.background='#23293188'" onmouseout="this.style.background='none'">📝 Grading</a>
+      <a href="#" style="display: flex; align-items: center; gap: 1rem; color: #fff; margin-bottom: 1rem; border-radius: 1rem; padding: 0.8rem 1.2rem; transition: background 0.2s;" onmouseover="this.style.background='#23293188'" onmouseout="this.style.background='none'">📅 Schedule</a>
+      <a href="#" style="display: flex; align-items: center; gap: 1rem; color: #fff; margin-bottom: 1rem; border-radius: 1rem; padding: 0.8rem 1.2rem; transition: background 0.2s;" onmouseover="this.style.background='#23293188'" onmouseout="this.style.background='none'">💬 Feedback</a>
+    </nav>
+    <a href="#" onclick="logout();" style="margin-top: auto; color: #fa4949; font-weight: bold; padding: 0.9rem 1.2rem; border-radius: 1rem; background: #2b2323cc; width: 100%; text-align: center; transition: background 0.2s;" onmouseover="this.style.background='#411a1acc'" onmouseout="this.style.background='#2b2323cc'">Logout</a>
+  </aside>
+
+  <!-- Main Content -->
+  <main style="flex: 1; display: flex; flex-direction: column; padding: 4rem 2.5rem 2rem 0; position: relative; min-width: 0;">
+    <!-- Top bar -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.7rem;">
+      <div>
+        <div style="font-size: 2rem; font-weight: 700; color: #fff;">Welcome back, <span id="studentName">Student</span>!</div>
+        <div style="font-size: 1.08rem; color: #b8bdc7; margin-top: 0.5rem;">
+          Your student portal for real-time ISR training.<br>
+          Dive into live PED, practice with KITS, and monitor your course progress all in one place.
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 1.5rem;">
+        <!-- Notification bell -->
+        <div style="position: relative;">
+          <button id="notifBtn" style="width: 48px; height: 48px; border-radius: 50%; background: rgba(39,45,51,0.92); border: none; color: #fff; font-size: 1.45rem; box-shadow: 0 4px 18px #1118; cursor: pointer;">🔔</button>
+          <!-- Notification popout (hidden by default) -->
+          <div id="notifPopup" style="display:none; position: absolute; right: 0; margin-top: 0.9rem; width: 340px; background: #191a1fcf; border-radius: 1.2rem; box-shadow: 0 6px 32px #000a; padding: 1.2rem;">
+            <div style="color: #fff; font-weight: bold; font-size: 1.08rem; margin-bottom: 0.5rem;">Notifications</div>
+            <div style="color: #b8bdc7; font-size: 0.97rem;">No new notifications.</div>
+          </div>
+        </div>
+        <!-- Day & instructor avatars -->
+        <div style="display: flex; flex-direction: column; align-items: end;">
+          <span id="studentDay" style="font-weight: 600; color: #fff;">Day 3/7</span>
+          <div style="display: flex; gap: 0.5rem; margin-top: 0.7rem;">
+            <!-- Instructor avatars (clickable for popup bio) -->
+            <img src="instructor1.jpg" onclick="showInstructorBio('Instructor 1')" title="Instructor 1" style="width: 38px; height: 38px; border-radius: 50%; border: 2px solid #fff; cursor: pointer; box-shadow: 0 2px 8px #0005;">
+            <img src="instructor2.jpg" onclick="showInstructorBio('Instructor 2')" title="Instructor 2" style="width: 38px; height: 38px; border-radius: 50%; border: 2px solid #fff; cursor: pointer; box-shadow: 0 2px 8px #0005;">
+            <!-- Add as many as needed -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bubbly Training Links -->
+    <div style="display: flex; gap: 2.7rem; margin-bottom: 2.7rem;">
+      <div onclick="goToKITS();" style="background: rgba(36,41,51,0.85); border-radius: 2rem; padding: 2.5rem 2rem; box-shadow: 0 8px 32px #0007; display: flex; flex-direction: column; align-items: center; cursor: pointer; flex:1; transition: transform 0.16s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='none'">
+        <img src="KIT CLICK LOGO.png" style="width: 58px; height: 58px; margin-bottom: 1rem;" />
+        <div style="font-weight: 600; color: #fff; font-size: 1.16rem; margin-bottom: 0.45rem;">Resume Keyboard Input Training</div>
+        <div style="color: #b8bdc7; font-size: 0.98rem;">Pick up where you left off</div>
+      </div>
+      <div onclick="goToCourseContent();" style="background: rgba(36,41,51,0.85); border-radius: 2rem; padding: 2.5rem 2rem; box-shadow: 0 8px 32px #0007; display: flex; flex-direction: column; align-items: center; cursor: pointer; flex:1; transition: transform 0.16s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='none'">
+        <img src="COURSE REFERENCES LOGO.png" style="width: 58px; height: 58px; margin-bottom: 1rem;" />
+        <div style="font-weight: 600; color: #fff; font-size: 1.16rem; margin-bottom: 0.45rem;">Course Content</div>
+        <div style="color: #b8bdc7; font-size: 0.98rem;">View all training modules</div>
+      </div>
+      <div onclick="goToISRTraining();" style="background: rgba(36,41,51,0.85); border-radius: 2rem; padding: 2.5rem 2rem; box-shadow: 0 8px 32px #0007; display: flex; flex-direction: column; align-items: center; cursor: pointer; flex:1; transition: transform 0.16s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='none'">
+        <img src="ISR CLICK LOGO.png" style="width: 58px; height: 58px; margin-bottom: 1rem;" />
+        <div style="font-weight: 600; color: #fff; font-size: 1.16rem; margin-bottom: 0.45rem;">Live ISR Training</div>
+        <div style="color: #b8bdc7; font-size: 0.98rem;">Access live operations & exercises</div>
+      </div>
+    </div>
+
+    <!-- Course Progression Bars -->
+    <div style="display: flex; gap: 2.5rem; margin-bottom: 2.3rem;">
+      <div style="background: rgba(31,36,43,0.9); border-radius: 1.6rem; padding: 2rem 1.5rem; box-shadow: 0 8px 32px #0007; flex:1;">
+        <div style="font-weight: 600; color: #fff; margin-bottom: 0.7rem;">Stars</div>
+        <div style="background: #1b1d20; border-radius: 1rem; height: 1.2rem; margin-bottom: 0.5rem; overflow: hidden;">
+          <div style="background: linear-gradient(90deg, #facc15 80%, #fbcf31 100%); height: 100%; width: 60%;"></div>
+        </div>
+        <div style="font-size: 0.96rem; color: #b8bdc7;">3 of 5 stars earned</div>
+      </div>
+      <div style="background: rgba(31,36,43,0.9); border-radius: 1.6rem; padding: 2rem 1.5rem; box-shadow: 0 8px 32px #0007; flex:1;">
+        <div style="font-weight: 600; color: #fff; margin-bottom: 0.7rem;">Screener Training</div>
+        <div style="background: #1b1d20; border-radius: 1rem; height: 1.2rem; margin-bottom: 0.5rem; overflow: hidden;">
+          <div style="background: linear-gradient(90deg, #38bdf8 80%, #5eead4 100%); height: 100%; width: 40%;"></div>
+        </div>
+        <div style="font-size: 0.96rem; color: #b8bdc7;">2 of 5 modules complete</div>
+      </div>
+      <div style="background: rgba(31,36,43,0.9); border-radius: 1.6rem; padding: 2rem 1.5rem; box-shadow: 0 8px 32px #0007; flex:1;">
+        <div style="font-weight: 600; color: #fff; margin-bottom: 0.7rem;">IA Training</div>
+        <div style="background: #1b1d20; border-radius: 1rem; height: 1.2rem; margin-bottom: 0.5rem; overflow: hidden;">
+          <div style="background: linear-gradient(90deg, #4ade80 80%, #22d3ee 100%); height: 100%; width: 80%;"></div>
+        </div>
+        <div style="font-size: 0.96rem; color: #b8bdc7;">4 of 5 modules complete</div>
+      </div>
+    </div>
+
+    <!-- Daily Notice (fixed right side) -->
+    <div style="position: fixed; right: 3vw; top: 8vw; width: 330px; background: #191a1fda; border-radius: 1.7rem; box-shadow: 0 6px 36px #000c; padding: 2rem;">
+      <div style="font-weight: 600; color: #fff; margin-bottom: 0.8rem;">Daily Notice</div>
+      <div style="color: #b8bdc7; font-size: 1rem;">
+        <b>Assignment due:</b> Upload all mission briefs by 1800Z.<br>
+        <b>Schedule:</b> Live PED at 1300Z, IA review at 1530Z.
+      </div>
+    </div>
+  </main>
+</section>
+
+<!-- Instructor bio popup logic -->
+<script>
+function showInstructorBio(name) {
+  // Create overlay
+  if(document.getElementById('bioOverlay')) return;
+  const overlay = document.createElement('div');
+  overlay.id = 'bioOverlay';
+  overlay.style = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:#10151faa;z-index:2000;display:flex;align-items:center;justify-content:center;';
+  overlay.onclick = function(e) { if(e.target===this) this.remove(); };
+  // Centered bubble
+  const bubble = document.createElement('div');
+  bubble.style = 'background:#222831eb;border-radius:2rem;box-shadow:0 8px 44px #000c;padding:2.5rem 2.3rem;width:400px;max-width:95vw;color:#fff;text-align:center;display:flex;flex-direction:column;align-items:center;';
+  bubble.innerHTML = `<img src="instructor1.jpg" style="width:88px;height:88px;border-radius:50%;border:3px solid #38bdf8;margin-bottom:1rem;"><div style="font-size:1.25rem;font-weight:bold;margin-bottom:0.4rem;">${name}</div><div style="font-size:1rem;color:#b8bdc7;margin-bottom:1.5rem;">[Instructor bio goes here]</div><button onclick="document.getElementById('bioOverlay').remove();" style="margin-top:0.6rem;background:#38bdf8;color:#112244;font-weight:bold;padding:0.55rem 1.4rem;border-radius:1rem;cursor:pointer;">Contact</button>`;
+  overlay.appendChild(bubble);
+  document.body.appendChild(overlay);
+}
+document.getElementById('notifBtn')?.addEventListener('click', function() {
+  const popup = document.getElementById('notifPopup');
+  if(!popup) return;
+  popup.style.display = popup.style.display === 'none' ? 'block' : 'none';
+});
+</script>
         <p>Intelligence, Surveillance & Reconnaissance</p>
       </div>
       <div class="home-box" onclick="goToPEDTraining()">
@@ -162,20 +293,24 @@
       window.location.replace('/login.html');
     }
 
-    // Placeholder functions - you would copy these from script.js
+    // Navigation functions to ensure proper loading
     function goToKITS() {
+      localStorage.setItem('activeSection', 'screen-dashboard');
       window.location.href = "/SMXKITS.html#screen-dashboard";
     }
     
     function goToCourseContent() {
+      localStorage.setItem('activeSection', 'screen-course-content');
       window.location.href = "/SMXKITS.html#screen-course-content";
     }
     
     function goToISRTraining() {
+      localStorage.setItem('activeSection', 'screen-isr-training');
       window.location.href = "/SMXKITS.html#screen-isr-training";
     }
     
     function goToPEDTraining() {
+      localStorage.setItem('activeSection', 'screen-ped-training');
       window.location.href = "/SMXKITS.html#screen-ped-training";
     }
     

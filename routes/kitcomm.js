@@ -6,6 +6,13 @@ const fs = require('fs');
 const KitCommMessage = require('../models/KitCommMessage');
 const auth = require('../middleware/auth');
 
+// In-memory storage for user status
+const userStatus = {
+  // classId: {
+  //   userId: { name: 'User Name', status: 'online|offline', lastSeen: Date }
+  // }
+};
+
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -57,10 +64,25 @@ router.get('/channels/:channel', async (req, res) => {
   }
 });
 
-// Get list of all channels
+// Get list of all channels with optional search
 router.get('/channels', async (req, res) => {
   try {
-    const channels = await KitCommMessage.distinct('channel');
+    // Get optional search parameter
+    const search = req.query.search ? req.query.search.toLowerCase() : '';
+    // Get optional class parameter
+    const classId = req.query.class || '';
+    
+    // Get all channels
+    let channels = await KitCommMessage.distinct('channel');
+    
+    // Filter by search term if provided
+    if (search) {
+      channels = channels.filter(ch => ch.toLowerCase().includes(search));
+    }
+    
+    // In a real implementation, you would filter channels by class
+    // For now, just return all channels with the search filter
+    
     res.json(channels);
   } catch (error) {
     console.error('❌ Error fetching KitComm channels:', error);
@@ -134,6 +156,100 @@ router.post('/upload', upload.single('file'), async (req, res) => {
   } catch (error) {
     console.error('❌ Error uploading KitComm file:', error);
     res.status(500).json({ error: 'Server error uploading file' });
+  }
+});
+
+// Delete a channel
+router.delete('/channels/:name', auth, async (req, res) => {
+  try {
+    const channelName = req.params.name;
+    
+    // Don't allow deleting default channels
+    if (channelName === 'Global') {
+      return res.status(403).json({ error: 'Cannot delete default channels' });
+    }
+    
+    // Delete all messages in the channel
+    await KitCommMessage.deleteMany({ channel: channelName });
+    
+    // Notify all clients that the channel has been deleted
+    req.app.get('io').emit('kitcomm:channelDeleted', { channel: channelName });
+    
+    res.json({ success: true, message: `Channel ${channelName} deleted` });
+  } catch (error) {
+    console.error('❌ Error deleting channel:', error);
+    res.status(500).json({ error: 'Server error deleting channel' });
+  }
+});
+
+// Get users for a class with online status
+router.get('/users', auth, async (req, res) => {
+  try {
+    const classId = req.query.class || 'default';
+    
+    // In a real implementation, fetch users from the database
+    // For now, use mock data
+    const mockUsers = [
+      { id: '1', name: 'John Doe', status: 'online' },
+      { id: '2', name: 'Jane Smith', status: 'online' },
+      { id: '3', name: 'Bob Johnson', status: 'offline' },
+      { id: '4', name: 'Alice Williams', status: 'offline' }
+    ];
+    
+    // Add the current user
+    const currentUser = {
+      id: req.user.id || '0',
+      name: req.user.name || req.body.userName || 'You',
+      status: 'online'
+    };
+    
+    // Check if user is already in the list
+    if (!mockUsers.find(u => u.id === currentUser.id)) {
+      mockUsers.push(currentUser);
+    }
+    
+    // Split into online and offline
+    const online = mockUsers.filter(u => u.status === 'online');
+    const offline = mockUsers.filter(u => u.status === 'offline');
+    
+    res.json({ online, offline });
+  } catch (error) {
+    console.error('❌ Error fetching users:', error);
+    res.status(500).json({ error: 'Server error fetching users' });
+  }
+});
+
+// Update user status
+router.post('/users/status', auth, async (req, res) => {
+  try {
+    const { status } = req.body;
+    const userId = req.user.id;
+    const userName = req.user.name;
+    const classId = req.query.class || 'default';
+    
+    // Initialize class if needed
+    if (!userStatus[classId]) {
+      userStatus[classId] = {};
+    }
+    
+    // Update user status
+    userStatus[classId][userId] = {
+      name: userName,
+      status: status || 'online',
+      lastSeen: new Date()
+    };
+    
+    // Notify all clients of status change
+    req.app.get('io').to(`class:${classId}`).emit('kitcomm:userStatus', {
+      userId,
+      userName,
+      status: status || 'online'
+    });
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('❌ Error updating user status:', error);
+    res.status(500).json({ error: 'Server error updating user status' });
   }
 });
 
