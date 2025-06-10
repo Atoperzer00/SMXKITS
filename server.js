@@ -152,6 +152,41 @@ process.on('SIGINT', async () => {
   }
 });
 
+// ===== OpsLog Mongoose Schema =====
+const calloutSchema = new mongoose.Schema({
+  roomId: String,
+  classification: String,
+  asset: String,
+  sensor: String,
+  operation: String,
+  countryCode: String,
+  team: String,
+  zulu: String,
+  mgrs: String,
+  location: String,
+  activity: String,
+  males: Number,
+  females: Number,
+  children: Number,
+  iaNotes: String,
+  follow: {
+    name: String,
+    stage: String
+  },
+  qc: { type: String, default: "qc-orange" },
+  createdBy: String,
+  createdAt: { type: Date, default: Date.now },
+  editedAt: Date,
+  history: [
+    {
+      editedBy: String,
+      editedAt: Date,
+      changes: Object
+    }
+  ]
+});
+const Callout = mongoose.model('Callout', calloutSchema);
+
 // Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
@@ -160,6 +195,80 @@ app.use('/api/progress', require('./routes/progress'));
 app.use('/api/chat', require('./routes/chat'));
 app.use('/api/kitcomm', require('./routes/kitcomm'));
 app.use('/api/streams', require('./routes/streams'));
+
+// ===== OpsLog API Routes =====
+// Get all callouts for a room
+app.get('/api/callouts/:roomId', async (req, res) => {
+  const roomId = req.params.roomId;
+  try {
+    const logs = await Callout.find({ roomId }).sort({ createdAt: -1 });
+    res.json(logs);
+  } catch (error) {
+    console.error('❌ Error fetching callouts:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Create callout
+app.post('/api/callouts', async (req, res) => {
+  try {
+    const callout = await Callout.create(req.body);
+    io.to(callout.roomId).emit('new_callout', callout);
+    res.json(callout);
+  } catch (error) {
+    console.error('❌ Error creating callout:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Edit callout
+app.put('/api/callouts/:id', async (req, res) => {
+  const id = req.params.id;
+  try {
+    const current = await Callout.findById(id);
+    if (!current) return res.status(404).json({ message: 'Callout not found' });
+    
+    // Save previous version to history
+    current.history.push({
+      editedBy: req.body.editedBy || 'Unknown',
+      editedAt: new Date(),
+      changes: { ...current.toObject() }
+    });
+    
+    // Update fields
+    Object.assign(current, req.body, { editedAt: new Date() });
+    await current.save();
+    io.to(current.roomId).emit('update_callout', current);
+    res.json(current);
+  } catch (error) {
+    console.error('❌ Error updating callout:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Delete callout
+app.delete('/api/callouts/:id', async (req, res) => {
+  try {
+    const callout = await Callout.findByIdAndDelete(req.params.id);
+    if (callout) io.to(callout.roomId).emit('delete_callout', callout._id);
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('❌ Error deleting callout:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get callout history
+app.get('/api/callouts/:id/history', async (req, res) => {
+  try {
+    const callout = await Callout.findById(req.params.id);
+    if (!callout) return res.status(404).json({ message: 'Callout not found' });
+    res.json(callout.history || []);
+  } catch (error) {
+    console.error('❌ Error fetching callout history:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -201,6 +310,12 @@ app.set('io', io);
 // Real-time chat and streaming with MongoDB storage
 io.on('connection', socket => {
   console.log('🔌 New socket connection established');
+  
+  // ===== OPSLOG HANDLERS =====
+  socket.on('join_room', roomId => {
+    console.log(`👤 User joined OpsLog room: ${roomId}`);
+    socket.join(roomId);
+  });
   
   // ===== STREAMING HANDLERS =====
   // Track connected viewers
