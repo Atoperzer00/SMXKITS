@@ -23,7 +23,7 @@ app.use(express.json());
 app.use(cors());
 
 // MongoDB connection
-mongoose.connect('mongodb://localhost/smxkits', { 
+mongoose.connect('mongodb://localhost:27017/smxkits', { 
   useNewUrlParser: true, 
   useUnifiedTopology: true,
   useCreateIndex: true
