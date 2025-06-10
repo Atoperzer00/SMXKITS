@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SMX Instructor Streaming Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link href="https://fonts.googleapis.com/css?family=Inter:400,600,700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --main-bg: #101824;
+      --panel-bg: #182233;
+      --control-bg: #192637;
+      --accent: #45a2ff;
+      --accent-fade: #2478c9;
+      --success: #11e38b;
+      --error: #fa6060;
+      --border: #25344b;
+      --text-main: #e3e7ef;
+      --text-secondary: #9bacc8;
+      --paused: #ffe65e;
+      --live: #ff5a5a;
+      --rounded: 18px;
+      --shadow: 0 6px 40px 0 #0005;
+    }
+    body {
+      margin: 0;
+      font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+      background: var(--main-bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 32px 18px 42px 18px;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+    }
+    .header-title {
+      font-size: 2.1rem;
+      font-weight: 700;
+      letter-spacing: .05em;
+      color: var(--text-main);
+    }
+    .status-badge {
+      padding: 0.36em 1.25em;
+      border-radius: 1em;
+      font-weight: 700;
+      font-size: 1.1rem;
+      background: var(--panel-bg);
+      color: var(--text-secondary);
+      border: 2.2px solid var(--border);
+      margin-left: 16px;
+      transition: background .14s;
+    }
+    .status-live { color: var(--live); border-color: var(--live); }
+    .status-paused { color: var(--paused); border-color: var(--paused); }
+    .status-offline { color: var(--text-secondary); border-color: var(--border); }
+    .main-panel {
+      display: flex;
+      gap: 36px;
+      flex-wrap: wrap;
+    }
+    .left-panel {
+      flex: 2 1 480px;
+      background: var(--panel-bg);
+      border-radius: var(--rounded);
+      padding: 28px 26px 32px 26px;
+      box-shadow: var(--shadow);
+      min-width: 400px;
+      display: flex;
+      flex-direction: column;
+      min-height: 700px;
+    }
+    .right-panel {
+      flex: 1 1 340px;
+      background: var(--panel-bg);
+      border-radius: var(--rounded);
+      padding: 28px 26px 32px 26px;
+      box-shadow: var(--shadow);
+      min-width: 340px;
+      max-width: 410px;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+    .panel-section {
+      margin-bottom: 36px;
+    }
+    .section-title {
+      font-size: 1.14rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 14px;
+    }
+    .class-select, .lesson-select {
+      width: 100%;
+      background: var(--control-bg);
+      color: var(--text-main);
+      border: 1.7px solid var(--border);
+      padding: 0.7em 1.2em;
+      font-size: 1.02rem;
+      border-radius: 9px;
+      margin-bottom: 15px;
+      font-family: inherit;
+    }
+    .video-preview {
+      width: 100%;
+      aspect-ratio: 16/9;
+      border-radius: 13px;
+      background: #101929;
+      position: relative;
+      box-shadow: 0 0 0 2px var(--accent-fade);
+      margin-bottom: 10px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .video-preview video, .video-preview .placeholder {
+      width: 100%;
+      height: 100%;
+      border-radius: 13px;
+      object-fit: cover;
+      display: block;
+    }
+    .video-preview .placeholder {
+      background: #151d27 url('SMX%20Stream%20Loading%20Image.png') center/cover no-repeat;
+      filter: brightness(.82) blur(.3px);
+    }
+    .controls-row {
+      display: flex;
+      gap: 18px;
+      align-items: center;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+    .control-btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 9px;
+      padding: 0.6em 2.3em;
+      font-size: 1.04rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .17s;
+      box-shadow: 0 2px 12px #2172aa33;
+    }
+    .control-btn:active { background: var(--accent-fade); }
+    .control-btn.paused { background: var(--paused); color: #2a2a13;}
+    .control-btn.stop { background: var(--error); }
+    .control-btn[disabled] { opacity: .64; cursor: not-allowed; }
+    .viewers-label {
+      margin-left: 20px;
+      color: var(--text-secondary);
+      font-size: 1.04rem;
+      font-weight: 600;
+    }
+    .file-drop {
+      border: 2px dashed var(--accent);
+      border-radius: 11px;
+      padding: 30px 14px;
+      background: var(--main-bg);
+      color: var(--accent);
+      text-align: center;
+      font-size: 1.07rem;
+      margin-bottom: 18px;
+      cursor: pointer;
+      transition: background .12s, border-color .12s;
+    }
+    .file-drop.dragover { background: #16203b; border-color: var(--success);}
+    .progress-bar {
+      background: #112233;
+      border-radius: 7px;
+      height: 11px;
+      width: 100%;
+      margin: 12px 0 4px 0;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      width: 0;
+      transition: width .35s;
+      border-radius: 7px;
+    }
+    .notice-board {
+      margin-top: 17px;
+      background: var(--control-bg);
+      border-radius: 7px;
+      padding: 13px 12px 11px 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .notice-input {
+      flex: 1;
+      background: #141f2b;
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 8px 12px;
+      font-size: 1rem;
+      font-family: inherit;
+      margin-right: 10px;
+    }
+    .notice-send {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 7px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .timeline-bar {
+      background: #172336;
+      height: 8px;
+      border-radius: 8px;
+      margin-top: 14px;
+      position: relative;
+    }
+    .timeline-marker {
+      position: absolute;
+      top: -7px;
+      width: 3px;
+      height: 22px;
+      background: var(--success);
+      border-radius: 3px;
+    }
+    .bookmark-list {
+      margin-top: 12px;
+      color: var(--accent);
+      font-size: .97rem;
+      line-height: 1.8;
+    }
+    /* Right Panel */
+    .settings-section {
+      margin-bottom: 30px;
+      background: var(--control-bg);
+      border-radius: 8px;
+      padding: 14px 17px;
+      box-shadow: 0 2px 8px #0213231e;
+    }
+    .settings-title {
+      font-weight: 700;
+      color: var(--text-main);
+      font-size: 1.08rem;
+      margin-bottom: 8px;
+    }
+    .settings-row {
+      margin-bottom: 8px;
+      color: var(--text-secondary);
+      font-size: 0.98rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .copy-btn {
+      background: none;
+      border: none;
+      color: var(--accent);
+      cursor: pointer;
+      font-size: .97rem;
+      margin-left: 6px;
+      transition: color .12s;
+    }
+    .copy-btn:hover { color: var(--accent-fade);}
+    .obs-section {
+      margin-top: 21px;
+      color: var(--text-secondary);
+      font-size: 0.98rem;
+    }
+    .obs-section ul { margin: 8px 0 0 18px; }
+    .obs-section li { margin-bottom: 6px;}
+    @media (max-width: 1000px) {
+      .main-panel { flex-direction: column; gap: 18px;}
+      .right-panel { max-width: 100%;}
+    }
+    @media (max-width: 700px) {
+      .left-panel, .right-panel { min-width: unset; padding: 14px 5vw;}
+      .container { padding: 18px 0 28px 0;}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <span class="header-title">Instructor Streaming Control Panel</span>
+      <span class="status-badge status-offline" id="streamStatus">OFFLINE</span>
+    </div>
+    <div class="main-panel">
+      <!-- Left: Video and Controls -->
+      <div class="left-panel">
+        <div class="panel-section">
+          <div class="section-title">Class</div>
+          <select id="classSelect" class="class-select">
+            <option value="">Select a class...</option>
+            <option value="Alpha1">Alpha 1</option>
+            <option value="Bravo2">Bravo 2</option>
+            <!-- Dynamically populated from backend -->
+          </select>
+        </div>
+        <div class="panel-section">
+          <div class="section-title">Stream Preview</div>
+          <div class="video-preview" id="videoPreview">
+            <div class="placeholder"></div>
+            <video id="previewVideo" style="display:none;" autoplay muted controls></video>
+          </div>
+        </div>
+        <div class="controls-row">
+          <button class="control-btn" id="goLiveBtn">Go Live</button>
+          <button class="control-btn paused" id="pauseBtn" disabled>Pause</button>
+          <button class="control-btn stop" id="stopBtn" disabled>Stop</button>
+          <span class="viewers-label">Viewers: <span id="viewerCount">0</span></span>
+        </div>
+        <div class="panel-section">
+          <div class="section-title">Lesson / Exercise Library</div>
+          <select id="lessonSelect" class="lesson-select">
+            <option value="">Choose a lesson/exercise...</option>
+            <option value="ex1p1">Exercise 1: Practice 1</option>
+            <option value="ex1p2">Exercise 1: Practice 2</option>
+            <option value="ex2p1">Exercise 2: Practice 1</option>
+            <!-- Dynamically populated from backend -->
+          </select>
+          <button class="control-btn" id="playLessonBtn" style="width:100%;margin:13px 0 0 0;">Stream Selected Lesson</button>
+        </div>
+        <div class="panel-section">
+          <div class="section-title">Stream New Video</div>
+          <div class="file-drop" id="fileDrop">
+            <input type="file" id="fileInput" accept="video/mp4" style="display:none;">
+            <div>Drag and drop an MP4 here, or <span style="text-decoration:underline; cursor:pointer;" id="fileBrowse">browse</span> to select a file.</div>
+            <div id="uploadStatus"></div>
+            <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+          </div>
+        </div>
+        <div class="panel-section">
+          <div class="section-title">Instructor Notice / Message</div>
+          <div class="notice-board">
+            <input class="notice-input" id="noticeInput" type="text" maxlength="150" placeholder="Type a message for all students..." />
+            <button class="notice-send" id="noticeSendBtn">Send</button>
+          </div>
+        </div>
+        <div class="panel-section">
+          <div class="section-title">Session Timeline / Bookmarks</div>
+          <div class="timeline-bar" id="timelineBar"></div>
+          <button class="control-btn" id="bookmarkBtn" style="margin-top:10px;">Add Bookmark (Now)</button>
+          <div class="bookmark-list" id="bookmarkList"></div>
+        </div>
+      </div>
+      <!-- Right: Stream settings, OBS instructions, stats -->
+      <div class="right-panel">
+        <div class="settings-section">
+          <div class="settings-title">Streaming Details</div>
+          <div class="settings-row">Class: <span id="classLabel">Not selected</span></div>
+          <div class="settings-row">Server URL: 
+            <span id="serverUrl">rtmp://127.0.0.1:1935/live</span> 
+            <button class="copy-btn" onclick="copyToClipboard('serverUrl')">Copy</button>
+          </div>
+          <div class="settings-row">Stream Key: 
+            <span id="streamKey">---</span>
+            <button class="copy-btn" onclick="copyToClipboard('streamKey')">Copy</button>
+          </div>
+        </div>
+        <div class="obs-section">
+          <strong>Streaming with OBS or similar?</strong>
+          <ul>
+            <li>Open OBS Studio and go to <b>Settings → Stream</b>.</li>
+            <li>Paste the Server URL and your class Stream Key.</li>
+            <li>Click <b>Start Streaming</b> to broadcast live.</li>
+            <li>You can also stream an MP4 or lesson instantly above.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    // --- Class select, dynamic labels ---
+    const classSelect = document.getElementById('classSelect');
+    const classLabel = document.getElementById('classLabel');
+    const streamKey = document.getElementById('streamKey');
+    classSelect.addEventListener('change', () => {
+      classLabel.textContent = classSelect.options[classSelect.selectedIndex].text;
+      streamKey.textContent = classSelect.value ? 'STREAM_' + classSelect.value : '---';
+      // TODO: Load lessons for this class, fetch viewers count, etc.
+    });
+
+    // --- Video Preview controls (stub/demo for now) ---
+    const goLiveBtn = document.getElementById('goLiveBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const streamStatus = document.getElementById('streamStatus');
+    let liveState = 'offline'; // 'offline' | 'live' | 'paused'
+    function setStatus(status) {
+      liveState = status;
+      streamStatus.className = 'status-badge status-' + status;
+      streamStatus.textContent = status === 'live' ? 'LIVE' : status === 'paused' ? 'PAUSED' : 'OFFLINE';
+      goLiveBtn.disabled = (status === 'live');
+      pauseBtn.disabled = (status !== 'live');
+      stopBtn.disabled = (status === 'offline');
+    }
+    goLiveBtn.onclick = () => setStatus('live');
+    pauseBtn.onclick = () => setStatus('paused');
+    stopBtn.onclick = () => setStatus('offline');
+    setStatus('offline');
+
+    // --- Lesson picker and play demo ---
+    const lessonSelect = document.getElementById('lessonSelect');
+    document.getElementById('playLessonBtn').onclick = () => {
+      if (!lessonSelect.value) return alert('Choose a lesson/exercise!');
+      // TODO: Stream the selected lesson to all students (backend call)
+      alert('Streaming ' + lessonSelect.options[lessonSelect.selectedIndex].text + ' to students.');
+    };
+
+    // --- File drop (Instant Stream) demo ---
+    const fileDrop = document.getElementById('fileDrop');
+    const fileInput = document.getElementById('fileInput');
+    const fileBrowse = document.getElementById('fileBrowse');
+    const uploadStatus = document.getElementById('uploadStatus');
+    const progressFill = document.getElementById('progressFill');
+    fileDrop.addEventListener('click', () => fileInput.click());
+    fileBrowse.addEventListener('click', e => { e.stopPropagation(); fileInput.click(); });
+    fileDrop.addEventListener('dragover', e => { e.preventDefault(); fileDrop.classList.add('dragover'); });
+    fileDrop.addEventListener('dragleave', e => fileDrop.classList.remove('dragover'));
+    fileDrop.addEventListener('drop', e => {
+      e.preventDefault();
+      fileDrop.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      handleFileUpload(file);
+    });
+    fileInput.addEventListener('change', e => {
+      const file = fileInput.files[0];
+      handleFileUpload(file);
+    });
+    function handleFileUpload(file) {
+      if (!file || !file.name.endsWith('.mp4')) {
+        uploadStatus.textContent = 'Please select an MP4 file.';
+        return;
+      }
+      uploadStatus.textContent = 'Uploading "' + file.name + '"...';
+      progressFill.style.width = '30%';
+      // TODO: Upload file to backend and start streaming
+      setTimeout(() => {
+        progressFill.style.width = '100%';
+        uploadStatus.textContent = 'Streaming "' + file.name + '" to students!';
+        setTimeout(() => {
+          uploadStatus.textContent = '';
+          progressFill.style.width = '0';
+        }, 2200);
+      }, 1400);
+    }
+
+    // --- Instructor notice/message demo ---
+    document.getElementById('noticeSendBtn').onclick = () => {
+      const val = document.getElementById('noticeInput').value.trim();
+      if (!val) return;
+      // TODO: Send this message to all students in the class (backend call)
+      alert('Notice sent: ' + val);
+      document.getElementById('noticeInput').value = '';
+    };
+
+    // --- Bookmarks/timeline ---
+    const timelineBar = document.getElementById('timelineBar');
+    const bookmarkList = document.getElementById('bookmarkList');
+    let bookmarks = [];
+    document.getElementById('bookmarkBtn').onclick = () => {
+      const time = new Date();
+      const label = 'Bookmark at ' + time.toLocaleTimeString();
+      bookmarks.push({ time: time.getTime(), label });
+      updateBookmarks();
+    };
+    function updateBookmarks() {
+      bookmarkList.innerHTML = bookmarks.map(bm => `<div>• ${bm.label}</div>`).join('');
+      timelineBar.innerHTML = bookmarks.map((bm,i) =>
+        `<div class="timeline-marker" style="left:${i*12+8}px"></div>`).join('');
+    }
+
+    // --- Copy to clipboard ---
+    function copyToClipboard(id) {
+      const val = document.getElementById(id).textContent;
+      navigator.clipboard.writeText(val).then(() => {
+        alert('Copied: ' + val);
+      });
+    }
+
+    // --- Mock: Viewer count ---
+    setInterval(() => {
+      document.getElementById('viewerCount').textContent = (liveState === 'live')
+        ? Math.floor(Math.random()*8)+10 : 0;
+    }, 1800);
+
+    // TODO: Connect to backend APIs for all dynamic controls.
+  </script>
+</body>
+</html>
