@@ -310,7 +310,10 @@
         <div class="dashboard-tile">Manage Attendance</div>
         <div class="dashboard-tile">Instructor Inbox <span class="tile-badge">3</span></div>
         <div class="dashboard-tile" onclick="window.open('../SMXStream-integrated.html', '_blank')">
-          SMX Stream Platform
+          SMX Stream Instructor
+        </div>
+        <div class="dashboard-tile" onclick="window.open('../SMXStream-new.html', '_blank')">
+          SMX Stream Student
         </div>
         <div class="dashboard-tile" onclick="window.open('../OpsLog.html', '_blank')">
           Operations Log
@@ -321,10 +324,13 @@
         </div>
         <div class="dashboard-tile">Upload Templates</div>
       </section>
-      <!-- Optionally, add instructions for instructors -->
+      <!-- Instructions for streaming options -->
       <div class="dashboard-tile" style="background:#1e2738; color:#fff; font-size:0.98rem; cursor:default;">
-        <b>Stream Mode:</b> When opening SMX Stream, select <b>Live Stream</b> to broadcast the live feed, or <b>Local File</b> to play a video file.<br><br>
-        <span style="color:#89bcf4;">(Instructor: Push your live feed to the configured HLS server. Students: Select Live Stream to watch.)</span>
+        <b>Streaming Options:</b><br>
+        - <b>SMX Stream Instructor:</b> Full control panel for instructors to manage streams and interact with students.<br>
+        - <b>SMX Stream Student:</b> Student view of streams with chat capabilities.<br>
+        - <b>Instructor Stream Mode:</b> Alternative streaming interface for instructors.<br><br>
+        <span style="color:#89bcf4;">(Instructors: Choose your preferred interface to broadcast your live feed. Students will access through the SMX Stream Student view.)</span>
       </div>
       
       <!-- Full-width Calendar Widget -->
