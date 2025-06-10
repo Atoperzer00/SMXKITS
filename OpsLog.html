@@ -161,6 +161,11 @@
     .bubble.qc-yellow { border-color: var(--qc-yellow);}
     .bubble.qc-green  { border-color: var(--qc-green);}
     .bubble.qc-red    { border-color: var(--qc-red);}
+    .bubble-flex { display: flex; justify-content: space-between; align-items: flex-start; gap: 40px; } 
+    .bubble-left, .bubble-right { display: flex; flex-direction: column; gap: 7px; } 
+    .bubble-row { margin-bottom: 2px; } 
+    .bubble-right { align-items: flex-end; min-width: 160px; font-family: 'Consolas', 'Menlo', 'Monaco', monospace; } 
+    .bubble-right .bubble-time { font-weight: bold; font-size: 1.1em; }
     .bubble .menu-btn {
       position: absolute;
       top: 14px;
@@ -448,12 +453,10 @@
             <textarea name="iaNotes" rows="1" oninput="autoGrow(this)"></textarea>
           </div>
         </div>
-        <!-- Follow Callout builder -->
         <div id="followContainer">
           <button type="button" class="submit-btn" style="margin-bottom: 0; background:var(--qc-orange); color:#181c1c; font-weight:600;" onclick="openFollow()">Create Follow</button>
         </div>
-        <!-- Follow UI will go here -->
-        <button type="submit" class="submit-btn">Submit Callout</button>
+        <button type="submit" class="submit-btn">Submit</button>
       </form>
     </main>
   </div>
@@ -488,6 +491,30 @@
           <select name="mission" id="modalMission" required>
             <option value="">Select Mission</option>
             <!-- Populate 30 missions -->
+            <option>Mission 1</option><option>Mission 2</option><option>Mission 3</option>
+            <option>Mission 4</option><option>Mission 5</option><option>Mission 6</option>
+            <option>Mission 7</option><option>Mission 8</option><option>Mission 9</option>
+            <option>Mission 10</option><option>Mission 11</option><option>Mission 12</option>
+            <option>Mission 13</option><option>Mission 14</option><option>Mission 15</option>
+            <option>Mission 16</option><option>Mission 17</option><option>Mission 18</option>
+            <option>Mission 19</option><option>Mission 20</option><option>Mission 21</option>
+            <option>Mission 22</option><option>Mission 23</option><option>Mission 24</option>
+            <option>Mission 25</option><option>Mission 26</option><option>Mission 27</option>
+            <option>Mission 28</option><option>Mission 29</option><option>Mission 30</option>
+          </select>
+        </div>
+        <button type="submit" class="submit-btn" style="margin-top:18px;">Join Room</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Callout Menu Modal -->
+  <div id="calloutMenuModal" class="modal" style="display:none;">
+    <div class="modal-content" id="calloutMenuContent">
+      <!-- Content filled by JS -->
+    </div>
+  </div>
+
 <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
 <script>
   // ------ Global State ------
@@ -568,52 +595,39 @@
   }
 
   // Create/append log bubble
-  function createBubble(data, append=false) {
-    const panel = document.getElementById('feedPanel');
-    let div = document.createElement('div');
-    div.className = "bubble " + (data.qc || "qc-orange");
-    div.id = 'callout_'+data._id;
-    div.innerHTML = `
-      <button class="menu-btn" title="Options" onclick="showCalloutMenu(event, this, '${data._id}')">&#8942;</button>
-      <div class="callout-meta">
-        <b>${data.classification}</b> | <b>${data.asset}</b> | <b>${data.sensor}</b> | <b>${data.operation}</b> | <b>${data.countryCode||''}</b>
-        <br><b>Team:</b> ${data.team || "-"} | <b>Time:</b> ${data.zulu || "-"} | <b>MGRS:</b> ${data.mgrs || "-"}
-      </div>
-      <div><b>Loc:</b> ${data.location || "-"}<br>
-        <b>Activity:</b> ${(data.activity||'').replace(/\n/g,'<br>')}<br>
-        <b>SLANT:</b> ${data.males||0}/${data.females||0}/${data.children||0}<br>
-        <b>IA Notes:</b> ${(data.iaNotes||'').replace(/\n/g,'<br>')}
-      </div>
-      ${data.follow ? `
-      <div style="margin-top:9px; background:#23272e; border-radius:6px; padding:9px 12px;">
-        <b>Follow:</b> ${data.follow.name || "-"}<br>
-        <b>Stage:</b> <span>${data.follow.stage}</span>
-      </div>` : ""}
-      <div style="font-size:0.85em; color:#888; margin-top:7px;">
-        By ${data.createdBy} &middot; ${(data.createdAt ? new Date(data.createdAt).toLocaleTimeString() : '')}
-      </div>
-    `;
-    div.dataset.payload = JSON.stringify(data);
-    if (append) panel.appendChild(div);
-    else panel.prepend(div);
+  function createBubble(data, append=false) { 
+    const panel = document.getElementById('feedPanel'); 
+    let div = document.createElement('div'); 
+    div.className = "bubble " + (data.qc || "qc-orange"); 
+    div.id = 'callout_' + data._id; 
+    div.innerHTML = ` 
+      <button class="menu-btn" title="Options" onclick="showCalloutMenu(event, this, '${data._id}')">&#8942;</button> 
+      <div class="bubble-flex"> 
+        <div class="bubble-left"> 
+          <div class="bubble-row"> 
+            <span><b>${data.operation || '-'}</b></span> 
+            <span style="margin: 0 9px; color: #444;">|</span> 
+            <span><b>${data.asset || '-'}</b></span> 
+          </div> 
+          <div class="bubble-row">${data.location || '-'}</div> 
+          ${ data.follow && data.follow.name ? `<div class="bubble-row"><b>${data.follow.name} / ${data.follow.stage}</b></div>` : '' } 
+          <div class="bubble-row">${data.activity || '-'}</div> 
+          <div class="bubble-row"><b>IA Notes:</b> ${(data.iaNotes||'').replace(/\n/g,'<br>')}</div> 
+        </div> 
+        <div class="bubble-right"> 
+          <span class="bubble-time">${data.zulu || '-'}</span> 
+          <span>MGRS: ${data.mgrs || '-'}</span> 
+          <span>SLANT: ${(data.males||0)}/${(data.females||0)}/${(data.children||0)} &nbsp; V: ${(data.vehicles||0)}</span> 
+        </div> 
+      </div> 
+      <div style="font-size:0.85em; color:#888; margin-top:7px;"> 
+        By ${data.createdBy} &middot; ${(data.createdAt ? new Date(data.createdAt).toLocaleTimeString() : '')} 
+      </div> 
+    `; 
+    div.dataset.payload = JSON.stringify(data); 
+    if (append) panel.appendChild(div); 
+    else panel.prepend(div); 
   }
-
-  // ------ Socket.io real-time ------
-  socket.on('new_callout', log => {
-    callouts[log._id] = log;
-    createBubble(log, false);
-  });
-  socket.on('update_callout', log => {
-    callouts[log._id] = log;
-    let old = document.getElementById('callout_'+log._id);
-    if (old) old.remove();
-    createBubble(log, false);
-  });
-  socket.on('delete_callout', id => {
-    delete callouts[id];
-    let old = document.getElementById('callout_'+id);
-    if (old) old.remove();
-  });
 
   // Edit / History / QC / Delete overlays
   function showCalloutMenu(e, btn, id) {
@@ -799,6 +813,25 @@
       e.target.style.display='none';
     }
   }
+  
+  // Socket.io real-time updates
+  socket.on('new_callout', (callout) => {
+    callouts[callout._id] = callout;
+    createBubble(callout, false);
+  });
+  
+  socket.on('update_callout', (callout) => {
+    callouts[callout._id] = callout;
+    let old = document.getElementById('callout_'+callout._id);
+    if (old) old.remove();
+    createBubble(callout, false);
+  });
+  
+  socket.on('delete_callout', (id) => {
+    let old = document.getElementById('callout_'+id);
+    if (old) old.remove();
+    delete callouts[id];
+  });
 </script>
 </body>
 </html>
