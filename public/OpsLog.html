@@ -516,7 +516,7 @@
     <div class="modal-content">
       <button class="modal-close" onclick="closeRoomModal()">&times;</button>
       <div style="font-weight:600; color:var(--logo-color); font-size:1.2em; margin-bottom:16px;">Join a Room</div>
-      <form id="joinRoomForm">
+      <form id="joinRoomForm" onsubmit="return false;">
         <div class="form-group" style="margin-bottom: 15px;">
           <label>Team</label>
           <select name="team" id="modalTeam" required>
@@ -532,7 +532,7 @@
             <option>Yankee Team</option><option>Zulu Team</option>
           </select>
         </div>
-        <div class="form-group">
+        <div class="form-group" style="margin-bottom: 15px;">
           <label>Mission</label>
           <select name="mission" id="modalMission" required>
             <option value="">Select Mission</option>
@@ -549,7 +549,7 @@
             <option>Mission 28</option><option>Mission 29</option><option>Mission 30</option>
           </select>
         </div>
-        <button type="submit" class="submit-btn" style="margin-top:18px;">Join Room</button>
+        <button type="button" id="joinRoomButton" class="submit-btn" style="margin-top:18px;">Join Room</button>
       </form>
     </div>
   </div>
@@ -579,33 +579,79 @@
   function openRoomModal() { document.getElementById('roomModal').style.display='flex'; }
   function closeRoomModal() { document.getElementById('roomModal').style.display='none'; }
 
-  document.getElementById('joinRoomForm').onsubmit = async function(e){
-    e.preventDefault();
-    // Join room - Using fixed classId since field was removed
-    let classId = "SMX"; // Using a default class ID since the field was removed
-    let team = this.team.value;
-    let mission = this.mission.value;
-    currentRoom = { classId, team, mission };
-    let roomId = classId + "_" + team + "_" + mission;
-    socket.emit('join_room', roomId);
-    document.getElementById('currentClass').textContent = classId;
-    document.getElementById('currentTeam').textContent = team;
-    document.getElementById('currentMission').textContent = mission;
-    closeRoomModal();
-    await loadCallouts(roomId);
+  // Make sure form initialization happens after the DOM is fully loaded
+  window.addEventListener('DOMContentLoaded', function() {
+    console.log("DOM fully loaded, initializing UI handlers");
+    
+    // Use a direct click handler for the join button instead of form submit
+    const joinButton = document.getElementById('joinRoomButton');
+    if (joinButton) {
+      joinButton.addEventListener('click', async function() {
+        try {
+          console.log("Join Room button clicked");
+          
+          const form = document.getElementById('joinRoomForm');
+          const teamSelect = document.getElementById('modalTeam');
+          const missionSelect = document.getElementById('modalMission');
+          
+          // Validate form fields
+          if (!teamSelect.value) {
+            alert("Please select a team");
+            return;
+          }
+          if (!missionSelect.value) {
+            alert("Please select a mission");
+            return;
+          }
+          
+          // Join room - Using fixed classId since field was removed
+          let classId = "SMX"; // Using a default class ID since the field was removed
+          let team = teamSelect.value;
+          let mission = missionSelect.value;
+          
+          console.log("Selected values:", { classId, team, mission });
+          
+          currentRoom = { classId, team, mission };
+          let roomId = classId + "_" + team + "_" + mission;
+          socket.emit('join_room', roomId);
+          
+          document.getElementById('currentClass').textContent = classId;
+          document.getElementById('currentTeam').textContent = team;
+          document.getElementById('currentMission').textContent = mission;
+          
+          closeRoomModal();
+          await loadCallouts(roomId);
+        } catch (error) {
+          console.error("Error joining room:", error);
+          alert("Error joining room. Please check console for details.");
+        }
+      });
+    } else {
+      console.error("Join Room button not found in DOM");
+    }
+  });
   }
 
   // Load callouts for room
   async function loadCallouts(roomId) {
-    const res = await fetch(`http://localhost:3001/api/callouts/${roomId}`);
-    const logs = await res.json();
-    callouts = {};
-    document.getElementById('feedPanel').innerHTML = '';
-    // Sort logs by creation date (newest first)
-    logs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    for(const log of logs) {
-      callouts[log._id] = log;
-      createBubble(log, true); // Still using append=true for initial load to maintain the sorted order
+    try {
+      console.log("Loading callouts for room:", roomId);
+      const res = await fetch(`http://localhost:3001/api/callouts/${roomId}`);
+      const logs = await res.json();
+      console.log("Callouts loaded:", logs);
+      
+      callouts = {};
+      document.getElementById('feedPanel').innerHTML = '';
+      
+      // Sort logs by creation date (newest first)
+      logs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      for(const log of logs) {
+        callouts[log._id] = log;
+        createBubble(log, true); // Still using append=true for initial load to maintain the sorted order
+      }
+    } catch (error) {
+      console.error("Error loading callouts:", error);
+      alert("Error loading room data. Please check console for details.");
     }
   }
 
