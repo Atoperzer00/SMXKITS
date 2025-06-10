@@ -42,7 +42,7 @@
 
     /* Sidebar */
     .sidebar {
-      width: 320px;
+      width: 480px;
       background: var(--sidebar);
       padding: 28px 18px 18px 18px;
       display: flex;
@@ -363,9 +363,8 @@
     <aside class="sidebar">
       <div class="logo">SMXKITS</div>
       <div class="nav">
-        <button class="nav-btn" onclick="goDashboard()">Dashboard</button>
-        <button class="nav-btn" onclick="openMyLogs()">My Logs</button>
-        <button class="nav-btn" onclick="openRoomModal()">Join Room</button>
+        <!-- My Logs button removed -->
+        <!-- Dashboard and Join Room buttons moved to top bar -->
       </div>
       <div class="divider"></div>
 
@@ -466,9 +465,11 @@
     <!-- Main -->
     <main class="main-panel">
       <div class="top-bar" id="mainTopBar">
-        <!-- Room information moved to top bar -->
+        <!-- Room information and navigation buttons in top bar -->
         <div style="flex: 1; display: flex; align-items: center;">
-          <span style="font-weight: bold; margin-right: 15px;">OPS LOG</span> &mdash; 
+          <span style="font-weight: bold; margin-right: 15px;">OPS LOG</span>
+          <button class="nav-btn" onclick="openRoomModal()" style="margin:0 20px;">Join Room</button>
+          &mdash; 
           <div style="margin-left: 10px; display: flex; align-items: center;">
             <span>Class: <span id="currentClass" style="font-weight: 500; color: #a9d4c6;">-</span></span>
             <span style="margin: 0 10px;">|</span>
@@ -477,7 +478,7 @@
             <span>Mission: <span id="currentMission" style="font-weight: 500; color: #a9d4c6;">-</span></span>
           </div>
         </div>
-        <button onclick="forceRefresh()" style="background: var(--button-bg); color: #fff; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Refresh</button>
+        <button class="nav-btn" onclick="goDashboard()" style="margin-left:24px;">Dashboard</button>
       </div>
 
       <section class="feed-panel" id="feedPanel">
@@ -492,11 +493,6 @@
       <button class="modal-close" onclick="closeRoomModal()">&times;</button>
       <div style="font-weight:600; color:var(--logo-color); font-size:1.2em; margin-bottom:16px;">Join a Room</div>
       <form id="joinRoomForm">
-        <div class="form-group">
-          <label>Class</label>
-          <input type="text" name="classId" id="modalClassId" required/>
-        </div>
-        <div class="form-group">
           <label>Team</label>
           <select name="team" id="modalTeam" required>
             <option value="">Select Team</option>
