@@ -563,38 +563,9 @@
   
   <div class="main-content">
     <div class="container">
-      <div id="login-view" style="display: none;">
-        <div class="login-section">
-          <div class="login-header">
-            <h2>Login to SMX Stream</h2>
-            <p style="color: rgba(255,255,255,0.7); margin-top: 0.5rem;">Access your classes and training sessions</p>
-          </div>
-          
-          <form id="login-form">
-            <div class="form-group">
-              <label class="form-label">Email</label>
-              <input type="email" class="form-input" id="email" required>
-              <div class="form-error" id="email-error"></div>
-            </div>
-            
-            <div class="form-group">
-              <label class="form-label">Password</label>
-              <input type="password" class="form-input" id="password" required>
-              <div class="form-error" id="password-error"></div>
-            </div>
-            
-            <button type="submit" class="form-submit">Login</button>
-            
-            <div class="form-switch">
-              Please contact your instructor if you need access.
-            </div>
-          </form>
-        </div>
-      </div>
+      <!-- Login view removed -->
       
-      <!-- Using existing authentication system, no registration needed -->
-      
-      <div id="stream-view" style="display: none;">
+      <div id="stream-view">
         <div class="class-selector" id="class-selector">
           <h2>Available Training Sessions</h2>
           <div class="class-list" id="class-list">
@@ -685,19 +656,13 @@
   
   <script>
     // Global variables
-    let currentUser = null;
+    let currentUser = { id: "demo-user", username: "Demo User", name: "Demo User" };
     let currentClass = null;
     let socket = null;
     let player = null;
     
     // DOM Elements
-    const loginView = document.getElementById('login-view');
-    // No registration view needed
     const streamView = document.getElementById('stream-view');
-    const loginBtn = document.getElementById('login-btn');
-    const loginForm = document.getElementById('login-form');
-    // No registration form needed
-    // Using existing authentication system
     const classList = document.getElementById('class-list');
     const video = document.getElementById('video');
     const playBtn = document.getElementById('playBtn');
@@ -717,13 +682,11 @@
     const chatInput = document.getElementById('chat-input');
     const chatSend = document.getElementById('chat-send');
     
-    // Check for token in localStorage (auto-login)
-    const token = localStorage.getItem('smx-token');
-    if (token) {
-      fetchUserData(token);
-    } else {
-      showLoginView();
-    }
+    // Initialize socket connection immediately
+    initSocket();
+    
+    // Get sample class data directly
+    fetchClassesDirectly();
     
     // Initialize socket connection
     function initSocket() {
@@ -775,70 +738,44 @@
       });
     }
     
-    // Authentication functions
-    function showLoginView() {
-      loginView.style.display = 'block';
-      registerView.style.display = 'none';
-      streamView.style.display = 'none';
-      loginBtn.textContent = 'Login';
-    }
-    
-    // No registration view in this version
-    
-    function showStreamView() {
-      loginView.style.display = 'none';
-      streamView.style.display = 'block';
-      loginBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Logout';
-    }
-    
-    // Fetch user data with token
-    async function fetchUserData(token) {
-      try {
-        const response = await fetch('/api/auth/user', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (!response.ok) {
-          throw new Error('Authentication failed');
-        }
-        
-        const userData = await response.json();
-        currentUser = userData;
-        
-        // Initialize socket after authentication
-        initSocket();
-        
-        // Fetch available classes
-        fetchClasses(token);
-        
-        // Show stream view
-        showStreamView();
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-        localStorage.removeItem('smx-token');
-        showLoginView();
-      }
-    }
-    
-    // Fetch available classes
-    async function fetchClasses(token) {
-      try {
-        const response = await fetch('/api/classes', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch classes');
-        }
-        
-        const classes = await response.json();
-        renderClassList(classes);
-      } catch (error) {
-        console.error('Error fetching classes:', error);
+    // Load sample class data for demonstration
+    function fetchClassesDirectly() {
+      // Sample class data
+      const sampleClasses = [
+        {
+          _id: "class1",
+          name: "Cybersecurity Fundamentals",
+          streamKey: "cyber_123abc",
+          streamStatus: "live",
+          students: [{ id: "1" }, { id: "2" }, { id: "3" }],
+          instructors: ["instructor1"],
+          status: "live"
+        },
+        {
+          _id: "class2",
+          name: "Advanced Threat Detection",
+          streamKey: "threat_456def",
+          streamStatus: "offline",
+          students: [{ id: "1" }, { id: "4" }],
+          instructors: ["instructor2"],
+          status: "offline"
+        },
+        {
+          _id: "class3",
+          name: "Security Architecture",
+          streamKey: "arch_789ghi",
+          streamStatus: "offline",
+          students: [{ id: "5" }, { id: "6" }, { id: "7" }],
+         instructors: ["instructor1"],
+          status: "offline"
+         }
+      ];
+      
+      renderClassList(sampleClasses);
+      
+      // Auto-select the first class
+      if (sampleClasses.length > 0) {
+        selectClass(sampleClasses[0]);
       }
     }
     
@@ -1112,71 +1049,7 @@
     
     // Event Listeners
     
-    // Login form
-    loginForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      
-      try {
-        const response = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ email, password })
-        });
-        
-        const data = await response.json();
-        
-        if (!response.ok) {
-          throw new Error(data.message || 'Login failed');
-        }
-        
-        // Save token
-        localStorage.setItem('smx-token', data.token);
-        
-        // Set current user
-        currentUser = data.user;
-        
-        // Initialize socket
-        initSocket();
-        
-        // Fetch classes
-        fetchClasses(data.token);
-        
-        // Show stream view
-        showStreamView();
-      } catch (error) {
-        console.error('Login error:', error);
-        document.getElementById('email-error').textContent = error.message;
-      }
-    });
-    
-    // No register/login switch needed with existing auth system
-    
-    // Login/Logout button
-    loginBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      
-      if (currentUser) {
-        // Logout
-        localStorage.removeItem('smx-token');
-        currentUser = null;
-        
-        // Disconnect socket
-        if (socket) {
-          socket.disconnect();
-        }
-        
-        // Show login view
-        showLoginView();
-      } else {
-        // Show login view
-        showLoginView();
-      }
-    });
+    // Login functionality removed
     
     // Video player controls
     video.addEventListener('canplay', function() {
