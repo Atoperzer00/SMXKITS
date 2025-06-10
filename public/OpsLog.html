@@ -1,351 +1,852 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Target Log Generator</title>
+  <title>Ops Log - SMXKITS</title>
   <style>
+    :root {
+      --bg: #1e1e1e;
+      --panel: #23272e;
+      --sidebar: #20232a;
+      --accent: #22c55e;
+      --inactive: #3b3b3b;
+      --hover: #262a32;
+      --qc-orange: #ff9800;
+      --qc-yellow: #ffe066;
+      --qc-green: #22c55e;
+      --qc-red: #ef4444;
+      --bubble-bg: #141414;
+      --bubble-text: #fafafa;
+      --button-bg: #23272e;
+      --button-hover: #31363f;
+      --input-bg: #252a33;
+      --input-border: #333c48;
+      --logo-color: #22c55e;
+    }
+
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: #1e1e1e;
-      color: white;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--bubble-text);
+      min-height: 100vh;
+      overflow: hidden;
     }
+
     .container {
       display: flex;
       height: 100vh;
+      width: 100vw;
     }
+
+    /* Sidebar */
     .sidebar {
-      width: 350px;
-      background: #2b2b2b;
-      padding: 20px;
-      box-sizing: border-box;
-      overflow-y: auto;
-    }
-    .menu-icon {
-      font-size: 24px;
-      margin-bottom: 10px;
-      cursor: pointer;
-    }
-    .sidebar h2 {
-      margin: 10px 0 20px;
-      font-size: 20px;
-      color: #fff;
-    }
-    label {
-      display: block;
-      margin-bottom: 12px;
-      font-size: 14px;
-    }
-    input[type="text"],
-    input[type="number"],
-    input[type="time"],
-    select,
-    textarea {
-      width: 100%;
-      padding: 6px;
-      margin-top: 4px;
-      background: #333;
-      color: white;
-      border: 1px solid #555;
-      border-radius: 4px;
-      box-sizing: border-box;
-    }
-    textarea {
-      resize: vertical;
-    }
-    .submit-btn {
-      width: 100%;
-      padding: 10px;
-      background-color: #22c55e;
-      border: none;
-      color: white;
-      font-weight: bold;
-      border-radius: 4px;
-      cursor: pointer;
-      margin-top: 10px;
-    }
-    .log-panel {
-      flex: 1;
-      padding: 20px;
-      overflow-y: auto;
-      background-color: #111;
+      width: 280px;
+      background: var(--sidebar);
+      padding: 28px 18px 18px 18px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 28px;
+      box-sizing: border-box;
+      border-right: 2px solid var(--inactive);
     }
-    .bubble {
-      background-color: #000;
-      color: white;
-      padding: 15px;
+    .logo {
+      font-size: 1.8em;
+      font-weight: bold;
+      letter-spacing: 2px;
+      color: var(--logo-color);
+      margin-bottom: 12px;
+    }
+    .nav {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .nav-btn {
+      background: var(--button-bg);
+      border: none;
+      color: #fafafa;
+      font-size: 1.07em;
+      padding: 11px 16px;
+      margin: 0;
+      text-align: left;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: background 0.2s;
+      outline: none;
+    }
+    .nav-btn:hover, .nav-btn.active {
+      background: var(--button-hover);
+    }
+    .divider {
+      height: 1px;
+      background: var(--inactive);
+      margin: 16px 0 12px 0;
+      border-radius: 2px;
+    }
+    .room-status {
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
       border-radius: 8px;
-      max-width: 80%;
+      padding: 15px 14px;
+      font-size: 0.98em;
+      margin-bottom: 12px;
+      color: #e5e7eb;
+      line-height: 1.5;
+    }
+    .logout-btn {
+      margin-top: auto;
+      background: var(--qc-red);
+      color: #fff;
+      border: none;
+      font-size: 1.06em;
+      padding: 12px 0;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .logout-btn:hover { background: #be2121; }
+
+    /* Main */
+    .main-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--panel);
+      overflow: hidden;
+    }
+    .top-bar {
+      height: 58px;
+      background: var(--sidebar);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 0 30px;
+      border-bottom: 2px solid var(--inactive);
+      font-size: 1.1em;
+      letter-spacing: 1px;
+      color: #a9d4c6;
+      font-weight: 500;
+      z-index: 2;
+    }
+    .feed-panel {
+      flex: 1;
+      overflow-y: auto;
+      padding: 36px 26px 22px 26px;
+      background: var(--panel);
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 24px;
+      min-height: 0;
+    }
+
+    /* Log Bubbles */
+    .bubble {
+      background: var(--bubble-bg);
+      color: var(--bubble-text);
+      border: 2.5px solid var(--inactive);
+      border-radius: 18px;
+      box-shadow: 0 4px 28px #00000045;
+      padding: 24px 34px 19px 24px;
       position: relative;
-      border-left: 6px solid orange;
-      transition: border-color 0.3s ease;
-      cursor: grab;
+      transition: border-color 0.22s, box-shadow 0.22s;
+      min-width: 260px;
+      max-width: 610px;
+      word-break: break-word;
+      white-space: pre-line;
+      font-size: 1.06em;
     }
-    .bubble:hover::after {
-      content: "Ready for QC";
+    .bubble.qc-orange { border-color: var(--qc-orange);}
+    .bubble.qc-yellow { border-color: var(--qc-yellow);}
+    .bubble.qc-green  { border-color: var(--qc-green);}
+    .bubble.qc-red    { border-color: var(--qc-red);}
+    .bubble-flex { display: flex; justify-content: space-between; align-items: flex-start; gap: 40px; } 
+    .bubble-left, .bubble-right { display: flex; flex-direction: column; gap: 7px; } 
+    .bubble-row { margin-bottom: 2px; } 
+    .bubble-right { align-items: flex-end; min-width: 160px; font-family: 'Consolas', 'Menlo', 'Monaco', monospace; } 
+    .bubble-right .bubble-time { font-weight: bold; font-size: 1.1em; }
+    .bubble .menu-btn {
       position: absolute;
-      top: -20px;
-      left: 10px;
-      background-color: #333;
-      color: white;
-      padding: 3px 8px;
-      font-size: 12px;
-      border-radius: 4px;
-      white-space: nowrap;
+      top: 14px;
+      right: 16px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: #a7a7a7;
+      font-size: 1.56em;
+      z-index: 3;
+      padding: 0;
+      border-radius: 50%;
+      width: 38px; height: 38px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s;
     }
-    .qc-orange { border-left-color: orange; }
-    .qc-yellow { border-left-color: yellow; }
-    .qc-green { border-left-color: limegreen; }
-    .qc-red { border-left-color: red; }
-    #lockToggle {
+    .bubble .menu-btn:hover { background: var(--hover); }
+    .bubble .callout-meta {
+      font-size: 0.98em;
+      color: #b9c6c7;
+      margin-bottom: 6px;
+    }
+
+    /* Form */
+    .form-panel {
+      width: 100%;
+      background: var(--sidebar);
+      border-top: 2px solid var(--inactive);
+      padding: 25px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 17px;
+      z-index: 3;
+    }
+    .form-title {
+      font-size: 1.2em;
+      font-weight: 600;
+      color: var(--logo-color);
+      letter-spacing: 1px;
+      margin-bottom: 7px;
+    }
+    .fields-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px 24px;
+      align-items: flex-start;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    label {
+      font-size: 0.97em;
+      color: #c2cbd1;
+      font-weight: 500;
+    }
+    input, select, textarea {
+      background: var(--input-bg);
+      color: #f5f6f7;
+      border: 1.5px solid var(--input-border);
+      border-radius: 7px;
+      font-size: 1.07em;
+      padding: 8px 12px;
+      outline: none;
+      transition: border-color 0.2s;
+      resize: none;
+      min-height: 38px;
+      font-family: inherit;
+      box-sizing: border-box;
+      width: 100%;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+    }
+    textarea {
+      min-height: 46px;
+      max-height: 350px;
+      overflow: hidden;
+      resize: none;
+      line-height: 1.5;
+    }
+    .submit-btn {
+      background: var(--accent);
+      color: #fff;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.13em;
+      padding: 14px;
       margin-top: 10px;
+      cursor: pointer;
+      transition: background 0.18s;
+      box-shadow: 0 1px 10px #00000017;
     }
-    .sidebar.drag-over {
-      outline: 2px dashed #22c55e;
-      background: #1f1f1f;
+    .submit-btn:hover { background: #28dd6c; }
+
+    /* Follow Section */
+    .follow-section {
+      background: var(--panel);
+      border: 1.5px solid var(--input-border);
+      border-radius: 10px;
+      margin-top: 7px;
+      padding: 18px 18px 13px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+      animation: fadeIn 0.25s;
     }
+    .follow-row {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .stage-btn {
+      background: var(--qc-orange);
+      color: #181c1c;
+      border: none;
+      border-radius: 7px;
+      font-weight: 700;
+      font-size: 1em;
+      padding: 10px 21px;
+      cursor: pointer;
+      outline: none;
+      margin-right: 6px;
+      min-width: 95px;
+    }
+    .follow-actions .action-btn {
+      background: var(--button-bg);
+      color: #eee;
+      border: 1.5px solid var(--input-border);
+      border-radius: 7px;
+      padding: 8px 17px;
+      font-size: 1em;
+      margin-right: 10px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.13s, border 0.13s;
+    }
+    .follow-actions .action-btn:hover {
+      background: var(--button-hover);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Overlay/Modal */
+    .modal {
+      position: fixed;
+      z-index: 30;
+      left: 0; top: 0; right: 0; bottom: 0;
+      background: #181e22e9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.22s;
+    }
+    .modal-content {
+      background: var(--sidebar);
+      color: #f5f6f7;
+      padding: 34px 38px 32px 38px;
+      border-radius: 14px;
+      min-width: 400px;
+      max-width: 98vw;
+      box-shadow: 0 10px 60px #00000069;
+      position: relative;
+      font-size: 1.08em;
+    }
+    .modal-close {
+      position: absolute;
+      top: 12px; right: 18px;
+      background: none;
+      color: #ccc;
+      border: none;
+      font-size: 1.4em;
+      cursor: pointer;
+      transition: color 0.16s;
+    }
+    .modal-close:hover { color: var(--qc-red); }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    /* Scrollbars */
+    ::-webkit-scrollbar { width: 10px; background: #17181a;}
+    ::-webkit-scrollbar-thumb { background: #22262b; border-radius: 6px;}
+    ::-webkit-scrollbar-thumb:hover { background: #363b40;}
   </style>
 </head>
 <body>
-  <!-- Authentication Check -->
-  <script>
-    // Check authentication immediately
-    const token = localStorage.getItem('token');
-    const role = localStorage.getItem('role');
-    
-    if (!token || !role) {
-      // No authentication found, redirect to login
-      window.location.replace('/login.html');
-    }
-  </script>
-
   <div class="container">
-    <aside class="sidebar" id="sidebar">
-      <div class="menu-icon" onclick="goBack()">← Back</div>
-      <div style="float: right; cursor: pointer; color: #ff6b6b;" onclick="logout()">Logout</div>
-      <h2>Target Log</h2>
-      <form id="logForm">
-        <label>Classification
-          <select name="classification">
-            <option>No Classification</option>
-          </select>
-        </label>
-        <label>Asset Name
-          <input type="text" name="asset"/>
-        </label>
-        <label>Sensor
-          <select name="sensor">
-            <option>FMV</option>
-          </select>
-        </label>
-        <label>Operation Name
-          <input type="text" name="operation" value="OBJ"/>
-        </label>
-        <label>Team Name
-          <input type="text" name="team"/>
-        </label>
-        <label>Zulu Time
-          <input type="time" name="zulu"/>
-        </label>
-        <label>MGRS
-          <input type="text" name="mgrs"/>
-        </label>
-        <label>Location Description
-          <input type="text" name="location"/>
-        </label>
-        <label>Target Description
-          <input type="text" name="target"/>
-        </label>
-        <label>Follow Callout Stage
-          <select name="followStage">
-            <option>START</option>
-            <option>STOP 1</option>
-            <option>STOP 2</option>
-            <option>END</option>
-          </select>
-        </label>
-        <label>Follow Narrative
-          <textarea name="followText" rows="2"></textarea>
-        </label>
-        <label>Activity
-          <input type="text" name="activity"/>
-        </label>
-        <label>Males
-          <input type="number" name="males" min="0"/>
-        </label>
-        <label>Females
-          <input type="number" name="females" min="0"/>
-        </label>
-        <label>Children
-          <input type="number" name="children" min="0"/>
-        </label>
-        <label>IA Notes
-          <textarea name="iaNotes" rows="3"></textarea>
-        </label>
-        <label id="lockToggle">
-          <input type="checkbox" id="lockForm"> Lock Input Data
-        </label>
-        <button type="submit" class="submit-btn">Submit</button>
-        <button type="button" class="submit-btn" onclick="exportLogs()" style="background-color: #3b82f6; margin-top: 5px;">Export Logs</button>
-        <button type="button" class="submit-btn" onclick="clearLogs()" style="background-color: #ef4444; margin-top: 5px;">Clear All</button>
-      </form>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="logo">SMXKITS</div>
+      <div class="nav">
+        <button class="nav-btn" onclick="goDashboard()">Dashboard</button>
+        <button class="nav-btn" onclick="openMyLogs()">My Logs</button>
+        <button class="nav-btn" onclick="openRoomModal()">Join Room</button>
+      </div>
+      <div class="divider"></div>
+      <div class="room-status" id="roomStatus">
+        <b>Current Room</b><br>
+        Class: <span id="currentClass">-</span><br>
+        Team: <span id="currentTeam">-</span><br>
+        Mission: <span id="currentMission">-</span>
+      </div>
+      <button class="logout-btn" onclick="logout()">Logout</button>
     </aside>
-    <main class="log-panel" id="logPanel"></main>
+
+    <!-- Main -->
+    <main class="main-panel">
+      <div class="top-bar" id="mainTopBar">
+        OPS LOG &mdash; <span id="topRoomStatus"></span>
+        <button onclick="forceRefresh()" style="margin-left: 20px; background: var(--button-bg); color: #fff; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Refresh</button>
+      </div>
+
+      <section class="feed-panel" id="feedPanel">
+        <!-- Generated log/chat bubbles will appear here -->
+      </section>
+
+      <!-- Callout Form -->
+      <form class="form-panel" id="logForm" autocomplete="off">
+        <div class="form-title">Submit New Callout</div>
+        <div class="fields-grid">
+          <div class="form-group">
+            <label>Classification</label>
+            <select name="classification" required>
+              <option value="">Select</option>
+              <option>No Classification</option>
+              <!-- Add more as needed -->
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Asset Name</label>
+            <input type="text" name="asset" required/>
+          </div>
+          <div class="form-group">
+            <label>Sensor</label>
+            <select name="sensor" required>
+              <option value="FMV">FMV</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Mission / Operation</label>
+            <input type="text" name="operation" value="OBJ" required/>
+          </div>
+          <div class="form-group">
+            <label>Country Code</label>
+            <input type="text" name="countryCode" maxlength="3"/>
+          </div>
+          <div class="form-group">
+            <label>Team Name</label>
+            <input type="text" name="team"/>
+          </div>
+          <div class="form-group">
+            <label>Zulu Time</label>
+            <input type="time" name="zulu" required/>
+          </div>
+          <div class="form-group">
+            <label>MGRS</label>
+            <input type="text" name="mgrs"/>
+          </div>
+          <div class="form-group">
+            <label>Location Description</label>
+            <input type="text" name="location"/>
+          </div>
+          <div class="form-group">
+            <label>Activity</label>
+            <textarea name="activity" rows="1" oninput="autoGrow(this)"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Males</label>
+            <input type="number" name="males" min="0"/>
+          </div>
+          <div class="form-group">
+            <label>Females</label>
+            <input type="number" name="females" min="0"/>
+          </div>
+          <div class="form-group">
+            <label>Children</label>
+            <input type="number" name="children" min="0"/>
+          </div>
+          <div class="form-group">
+            <label>Vehicles</label>
+            <input type="number" name="vehicles" min="0"/>
+          </div>
+          <div class="form-group">
+            <label>IA Notes</label>
+            <textarea name="iaNotes" rows="1" oninput="autoGrow(this)"></textarea>
+          </div>
+        </div>
+        <div id="followContainer">
+          <button type="button" class="submit-btn" style="margin-bottom: 0; background:var(--qc-orange); color:#181c1c; font-weight:600;" onclick="openFollow()">Create Follow</button>
+        </div>
+        <button type="submit" class="submit-btn">Submit</button>
+      </form>
+    </main>
   </div>
-  <script>
-    const form = document.getElementById('logForm');
-    const logPanel = document.getElementById('logPanel');
-    const lockInput = document.getElementById('lockForm');
-    const sidebar = document.getElementById('sidebar');
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const data = new FormData(form);
-      const bubble = document.createElement('div');
-      bubble.classList.add('bubble', 'qc-orange');
-      bubble.setAttribute('draggable', 'true');
-      const payload = {
-        asset: data.get('asset'),
-        sensor: data.get('sensor'),
-        operation: data.get('operation'),
-        team: data.get('team'),
-        zulu: data.get('zulu'),
-        mgrs: data.get('mgrs'),
-        location: data.get('location'),
-        target: data.get('target'),
-        followStage: data.get('followStage'),
-        followText: data.get('followText'),
-        activity: data.get('activity'),
-        males: data.get('males'),
-        females: data.get('females'),
-        children: data.get('children'),
-        iaNotes: data.get('iaNotes')
+
+  <!-- Room Modal -->
+  <div id="roomModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeRoomModal()">&times;</button>
+      <div style="font-weight:600; color:var(--logo-color); font-size:1.2em; margin-bottom:16px;">Join a Room</div>
+      <form id="joinRoomForm">
+        <div class="form-group">
+          <label>Class</label>
+          <input type="text" name="classId" id="modalClassId" required/>
+        </div>
+        <div class="form-group">
+          <label>Team</label>
+          <select name="team" id="modalTeam" required>
+            <option value="">Select Team</option>
+            <option>Alpha Team</option><option>Bravo Team</option><option>Charlie Team</option>
+            <option>Delta Team</option><option>Echo Team</option><option>Foxtrot Team</option>
+            <option>Golf Team</option><option>Hotel Team</option><option>India Team</option>
+            <option>Juliett Team</option><option>Kilo Team</option><option>Lima Team</option>
+            <option>Mike Team</option><option>November Team</option><option>Oscar Team</option>
+            <option>Papa Team</option><option>Quebec Team</option><option>Romeo Team</option>
+            <option>Sierra Team</option><option>Tango Team</option><option>Uniform Team</option>
+            <option>Victor Team</option><option>Whiskey Team</option><option>X-ray Team</option>
+            <option>Yankee Team</option><option>Zulu Team</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Mission</label>
+          <select name="mission" id="modalMission" required>
+            <option value="">Select Mission</option>
+            <!-- Populate 30 missions -->
+            <option>Mission 1</option><option>Mission 2</option><option>Mission 3</option>
+            <option>Mission 4</option><option>Mission 5</option><option>Mission 6</option>
+            <option>Mission 7</option><option>Mission 8</option><option>Mission 9</option>
+            <option>Mission 10</option><option>Mission 11</option><option>Mission 12</option>
+            <option>Mission 13</option><option>Mission 14</option><option>Mission 15</option>
+            <option>Mission 16</option><option>Mission 17</option><option>Mission 18</option>
+            <option>Mission 19</option><option>Mission 20</option><option>Mission 21</option>
+            <option>Mission 22</option><option>Mission 23</option><option>Mission 24</option>
+            <option>Mission 25</option><option>Mission 26</option><option>Mission 27</option>
+            <option>Mission 28</option><option>Mission 29</option><option>Mission 30</option>
+          </select>
+        </div>
+        <button type="submit" class="submit-btn" style="margin-top:18px;">Join Room</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Callout Menu Modal -->
+  <div id="calloutMenuModal" class="modal" style="display:none;">
+    <div class="modal-content" id="calloutMenuContent">
+      <!-- Content filled by JS -->
+    </div>
+  </div>
+
+<script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+<script>
+  // ------ Global State ------
+  let currentRoom = { classId: null, team: null, mission: null };
+  // Connect to socket.io server, using same host as current page
+  let socket = io(window.location.hostname === 'localhost' ? 'http://localhost:3001' : '');
+  let callouts = {}; // id -> callout
+
+  // Helper for growing textareas
+  function autoGrow(el) {
+    el.style.height = '38px';
+    el.style.height = (el.scrollHeight)+'px';
+  }
+
+  // Room Modal
+  function openRoomModal() { document.getElementById('roomModal').style.display='flex'; }
+  function closeRoomModal() { document.getElementById('roomModal').style.display='none'; }
+
+  document.getElementById('joinRoomForm').onsubmit = async function(e){
+    e.preventDefault();
+    // Join room
+    let classId = this.classId.value.trim();
+    let team = this.team.value;
+    let mission = this.mission.value;
+    currentRoom = { classId, team, mission };
+    let roomId = classId + "_" + team + "_" + mission;
+    socket.emit('join_room', roomId);
+    document.getElementById('currentClass').textContent = classId;
+    document.getElementById('currentTeam').textContent = team;
+    document.getElementById('currentMission').textContent = mission;
+    document.getElementById('topRoomStatus').textContent = classId + ' / ' + team + ' / ' + mission;
+    closeRoomModal();
+    await loadCallouts(roomId);
+  }
+
+  // Load callouts for room
+  async function loadCallouts(roomId) {
+    const res = await fetch(`http://localhost:3001/api/callouts/${roomId}`);
+    const logs = await res.json();
+    callouts = {};
+    document.getElementById('feedPanel').innerHTML = '';
+    for(const log of logs) {
+      callouts[log._id] = log;
+      createBubble(log, true);
+    }
+  }
+
+  // SUBMIT FORM HANDLER
+  document.getElementById('logForm').onsubmit = async function(e){
+    e.preventDefault();
+    if(!currentRoom.classId) return alert('Join a room first.');
+    const data = Object.fromEntries(new FormData(this));
+    let follow = null;
+    if(document.getElementById('followSection')) {
+      follow = {
+        name: document.getElementById('followName').value,
+        stage: document.getElementById('followStageBtn').textContent
       };
-      bubble.dataset.payload = JSON.stringify(payload);
-      bubble.innerHTML = `
-        <b>${payload.followStage}:</b> ${payload.followText}<br><br>
-        <b>Asset:</b> ${payload.asset} | <b>Sensor:</b> ${payload.sensor}<br>
-        <b>Op:</b> ${payload.operation} | <b>Team:</b> ${payload.team}<br>
-        <b>Time:</b> ${payload.zulu} | <b>MGRS:</b> ${payload.mgrs}<br>
-        <b>Location:</b> ${payload.location}<br>
-        <b>Target:</b> ${payload.target}<br>
-        <b>Activity:</b> ${payload.activity}<br>
-        <b>SLANT:</b> ${payload.males}/${payload.females}/${payload.children}<br>
-        <b>IA Notes:</b> ${payload.iaNotes}
-      `;
-      const qcStates = ['qc-orange', 'qc-yellow', 'qc-green', 'qc-red'];
-      let currentIndex = 0;
-      bubble.addEventListener('click', () => {
-        bubble.classList.remove(qcStates[currentIndex]);
-        currentIndex = (currentIndex + 1) % qcStates.length;
-        bubble.classList.add(qcStates[currentIndex]);
-      });
-      bubble.addEventListener('dragstart', (e) => {
-        e.dataTransfer.setData('bubble', bubble.dataset.payload);
-      });
-      logPanel.prepend(bubble);
-      if (!lockInput.checked) form.reset();
+    }
+    const payload = {
+      ...data,
+      roomId: currentRoom.classId + "_" + currentRoom.team + "_" + currentRoom.mission,
+      follow,
+      createdBy: localStorage.getItem('userName') || "You"
+    };
+    const res = await fetch('http://localhost:3001/api/callouts', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
     });
-    sidebar.addEventListener('dragover', (e) => {
+    const log = await res.json();
+    this.reset();
+    document.getElementById('followContainer').innerHTML = `
+      <button type="button" class="submit-btn" style="margin-bottom: 0; background:var(--qc-orange); color:#181c1c; font-weight:600;" onclick="openFollow()">Create Follow</button>
+    `;
+    window.followState = null;
+    // createBubble(log, true); // Real-time from socket!
+  }
+
+  // Create/append log bubble
+  function createBubble(data, append=false) { 
+    const panel = document.getElementById('feedPanel'); 
+    let div = document.createElement('div'); 
+    div.className = "bubble " + (data.qc || "qc-orange"); 
+    div.id = 'callout_' + data._id; 
+    div.innerHTML = ` 
+      <button class="menu-btn" title="Options" onclick="showCalloutMenu(event, this, '${data._id}')">&#8942;</button> 
+      <div class="bubble-flex"> 
+        <div class="bubble-left"> 
+          <div class="bubble-row"> 
+            <span><b>${data.operation || '-'}</b></span> 
+            <span style="margin: 0 9px; color: #444;">|</span> 
+            <span><b>${data.asset || '-'}</b></span> 
+          </div> 
+          <div class="bubble-row">${data.location || '-'}</div> 
+          ${ data.follow && data.follow.name ? `<div class="bubble-row"><b>${data.follow.name} / ${data.follow.stage}</b></div>` : '' } 
+          <div class="bubble-row">${data.activity || '-'}</div> 
+          <div class="bubble-row"><b>IA Notes:</b> ${(data.iaNotes||'').replace(/\n/g,'<br>')}</div> 
+        </div> 
+        <div class="bubble-right"> 
+          <span class="bubble-time">${data.zulu || '-'}</span> 
+          <span>MGRS: ${data.mgrs || '-'}</span> 
+          <span>SLANT: ${(data.males||0)}/${(data.females||0)}/${(data.children||0)} &nbsp; V: ${(data.vehicles||0)}</span> 
+        </div> 
+      </div> 
+      <div style="font-size:0.85em; color:#888; margin-top:7px;"> 
+        By ${data.createdBy} &middot; ${(data.createdAt ? new Date(data.createdAt).toLocaleTimeString() : '')} 
+      </div> 
+    `; 
+    div.dataset.payload = JSON.stringify(data); 
+    if (append) panel.appendChild(div); 
+    else panel.prepend(div); 
+  }
+
+  // Edit / History / QC / Delete overlays
+  function showCalloutMenu(e, btn, id) {
+    e.stopPropagation();
+    let data = callouts[id];
+    // Modal content
+    let html = `
+      <button class="modal-close" onclick="closeCalloutMenu()">&times;</button>
+      <div style="margin-bottom:19px; font-size:1.1em; color:var(--logo-color); font-weight:600;">
+        Callout Options
+      </div>
+      <button class="submit-btn" style="width:100%; margin-bottom:10px;" onclick="editCallout('${id}')">Edit</button>
+      <button class="submit-btn" style="width:100%; background:var(--inactive); margin-bottom:10px;" onclick="calloutHistory('${id}')">History</button>
+      <button class="submit-btn" style="width:100%; background:var(--qc-yellow); color:#111; margin-bottom:10px;" onclick="calloutQC('${id}', 'qc-yellow')">QC: Yellow</button>
+      <button class="submit-btn" style="width:100%; background:var(--qc-green); color:#111; margin-bottom:10px;" onclick="calloutQC('${id}', 'qc-green')">QC: Green</button>
+      <button class="submit-btn" style="width:100%; background:var(--qc-orange); color:#111; margin-bottom:10px;" onclick="calloutQC('${id}', 'qc-orange')">QC: Orange</button>
+      <button class="submit-btn" style="width:100%; background:var(--qc-red); color:#fff; margin-bottom:10px;" onclick="calloutQC('${id}', 'qc-red')">QC: Red</button>
+      <button class="submit-btn" style="width:100%; background:var(--qc-red); color:#fff;" onclick="deleteCallout('${id}')">Delete</button>
+    `;
+    document.getElementById('calloutMenuContent').innerHTML = html;
+    document.getElementById('calloutMenuModal').style.display='flex';
+    window._selectedCalloutId = id;
+  }
+  function closeCalloutMenu() { document.getElementById('calloutMenuModal').style.display='none'; window._selectedCalloutId = null; }
+
+  async function editCallout(id) {
+    closeCalloutMenu();
+    let data = callouts[id];
+    // Open overlay with form (reuse your original form fields)
+    let html = `<button class="modal-close" onclick="closeEditCallout()">&times;</button>
+    <div style="font-weight:600; color:var(--logo-color); font-size:1.2em; margin-bottom:10px;">Edit Callout</div>
+    <form id="editForm">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px;">
+        <input type="text" name="classification" value="${data.classification||''}" required placeholder="Classification"/>
+        <input type="text" name="asset" value="${data.asset||''}" required placeholder="Asset"/>
+        <input type="text" name="sensor" value="${data.sensor||''}" required placeholder="Sensor"/>
+        <input type="text" name="operation" value="${data.operation||''}" required placeholder="Operation"/>
+        <input type="text" name="countryCode" value="${data.countryCode||''}" maxlength="3" placeholder="Country Code"/>
+        <input type="text" name="team" value="${data.team||''}" placeholder="Team"/>
+        <input type="time" name="zulu" value="${data.zulu||''}" required placeholder="Zulu Time"/>
+        <input type="text" name="mgrs" value="${data.mgrs||''}" placeholder="MGRS"/>
+        <input type="text" name="location" value="${data.location||''}" placeholder="Location"/>
+        <textarea name="activity" rows="1" oninput="autoGrow(this)">${data.activity||''}</textarea>
+        <input type="number" name="males" min="0" value="${data.males||''}" placeholder="Males"/>
+        <input type="number" name="females" min="0" value="${data.females||''}" placeholder="Females"/>
+        <input type="number" name="children" min="0" value="${data.children||''}" placeholder="Children"/>
+        <input type="number" name="vehicles" min="0" value="${data.vehicles||''}" placeholder="Vehicles"/>
+        <textarea name="iaNotes" rows="1" oninput="autoGrow(this)">${data.iaNotes||''}</textarea>
+      </div>
+      <div style="margin-top:12px;">
+        <label>Follow Name</label>
+        <input type="text" name="followName" value="${data.follow?.name||''}"/>
+        <label style="margin-left:12px;">Follow Stage</label>
+        <input type="text" name="followStage" value="${data.follow?.stage||''}"/>
+      </div>
+      <button type="submit" class="submit-btn" style="margin-top:16px;">Save</button>
+    </form>`;
+    document.getElementById('calloutMenuContent').innerHTML = html;
+    document.getElementById('calloutMenuModal').style.display='flex';
+    document.getElementById('editForm').onsubmit = async function(e){
       e.preventDefault();
-      sidebar.classList.add('drag-over');
-    });
-    sidebar.addEventListener('dragleave', () => {
-      sidebar.classList.remove('drag-over');
-    });
-    sidebar.addEventListener('drop', (e) => {
-      e.preventDefault();
-      sidebar.classList.remove('drag-over');
-      const payload = JSON.parse(e.dataTransfer.getData('bubble'));
-      for (let key in payload) {
-        const input = form.elements.namedItem(key);
-        if (input) input.value = payload[key];
-      }
-    });
-
-    // Navigation functions
-    function goBack() {
-      const role = localStorage.getItem('role');
-      if (role === 'admin' || role === 'instructor') {
-        window.location.href = '/admin-dashboard.html';
-      } else {
-        window.location.href = '/dashboard.html';
-      }
-    }
-
-    function logout() {
-      localStorage.removeItem('token');
-      localStorage.removeItem('role');
-      localStorage.removeItem('userName');
-      localStorage.removeItem('classId');
-      window.location.replace('/login.html');
-    }
-
-    // Export logs function
-    function exportLogs() {
-      const bubbles = document.querySelectorAll('.bubble');
-      if (bubbles.length === 0) {
-        alert('No logs to export');
-        return;
-      }
-      
-      let exportData = 'SMX KITS - Operations Log Export\n';
-      exportData += '=====================================\n';
-      exportData += `Generated: ${new Date().toISOString()}\n`;
-      exportData += `User: ${localStorage.getItem('userName') || 'Unknown'}\n\n`;
-      
-      bubbles.forEach((bubble, index) => {
-        const payload = JSON.parse(bubble.dataset.payload);
-        exportData += `Entry ${index + 1}:\n`;
-        exportData += `Asset: ${payload.asset}\n`;
-        exportData += `Sensor: ${payload.sensor}\n`;
-        exportData += `Operation: ${payload.operation}\n`;
-        exportData += `Team: ${payload.team}\n`;
-        exportData += `Time: ${payload.zulu}\n`;
-        exportData += `MGRS: ${payload.mgrs}\n`;
-        exportData += `Location: ${payload.location}\n`;
-        exportData += `Target: ${payload.target}\n`;
-        exportData += `Stage: ${payload.followStage}\n`;
-        exportData += `Narrative: ${payload.followText}\n`;
-        exportData += `Activity: ${payload.activity}\n`;
-        exportData += `SLANT: ${payload.males}/${payload.females}/${payload.children}\n`;
-        exportData += `IA Notes: ${payload.iaNotes}\n`;
-        exportData += '---\n';
+      let payload = Object.fromEntries(new FormData(this));
+      let follow = { name: payload.followName, stage: payload.followStage };
+      delete payload.followName; delete payload.followStage;
+      const res = await fetch(`http://localhost:3001/api/callouts/${id}`, {
+        method:'PUT', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          ...callouts[id],
+          ...payload,
+          follow,
+          editedBy: localStorage.getItem('userName') || "You"
+        })
       });
-      
-      const blob = new Blob([exportData], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `ops-log-${new Date().toISOString().split('T')[0]}.txt`;
-      a.click();
-      URL.revokeObjectURL(url);
+      const log = await res.json();
+      callouts[log._id] = log;
+      let old = document.getElementById('callout_'+log._id);
+      if (old) old.remove();
+      createBubble(log, false);
+      closeEditCallout();
     }
+  }
+  function closeEditCallout() { document.getElementById('calloutMenuModal').style.display='none'; }
 
-    // Clear all logs function
-    function clearLogs() {
-      if (confirm('Are you sure you want to clear all logs? This cannot be undone.')) {
-        logPanel.innerHTML = '';
-      }
+  async function calloutHistory(id) {
+    closeCalloutMenu();
+    let res = await fetch(`http://localhost:3001/api/callouts/${id}/history`);
+    let history = await res.json();
+    let html = `<button class="modal-close" onclick="closeEditCallout()">&times;</button>
+      <div style="font-weight:600; color:var(--logo-color); font-size:1.2em; margin-bottom:8px;">Callout History</div>`;
+    if (!history.length) html += "<div>No history found for this callout.</div>";
+    else {
+      history.reverse().forEach((h, idx) => {
+        html += `<div style="margin-bottom:10px;border-bottom:1px solid #444;padding-bottom:7px;">
+          <b>Edited by:</b> ${h.editedBy || "Unknown"}<br>
+          <b>Edited at:</b> ${new Date(h.editedAt).toLocaleString()}<br>
+          <b>Changes:</b> <pre style="background:#181d21;border-radius:6px;padding:7px 12px;color:#efefef;overflow-x:auto;">${JSON.stringify(h.changes, null, 2)}</pre>
+        </div>`;
+      });
     }
+    document.getElementById('calloutMenuContent').innerHTML = html;
+    document.getElementById('calloutMenuModal').style.display='flex';
+  }
 
-    // Display user info
-    document.addEventListener('DOMContentLoaded', function() {
-      const userName = localStorage.getItem('userName') || 'User';
-      const role = localStorage.getItem('role') || 'Student';
-      console.log('OpsLog accessed by:', userName, '(' + role + ')');
-      
-      // Auto-populate current time
-      const now = new Date();
-      const zuluTime = now.toISOString().substr(11, 5);
-      const zuluInput = document.querySelector('input[name="zulu"]');
-      if (zuluInput && !zuluInput.value) {
-        zuluInput.value = zuluTime;
-      }
+  async function calloutQC(id, qc) {
+    let res = await fetch(`http://localhost:3001/api/callouts/${id}`,{
+      method:'PUT', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ ...callouts[id], qc, editedBy: localStorage.getItem('userName') || "You" })
     });
-  </script>
+    closeCalloutMenu();
+  }
+  async function deleteCallout(id) {
+    await fetch(`http://localhost:3001/api/callouts/${id}`, {method:'DELETE'});
+    closeCalloutMenu();
+  }
+
+  // Follow logic from previous code (unchanged)
+  let followStageOrder = ["START", "STOP 1", "STOP 2", "END"];
+  function openFollow() {
+    const fc = document.getElementById('followContainer');
+    fc.innerHTML = `
+      <div class="follow-section" id="followSection">
+        <div class="follow-row">
+          <label style="margin-bottom:0;">Follow Name</label>
+          <input type="text" id="followName" style="flex:1; min-width:120px;"/>
+          <button type="button" class="stage-btn" id="followStageBtn">START</button>
+        </div>
+        <div class="follow-row follow-actions">
+          <button type="button" class="action-btn" onclick="followContinue()">Continue</button>
+          <button type="button" class="action-btn" onclick="followAdvance()">Advance</button>
+          <button type="button" class="action-btn" onclick="followEnd()">End</button>
+        </div>
+      </div>
+    `;
+    window.followState = { stage: 0, cont: false, ended: false };
+    updateFollowStageBtn();
+  }
+  function followContinue() {
+    if(window.followState.ended) return;
+    window.followState.cont = true;
+    updateFollowStageBtn();
+  }
+  function followAdvance() {
+    if(window.followState.ended) return;
+    if(window.followState.stage < 3) window.followState.stage++;
+    window.followState.cont = false;
+    updateFollowStageBtn();
+  }
+  function followEnd() {
+    window.followState.stage = 3; // "END"
+    window.followState.cont = false;
+    window.followState.ended = true;
+    updateFollowStageBtn();
+    document.getElementById('followStageBtn').disabled = true;
+  }
+  function updateFollowStageBtn() {
+    let text = followStageOrder[window.followState.stage];
+    if(window.followState.cont && window.followState.stage < 3) text += " CONT.";
+    document.getElementById('followStageBtn').textContent = text;
+  }
+
+  // Prefill zulu
+  document.addEventListener('DOMContentLoaded', function() {
+    const now = new Date();
+    const zuluTime = now.toISOString().substr(11, 5);
+    const zuluInput = document.querySelector('input[name="zulu"]');
+    if (zuluInput && !zuluInput.value) zuluInput.value = zuluTime;
+    window.followState = null;
+    
+    // Add a version timestamp to force refresh if needed
+    localStorage.setItem('opsLogVersion', '1.1');
+  });
+  
+  // Function to force a hard refresh - can be useful to clear cache
+  function forceRefresh() {
+    localStorage.setItem('forceRefresh', 'true');
+    window.location.reload(true);
+  }
+
+  // Sidebar Navigation
+  function goDashboard() { window.location.href = '/dashboard.html'; }
+  function openMyLogs() { /* Implement as needed */ }
+  function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('classId');
+    window.location.replace('/login.html');
+  }
+
+  // Close modals on outside click
+  window.onclick = function(e){
+    if(e.target.classList && e.target.classList.contains('modal')) {
+      e.target.style.display='none';
+    }
+  }
+  
+  // Socket.io real-time updates
+  socket.on('new_callout', (callout) => {
+    callouts[callout._id] = callout;
+    createBubble(callout, false);
+  });
+  
+  socket.on('update_callout', (callout) => {
+    callouts[callout._id] = callout;
+    let old = document.getElementById('callout_'+callout._id);
+    if (old) old.remove();
+    createBubble(callout, false);
+  });
+  
+  socket.on('delete_callout', (id) => {
+    let old = document.getElementById('callout_'+id);
+    if (old) old.remove();
+    delete callouts[id];
+  });
+</script>
 </body>
 </html>
