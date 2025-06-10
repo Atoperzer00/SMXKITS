@@ -579,14 +579,14 @@
   function openRoomModal() { document.getElementById('roomModal').style.display='flex'; }
   function closeRoomModal() { document.getElementById('roomModal').style.display='none'; }
 
-  // Make sure form initialization happens after the DOM is fully loaded
-  window.addEventListener('DOMContentLoaded', function() {
-    console.log("DOM fully loaded, initializing UI handlers");
+  // Initialize event handlers
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log("DOM loaded - initializing event handlers");
     
-    // Use a direct click handler for the join button instead of form submit
+    // Join Room button handler
     const joinButton = document.getElementById('joinRoomButton');
     if (joinButton) {
-      joinButton.addEventListener('click', async function() {
+      joinButton.onclick = async function() {
         try {
           console.log("Join Room button clicked");
           
@@ -630,7 +630,6 @@
       console.error("Join Room button not found in DOM");
     }
   });
-  }
 
   // Load callouts for room
   async function loadCallouts(roomId) {
@@ -655,10 +654,16 @@
     }
   }
 
-  // SUBMIT FORM HANDLER
-  document.getElementById('logForm').onsubmit = async function(e){
-    e.preventDefault();
-    if(!currentRoom.classId) return alert('Join a room first.');
+  // Move all event handlers into DOMContentLoaded
+  window.addEventListener('DOMContentLoaded', function() {
+    console.log("Setting up all event handlers");
+    
+    // SUBMIT FORM HANDLER
+    const logForm = document.getElementById('logForm');
+    if (logForm) {
+      logForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        if(!currentRoom.classId) return alert('Join a room first.');
     const data = Object.fromEntries(new FormData(this));
     let follow = null;
     if(document.getElementById('followSection')) {
