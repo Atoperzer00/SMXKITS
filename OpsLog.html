@@ -380,6 +380,7 @@
     <main class="main-panel">
       <div class="top-bar" id="mainTopBar">
         OPS LOG &mdash; <span id="topRoomStatus"></span>
+        <button onclick="forceRefresh()" style="margin-left: 20px; background: var(--button-bg); color: #fff; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Refresh</button>
       </div>
 
       <section class="feed-panel" id="feedPanel">
@@ -447,6 +448,10 @@
           <div class="form-group">
             <label>Children</label>
             <input type="number" name="children" min="0"/>
+          </div>
+          <div class="form-group">
+            <label>Vehicles</label>
+            <input type="number" name="vehicles" min="0"/>
           </div>
           <div class="form-group">
             <label>IA Notes</label>
@@ -674,6 +679,7 @@
         <input type="number" name="males" min="0" value="${data.males||''}" placeholder="Males"/>
         <input type="number" name="females" min="0" value="${data.females||''}" placeholder="Females"/>
         <input type="number" name="children" min="0" value="${data.children||''}" placeholder="Children"/>
+        <input type="number" name="vehicles" min="0" value="${data.vehicles||''}" placeholder="Vehicles"/>
         <textarea name="iaNotes" rows="1" oninput="autoGrow(this)">${data.iaNotes||''}</textarea>
       </div>
       <div style="margin-top:12px;">
@@ -794,7 +800,16 @@
     const zuluInput = document.querySelector('input[name="zulu"]');
     if (zuluInput && !zuluInput.value) zuluInput.value = zuluTime;
     window.followState = null;
+    
+    // Add a version timestamp to force refresh if needed
+    localStorage.setItem('opsLogVersion', '1.1');
   });
+  
+  // Function to force a hard refresh - can be useful to clear cache
+  function forceRefresh() {
+    localStorage.setItem('forceRefresh', 'true');
+    window.location.reload(true);
+  }
 
   // Sidebar Navigation
   function goDashboard() { window.location.href = '/dashboard.html'; }
