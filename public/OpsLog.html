@@ -561,9 +561,11 @@
     const logs = await res.json();
     callouts = {};
     document.getElementById('feedPanel').innerHTML = '';
+    // Sort logs by creation date (newest first)
+    logs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     for(const log of logs) {
       callouts[log._id] = log;
-      createBubble(log, true);
+      createBubble(log, true); // Still using append=true for initial load to maintain the sorted order
     }
   }
 
@@ -596,7 +598,8 @@
       <button type="button" class="submit-btn" style="margin-bottom: 0; background:var(--qc-orange); color:#181c1c; font-weight:600;" onclick="openFollow()">Create Follow</button>
     `;
     window.followState = null;
-    // createBubble(log, true); // Real-time from socket!
+    createBubble(log, false); // Create bubble immediately instead of waiting for socket
+    console.log("Callout created:", log);
   }
 
   // Create/append log bubble
