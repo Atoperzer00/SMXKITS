@@ -159,6 +159,7 @@ app.use('/api/classes', require('./routes/classes'));
 app.use('/api/progress', require('./routes/progress'));
 app.use('/api/chat', require('./routes/chat'));
 app.use('/api/kitcomm', require('./routes/kitcomm'));
+app.use('/api/streams', require('./routes/streams'));
 
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -197,9 +198,105 @@ app.get('/admin-dashboard.html', (req, res) => {
 // Make io available to routes
 app.set('io', io);
 
-// Real-time chat with MongoDB storage
+// Real-time chat and streaming with MongoDB storage
 io.on('connection', socket => {
   console.log('🔌 New socket connection established');
+  
+  // ===== STREAMING HANDLERS =====
+  // Track connected viewers
+  const activeStreamRooms = new Set();
+  
+  // Join stream room
+  socket.on('joinStream', async (streamKey) => {
+    if (!streamKey) return;
+    
+    const roomName = `stream:${streamKey}`;
+    socket.join(roomName);
+    activeStreamRooms.add(roomName);
+    
+    console.log(`👤 User joined stream: ${streamKey}`);
+    
+    try {
+      // Find class by stream key
+      const Class = require('./models/Class');
+      const classObj = await Class.findOne({ streamKey }).populate('currentLesson');
+      
+      if (classObj) {
+        // Emit current stream status
+        socket.emit('streamStatus', {
+          status: classObj.streamStatus,
+          source: classObj.currentStreamSource,
+          lesson: classObj.currentLesson
+        });
+        
+        // Broadcast updated viewer count
+        const roomMembers = io.sockets.adapter.rooms.get(roomName);
+        const viewerCount = roomMembers ? roomMembers.size : 0;
+        io.to(roomName).emit('viewerCount', { count: viewerCount });
+        
+        // Load bookmarks
+        socket.emit('bookmarks', classObj.bookmarks);
+      }
+    } catch (error) {
+      console.error('❌ Error handling joinStream:', error);
+    }
+  });
+  
+  // Leave stream room
+  socket.on('leaveStream', (streamKey) => {
+    if (!streamKey) return;
+    
+    const roomName = `stream:${streamKey}`;
+    socket.leave(roomName);
+    
+    console.log(`👤 User left stream: ${streamKey}`);
+    
+    // Broadcast updated viewer count
+    const roomMembers = io.sockets.adapter.rooms.get(roomName);
+    const viewerCount = roomMembers ? roomMembers.size : 0;
+    io.to(roomName).emit('viewerCount', { count: viewerCount });
+  });
+  
+  // Handle stream chat messages
+  socket.on('streamMessage', async (data) => {
+    try {
+      const { streamKey, message, userId, userName } = data;
+      
+      if (!streamKey || !message) return;
+      
+      const roomName = `stream:${streamKey}`;
+      
+      // Broadcast to everyone in the stream room
+      io.to(roomName).emit('streamMessage', {
+        message,
+        userId,
+        userName,
+        timestamp: new Date()
+      });
+      
+      // Save to database if session exists
+      const StreamSession = require('./models/StreamSession');
+      const Class = require('./models/Class');
+      
+      const classObj = await Class.findOne({ streamKey });
+      if (classObj) {
+        const session = await StreamSession.findOne({ 
+          classId: classObj._id, 
+          status: { $ne: 'offline' } 
+        });
+        
+        if (session) {
+          session.messages.push({
+            userId,
+            message
+          });
+          await session.save();
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error handling stream message:', error);
+    }
+  });
   
   // ===== INSTRUCTOR CHAT HANDLERS =====
   socket.on('join', async (channel) => {
@@ -346,6 +443,18 @@ io.on('connection', socket => {
         userName,
         status: 'offline'
       });
+    }
+    
+    // Update viewer counts for any stream rooms
+    if (socket.rooms) {
+      // Get all rooms this socket was in
+      for (const room of socket.rooms) {
+        if (room.startsWith('stream:')) {
+          const roomMembers = io.sockets.adapter.rooms.get(room);
+          const viewerCount = roomMembers ? roomMembers.size : 0;
+          io.to(room).emit('viewerCount', { count: viewerCount });
+        }
+      }
     }
   });
 });
