@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SMX Stream</title>
+  <style>
+    :root {
+      --bg: #0e0e0e;
+      --fg: #f0f0f0;
+      --accent: #e91e63;
+      --track: #1c1c1c;
+      --hover: rgba(255, 255, 255, 0.1);
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .navbar {
+      background: var(--track);
+      padding: 1rem 0;
+    }
+    
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1rem;
+    }
+    
+    .navbar-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      color: var(--fg);
+      font-size: 1.5rem;
+      font-weight: bold;
+      text-decoration: none;
+    }
+    
+    .logo span {
+      margin-right: 10px;
+    }
+    
+    .nav-buttons {
+      display: flex;
+      gap: 1.5rem;
+    }
+    
+    .btn {
+      font-size: 1rem;
+      background: rgba(255,255,255,0.05);
+      color: var(--fg);
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    
+    .btn:hover {
+      background: var(--hover);
+    }
+    
+    .btn-primary {
+      background: var(--accent);
+    }
+    
+    .btn-primary:hover {
+      background: #c41a53;
+    }
+    
+    .main-content {
+      flex: 1;
+      padding: 2rem 0;
+    }
+    
+    .player-wrapper {
+      background: var(--track);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      margin-bottom: 1.5rem;
+    }
+    
+    .video-container {
+      width: 100%;
+      position: relative;
+      padding-top: 56.25%; /* 16:9 aspect ratio */
+      background: #000;
+      border-radius: 10px 10px 0 0;
+    }
+    
+    video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 10px 10px 0 0;
+    }
+    
+    .video-info {
+      padding: 1.5rem;
+    }
+    
+    .video-title {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .video-description {
+      color: rgba(255,255,255,0.7);
+    }
+    
+    .controls {
+      display: flex;
+      padding: 1rem;
+      background: rgba(0,0,0,0.2);
+      border-radius: 0 0 10px 10px;
+    }
+    
+    #timeline {
+      position: relative;
+      height: 10px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 5px;
+      cursor: pointer;
+      flex: 1;
+      margin: 0 1rem;
+    }
+    
+    #progress {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 5px;
+      width: 0;
+    }
+    
+    #playhead {
+      position: absolute;
+      width: 15px;
+      height: 15px;
+      background: var(--accent);
+      border-radius: 50%;
+      top: -2.5px;
+      margin-left: -7.5px;
+      left: 0%;
+    }
+    
+    .loading-spinner {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 50px;
+      height: 50px;
+      border: 5px solid rgba(255,255,255,0.1);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s infinite linear;
+    }
+    
+    @keyframes spin {
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+    
+    .live-badge {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: var(--accent);
+      color: white;
+      padding: 0.25rem 0.75rem;
+      border-radius: 4px;
+      font-weight: bold;
+      font-size: 0.9rem;
+      z-index: 10;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <div class="navbar-content">
+        <a href="/" class="logo">
+          <span>📡</span>SMX Stream
+        </a>
+        
+        <div class="nav-buttons">
+          <a href="dashboard.html" class="btn">Dashboard</a>
+          <a href="#" class="btn">Settings</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+  
+  <div class="main-content">
+    <div class="container">
+      <div class="player-wrapper">
+        <div class="video-container">
+          <div class="live-badge">LIVE</div>
+          <video id="video" autoplay muted></video>
+          <div class="loading-spinner" id="loading"></div>
+        </div>
+        
+        <div class="video-info">
+          <h2 class="video-title">SMX Live Training Session</h2>
+          <p class="video-description">Security Mission Exercise - Live Training</p>
+        </div>
+        
+        <div class="controls">
+          <button id="playBtn" class="btn">Play</button>
+          <div id="timeline">
+            <div id="progress"></div>
+            <div id="playhead"></div>
+          </div>
+          <button id="fullscreenBtn" class="btn">Fullscreen</button>
+        </div>
+      </div>
+      
+      <div style="margin-top: 2rem; text-align: center;">
+        <p style="margin-bottom: 1rem; color: rgba(255,255,255,0.7);">
+          To stream to this page, use OBS or other streaming software with the following settings:
+        </p>
+        <div style="background: var(--track); padding: 1rem; border-radius: 5px; display: inline-block; text-align: left;">
+          <p><strong>Server:</strong> rtmp://127.0.0.1:1935/live</p>
+          <p><strong>Stream Key:</strong> Contact administrator for your stream key</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    const video = document.getElementById('video');
+    const playBtn = document.getElementById('playBtn');
+    const timeline = document.getElementById('timeline');
+    const progress = document.getElementById('progress');
+    const playhead = document.getElementById('playhead');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    const loading = document.getElementById('loading');
+    
+    // Update this to your actual HLS stream URL from node-stream-master
+    const streamUrl = 'http://127.0.0.1:8888/live/stream_key/index.m3u8';
+    
+    // Initialize HLS.js
+    if (Hls.isSupported()) {
+      const hls = new Hls();
+      hls.loadSource(streamUrl);
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MANIFEST_PARSED, function() {
+        video.play();
+        updatePlayButton();
+      });
+      
+      hls.on(Hls.Events.ERROR, function(event, data) {
+        console.error('HLS error:', data);
+      });
+    } 
+    else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = streamUrl;
+      video.addEventListener('loadedmetadata', function() {
+        video.play();
+        updatePlayButton();
+      });
+    } 
+    else {
+      console.error('HLS is not supported in this browser');
+    }
+    
+    video.addEventListener('canplay', function() {
+      loading.style.display = 'none';
+    });
+    
+    video.addEventListener('waiting', function() {
+      loading.style.display = 'block';
+    });
+    
+    video.addEventListener('playing', function() {
+      loading.style.display = 'none';
+    });
+    
+    // Play/pause toggle
+    playBtn.addEventListener('click', function() {
+      if (video.paused) {
+        video.play();
+      } else {
+        video.pause();
+      }
+      updatePlayButton();
+    });
+    
+    function updatePlayButton() {
+      playBtn.textContent = video.paused ? 'Play' : 'Pause';
+    }
+    
+    // Timeline functionality
+    video.addEventListener('timeupdate', function() {
+      const percent = (video.currentTime / video.duration) * 100;
+      progress.style.width = percent + '%';
+      playhead.style.left = percent + '%';
+    });
+    
+    timeline.addEventListener('click', function(e) {
+      const rect = timeline.getBoundingClientRect();
+      const pos = (e.clientX - rect.left) / rect.width;
+      video.currentTime = pos * video.duration;
+    });
+    
+    // Fullscreen
+    fullscreenBtn.addEventListener('click', function() {
+      if (video.requestFullscreen) {
+        video.requestFullscreen();
+      } else if (video.webkitRequestFullscreen) {
+        video.webkitRequestFullscreen();
+      } else if (video.msRequestFullscreen) {
+        video.msRequestFullscreen();
+      }
+    });
+  </script>
+</body>
+</html>

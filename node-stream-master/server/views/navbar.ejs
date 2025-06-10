@@ -1,0 +1,19 @@
+<nav style="background: var(--track); padding: 1rem 0;">
+    <div class="container">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <a href="/" style="color: var(--fg); font-size: 1.5rem; font-weight: bold; text-decoration: none; display: flex; align-items: center;">
+                <span style="margin-right: 10px;">📡</span>SMX Stream
+            </a>
+            
+            <div style="display: flex; gap: 1.5rem;">
+                <% if (!user) { %>
+                    <a href="/login" class="btn">Login</a>
+                    <a href="/register" class="btn btn-primary">Register</a>
+                <% } else { %>
+                    <a href="/settings" class="btn">Settings</a>
+                    <a href="/logout" class="btn">Logout</a>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</nav>
