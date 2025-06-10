@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -19,7 +19,6 @@
     }
     .admin-layout {
       display: flex;
-      min-height: 100vh;
     }
     .admin-sidebar {
       background: #002d62;
@@ -29,6 +28,7 @@
       flex-direction: column;
       align-items: center;
       padding-top: 28px;
+      padding-bottom: 28px;
     }
     .admin-logo {
       width: 180px;
@@ -56,7 +56,6 @@
       flex: 1;
       background: linear-gradient(120deg, #212e42 0%, #1e2738 100%);
       padding: 36px 46px 36px 46px;
-      min-height: 100vh;
     }
     .dashboard-title {
       font-size: 2.35rem;
@@ -310,14 +309,16 @@
         </div>
         <div class="dashboard-tile">Manage Attendance</div>
         <div class="dashboard-tile">Instructor Inbox <span class="tile-badge">3</span></div>
-        <div class="dashboard-tile" onclick="window.open('../SMXStream-new.html', '_blank')">
-          Stream Feed
+        <div class="dashboard-tile" onclick="window.open('../SMXStream-integrated.html', '_blank')">
+          SMX Stream Platform
         </div>
         <div class="dashboard-tile" onclick="window.open('../OpsLog.html', '_blank')">
           Operations Log
         </div>
         <div class="dashboard-tile">Grading</div>
-        <div class="dashboard-tile">Live Training Controls</div>
+        <div class="dashboard-tile" onclick="window.open('Stream Mode.html', '_blank')">
+          Instructor Stream Mode
+        </div>
         <div class="dashboard-tile">Upload Templates</div>
       </section>
       <!-- Optionally, add instructions for instructors -->

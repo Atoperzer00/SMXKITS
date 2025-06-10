@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SMX Stream</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+  <style>
+    :root {
+      --bg: #0e0e0e;
+      --fg: #f0f0f0;
+      --accent: #e91e63;
+      --track: #1c1c1c;
+      --hover: rgba(255, 255, 255, 0.1);
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      /* Let the browser handle scrolling naturally */
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .navbar {
+      background: var(--track);
+      padding: 1rem 0;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+    
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1rem;
+    }
+    
+    .navbar-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      color: var(--fg);
+      font-size: 1.5rem;
+      font-weight: bold;
+      text-decoration: none;
+    }
+    
+    .logo span {
+      margin-right: 10px;
+    }
+    
+    .nav-buttons {
+      display: flex;
+      gap: 1rem;
+    }
+    
+    .btn {
+      font-size: 1rem;
+      background: rgba(255,255,255,0.05);
+      color: var(--fg);
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .btn:hover {
+      background: var(--hover);
+    }
+    
+    .btn-primary {
+      background: var(--accent);
+    }
+    
+    .btn-primary:hover {
+      background: #c41a53;
+    }
+    
+    .main-content {
+      /* Don't use flex: 1 which can cause main content to fill viewport */
+      padding: 2rem 0;
+    }
+    
+    .class-selector {
+      margin-bottom: 2rem;
+      background: var(--track);
+      border-radius: 10px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .class-selector h2 {
+      margin-bottom: 1rem;
+      font-size: 1.5rem;
+    }
+    
+    .class-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem;
+    }
+    
+    .class-card {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 1.5rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 2px solid transparent;
+    }
+    
+    .class-card:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateY(-3px);
+    }
+    
+    .class-card.selected {
+      border-color: var(--accent);
+    }
+    
+    .class-name {
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+    
+    .class-details {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .class-status {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      margin-top: 0.5rem;
+      color: white;
+    }
+    
+    .status-live {
+      background: #4caf50;
+    }
+    
+    .status-offline {
+      background: #f44336;
+    }
+    
+    .status-paused {
+      background: #ff9800;
+    }
+    
+    .player-wrapper {
+      background: var(--track);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      margin-bottom: 1.5rem;
+    }
+    
+    .video-container {
+      width: 100%;
+      position: relative;
+      padding-top: 56.25%; /* 16:9 aspect ratio */
+      background: #000;
+      border-radius: 10px 10px 0 0;
+    }
+    
+    video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 10px 10px 0 0;
+    }
+    
+    .video-info {
+      padding: 1.5rem;
+    }
+    
+    .video-title {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .video-description {
+      color: rgba(255,255,255,0.7);
+    }
+    
+    .controls {
+      display: flex;
+      padding: 1rem;
+      background: rgba(0,0,0,0.2);
+      border-radius: 0 0 10px 10px;
+    }
+    
+    #timeline {
+      position: relative;
+      height: 10px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 5px;
+      cursor: pointer;
+      flex: 1;
+      margin: 0 1rem;
+    }
+    
+    #progress {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 5px;
+      width: 0;
+    }
+    
+    #playhead {
+      position: absolute;
+      width: 15px;
+      height: 15px;
+      background: var(--accent);
+      border-radius: 50%;
+      top: -2.5px;
+      margin-left: -7.5px;
+      left: 0%;
+    }
+    
+    .loading-spinner {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 50px;
+      height: 50px;
+      border: 5px solid rgba(255,255,255,0.1);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s infinite linear;
+    }
+    
+    @keyframes spin {
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+    
+    .live-badge {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: var(--accent);
+      color: white;
+      padding: 0.25rem 0.75rem;
+      border-radius: 4px;
+      font-weight: bold;
+      font-size: 0.9rem;
+      z-index: 10;
+    }
+    
+    .viewer-count {
+      position: absolute;
+      bottom: 1rem;
+      right: 1rem;
+      background: rgba(0, 0, 0, 0.5);
+      color: white;
+      padding: 0.25rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .video-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      z-index: 5;
+    }
+    
+    .overlay-message {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    
+    .overlay-desc {
+      font-size: 1rem;
+      color: rgba(255, 255, 255, 0.7);
+      text-align: center;
+      max-width: 400px;
+      line-height: 1.5;
+    }
+    
+    .chat-section {
+      background: var(--track);
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      display: flex;
+      flex-direction: column;
+      min-height: 400px;
+    }
+    
+    .chat-header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      max-height: 300px; /* Set a reasonable max height but allow scrolling */
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .message {
+      padding: 0.75rem;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.05);
+      animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+      0% { opacity: 0; transform: translateY(10px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    
+    .message-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+    }
+    
+    .message-author {
+      font-weight: bold;
+    }
+    
+    .message-time {
+      color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .message-content {
+      color: rgba(255, 255, 255, 0.9);
+      line-height: 1.4;
+    }
+    
+    .notice {
+      background: rgba(233, 30, 99, 0.2);
+      border-left: 3px solid var(--accent);
+    }
+    
+    .chat-input-container {
+      display: flex;
+      padding: 1rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .chat-input {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: white;
+      padding: 0.75rem;
+      border-radius: 5px 0 0 5px;
+      font-family: inherit;
+    }
+    
+    .chat-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    
+    .chat-send {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0 5px 5px 0;
+      cursor: pointer;
+    }
+    
+    .bookmarks-section {
+      background: var(--track);
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      padding: 1.5rem;
+      margin-top: 1.5rem;
+    }
+    
+    .bookmarks-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    
+    .bookmark-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      max-height: 200px; /* This is fine because we want bookmarks to scroll */
+      overflow-y: auto;
+    }
+    
+    .bookmark-item {
+      display: flex;
+      align-items: center;
+      padding: 0.75rem;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .bookmark-item:hover {
+      background: rgba(0, 0, 0, 0.3);
+    }
+    
+    .bookmark-time {
+      font-family: monospace;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      margin-right: 1rem;
+      color: var(--accent);
+    }
+    
+    .bookmark-label {
+      flex: 1;
+    }
+    
+    .two-columns {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 1.5rem;
+      /* No fixed height - let content determine height */
+    }
+    
+    @media (max-width: 992px) {
+      .two-columns {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .login-section {
+      background: var(--track);
+      border-radius: 10px;
+      padding: 2rem;
+      max-width: 500px;
+      margin: 3rem auto;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .login-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: bold;
+    }
+    
+    .form-input {
+      width: 100%;
+      padding: 0.75rem;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      font-family: inherit;
+    }
+    
+    .form-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    
+    .form-submit {
+      width: 100%;
+      padding: 0.75rem;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+    
+    .form-error {
+      color: #f44336;
+      font-size: 0.9rem;
+      margin-top: 0.25rem;
+    }
+    
+    .form-switch {
+      text-align: center;
+      margin-top: 1.5rem;
+      color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .form-switch a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="container">
+      <div class="navbar-content">
+        <a href="/" class="logo">
+          <span>📡</span>SMX Stream
+        </a>
+        
+        <div class="nav-buttons">
+          <a href="#" class="btn" id="login-btn">
+            <i class="fas fa-sign-in-alt"></i> Login
+          </a>
+          <a href="public/admin-dashboard.html" class="btn">
+            <i class="fas fa-tachometer-alt"></i> Dashboard
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
+  
+  <div class="main-content">
+    <div class="container">
+      <div id="login-view" style="display: none;">
+        <div class="login-section">
+          <div class="login-header">
+            <h2>Login to SMX Stream</h2>
+            <p style="color: rgba(255,255,255,0.7); margin-top: 0.5rem;">Access your classes and training sessions</p>
+          </div>
+          
+          <form id="login-form">
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-input" id="email" required>
+              <div class="form-error" id="email-error"></div>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Password</label>
+              <input type="password" class="form-input" id="password" required>
+              <div class="form-error" id="password-error"></div>
+            </div>
+            
+            <button type="submit" class="form-submit">Login</button>
+            
+            <div class="form-switch">
+              Please contact your instructor if you need access.
+            </div>
+          </form>
+        </div>
+      </div>
+      
+      <!-- Using existing authentication system, no registration needed -->
+      
+      <div id="stream-view" style="display: none;">
+        <div class="class-selector" id="class-selector">
+          <h2>Available Training Sessions</h2>
+          <div class="class-list" id="class-list">
+            <!-- Classes will be populated dynamically -->
+            <div class="class-card">
+              <div class="class-name">Alpha 1 - Beginner Cybersecurity</div>
+              <div class="class-details">12 students enrolled</div>
+              <div class="class-status status-offline">OFFLINE</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="two-columns">
+          <div>
+            <div class="player-wrapper">
+              <div class="video-container">
+                <div class="live-badge" id="status-badge">LIVE</div>
+                <div class="viewer-count" id="viewer-count">
+                  <i class="fas fa-users"></i> <span id="viewer-number">0</span> viewers
+                </div>
+                <video id="video" autoplay></video>
+                <div class="loading-spinner" id="loading"></div>
+                <div class="video-overlay" id="offline-overlay">
+                  <div class="overlay-message">Stream is offline</div>
+                  <div class="overlay-desc">The instructor has not started the stream yet. Please check back later or select another class.</div>
+                </div>
+              </div>
+              
+              <div class="video-info">
+                <h2 class="video-title" id="stream-title">SMX Live Training Session</h2>
+                <p class="video-description" id="stream-description">Security Mission Exercise - Live Training</p>
+              </div>
+              
+              <div class="controls">
+                <button id="playBtn" class="btn">Play</button>
+                <div id="timeline">
+                  <div id="progress"></div>
+                  <div id="playhead"></div>
+                </div>
+                <button id="fullscreenBtn" class="btn">Fullscreen</button>
+              </div>
+            </div>
+            
+            <div class="bookmarks-section">
+              <div class="bookmarks-header">
+                <h3>Session Bookmarks</h3>
+                <span id="bookmark-count">0 bookmarks</span>
+              </div>
+              
+              <div class="bookmark-list" id="bookmark-list">
+                <!-- Bookmarks will be populated dynamically -->
+              </div>
+            </div>
+          </div>
+          
+          <div>
+            <div class="chat-section">
+              <div class="chat-header">
+                <span>Live Chat</span>
+                <span id="chat-status">Connected</span>
+              </div>
+              
+              <div class="chat-messages" id="chat-messages">
+                <!-- Messages will be populated dynamically -->
+                <div class="message notice">
+                  <div class="message-header">
+                    <span class="message-author">System</span>
+                    <span class="message-time">Just now</span>
+                  </div>
+                  <div class="message-content">
+                    Welcome to the live chat. Be respectful and stay on topic.
+                  </div>
+                </div>
+              </div>
+              
+              <div class="chat-input-container">
+                <input type="text" class="chat-input" id="chat-input" placeholder="Type a message...">
+                <button class="chat-send" id="chat-send">
+                  <i class="fas fa-paper-plane"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Global variables
+    let currentUser = null;
+    let currentClass = null;
+    let socket = null;
+    let player = null;
+    
+    // DOM Elements
+    const loginView = document.getElementById('login-view');
+    // No registration view needed
+    const streamView = document.getElementById('stream-view');
+    const loginBtn = document.getElementById('login-btn');
+    const loginForm = document.getElementById('login-form');
+    // No registration form needed
+    // Using existing authentication system
+    const classList = document.getElementById('class-list');
+    const video = document.getElementById('video');
+    const playBtn = document.getElementById('playBtn');
+    const timeline = document.getElementById('timeline');
+    const progress = document.getElementById('progress');
+    const playhead = document.getElementById('playhead');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    const loading = document.getElementById('loading');
+    const offlineOverlay = document.getElementById('offline-overlay');
+    const statusBadge = document.getElementById('status-badge');
+    const viewerCount = document.getElementById('viewer-number');
+    const streamTitle = document.getElementById('stream-title');
+    const streamDescription = document.getElementById('stream-description');
+    const bookmarkList = document.getElementById('bookmark-list');
+    const bookmarkCount = document.getElementById('bookmark-count');
+    const chatMessages = document.getElementById('chat-messages');
+    const chatInput = document.getElementById('chat-input');
+    const chatSend = document.getElementById('chat-send');
+    
+    // Check for token in localStorage (auto-login)
+    const token = localStorage.getItem('smx-token');
+    if (token) {
+      fetchUserData(token);
+    } else {
+      showLoginView();
+    }
+    
+    // Initialize socket connection
+    function initSocket() {
+      socket = io(); // Connect to the current host
+      
+      socket.on('connect', () => {
+        console.log('Connected to server');
+        document.getElementById('chat-status').textContent = 'Connected';
+      });
+      
+      socket.on('disconnect', () => {
+        console.log('Disconnected from server');
+        document.getElementById('chat-status').textContent = 'Disconnected';
+      });
+      
+      socket.on('viewerCount', (data) => {
+        viewerCount.textContent = data.count;
+      });
+      
+      socket.on('streamStatus', (data) => {
+        updateStreamStatus(data.status);
+        
+        if (data.source === 'mp4' && data.lesson) {
+          streamTitle.textContent = data.lesson.title;
+          initializeVideo('/uploads/' + data.lesson.filePath);
+        }
+      });
+      
+      socket.on('notice', (data) => {
+        addChatMessage({
+          userId: data.userId,
+          username: data.userName || 'Instructor',
+          message: data.message,
+          timestamp: data.timestamp || new Date(),
+          isNotice: true
+        });
+      });
+      
+      socket.on('streamMessage', (data) => {
+        addChatMessage(data);
+      });
+      
+      socket.on('bookmark', (data) => {
+        addBookmark(data);
+      });
+      
+      socket.on('bookmarks', (bookmarks) => {
+        renderBookmarks(bookmarks);
+      });
+    }
+    
+    // Authentication functions
+    function showLoginView() {
+      loginView.style.display = 'block';
+      registerView.style.display = 'none';
+      streamView.style.display = 'none';
+      loginBtn.textContent = 'Login';
+    }
+    
+    // No registration view in this version
+    
+    function showStreamView() {
+      loginView.style.display = 'none';
+      streamView.style.display = 'block';
+      loginBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Logout';
+    }
+    
+    // Fetch user data with token
+    async function fetchUserData(token) {
+      try {
+        const response = await fetch('/api/auth/user', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Authentication failed');
+        }
+        
+        const userData = await response.json();
+        currentUser = userData;
+        
+        // Initialize socket after authentication
+        initSocket();
+        
+        // Fetch available classes
+        fetchClasses(token);
+        
+        // Show stream view
+        showStreamView();
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        localStorage.removeItem('smx-token');
+        showLoginView();
+      }
+    }
+    
+    // Fetch available classes
+    async function fetchClasses(token) {
+      try {
+        const response = await fetch('/api/classes', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch classes');
+        }
+        
+        const classes = await response.json();
+        renderClassList(classes);
+      } catch (error) {
+        console.error('Error fetching classes:', error);
+      }
+    }
+    
+    // Render class list
+    function renderClassList(classes) {
+      classList.innerHTML = '';
+      
+      if (classes.length === 0) {
+        classList.innerHTML = '<p>No classes available. Please contact your instructor.</p>';
+        return;
+      }
+      
+      classes.forEach(classItem => {
+        const classCard = document.createElement('div');
+        classCard.className = 'class-card';
+        classCard.dataset.id = classItem._id;
+        classCard.dataset.key = classItem.streamKey;
+        
+        const className = document.createElement('div');
+        className.className = 'class-name';
+        className.textContent = classItem.name;
+        
+        const classDetails = document.createElement('div');
+        classDetails.className = 'class-details';
+        classDetails.textContent = `${classItem.students.length} students enrolled`;
+        
+        const classStatus = document.createElement('div');
+        classStatus.className = `class-status status-${classItem.status}`;
+        classStatus.textContent = classItem.status.toUpperCase();
+        
+        classCard.appendChild(className);
+        classCard.appendChild(classDetails);
+        classCard.appendChild(classStatus);
+        
+        classCard.addEventListener('click', () => {
+          selectClass(classItem);
+        });
+        
+        classList.appendChild(classCard);
+      });
+    }
+    
+    // Select a class to watch
+    function selectClass(classItem) {
+      // Remove selected class from all cards
+      document.querySelectorAll('.class-card').forEach(card => {
+        card.classList.remove('selected');
+      });
+      
+      // Add selected class to clicked card
+      const selectedCard = document.querySelector(`.class-card[data-id="${classItem._id}"]`);
+      if (selectedCard) {
+        selectedCard.classList.add('selected');
+      }
+      
+      currentClass = classItem;
+      
+      // Update stream title and description
+      streamTitle.textContent = `${classItem.name} - Live Training`;
+      streamDescription.textContent = classItem.description || 'Security Mission Exercise - Live Training Session';
+      
+      // If previously connected to a class, leave it
+      if (socket && currentClass && currentClass.streamKey !== classItem.streamKey) {
+        socket.emit('leaveStream', currentClass.streamKey);
+      }
+      
+      // Join the selected class
+      if (socket) {
+        socket.emit('joinStream', classItem.streamKey);
+      }
+      
+      // Fetch bookmarks for this class
+      fetchBookmarks(classItem._id);
+      
+      // Update stream status
+      updateStreamStatus(classItem.status);
+      
+      // Initialize video stream if class is live
+      if (classItem.status === 'live') {
+        initializeVideo(`http://127.0.0.1:8888/live/${classItem.streamKey}/index.m3u8`);
+      }
+    }
+    
+    // Update stream status UI
+    function updateStreamStatus(status) {
+      statusBadge.textContent = status.toUpperCase();
+      
+      if (status === 'live') {
+        statusBadge.style.background = '#4caf50';
+        offlineOverlay.style.display = 'none';
+      } else if (status === 'paused') {
+        statusBadge.style.background = '#ff9800';
+        offlineOverlay.style.display = 'flex';
+        offlineOverlay.querySelector('.overlay-message').textContent = 'Stream is paused';
+        offlineOverlay.querySelector('.overlay-desc').textContent = 'The instructor has temporarily paused the stream. Please wait...';
+      } else {
+        statusBadge.style.background = '#f44336';
+        offlineOverlay.style.display = 'flex';
+        offlineOverlay.querySelector('.overlay-message').textContent = 'Stream is offline';
+        offlineOverlay.querySelector('.overlay-desc').textContent = 'The instructor has not started the stream yet. Please check back later or select another class.';
+      }
+    }
+    
+    // Initialize video player
+    function initializeVideo(streamUrl) {
+      if (player) {
+        player.destroy();
+      }
+      
+      loading.style.display = 'block';
+      offlineOverlay.style.display = 'none';
+      
+      if (Hls.isSupported()) {
+        player = new Hls();
+        player.loadSource(streamUrl);
+        player.attachMedia(video);
+        
+        player.on(Hls.Events.MANIFEST_PARSED, function() {
+          video.play();
+          updatePlayButton();
+        });
+        
+        player.on(Hls.Events.ERROR, function(event, data) {
+          console.error('HLS error:', data);
+          if (data.fatal) {
+            switch(data.type) {
+              case Hls.ErrorTypes.NETWORK_ERROR:
+                console.log('Network error');
+                player.startLoad();
+                break;
+              case Hls.ErrorTypes.MEDIA_ERROR:
+                console.log('Media error');
+                player.recoverMediaError();
+                break;
+              default:
+                console.log('Unrecoverable error');
+                player.destroy();
+                break;
+            }
+          }
+        });
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = streamUrl;
+        video.addEventListener('loadedmetadata', function() {
+          video.play();
+          updatePlayButton();
+        });
+      } else {
+        console.error('HLS is not supported in this browser');
+      }
+    }
+    
+    // Fetch bookmarks for a class
+    async function fetchBookmarks(classId) {
+      try {
+        const response = await fetch(`/api/streams/bookmarks/${classId}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('smx-token')}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch bookmarks');
+        }
+        
+        const bookmarks = await response.json();
+        renderBookmarks(bookmarks);
+      } catch (error) {
+        console.error('Error fetching bookmarks:', error);
+      }
+    }
+    
+    // Render bookmarks
+    function renderBookmarks(bookmarks) {
+      bookmarkList.innerHTML = '';
+      bookmarkCount.textContent = `${bookmarks.length} bookmarks`;
+      
+      if (bookmarks.length === 0) {
+        bookmarkList.innerHTML = '<p style="color: rgba(255,255,255,0.5); text-align: center; padding: 1rem;">No bookmarks yet</p>';
+        return;
+      }
+      
+      bookmarks.forEach(bookmark => {
+        addBookmark(bookmark);
+      });
+    }
+    
+    // Add a bookmark to the list
+    function addBookmark(bookmark) {
+      const bookmarkItem = document.createElement('div');
+      bookmarkItem.className = 'bookmark-item';
+      
+      const time = formatTime(bookmark.time);
+      
+      const bookmarkTime = document.createElement('div');
+      bookmarkTime.className = 'bookmark-time';
+      bookmarkTime.textContent = time;
+      
+      const bookmarkLabel = document.createElement('div');
+      bookmarkLabel.className = 'bookmark-label';
+      bookmarkLabel.textContent = bookmark.label;
+      
+      bookmarkItem.appendChild(bookmarkTime);
+      bookmarkItem.appendChild(bookmarkLabel);
+      
+      bookmarkItem.addEventListener('click', () => {
+        if (video && !isNaN(bookmark.time)) {
+          video.currentTime = bookmark.time;
+        }
+      });
+      
+      bookmarkList.appendChild(bookmarkItem);
+      
+      // Update bookmark count
+      const count = bookmarkList.childElementCount;
+      bookmarkCount.textContent = `${count} bookmarks`;
+    }
+    
+    // Add a message to the chat
+    function addChatMessage(message) {
+      const messageEl = document.createElement('div');
+      messageEl.className = 'message';
+      
+      if (message.isNotice) {
+        messageEl.classList.add('notice');
+      }
+      
+      const messageHeader = document.createElement('div');
+      messageHeader.className = 'message-header';
+      
+      const messageAuthor = document.createElement('span');
+      messageAuthor.className = 'message-author';
+      messageAuthor.textContent = message.username || 'Anonymous';
+      
+      const messageTime = document.createElement('span');
+      messageTime.className = 'message-time';
+      messageTime.textContent = formatDate(message.timestamp);
+      
+      const messageContent = document.createElement('div');
+      messageContent.className = 'message-content';
+      messageContent.textContent = message.message;
+      
+      messageHeader.appendChild(messageAuthor);
+      messageHeader.appendChild(messageTime);
+      
+      messageEl.appendChild(messageHeader);
+      messageEl.appendChild(messageContent);
+      
+      chatMessages.appendChild(messageEl);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    // Format time (seconds to MM:SS)
+    function formatTime(seconds) {
+      seconds = Math.floor(seconds);
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = seconds % 60;
+      return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+    
+    // Format date
+    function formatDate(date) {
+      date = new Date(date);
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    
+    // Update play button state
+    function updatePlayButton() {
+      playBtn.textContent = video.paused ? 'Play' : 'Pause';
+    }
+    
+    // Event Listeners
+    
+    // Login form
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email, password })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.message || 'Login failed');
+        }
+        
+        // Save token
+        localStorage.setItem('smx-token', data.token);
+        
+        // Set current user
+        currentUser = data.user;
+        
+        // Initialize socket
+        initSocket();
+        
+        // Fetch classes
+        fetchClasses(data.token);
+        
+        // Show stream view
+        showStreamView();
+      } catch (error) {
+        console.error('Login error:', error);
+        document.getElementById('email-error').textContent = error.message;
+      }
+    });
+    
+    // No register/login switch needed with existing auth system
+    
+    // Login/Logout button
+    loginBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      
+      if (currentUser) {
+        // Logout
+        localStorage.removeItem('smx-token');
+        currentUser = null;
+        
+        // Disconnect socket
+        if (socket) {
+          socket.disconnect();
+        }
+        
+        // Show login view
+        showLoginView();
+      } else {
+        // Show login view
+        showLoginView();
+      }
+    });
+    
+    // Video player controls
+    video.addEventListener('canplay', function() {
+      loading.style.display = 'none';
+    });
+    
+    video.addEventListener('waiting', function() {
+      loading.style.display = 'block';
+    });
+    
+    video.addEventListener('playing', function() {
+      loading.style.display = 'none';
+    });
+    
+    playBtn.addEventListener('click', function() {
+      if (video.paused) {
+        video.play();
+      } else {
+        video.pause();
+      }
+      updatePlayButton();
+    });
+    
+    video.addEventListener('timeupdate', function() {
+      const percent = (video.currentTime / video.duration) * 100;
+      progress.style.width = percent + '%';
+      playhead.style.left = percent + '%';
+    });
+    
+    timeline.addEventListener('click', function(e) {
+      const rect = timeline.getBoundingClientRect();
+      const pos = (e.clientX - rect.left) / rect.width;
+      video.currentTime = pos * video.duration;
+    });
+    
+    fullscreenBtn.addEventListener('click', function() {
+      if (video.requestFullscreen) {
+        video.requestFullscreen();
+      } else if (video.webkitRequestFullscreen) {
+        video.webkitRequestFullscreen();
+      } else if (video.msRequestFullscreen) {
+        video.msRequestFullscreen();
+      }
+    });
+    
+    // Chat controls
+    chatSend.addEventListener('click', sendChatMessage);
+    
+    chatInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        sendChatMessage();
+      }
+    });
+    
+    function sendChatMessage() {
+      const message = chatInput.value.trim();
+      
+      if (!message || !currentUser || !currentClass) {
+        return;
+      }
+      
+      // Send message to server
+      if (socket) {
+        socket.emit('streamMessage', {
+          streamKey: currentClass.streamKey,
+          userId: currentUser.id,
+          userName: currentUser.username || currentUser.name,
+          message
+        });
+      }
+      
+      // Clear input
+      chatInput.value = '';
+    }
+  </script>
+</body>
+</html>
