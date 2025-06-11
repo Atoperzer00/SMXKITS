@@ -136,11 +136,11 @@
     .feed-panel {
       flex: 1;
       overflow-y: auto;
-      padding: 36px 26px 22px 26px;
+      padding: 36px 60px 22px 26px;
       background: var(--panel);
       display: flex;
       flex-direction: column-reverse;
-      gap: 24px;
+      gap: 28px;
       min-height: 0;
     }
 
@@ -153,28 +153,33 @@
       box-shadow: 0 4px 28px #00000045;
       padding: 24px 34px 19px 24px;
       position: relative;
-      transition: border-color 0.22s, box-shadow 0.22s;
-      min-width: 260px;
-      max-width: 610px;
+      transition: border-color 0.22s, box-shadow 0.22s, transform 0.15s;
+      min-width: 400px;
+      max-width: 800px;
+      width: 90%;
       word-break: break-word;
       white-space: pre-line;
       font-size: 1.06em;
+    }
+    .bubble:hover {
+      box-shadow: 0 5px 30px #00000060;
+      transform: translateY(-1px);
     }
     .bubble.qc-orange { border-color: var(--qc-orange);}
     .bubble.qc-yellow { border-color: var(--qc-yellow);}
     .bubble.qc-green  { border-color: var(--qc-green);}
     .bubble.qc-red    { border-color: var(--qc-red);}
-    .bubble-flex { display: flex; justify-content: space-between; align-items: flex-start; gap: 40px; } 
-    .bubble-left, .bubble-right { display: flex; flex-direction: column; gap: 7px; } 
-    .bubble-row { margin-bottom: 2px; } 
-    .bubble-right { align-items: flex-end; min-width: 160px; font-family: 'Consolas', 'Menlo', 'Monaco', monospace; } 
+    .bubble-flex { display: flex; justify-content: space-between; align-items: flex-start; gap: 60px; } 
+    .bubble-left, .bubble-right { display: flex; flex-direction: column; gap: 8px; } 
+    .bubble-row { margin-bottom: 3px; } 
+    .bubble-right { align-items: flex-end; min-width: 180px; font-family: 'Consolas', 'Menlo', 'Monaco', monospace; } 
     .bubble-right .bubble-time { font-weight: bold; font-size: 1.1em; }
     .bubble .menu-btn {
       position: absolute;
       top: 14px;
-      right: 16px;
-      background: transparent;
-      border: none;
+      right: -46px;
+      background: rgba(35, 39, 46, 0.9);
+      border: 1px solid var(--inactive);
       cursor: pointer;
       color: #a7a7a7;
       font-size: 1.56em;
@@ -183,9 +188,10 @@
       border-radius: 50%;
       width: 38px; height: 38px;
       display: flex; align-items: center; justify-content: center;
-      transition: background 0.2s;
+      transition: background 0.2s, color 0.2s;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     }
-    .bubble .menu-btn:hover { background: var(--hover); }
+    .bubble .menu-btn:hover { background: var(--hover); color: var(--logo-color); }
     .bubble .callout-meta {
       font-size: 0.98em;
       color: #b9c6c7;
@@ -708,7 +714,7 @@ if (document.querySelector('[data-follow-section="true"]')) {
         createdBy: localStorage.getItem('userName') || "You"
       };
       
-const response = await fetch('/api/callouts', {
+      const response = await fetch('/api/callouts', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify(payload)
@@ -744,7 +750,17 @@ const response = await fetch('/api/callouts', {
   async function loadCallouts(roomId) {
     try {
       console.log("Loading callouts for room:", roomId);
-      const response = await fetch(`http://localhost:3001/api/callouts/${roomId}`);
+      
+      // Consistent API URL handling
+      const apiUrl = window.location.hostname === 'localhost' 
+        ? `http://localhost:3001/api/callouts/${roomId}`
+        : `/api/callouts/${roomId}`;
+        
+      const response = await fetch(apiUrl, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
       
       if (!response.ok) {
         throw new Error(`Server returned ${response.status}`);
@@ -754,7 +770,21 @@ const response = await fetch('/api/callouts', {
       console.log("Callouts loaded:", logs);
       
       callouts = {};
-      document.getElementById('feedPanel').innerHTML = '';
+      const feedPanel = document.getElementById('feedPanel');
+      feedPanel.innerHTML = '';
+      
+      // Add tip about double-clicking
+      const tipDiv = document.createElement('div');
+      tipDiv.style.textAlign = 'center';
+      tipDiv.style.padding = '8px 12px';
+      tipDiv.style.marginBottom = '15px';
+      tipDiv.style.background = 'rgba(34, 197, 94, 0.1)';
+      tipDiv.style.borderRadius = '8px';
+      tipDiv.style.color = '#a9d4c6';
+      tipDiv.style.fontSize = '0.95em';
+      tipDiv.style.border = '1px dashed rgba(34, 197, 94, 0.3)';
+      tipDiv.innerHTML = '<i>Tip: Double-click any callout to edit it quickly</i>';
+      feedPanel.appendChild(tipDiv);
       
       // Sort logs by creation date (newest first)
       logs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -775,7 +805,14 @@ const response = await fetch('/api/callouts', {
       const panel = document.getElementById('feedPanel');
       const div = document.createElement('div');
       div.className = "bubble " + (data.qc || "qc-orange"); 
-      div.id = 'callout_' + data._id; 
+      div.id = 'callout_' + data._id;
+      
+      // Add double-click handler to open edit menu
+      div.ondblclick = function() {
+        editCallout(data._id);
+      };
+      div.style.cursor = 'pointer';
+      div.title = 'Double-click to edit';
       
       // Create menu button with direct onclick attribute
       const menuBtn = document.createElement('button');
@@ -914,10 +951,24 @@ const response = await fetch('/api/callouts', {
     const callout = callouts[id];
     if (!callout) return;
     
+    // Check user permissions
+    const userRole = localStorage.getItem('role');
+    if (userRole === 'student' && (qcClass === 'qc-green' || qcClass === 'qc-red')) {
+      alert('You do not have permission to set QC: Approved or QC: Issues. Only instructors can perform this action.');
+      return;
+    }
+    
     try {
-      const response = await fetch(`http://localhost:3001/api/callouts/${id}`, {
+      const apiUrl = window.location.hostname === 'localhost' 
+        ? `http://localhost:3001/api/callouts/${id}`
+        : `/api/callouts/${id}`;
+        
+      const response = await fetch(apiUrl, {
         method: 'PUT',
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
         body: JSON.stringify({
           ...callout,
           qc: qcClass,
@@ -926,6 +977,9 @@ const response = await fetch('/api/callouts', {
       });
       
       if (!response.ok) {
+        if (response.status === 403) {
+          throw new Error('Permission denied. You do not have the required role to perform this action.');
+        }
         throw new Error(`Server returned ${response.status}`);
       }
       
@@ -945,15 +999,33 @@ const response = await fetch('/api/callouts', {
   
   async function deleteCallout(id) {
     closeCalloutMenu();
+    
+    // Check user permissions
+    const userRole = localStorage.getItem('role');
+    if (userRole === 'student') {
+      alert('You do not have permission to delete callouts. Only instructors can perform this action.');
+      return;
+    }
+    
     if (confirm('Are you sure you want to delete this callout?')) {
       console.log("Deleting callout:", id);
       
       try {
-        const response = await fetch(`http://localhost:3001/api/callouts/${id}`, {
-          method: 'DELETE'
+        const apiUrl = window.location.hostname === 'localhost' 
+          ? `http://localhost:3001/api/callouts/${id}`
+          : `/api/callouts/${id}`;
+          
+        const response = await fetch(apiUrl, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
         });
         
         if (!response.ok) {
+          if (response.status === 403) {
+            throw new Error('Permission denied. You do not have the required role to perform this action.');
+          }
           throw new Error(`Server returned ${response.status}`);
         }
         
@@ -1245,7 +1317,9 @@ const response = await fetch('/api/callouts', {
   window.showCalloutMenu = function(e, btn, id) {
     e.stopPropagation();
     let data = callouts[id];
-    // Modal content
+    const userRole = localStorage.getItem('role');
+    
+    // Modal content with role-based permissions
     let html = `
       <button class="modal-close" onclick="closeCalloutMenu()">&times;</button>
       <div style="margin-bottom:19px; font-size:1.1em; color:var(--logo-color); font-weight:600;">
@@ -1253,12 +1327,28 @@ const response = await fetch('/api/callouts', {
       </div>
       <button class="submit-btn" style="width:100%; margin-bottom:10px;" onclick="editCallout('${id}')">Edit</button>
       <button class="submit-btn" style="width:100%; background:var(--inactive); margin-bottom:10px;" onclick="calloutHistory('${id}')">History</button>
-      <button class="submit-btn" style="width:100%; background:var(--qc-yellow); color:#111; margin-bottom:10px;" onclick="calloutQC('${id}', 'qc-yellow')">QC: Yellow</button>
-      <button class="submit-btn" style="width:100%; background:var(--qc-green); color:#111; margin-bottom:10px;" onclick="calloutQC('${id}', 'qc-green')">QC: Green</button>
-      <button class="submit-btn" style="width:100%; background:var(--qc-orange); color:#111; margin-bottom:10px;" onclick="calloutQC('${id}', 'qc-orange')">QC: Orange</button>
-      <button class="submit-btn" style="width:100%; background:var(--qc-red); color:#fff; margin-bottom:10px;" onclick="calloutQC('${id}', 'qc-red')">QC: Red</button>
-      <button class="submit-btn" style="width:100%; background:var(--qc-red); color:#fff;" onclick="deleteCallout('${id}')">Delete</button>
+      
+      <!-- In-progress and In-review can be set by anyone -->
+      <button class="submit-btn" style="width:100%; background:var(--qc-orange); color:#111; margin-bottom:10px;" onclick="calloutQC('${id}', 'qc-orange')">QC: In Progress</button>
+      <button class="submit-btn" style="width:100%; background:var(--qc-yellow); color:#111; margin-bottom:10px;" onclick="calloutQC('${id}', 'qc-yellow')">QC: In Review</button>
     `;
+    
+    // Only show Approved and Issues options for instructors
+    if (userRole !== 'student') {
+      html += `
+        <button class="submit-btn" style="width:100%; background:var(--qc-green); color:#111; margin-bottom:10px;" onclick="calloutQC('${id}', 'qc-green')">QC: Approved</button>
+        <button class="submit-btn" style="width:100%; background:var(--qc-red); color:#fff; margin-bottom:10px;" onclick="calloutQC('${id}', 'qc-red')">QC: Issues</button>
+        <button class="submit-btn" style="width:100%; background:var(--qc-red); color:#fff;" onclick="deleteCallout('${id}')">Delete</button>
+      `;
+    } else {
+      // Show disabled buttons for students
+      html += `
+        <button class="submit-btn" style="width:100%; background:var(--inactive); color:#999; margin-bottom:10px; cursor:not-allowed;" title="Only instructors can set Approved status">QC: Approved (Instructor Only)</button>
+        <button class="submit-btn" style="width:100%; background:var(--inactive); color:#999; margin-bottom:10px; cursor:not-allowed;" title="Only instructors can set Issues status">QC: Issues (Instructor Only)</button>
+        <button class="submit-btn" style="width:100%; background:var(--inactive); color:#999; cursor:not-allowed;" title="Only instructors can delete callouts">Delete (Instructor Only)</button>
+      `;
+    }
+    
     document.getElementById('calloutMenuContent').innerHTML = html;
     document.getElementById('calloutMenuModal').style.display='flex';
     window._selectedCalloutId = id;
@@ -1272,38 +1362,32 @@ const response = await fetch('/api/callouts', {
   window.editCallout = async function(id) {
     window.closeCalloutMenu();
     let data = callouts[id];
-    // Open overlay with form (reuse your original form fields)
-    let html = `<button class="modal-close" onclick="closeEditCallout()">&times;</button>
-    <div style="font-weight:600; color:var(--logo-color); font-size:1.2em; margin-bottom:10px;">Edit Callout</div>
-    <form id="editForm">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px;">
-        <input type="text" name="classification" value="${data.classification||''}" required placeholder="Classification"/>
-        <input type="text" name="asset" value="${data.asset||''}" required placeholder="Asset"/>
-        <input type="text" name="sensor" value="${data.sensor||''}" required placeholder="Sensor"/>
-        <input type="text" name="operation" value="${data.operation||''}" required placeholder="Operation"/>
-        <input type="text" name="countryCode" value="${data.countryCode||''}" maxlength="3" placeholder="Country Code"/>
-        <input type="text" name="team" value="${data.team||''}" placeholder="Team"/>
-        <input type="time" name="zulu" value="${data.zulu||''}" required placeholder="Zulu Time"/>
-        <input type="text" name="mgrs" value="${data.mgrs||''}" placeholder="MGRS"/>
-        <input type="text" name="location" value="${data.location||''}" placeholder="Location"/>
-        <textarea name="activity" rows="1" oninput="autoGrow(this)">${data.activity||''}</textarea>
-        <input type="number" name="males" min="0" value="${data.males||''}" placeholder="Males"/>
-        <input type="number" name="females" min="0" value="${data.females||''}" placeholder="Females"/>
-        <input type="number" name="children" min="0" value="${data.children||''}" placeholder="Children"/>
-        <input type="number" name="vehicles" min="0" value="${data.vehicles||''}" placeholder="Vehicles"/>
-        <textarea name="iaNotes" rows="1" oninput="autoGrow(this)">${data.iaNotes||''}</textarea>
-      </div>
-      <div style="margin-top:12px;">
-        <label>Follow Name</label>
-        <input type="text" name="followName" value="${data.follow?.name||''}"/>
-        <label style="margin-left:12px;">Follow Stage</label>
-        <input type="text" name="followStage" value="${data.follow?.stage||''}"/>
-      </div>
-      <button type="submit" class="submit-btn" style="margin-top:16px;">Save</button>
-    </form>`;
-    document.getElementById('calloutMenuContent').innerHTML = html;
-    document.getElementById('calloutMenuModal').style.display='flex';
-    document.getElementById('editForm').onsubmit = async function(e){
+    
+    // Fill in the edit form with current values
+    const form = document.getElementById('editCalloutForm');
+    form.elements['classification'].value = data.classification || '';
+    form.elements['asset'].value = data.asset || '';
+    form.elements['sensor'].value = data.sensor || '';
+    form.elements['operation'].value = data.operation || '';
+    form.elements['countryCode'].value = data.countryCode || '';
+    form.elements['team'].value = data.team || '';
+    form.elements['zulu'].value = data.zulu || '';
+    form.elements['mgrs'].value = data.mgrs || '';
+    form.elements['location'].value = data.location || '';
+    form.elements['activity'].value = data.activity || '';
+    form.elements['males'].value = data.males || '';
+    form.elements['females'].value = data.females || '';
+    form.elements['children'].value = data.children || '';
+    form.elements['vehicles'].value = data.vehicles || '';
+    form.elements['iaNotes'].value = data.iaNotes || '';
+    form.elements['followName'].value = data.follow?.name || '';
+    form.elements['followStage'].value = data.follow?.stage || '';
+    
+    // Auto-grow any textareas
+    Array.from(form.querySelectorAll('textarea')).forEach(textarea => autoGrow(textarea));
+    
+    // Set the submit handler
+    form.onsubmit = async function(e) {
       e.preventDefault();
       let payload = Object.fromEntries(new FormData(this));
       let follow = { 
@@ -1328,43 +1412,71 @@ const response = await fetch('/api/callouts', {
       if (old) old.remove();
       createBubble(log, false);
       window.closeEditCallout();
-    }
+    };
+    
+    // Show the edit overlay
+    document.getElementById('editCalloutOverlay').style.display = 'flex';
   };
   
   window.closeEditCallout = function() { 
-    document.getElementById('calloutMenuModal').style.display='none'; 
+    document.getElementById('editCalloutOverlay').style.display = 'none'; 
   };
 
   window.calloutHistory = async function(id) {
     window.closeCalloutMenu();
-    let res = await fetch(`http://localhost:3001/api/callouts/${id}/history`);
+    
+    // Consistent API URL handling
+    const apiUrl = window.location.hostname === 'localhost' 
+      ? `http://localhost:3001/api/callouts/${id}/history`
+      : `/api/callouts/${id}/history`;
+      
+    let res = await fetch(apiUrl, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    
     let history = await res.json();
-    let html = `<button class="modal-close" onclick="closeEditCallout()">&times;</button>
-      <div style="font-weight:600; color:var(--logo-color); font-size:1.2em; margin-bottom:8px;">Callout History</div>`;
-    if (!history.length) html += "<div>No history found for this callout.</div>";
-    else {
+    let historyContainer = document.getElementById('historyLogContainer');
+    
+    // Clear previous content
+    historyContainer.innerHTML = '';
+    
+    if (!history.length) {
+      historyContainer.innerHTML = "<div>No history found for this callout.</div>";
+    } else {
       history.reverse().forEach((h, idx) => {
-        html += `<div style="margin-bottom:10px;border-bottom:1px solid #444;padding-bottom:7px;">
+        let entryDiv = document.createElement('div');
+        entryDiv.style.marginBottom = '10px';
+        entryDiv.style.borderBottom = '1px solid #444';
+        entryDiv.style.paddingBottom = '7px';
+        
+        entryDiv.innerHTML = `
           <b>Edited by:</b> ${h.editedBy || "Unknown"}<br>
           <b>Edited at:</b> ${new Date(h.editedAt).toLocaleString()}<br>
           <b>Changes:</b> <pre style="background:#181d21;border-radius:6px;padding:7px 12px;color:#efefef;overflow-x:auto;">${JSON.stringify(h.changes, null, 2)}</pre>
-        </div>`;
+        `;
+        historyContainer.appendChild(entryDiv);
       });
     }
-    document.getElementById('calloutMenuContent').innerHTML = html;
-    document.getElementById('calloutMenuModal').style.display='flex';
+    
+    // Show the history overlay
+    document.getElementById('historyOverlay').style.display = 'flex';
+  };
+  
+  window.closeHistoryOverlay = function() {
+    document.getElementById('historyOverlay').style.display = 'none';
   };
 
   window.calloutQC = async function(id, qc) {
-    let res = await fetch(`http://localhost:3001/api/callouts/${id}`,{
-      method:'PUT', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ ...callouts[id], qc, editedBy: localStorage.getItem('userName') || "You" })
-    });
+    // Use the existing updateQC function to maintain consistency and permission checks
+    await updateQC(id, qc);
     window.closeCalloutMenu();
   };
   
   window.deleteCallout = async function(id) {
-    await fetch(`http://localhost:3001/api/callouts/${id}`, {method:'DELETE'});
+    // Use the existing deleteCallout function to maintain consistency and permission checks
+    await deleteCallout(id);
     window.closeCalloutMenu();
   };
 
@@ -1475,5 +1587,49 @@ const response = await fetch('/api/callouts', {
   
   // Socket.io event listeners already defined above - removing duplicates
 </script>
+
+<!-- Edit Bubble Overlay -->
+<div id="editCalloutOverlay" class="modal" style="display:none;">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeEditCallout()">&times;</button>
+    <div style="font-weight:600; color:var(--logo-color); font-size:1.2em; margin-bottom:10px;">Edit Callout</div>
+    <form id="editCalloutForm">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px;">
+        <input type="text" name="classification" required placeholder="Classification"/>
+        <input type="text" name="asset" required placeholder="Asset"/>
+        <input type="text" name="sensor" required placeholder="Sensor"/>
+        <input type="text" name="operation" required placeholder="Operation"/>
+        <input type="text" name="countryCode" maxlength="3" placeholder="Country Code"/>
+        <input type="text" name="team" placeholder="Team"/>
+        <input type="time" name="zulu" required placeholder="Zulu Time"/>
+        <input type="text" name="mgrs" placeholder="MGRS"/>
+        <input type="text" name="location" placeholder="Location"/>
+        <textarea name="activity" rows="1" placeholder="Activity" oninput="autoGrow(this)"></textarea>
+        <input type="number" name="males" min="0" placeholder="Males"/>
+        <input type="number" name="females" min="0" placeholder="Females"/>
+        <input type="number" name="children" min="0" placeholder="Children"/>
+        <input type="number" name="vehicles" min="0" placeholder="Vehicles"/>
+        <textarea name="iaNotes" rows="1" placeholder="IA Notes" oninput="autoGrow(this)"></textarea>
+      </div>
+      <div style="margin-top:12px;">
+        <label>Follow Name</label>
+        <input type="text" name="followName" placeholder="Follow Name"/>
+        <label style="margin-left:12px;">Follow Stage</label>
+        <input type="text" name="followStage" placeholder="Follow Stage"/>
+      </div>
+      <button type="submit" class="submit-btn" style="margin-top:16px; width:100%;">Save Changes</button>
+    </form>
+  </div>
+</div>
+
+<!-- Change History Overlay -->
+<div id="historyOverlay" class="modal" style="display:none;">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeHistoryOverlay()">&times;</button>
+    <div style="font-weight:600; color:var(--logo-color); font-size:1.2em; margin-bottom:10px;">Change History</div>
+    <div id="historyLogContainer" style="max-height:60vh; overflow:auto; font-size:0.95em;"></div>
+  </div>
+</div>
+
 </body>
 </html>
