@@ -1161,153 +1161,18 @@
   });
 </script>
   
-  // This is no longer needed as we're using window.onload now
-  // document.addEventListener('DOMContentLoaded', function() {
-  //   console.log("DOM loaded - initializing event handlers");
-  // 
-    const joinButton = document.getElementById('joinRoomButton');
-    if (joinButton) {
-      joinButton.onclick = async function() {
-        try {
-          console.log("Join Room button clicked");
-          
-          const form = document.getElementById('joinRoomForm');
-          const teamSelect = document.getElementById('modalTeam');
-          const missionSelect = document.getElementById('modalMission');
-          
-          // Validate form fields
-          if (!teamSelect.value) {
-            alert("Please select a team");
-            return;
-          }
-          if (!missionSelect.value) {
-            alert("Please select a mission");
-            return;
-          }
-          
-          // Join room - Using fixed classId since field was removed
-          let classId = "SMX"; // Using a default class ID since the field was removed
-          let team = teamSelect.value;
-          let mission = missionSelect.value;
-          
-          console.log("Selected values:", { classId, team, mission });
-          
-          currentRoom = { classId, team, mission };
-          let roomId = classId + "_" + team + "_" + mission;
-          socket.emit('join_room', roomId);
-          
-          document.getElementById('currentClass').textContent = classId;
-          document.getElementById('currentTeam').textContent = team;
-          document.getElementById('currentMission').textContent = mission;
-          
-          closeRoomModal();
-          await loadCallouts(roomId);
-        } catch (error) {
-          console.error("Error joining room:", error);
-          alert("Error joining room. Please check console for details.");
-        }
-      });
-    } else {
-      console.error("Join Room button not found in DOM");
-    }
-  });
-
-  // Load callouts for room
-  async function loadCallouts(roomId) {
-    try {
-      console.log("Loading callouts for room:", roomId);
-      const res = await fetch(`http://localhost:3001/api/callouts/${roomId}`);
-      const logs = await res.json();
-      console.log("Callouts loaded:", logs);
-      
-      callouts = {};
-      document.getElementById('feedPanel').innerHTML = '';
-      
-      // Sort logs by creation date (newest first)
-      logs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      for(const log of logs) {
-        callouts[log._id] = log;
-        createBubble(log, true); // Still using append=true for initial load to maintain the sorted order
-      }
-    } catch (error) {
-      console.error("Error loading callouts:", error);
-      alert("Error loading room data. Please check console for details.");
-    }
+  // Commented out redundant code - we're using the proper event listeners in the DOMContentLoaded event handler above
+  /*
+  const joinButton = document.getElementById('joinRoomButton');
+  if (joinButton) {
+    joinButton.onclick = async function() {
+      // This code is now handled by the event listener in the DOMContentLoaded event
+    };
   }
+  */
 
   // Move all event handlers into DOMContentLoaded
-  window.addEventListener('DOMContentLoaded', function() {
-    console.log("Setting up all event handlers");
-    
-    // SUBMIT FORM HANDLER
-    const logForm = document.getElementById('logForm');
-    if (logForm) {
-      logForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        if(!currentRoom.classId) return alert('Join a room first.');
-    const data = Object.fromEntries(new FormData(this));
-    let follow = null;
-    if(document.getElementById('followSection')) {
-      follow = {
-        name: document.getElementById('followName').value,
-        stage: document.getElementById('followStageBtn').textContent
-      };
-    }
-    const payload = {
-      ...data,
-      roomId: currentRoom.classId + "_" + currentRoom.team + "_" + currentRoom.mission,
-      follow,
-      createdBy: localStorage.getItem('userName') || "You"
-    };
-    const res = await fetch('http://localhost:3001/api/callouts', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(payload)
-    });
-    const log = await res.json();
-    this.reset();
-    document.getElementById('followContainer').innerHTML = `
-      <button type="button" class="submit-btn" style="margin-bottom: 0; background:var(--qc-orange); color:#181c1c; font-weight:600;" onclick="openFollow()">Create Follow</button>
-    `;
-    window.followState = null;
-    createBubble(log, false); // Create bubble immediately instead of waiting for socket
-    console.log("Callout created:", log);
-  }
-
-  // Create/append log bubble
-  function createBubble(data, append=false) { 
-    const panel = document.getElementById('feedPanel'); 
-    let div = document.createElement('div'); 
-    div.className = "bubble " + (data.qc || "qc-orange"); 
-    div.id = 'callout_' + data._id; 
-    div.innerHTML = ` 
-      <button class="menu-btn" title="Options" onclick="showCalloutMenu(event, this, '${data._id}')">&#8942;</button> 
-      <div class="bubble-flex"> 
-        <div class="bubble-left"> 
-          <div class="bubble-row"> 
-            <span><b>${data.operation || '-'}</b></span> 
-            <span style="margin: 0 9px; color: #444;">|</span> 
-            <span><b>${data.asset || '-'}</b></span> 
-          </div> 
-          <div class="bubble-row">${data.location || '-'}</div> 
-          ${ data.follow && data.follow.name ? `<div class="bubble-row"><b>${data.follow.name} / ${data.follow.stage}</b></div>` : '' } 
-          <div class="bubble-row">${data.activity || '-'}</div> 
-          <div class="bubble-row"><b>IA Notes:</b> ${(data.iaNotes||'').replace(/\n/g,'<br>')}</div> 
-        </div> 
-        <div class="bubble-right"> 
-          <span class="bubble-time">${data.zulu || '-'}</span> 
-          <span>MGRS: ${data.mgrs || '-'}</span> 
-          <span>SLANT: ${(data.males||0)}/${(data.females||0)}/${(data.children||0)} &nbsp; V: ${(data.vehicles||0)}</span> 
-        </div> 
-      </div> 
-      <div style="font-size:0.85em; color:#888; margin-top:7px;"> 
-        By ${data.createdBy} &middot; ${(data.createdAt ? new Date(data.createdAt).toLocaleTimeString() : '')} 
-      </div> 
-    `; 
-    div.dataset.payload = JSON.stringify(data); 
-    if (append) panel.appendChild(div); 
-    else panel.prepend(div); 
-  }
+  // Removed redundant DOMContentLoaded event listener - we're already using one above
 
   // Edit / History / QC / Delete overlays
   function showCalloutMenu(e, btn, id) {
@@ -1474,7 +1339,7 @@
     const zuluTime = now.toISOString().substr(11, 5);
     const zuluInput = document.querySelector('input[name="zulu"]');
     if (zuluInput && !zuluInput.value) zuluInput.value = zuluTime;
-    window.followState = null;
+    window.followState = null;l;
     
     // Add a version timestamp to force refresh if needed
     localStorage.setItem('opsLogVersion', '1.1');
@@ -1504,24 +1369,7 @@
     }
   }
   
-  // Socket.io real-time updates
-  socket.on('new_callout', (callout) => {
-    callouts[callout._id] = callout;
-    createBubble(callout, false);
-  });
-  
-  socket.on('update_callout', (callout) => {
-    callouts[callout._id] = callout;
-    let old = document.getElementById('callout_'+callout._id);
-    if (old) old.remove();
-    createBubble(callout, false);
-  });
-  
-  socket.on('delete_callout', (id) => {
-    let old = document.getElementById('callout_'+id);
-    if (old) old.remove();
-    delete callouts[id];
-  });
+  // Socket.io event listeners already defined above - removing duplicates
 </script>
 </body>
 </html>
