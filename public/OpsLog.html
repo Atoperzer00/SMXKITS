@@ -691,16 +691,15 @@
     try {
       console.log("Log form submitted");
       const data = Object.fromEntries(new FormData(form));
-      if (document.querySelector('[data-follow-section="true"]')) {
-         follow = {
-           /* ... */
-         };
-          name: document.getElementById('followName').value,
-          stage: document.getElementById('followStageBtn').textContent,
-          followId: window.followState?.followId || Math.random().toString(36).substr(2, 6).toUpperCase(),
-          ended: window.followState?.ended || (window.followState?.stage === 3) || false
-        };
-      }
+let follow = undefined;
+if (document.querySelector('[data-follow-section="true"]')) {
+  follow = {
+    name: document.getElementById('followName').value,
+    stage: document.getElementById('followStageBtn').textContent,
+    followId: window.followState?.followId || Math.random().toString(36).substr(2, 6).toUpperCase(),
+    ended: window.followState?.ended || (window.followState?.stage === 3) || false
+  };
+}
       
       const payload = {
         ...data,
@@ -709,7 +708,7 @@
         createdBy: localStorage.getItem('userName') || "You"
       };
       
-      const response = await fetch('/api/callouts', {
+const response = await fetch('/api/callouts', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify(payload)
