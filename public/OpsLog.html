@@ -462,8 +462,8 @@
     <aside class="sidebar">
       <div class="logo">SMXKITS</div>
       <div class="nav">
-        <!-- My Logs button removed -->
-        <!-- Dashboard and Join Room buttons moved to top bar -->
+        <button id="editCalloutBtn" class="nav-btn">Edit Callout</button>
+        <button id="viewHistoryBtn" class="nav-btn">View History</button>
       </div>
       <div class="divider"></div>
 
@@ -516,6 +516,11 @@
           <input type="text" name="mgrs"/>
         </div>
         
+        <!-- Follow container moved here -->
+        <div id="followContainer" style="margin-bottom: 12px;">
+          <button type="button" id="createFollowBtn" class="submit-btn" style="margin-bottom: 0; background:var(--qc-orange); color:#181c1c; font-weight:600; width: 100%;">Create Follow</button>
+        </div>
+        
         <div class="form-group" style="margin-bottom: 12px;">
           <label>Location Description</label>
           <input type="text" name="location"/>
@@ -549,10 +554,6 @@
         <div class="form-group" style="margin-bottom: 12px;">
           <label>IA Notes</label>
           <textarea name="iaNotes" rows="1" oninput="autoGrow(this)"></textarea>
-        </div>
-        
-        <div id="followContainer" style="margin-bottom: 12px;">
-          <button type="button" class="submit-btn" style="margin-bottom: 0; background:var(--qc-orange); color:#181c1c; font-weight:600; width: 100%;">Create Follow</button>
         </div>
         
         <button type="submit" class="submit-btn" style="width: 100%;">Submit</button>
@@ -826,6 +827,9 @@ if (document.querySelector('[data-follow-section="true"]')) {
         callouts[log._id] = log;
         createBubble(log);
       }
+      
+      // Update sidebar button states based on callout availability
+      updateSidebarButtonStates();
     } catch (error) {
       console.error("Error loading callouts:", error);
       alert("Error loading room data: " + error.message);
@@ -922,6 +926,9 @@ if (document.querySelector('[data-follow-section="true"]')) {
       
       // Always add to the top of the list regardless of the append parameter
       panel.prepend(div);
+      
+      // Update sidebar button states after adding a new bubble
+      updateSidebarButtonStates();
     } catch (error) {
       console.error("Error creating bubble:", error);
     }
@@ -1282,6 +1289,36 @@ if (document.querySelector('[data-follow-section="true"]')) {
       console.log("Logout button handler attached");
     }
     
+    // Edit Callout button (sidebar)
+    const editCalloutBtn = document.getElementById('editCalloutBtn');
+    if (editCalloutBtn) {
+      editCalloutBtn.addEventListener('click', function() {
+        // Find the most recent callout and open it for editing
+        const mostRecentCalloutId = Object.keys(callouts)[0]; // Assuming callouts are sorted newest first
+        if (mostRecentCalloutId) {
+          editCallout(mostRecentCalloutId);
+        } else {
+          alert('No callouts available to edit');
+        }
+      });
+      console.log("Edit Callout button handler attached");
+    }
+    
+    // View History button (sidebar)
+    const viewHistoryBtn = document.getElementById('viewHistoryBtn');
+    if (viewHistoryBtn) {
+      viewHistoryBtn.addEventListener('click', function() {
+        // Find the most recent callout and view its history
+        const mostRecentCalloutId = Object.keys(callouts)[0]; // Assuming callouts are sorted newest first
+        if (mostRecentCalloutId) {
+          calloutHistory(mostRecentCalloutId);
+        } else {
+          alert('No callout history available');
+        }
+      });
+      console.log("View History button handler attached");
+    }
+    
     // Close Room Modal button
     const closeRoomModalBtn = document.getElementById('closeRoomModalBtn');
     if (closeRoomModalBtn) {
@@ -1328,13 +1365,16 @@ if (document.querySelector('[data-follow-section="true"]')) {
     }
     
     // Create Follow button handler
-    const createFollowBtn = document.querySelector('#followContainer button');
+    const createFollowBtn = document.getElementById('createFollowBtn');
     if (createFollowBtn) {
       createFollowBtn.addEventListener('click', function() {
         window.openFollow();
       });
       console.log("Create Follow button handler attached");
     }
+    
+    // Initialize sidebar button states
+    updateSidebarButtonStates();
     
     console.log("Event handlers attached, page ready.");
   });
@@ -1696,6 +1736,28 @@ if (document.querySelector('[data-follow-section="true"]')) {
     
     if (formFollowStage && stageBtn) {
       formFollowStage.value = stageBtn.textContent;
+    }
+  }
+  
+  // Function to update sidebar button states based on callout availability
+  function updateSidebarButtonStates() {
+    const editCalloutBtn = document.getElementById('editCalloutBtn');
+    const viewHistoryBtn = document.getElementById('viewHistoryBtn');
+    
+    const hasCallouts = Object.keys(callouts).length > 0;
+    
+    if (editCalloutBtn) {
+      editCalloutBtn.disabled = !hasCallouts;
+      editCalloutBtn.title = hasCallouts ? 'Edit most recent callout' : 'No callouts available to edit';
+      editCalloutBtn.style.opacity = hasCallouts ? '1' : '0.6';
+      editCalloutBtn.style.cursor = hasCallouts ? 'pointer' : 'not-allowed';
+    }
+    
+    if (viewHistoryBtn) {
+      viewHistoryBtn.disabled = !hasCallouts;
+      viewHistoryBtn.title = hasCallouts ? 'View history of most recent callout' : 'No callout history available';
+      viewHistoryBtn.style.opacity = hasCallouts ? '1' : '0.6';
+      viewHistoryBtn.style.cursor = hasCallouts ? 'pointer' : 'not-allowed';
     }
   }
 
