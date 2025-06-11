@@ -448,7 +448,7 @@
         
         <div class="form-group" style="margin-bottom: 12px;">
           <label>Activity</label>
-          <textarea name="activity" rows="1" oninput="autoGrow(this)"></textarea>
+          <textarea id="activityTextarea" name="activity" rows="1"></textarea>
         </div>
         
         <div class="form-group" style="margin-bottom: 12px;">
@@ -483,7 +483,7 @@
         <button type="submit" class="submit-btn" style="width: 100%;">Submit</button>
       </form>
       
-      <button class="logout-btn" onclick="logout()" style="margin-top: 20px;">Logout</button>
+      <button id="logoutBtn" class="logout-btn" style="margin-top: 20px;">Logout</button>
     </aside>
 
     <!-- Main -->
@@ -492,7 +492,7 @@
         <!-- Room information and navigation buttons in top bar -->
         <div style="flex: 1; display: flex; align-items: center;">
           <span style="font-weight: bold; margin-right: 15px;">OPS LOG</span>
-          <button class="nav-btn" onclick="openRoomModal()" style="margin:0 20px;">Join Room</button>
+          <button id="joinRoomBtn" class="nav-btn" style="margin:0 20px;">Join Room</button>
           &mdash; 
           <div style="margin-left: 10px; display: flex; align-items: center;">
             <span>Class: <span id="currentClass" style="font-weight: 500; color: #a9d4c6;">-</span></span>
@@ -502,7 +502,7 @@
             <span>Mission: <span id="currentMission" style="font-weight: 500; color: #a9d4c6;">-</span></span>
           </div>
         </div>
-        <button class="nav-btn" onclick="goDashboard()" style="margin-left:24px;">Dashboard</button>
+        <button id="dashboardBtn" class="nav-btn" style="margin-left:24px;">Dashboard</button>
       </div>
 
       <section class="feed-panel" id="feedPanel">
@@ -514,9 +514,9 @@
   <!-- Room Modal -->
   <div id="roomModal" class="modal" style="display:none;">
     <div class="modal-content">
-      <button class="modal-close" onclick="closeRoomModal()">&times;</button>
+      <button id="closeRoomModalBtn" class="modal-close">&times;</button>
       <div style="font-weight:600; color:var(--logo-color); font-size:1.2em; margin-bottom:16px;">Join a Room</div>
-      <form id="joinRoomForm" onsubmit="return false;">
+      <form id="joinRoomForm">
         <div class="form-group" style="margin-bottom: 15px;">
           <label>Team</label>
           <select name="team" id="modalTeam" required>
@@ -568,14 +568,14 @@
   // Connect to socket.io server, using same host as current page
   let socket = io(window.location.hostname === 'localhost' ? 'http://localhost:3001' : '');
   let callouts = {}; // id -> callout
-
+  
   // Helper for growing textareas
   function autoGrow(el) {
     el.style.height = '38px';
     el.style.height = (el.scrollHeight)+'px';
   }
-
-  // Modal Functions
+  
+  // ------ Core UI Functions ------
   function openRoomModal() { 
     console.log("Opening room modal");
     document.getElementById('roomModal').style.display = 'flex'; 
@@ -587,134 +587,71 @@
   }
   
   function closeCalloutMenu() {
+    console.log("Closing callout menu");
     document.getElementById('calloutMenuModal').style.display = 'none';
   }
   
-  // Go to dashboard
   function goDashboard() {
+    console.log("Navigating to dashboard");
     window.location.href = '/dashboard.html';
   }
   
-  // Assign click handlers when DOM is loaded
-  window.onload = function() {
-    console.log("Window loaded - setting up all button handlers");
-    
-    // Join Room Button
-    var joinRoomBtn = document.getElementById('joinRoomButton');
-    if (joinRoomBtn) {
-      joinRoomBtn.onclick = function() {
-        try {
-          console.log("Join Room button clicked");
-          
-          const teamSelect = document.getElementById('modalTeam');
-          const missionSelect = document.getElementById('modalMission');
-          
-          // Validate form fields
-          if (!teamSelect.value) {
-            alert("Please select a team");
-            return;
-          }
-          if (!missionSelect.value) {
-            alert("Please select a mission");
-            return;
-          }
-          
-          // Join room
-          let classId = "SMX";
-          let team = teamSelect.value;
-          let mission = missionSelect.value;
-          
-          console.log("Selected values:", { classId, team, mission });
-          
-          currentRoom = { classId, team, mission };
-          let roomId = classId + "_" + team + "_" + mission;
-          socket.emit('join_room', roomId);
-          
-          document.getElementById('currentClass').textContent = classId;
-          document.getElementById('currentTeam').textContent = team;
-          document.getElementById('currentMission').textContent = mission;
-          
-          closeRoomModal();
-          loadCallouts(roomId);
-        } catch (error) {
-          console.error("Error joining room:", error);
-          alert("Error joining room: " + error.message);
-        }
-      };
-      console.log("Join Room button handler attached");
-    } else {
-      console.error("Join Room button not found in DOM");
-    }
-    
-    // Log Form Submit
-    var logForm = document.getElementById('logForm');
-    if (logForm) {
-      logForm.onsubmit = function(e) {
-        e.preventDefault();
-        console.log("Log form submitted");
-        submitLogForm(this);
-        return false;
-      };
-      console.log("Log form handler attached");
-    } else {
-      console.error("Log form not found in DOM");
-    }
-    
-    // Set up other button handlers
-    var dashboardBtn = document.querySelector('.nav-btn[onclick="goDashboard()"]');
-    if (dashboardBtn) {
-      dashboardBtn.onclick = function() {
-        console.log("Dashboard button clicked");
-        goDashboard();
-      };
-    }
-    
-    var openRoomBtn = document.querySelector('.nav-btn[onclick="openRoomModal()"]');
-    if (openRoomBtn) {
-      openRoomBtn.onclick = function() {
-        console.log("Open Room button clicked");
-        openRoomModal();
-      };
-    }
-  };
+  function logout() {
+    console.log("Logging out");
+    localStorage.removeItem('token');
+    localStorage.removeItem('userName');
+    window.location.href = '/login.html';
+  }
   
-  // Load callouts for room
-  function loadCallouts(roomId) {
+  // ------ Form Handling Functions ------
+  async function handleJoinRoomForm(form) {
     try {
-      console.log("Loading callouts for room:", roomId);
-      fetch(`http://localhost:3001/api/callouts/${roomId}`)
-        .then(res => res.json())
-        .then(logs => {
-          console.log("Callouts loaded:", logs);
-          
-          callouts = {};
-          document.getElementById('feedPanel').innerHTML = '';
-          
-          // Sort logs by creation date (newest first)
-          logs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-          
-          for(const log of logs) {
-            callouts[log._id] = log;
-            createBubble(log, true);
-          }
-        })
-        .catch(error => {
-          console.error("Error loading callouts:", error);
-          alert("Error loading room data. Please check console for details.");
-        });
+      console.log("Join Room form submitted");
+      
+      const teamSelect = document.getElementById('modalTeam');
+      const missionSelect = document.getElementById('modalMission');
+      
+      // Validate form fields
+      if (!teamSelect.value) {
+        alert("Please select a team");
+        return;
+      }
+      if (!missionSelect.value) {
+        alert("Please select a mission");
+        return;
+      }
+      
+      // Join room
+      let classId = "SMX";
+      let team = teamSelect.value;
+      let mission = missionSelect.value;
+      
+      console.log("Selected values:", { classId, team, mission });
+      
+      currentRoom = { classId, team, mission };
+      let roomId = classId + "_" + team + "_" + mission;
+      socket.emit('join_room', roomId);
+      
+      document.getElementById('currentClass').textContent = classId;
+      document.getElementById('currentTeam').textContent = team;
+      document.getElementById('currentMission').textContent = mission;
+      
+      closeRoomModal();
+      await loadCallouts(roomId);
     } catch (error) {
-      console.error("Error in loadCallouts:", error);
+      console.error("Error joining room:", error);
+      alert("Error joining room: " + error.message);
     }
   }
   
-  // Submit log form data
-  function submitLogForm(form) {
+  async function submitLogForm(form) {
     if(!currentRoom.classId) {
       alert('Join a room first.');
       return;
     }
     
     try {
+      console.log("Log form submitted");
       const data = Object.fromEntries(new FormData(form));
       let follow = null;
       
@@ -732,102 +669,403 @@
         createdBy: localStorage.getItem('userName') || "You"
       };
       
-      fetch('http://localhost:3001/api/callouts', {
+      const response = await fetch('http://localhost:3001/api/callouts', {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify(payload)
-      })
-      .then(res => res.json())
-      .then(log => {
-        callouts[log._id] = log;
-        createBubble(log, false);
-        
-        // Clear form
-        form.reset();
-        const textareas = form.querySelectorAll('textarea');
-        textareas.forEach(ta => ta.style.height = 'auto');
-        
-        // Flash animation
-        const bubble = document.getElementById('callout_' + log._id);
-        if (bubble) {
-          bubble.style.animation = 'none';
-          bubble.offsetHeight; /* trigger reflow */
-          bubble.style.animation = 'flash 1.5s';
-        }
-      })
-      .catch(error => {
-        console.error("Error submitting callout:", error);
       });
+      
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}`);
+      }
+      
+      const log = await response.json();
+      callouts[log._id] = log;
+      createBubble(log, false);
+      
+      // Clear form
+      form.reset();
+      const textareas = form.querySelectorAll('textarea');
+      textareas.forEach(ta => ta.style.height = 'auto');
+      
+      // Flash animation
+      const bubble = document.getElementById('callout_' + log._id);
+      if (bubble) {
+        bubble.style.animation = 'none';
+        bubble.offsetHeight; /* trigger reflow */
+        bubble.style.animation = 'flash 1.5s';
+      }
     } catch (error) {
-      console.error("Error in submitLogForm:", error);
+      console.error("Error submitting callout:", error);
+      alert("Error submitting callout: " + error.message);
     }
   }
-
-  // Create bubble in feed
+  
+  // ------ Data Loading Functions ------
+  async function loadCallouts(roomId) {
+    try {
+      console.log("Loading callouts for room:", roomId);
+      const response = await fetch(`http://localhost:3001/api/callouts/${roomId}`);
+      
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}`);
+      }
+      
+      const logs = await response.json();
+      console.log("Callouts loaded:", logs);
+      
+      callouts = {};
+      document.getElementById('feedPanel').innerHTML = '';
+      
+      // Sort logs by creation date (newest first)
+      logs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      
+      for(const log of logs) {
+        callouts[log._id] = log;
+        createBubble(log, true);
+      }
+    } catch (error) {
+      console.error("Error loading callouts:", error);
+      alert("Error loading room data: " + error.message);
+    }
+  }
+  
+  // ------ UI Generation Functions ------
   function createBubble(data, append=false) {
     try {
       const panel = document.getElementById('feedPanel');
       const div = document.createElement('div');
       div.className = "bubble " + (data.qc || "qc-orange"); 
       div.id = 'callout_' + data._id; 
-      div.innerHTML = ` 
-        <button class="menu-btn" title="Options" onclick="showCalloutMenu(event, this, '${data._id}')">&#8942;</button> 
-        <div class="bubble-flex"> 
-          <div class="bubble-left"> 
-            <div class="bubble-row"> 
-              <span><b>${data.operation || '-'}</b></span> 
-              <span style="margin: 0 9px; color: #444;">|</span> 
-              <span><b>${data.asset || '-'}</b></span> 
-            </div> 
-            <div class="bubble-row">${data.location || '-'}</div> 
-            ${ data.follow && data.follow.name ? `<div class="bubble-row"><b>${data.follow.name} / ${data.follow.stage}</b></div>` : '' } 
-            <div class="bubble-row">${data.activity || '-'}</div> 
-            <div class="bubble-row"><b>IA Notes:</b> ${(data.iaNotes||'').replace(/\n/g,'<br>')}</div> 
+      
+      // Create menu button with dataset attribute instead of onclick
+      const menuBtn = document.createElement('button');
+      menuBtn.className = "menu-btn";
+      menuBtn.title = "Options";
+      menuBtn.innerHTML = "&#8942;";
+      menuBtn.dataset.calloutId = data._id;
+      
+      // Create the rest of the content
+      const content = document.createElement('div');
+      content.className = "bubble-flex";
+      content.innerHTML = `
+        <div class="bubble-left"> 
+          <div class="bubble-row"> 
+            <span><b>${data.operation || '-'}</b></span> 
+            <span style="margin: 0 9px; color: #444;">|</span> 
+            <span><b>${data.asset || '-'}</b></span> 
           </div> 
-          <div class="bubble-right"> 
-            <span class="bubble-time">${data.zulu || '-'}</span> 
-            <span>MGRS: ${data.mgrs || '-'}</span> 
-            <span>SLANT: ${(data.males||0)}/${(data.females||0)}/${(data.children||0)} &nbsp; V: ${(data.vehicles||0)}</span> 
-          </div> 
+          <div class="bubble-row">${data.location || '-'}</div> 
+          ${ data.follow && data.follow.name ? `<div class="bubble-row"><b>${data.follow.name} / ${data.follow.stage}</b></div>` : '' } 
+          <div class="bubble-row">${data.activity || '-'}</div> 
+          <div class="bubble-row"><b>IA Notes:</b> ${(data.iaNotes||'').replace(/\n/g,'<br>')}</div> 
         </div> 
-        <div style="font-size:0.85em; color:#888; margin-top:7px;"> 
-          By ${data.createdBy} &middot; ${(data.createdAt ? new Date(data.createdAt).toLocaleTimeString() : '')} 
-        </div> 
-      `; 
-      div.dataset.payload = JSON.stringify(data); 
+        <div class="bubble-right"> 
+          <span class="bubble-time">${data.zulu || '-'}</span> 
+          <span>MGRS: ${data.mgrs || '-'}</span> 
+          <span>SLANT: ${(data.males||0)}/${(data.females||0)}/${(data.children||0)} &nbsp; V: ${(data.vehicles||0)}</span> 
+        </div>
+      `;
+      
+      const footer = document.createElement('div');
+      footer.style.fontSize = "0.85em";
+      footer.style.color = "#888";
+      footer.style.marginTop = "7px";
+      footer.innerHTML = `By ${data.createdBy} &middot; ${(data.createdAt ? new Date(data.createdAt).toLocaleTimeString() : '')}`;
+      
+      // Add event listener to menu button
+      menuBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        showCalloutMenu(e, this, this.dataset.calloutId);
+      });
+      
+      // Assemble the bubble
+      div.appendChild(menuBtn);
+      div.appendChild(content);
+      div.appendChild(footer);
+      div.dataset.payload = JSON.stringify(data);
+      
       if (append) panel.appendChild(div); 
-      else panel.prepend(div); 
+      else panel.prepend(div);
     } catch (error) {
       console.error("Error creating bubble:", error);
     }
   }
   
-  // Show callout menu
   function showCalloutMenu(e, btn, id) {
     try {
       e.stopPropagation();
       console.log("Opening callout menu for:", id);
-      document.getElementById('calloutMenuModal').style.display = 'flex';
       const modalContent = document.getElementById('calloutMenuContent');
-      modalContent.innerHTML = `
-        <button class="modal-close" onclick="closeCalloutMenu()">&times;</button>
-        <div style="text-align:center; margin-bottom:20px; font-weight:bold;">Callout Options</div>
-        <div style="display:flex; gap:15px; flex-direction:column;">
-          <button class="nav-btn" onclick="deleteCallout('${id}')">Delete Callout</button>
-          <button class="nav-btn" onclick="editCallout('${id}')">Edit Callout</button>
-          <button class="nav-btn" onclick="addFollow('${id}')">Add Follow-on</button>
-          <button class="nav-btn" onclick="updateQC('${id}', 'qc-orange')">Set QC: In Progress</button>
-          <button class="nav-btn" onclick="updateQC('${id}', 'qc-yellow')">Set QC: In Review</button>
-          <button class="nav-btn" onclick="updateQC('${id}', 'qc-green')">Set QC: Approved</button>
-          <button class="nav-btn" onclick="updateQC('${id}', 'qc-red')">Set QC: Issues</button>
-        </div>
-      `;
+      
+      // Create menu content
+      modalContent.innerHTML = '';
+      
+      // Close button
+      const closeBtn = document.createElement('button');
+      closeBtn.className = "modal-close";
+      closeBtn.innerHTML = "&times;";
+      closeBtn.addEventListener('click', closeCalloutMenu);
+      
+      // Title
+      const title = document.createElement('div');
+      title.style.textAlign = "center";
+      title.style.marginBottom = "20px";
+      title.style.fontWeight = "bold";
+      title.textContent = "Callout Options";
+      
+      // Options container
+      const options = document.createElement('div');
+      options.style.display = "flex";
+      options.style.gap = "15px";
+      options.style.flexDirection = "column";
+      
+      // Create button helper function
+      function createActionButton(text, action) {
+        const button = document.createElement('button');
+        button.className = "nav-btn";
+        button.textContent = text;
+        button.addEventListener('click', action);
+        return button;
+      }
+      
+      // Add option buttons
+      options.appendChild(createActionButton("Delete Callout", () => deleteCallout(id)));
+      options.appendChild(createActionButton("Edit Callout", () => editCallout(id)));
+      options.appendChild(createActionButton("Add Follow-on", () => addFollow(id)));
+      options.appendChild(createActionButton("Set QC: In Progress", () => updateQC(id, 'qc-orange')));
+      options.appendChild(createActionButton("Set QC: In Review", () => updateQC(id, 'qc-yellow')));
+      options.appendChild(createActionButton("Set QC: Approved", () => updateQC(id, 'qc-green')));
+      options.appendChild(createActionButton("Set QC: Issues", () => updateQC(id, 'qc-red')));
+      
+      // Assemble modal content
+      modalContent.appendChild(closeBtn);
+      modalContent.appendChild(title);
+      modalContent.appendChild(options);
+      
+      // Show modal
+      document.getElementById('calloutMenuModal').style.display = 'flex';
     } catch (error) {
       console.error("Error showing callout menu:", error);
     }
   }
   
-  // Socket.io event listeners
+  // ------ Action Functions ------
+  async function updateQC(id, qcClass) {
+    closeCalloutMenu();
+    console.log("Updating QC:", id, qcClass);
+    const callout = callouts[id];
+    if (!callout) return;
+    
+    try {
+      const response = await fetch(`http://localhost:3001/api/callouts/${id}`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          ...callout,
+          qc: qcClass,
+          editedBy: localStorage.getItem('userName') || 'You'
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}`);
+      }
+      
+      const updated = await response.json();
+      callouts[id] = updated;
+      
+      const bubble = document.getElementById('callout_' + id);
+      if (bubble) {
+        bubble.classList.remove('qc-orange', 'qc-yellow', 'qc-green', 'qc-red');
+        bubble.classList.add(qcClass);
+      }
+    } catch (error) {
+      console.error('Error updating QC:', error);
+      alert('Error updating QC: ' + error.message);
+    }
+  }
+  
+  async function deleteCallout(id) {
+    closeCalloutMenu();
+    if (confirm('Are you sure you want to delete this callout?')) {
+      console.log("Deleting callout:", id);
+      
+      try {
+        const response = await fetch(`http://localhost:3001/api/callouts/${id}`, {
+          method: 'DELETE'
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Server returned ${response.status}`);
+        }
+        
+        const bubble = document.getElementById('callout_' + id);
+        if (bubble) bubble.remove();
+        delete callouts[id];
+      } catch (error) {
+        console.error('Error deleting callout:', error);
+        alert('Error deleting callout: ' + error.message);
+      }
+    }
+  }
+  
+  function editCallout(id) {
+    closeCalloutMenu();
+    alert('Edit functionality will be implemented in a future update.');
+  }
+  
+  function addFollow(id) {
+    closeCalloutMenu();
+    console.log("Adding follow-on to:", id);
+    const callout = callouts[id];
+    if (!callout) return;
+    
+    const bubble = document.getElementById('callout_' + id);
+    if (!bubble || bubble.querySelector('.follow-section')) return;
+    
+    const followSection = document.createElement('div');
+    followSection.className = 'follow-section';
+    followSection.id = 'followSection';
+    
+    // Create name input row
+    const nameRow = document.createElement('div');
+    nameRow.className = 'follow-row';
+    
+    const nameLabel = document.createElement('label');
+    nameLabel.style.marginRight = 'auto';
+    nameLabel.textContent = 'Name:';
+    
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.id = 'followName';
+    nameInput.style.flex = '1';
+    nameInput.placeholder = 'Enter name';
+    
+    nameRow.appendChild(nameLabel);
+    nameRow.appendChild(nameInput);
+    
+    // Create stage buttons row
+    const stageRow = document.createElement('div');
+    stageRow.className = 'follow-row follow-actions';
+    
+    const stageBtn = document.createElement('button');
+    stageBtn.id = 'followStageBtn';
+    stageBtn.className = 'stage-btn';
+    stageBtn.textContent = 'WATCH';
+    
+    // Helper function for stage buttons
+    function createStageButton(stage) {
+      const btn = document.createElement('button');
+      btn.className = 'action-btn';
+      btn.textContent = stage;
+      btn.addEventListener('click', function() {
+        updateStage(stage);
+      });
+      return btn;
+    }
+    
+    stageRow.appendChild(stageBtn);
+    stageRow.appendChild(createStageButton('WATCH'));
+    stageRow.appendChild(createStageButton('TRACK'));
+    stageRow.appendChild(createStageButton('TARGET'));
+    stageRow.appendChild(createStageButton('ENGAGE'));
+    stageRow.appendChild(createStageButton('ASSESS'));
+    
+    // Create submit button row
+    const submitRow = document.createElement('div');
+    submitRow.className = 'follow-row';
+    submitRow.style.justifyContent = 'flex-end';
+    submitRow.style.marginTop = '10px';
+    
+    const submitBtn = document.createElement('button');
+    submitBtn.className = 'submit-btn';
+    submitBtn.style.padding = '8px 16px';
+    submitBtn.style.margin = '0';
+    submitBtn.textContent = 'Submit Follow';
+    submitBtn.addEventListener('click', function() {
+      submitFollow(id);
+    });
+    
+    submitRow.appendChild(submitBtn);
+    
+    // Assemble and insert follow section
+    followSection.appendChild(nameRow);
+    followSection.appendChild(stageRow);
+    followSection.appendChild(submitRow);
+    
+    const timeText = bubble.querySelector('.bubble-right');
+    timeText.parentNode.insertBefore(followSection, timeText.nextSibling);
+  }
+  
+  function updateStage(stage) {
+    const stageBtn = document.getElementById('followStageBtn');
+    if (stageBtn) {
+      stageBtn.textContent = stage;
+      stageBtn.style.background = {
+        'WATCH': 'var(--qc-orange)',
+        'TRACK': 'var(--qc-yellow)',
+        'TARGET': 'var(--qc-green)',
+        'ENGAGE': 'var(--qc-red)',
+        'ASSESS': '#3b82f6'
+      }[stage] || 'var(--qc-orange)';
+    }
+  }
+  
+  async function submitFollow(id) {
+    console.log("Submitting follow-on for:", id);
+    const callout = callouts[id];
+    if (!callout) return;
+    
+    const followName = document.getElementById('followName');
+    const followStage = document.getElementById('followStageBtn');
+    
+    if (!followName || !followStage) return;
+    if (!followName.value.trim()) {
+      alert('Please enter a name');
+      return;
+    }
+    
+    try {
+      const response = await fetch(`http://localhost:3001/api/callouts/${id}`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          ...callout,
+          follow: {
+            name: followName.value.trim(),
+            stage: followStage.textContent
+          },
+          editedBy: localStorage.getItem('userName') || 'You'
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}`);
+      }
+      
+      console.log('Follow-on submitted successfully');
+      
+      // Refresh the callout
+      const updatedResponse = await fetch(`http://localhost:3001/api/callouts/${id}`);
+      if (updatedResponse.ok) {
+        const updatedCallout = await updatedResponse.json();
+        callouts[id] = updatedCallout;
+        
+        // Update UI
+        const bubble = document.getElementById('callout_' + id);
+        if (bubble) {
+          bubble.remove();
+          createBubble(updatedCallout, true);
+        }
+      }
+    } catch (error) {
+      console.error('Error submitting follow-on:', error);
+      alert('Error submitting follow-on: ' + error.message);
+    }
+  }
+  
+  // ------ Socket.io Event Listeners ------
   socket.on('new_callout', function(callout) {
     console.log("New callout received:", callout);
     callouts[callout._id] = callout;
@@ -848,145 +1086,80 @@
     if (old) old.remove();
     delete callouts[id];
   });
-
-  // Additional functions
-  function updateQC(id, qcClass) {
-    closeCalloutMenu();
-    console.log("Updating QC:", id, qcClass);
-    const callout = callouts[id];
-    if (!callout) return;
-    
-    fetch(`http://localhost:3001/api/callouts/${id}`, {
-      method: 'PUT',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        ...callout,
-        qc: qcClass,
-        editedBy: localStorage.getItem('userName') || 'You'
-      })
-    })
-    .then(res => res.json())
-    .then(updated => {
-      callouts[id] = updated;
-      const bubble = document.getElementById('callout_' + id);
-      if (bubble) {
-        bubble.classList.remove('qc-orange', 'qc-yellow', 'qc-green', 'qc-red');
-        bubble.classList.add(qcClass);
-      }
-    })
-    .catch(error => {
-      console.error('Error updating QC:', error);
-    });
-  }
   
-  function deleteCallout(id) {
-    closeCalloutMenu();
-    if (confirm('Are you sure you want to delete this callout?')) {
-      console.log("Deleting callout:", id);
-      fetch(`http://localhost:3001/api/callouts/${id}`, {
-        method: 'DELETE'
-      })
-      .then(() => {
-        const bubble = document.getElementById('callout_' + id);
-        if (bubble) bubble.remove();
-        delete callouts[id];
-      })
-      .catch(error => {
-        console.error('Error deleting callout:', error);
+  // ------ Initialize All Event Handlers ------
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log("DOM loaded - initializing event handlers");
+    
+    // Dashboard button (top bar)
+    const dashboardBtn = document.getElementById('dashboardBtn');
+    if (dashboardBtn) {
+      dashboardBtn.addEventListener('click', goDashboard);
+      console.log("Dashboard button handler attached");
+    }
+    
+    // Join Room button (top bar)
+    const joinRoomBtn = document.getElementById('joinRoomBtn');
+    if (joinRoomBtn) {
+      joinRoomBtn.addEventListener('click', openRoomModal);
+      console.log("Join Room button handler attached");
+    }
+    
+    // Logout button (sidebar)
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', logout);
+      console.log("Logout button handler attached");
+    }
+    
+    // Close Room Modal button
+    const closeRoomModalBtn = document.getElementById('closeRoomModalBtn');
+    if (closeRoomModalBtn) {
+      closeRoomModalBtn.addEventListener('click', closeRoomModal);
+      console.log("Close Room Modal button handler attached");
+    }
+    
+    // Join Room Form submission
+    const joinRoomForm = document.getElementById('joinRoomForm');
+    if (joinRoomForm) {
+      joinRoomForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        handleJoinRoomForm(this);
       });
-    }
-  }
-  
-  function editCallout(id) {
-    closeCalloutMenu();
-    alert('Edit functionality will be implemented in a future update.');
-  }
-  
-  function addFollow(id) {
-    closeCalloutMenu();
-    console.log("Adding follow-on to:", id);
-    const callout = callouts[id];
-    if (!callout) return;
-    
-    const bubble = document.getElementById('callout_' + id);
-    if (!bubble) return;
-    
-    if (bubble.querySelector('.follow-section')) return;
-    
-    const followSection = document.createElement('div');
-    followSection.className = 'follow-section';
-    followSection.id = 'followSection';
-    followSection.innerHTML = `
-      <div class="follow-row">
-        <label style="margin-right:auto;">Name:</label>
-        <input type="text" id="followName" style="flex:1;" placeholder="Enter name">
-      </div>
-      <div class="follow-row follow-actions">
-        <button id="followStageBtn" class="stage-btn">WATCH</button>
-        <button class="action-btn" onclick="updateStage('WATCH')">WATCH</button>
-        <button class="action-btn" onclick="updateStage('TRACK')">TRACK</button>
-        <button class="action-btn" onclick="updateStage('TARGET')">TARGET</button>
-        <button class="action-btn" onclick="updateStage('ENGAGE')">ENGAGE</button>
-        <button class="action-btn" onclick="updateStage('ASSESS')">ASSESS</button>
-      </div>
-      <div class="follow-row" style="justify-content:flex-end; margin-top:10px;">
-        <button class="submit-btn" style="padding:8px 16px; margin:0;" onclick="submitFollow('${id}')">Submit Follow</button>
-      </div>
-    `;
-    
-    const timeText = bubble.querySelector('.bubble-right');
-    timeText.parentNode.insertBefore(followSection, timeText.nextSibling);
-  }
-  
-  function updateStage(stage) {
-    const stageBtn = document.getElementById('followStageBtn');
-    if (stageBtn) {
-      stageBtn.textContent = stage;
-      stageBtn.style.background = {
-        'WATCH': 'var(--qc-orange)',
-        'TRACK': 'var(--qc-yellow)',
-        'TARGET': 'var(--qc-green)',
-        'ENGAGE': 'var(--qc-red)',
-        'ASSESS': '#3b82f6'
-      }[stage] || 'var(--qc-orange)';
-    }
-  }
-  
-  function submitFollow(id) {
-    console.log("Submitting follow-on for:", id);
-    const callout = callouts[id];
-    if (!callout) return;
-    
-    const followName = document.getElementById('followName');
-    const followStage = document.getElementById('followStageBtn');
-    
-    if (!followName || !followStage) return;
-    if (!followName.value.trim()) {
-      alert('Please enter a name');
-      return;
+      console.log("Join Room form handler attached");
     }
     
-    fetch(`http://localhost:3001/api/callouts/${id}`, {
-      method: 'PUT',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        ...callout,
-        follow: {
-          name: followName.value.trim(),
-          stage: followStage.textContent
-        },
-        editedBy: localStorage.getItem('userName') || 'You'
-      })
-    })
-    .then(res => {
-      if (res.ok) {
-        console.log('Follow-on submitted successfully');
-      }
-    })
-    .catch(error => {
-      console.error('Error submitting follow-on:', error);
-    });
-  }
+    // Join Room Button in modal
+    const joinRoomButton = document.getElementById('joinRoomButton');
+    if (joinRoomButton) {
+      joinRoomButton.addEventListener('click', function() {
+        document.getElementById('joinRoomForm').dispatchEvent(new Event('submit'));
+      });
+      console.log("Join Room Button handler attached");
+    }
+    
+    // Log Form submission
+    const logForm = document.getElementById('logForm');
+    if (logForm) {
+      logForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        submitLogForm(this);
+      });
+      console.log("Log form handler attached");
+    }
+    
+    // Activity textarea auto-grow
+    const activityTextarea = document.getElementById('activityTextarea');
+    if (activityTextarea) {
+      activityTextarea.addEventListener('input', function() {
+        autoGrow(this);
+      });
+      console.log("Activity textarea handler attached");
+    }
+    
+    console.log("Event handlers attached, page ready.");
+  });
+</script>
   
   // This is no longer needed as we're using window.onload now
   // document.addEventListener('DOMContentLoaded', function() {
