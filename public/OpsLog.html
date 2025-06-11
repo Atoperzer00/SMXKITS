@@ -575,15 +575,423 @@
     el.style.height = (el.scrollHeight)+'px';
   }
 
-  // Room Modal
-  function openRoomModal() { document.getElementById('roomModal').style.display='flex'; }
-  function closeRoomModal() { document.getElementById('roomModal').style.display='none'; }
-
-  // Initialize event handlers
-  document.addEventListener('DOMContentLoaded', function() {
-    console.log("DOM loaded - initializing event handlers");
+  // Modal Functions
+  function openRoomModal() { 
+    console.log("Opening room modal");
+    document.getElementById('roomModal').style.display = 'flex'; 
+  }
+  
+  function closeRoomModal() { 
+    console.log("Closing room modal");
+    document.getElementById('roomModal').style.display = 'none'; 
+  }
+  
+  function closeCalloutMenu() {
+    document.getElementById('calloutMenuModal').style.display = 'none';
+  }
+  
+  // Go to dashboard
+  function goDashboard() {
+    window.location.href = '/dashboard.html';
+  }
+  
+  // Assign click handlers when DOM is loaded
+  window.onload = function() {
+    console.log("Window loaded - setting up all button handlers");
     
-    // Join Room button handler
+    // Join Room Button
+    var joinRoomBtn = document.getElementById('joinRoomButton');
+    if (joinRoomBtn) {
+      joinRoomBtn.onclick = function() {
+        try {
+          console.log("Join Room button clicked");
+          
+          const teamSelect = document.getElementById('modalTeam');
+          const missionSelect = document.getElementById('modalMission');
+          
+          // Validate form fields
+          if (!teamSelect.value) {
+            alert("Please select a team");
+            return;
+          }
+          if (!missionSelect.value) {
+            alert("Please select a mission");
+            return;
+          }
+          
+          // Join room
+          let classId = "SMX";
+          let team = teamSelect.value;
+          let mission = missionSelect.value;
+          
+          console.log("Selected values:", { classId, team, mission });
+          
+          currentRoom = { classId, team, mission };
+          let roomId = classId + "_" + team + "_" + mission;
+          socket.emit('join_room', roomId);
+          
+          document.getElementById('currentClass').textContent = classId;
+          document.getElementById('currentTeam').textContent = team;
+          document.getElementById('currentMission').textContent = mission;
+          
+          closeRoomModal();
+          loadCallouts(roomId);
+        } catch (error) {
+          console.error("Error joining room:", error);
+          alert("Error joining room: " + error.message);
+        }
+      };
+      console.log("Join Room button handler attached");
+    } else {
+      console.error("Join Room button not found in DOM");
+    }
+    
+    // Log Form Submit
+    var logForm = document.getElementById('logForm');
+    if (logForm) {
+      logForm.onsubmit = function(e) {
+        e.preventDefault();
+        console.log("Log form submitted");
+        submitLogForm(this);
+        return false;
+      };
+      console.log("Log form handler attached");
+    } else {
+      console.error("Log form not found in DOM");
+    }
+    
+    // Set up other button handlers
+    var dashboardBtn = document.querySelector('.nav-btn[onclick="goDashboard()"]');
+    if (dashboardBtn) {
+      dashboardBtn.onclick = function() {
+        console.log("Dashboard button clicked");
+        goDashboard();
+      };
+    }
+    
+    var openRoomBtn = document.querySelector('.nav-btn[onclick="openRoomModal()"]');
+    if (openRoomBtn) {
+      openRoomBtn.onclick = function() {
+        console.log("Open Room button clicked");
+        openRoomModal();
+      };
+    }
+  };
+  
+  // Load callouts for room
+  function loadCallouts(roomId) {
+    try {
+      console.log("Loading callouts for room:", roomId);
+      fetch(`http://localhost:3001/api/callouts/${roomId}`)
+        .then(res => res.json())
+        .then(logs => {
+          console.log("Callouts loaded:", logs);
+          
+          callouts = {};
+          document.getElementById('feedPanel').innerHTML = '';
+          
+          // Sort logs by creation date (newest first)
+          logs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+          
+          for(const log of logs) {
+            callouts[log._id] = log;
+            createBubble(log, true);
+          }
+        })
+        .catch(error => {
+          console.error("Error loading callouts:", error);
+          alert("Error loading room data. Please check console for details.");
+        });
+    } catch (error) {
+      console.error("Error in loadCallouts:", error);
+    }
+  }
+  
+  // Submit log form data
+  function submitLogForm(form) {
+    if(!currentRoom.classId) {
+      alert('Join a room first.');
+      return;
+    }
+    
+    try {
+      const data = Object.fromEntries(new FormData(form));
+      let follow = null;
+      
+      if(document.getElementById('followSection')) {
+        follow = {
+          name: document.getElementById('followName').value,
+          stage: document.getElementById('followStageBtn').textContent
+        };
+      }
+      
+      const payload = {
+        ...data,
+        roomId: currentRoom.classId + "_" + currentRoom.team + "_" + currentRoom.mission,
+        follow,
+        createdBy: localStorage.getItem('userName') || "You"
+      };
+      
+      fetch('http://localhost:3001/api/callouts', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(log => {
+        callouts[log._id] = log;
+        createBubble(log, false);
+        
+        // Clear form
+        form.reset();
+        const textareas = form.querySelectorAll('textarea');
+        textareas.forEach(ta => ta.style.height = 'auto');
+        
+        // Flash animation
+        const bubble = document.getElementById('callout_' + log._id);
+        if (bubble) {
+          bubble.style.animation = 'none';
+          bubble.offsetHeight; /* trigger reflow */
+          bubble.style.animation = 'flash 1.5s';
+        }
+      })
+      .catch(error => {
+        console.error("Error submitting callout:", error);
+      });
+    } catch (error) {
+      console.error("Error in submitLogForm:", error);
+    }
+  }
+
+  // Create bubble in feed
+  function createBubble(data, append=false) {
+    try {
+      const panel = document.getElementById('feedPanel');
+      const div = document.createElement('div');
+      div.className = "bubble " + (data.qc || "qc-orange"); 
+      div.id = 'callout_' + data._id; 
+      div.innerHTML = ` 
+        <button class="menu-btn" title="Options" onclick="showCalloutMenu(event, this, '${data._id}')">&#8942;</button> 
+        <div class="bubble-flex"> 
+          <div class="bubble-left"> 
+            <div class="bubble-row"> 
+              <span><b>${data.operation || '-'}</b></span> 
+              <span style="margin: 0 9px; color: #444;">|</span> 
+              <span><b>${data.asset || '-'}</b></span> 
+            </div> 
+            <div class="bubble-row">${data.location || '-'}</div> 
+            ${ data.follow && data.follow.name ? `<div class="bubble-row"><b>${data.follow.name} / ${data.follow.stage}</b></div>` : '' } 
+            <div class="bubble-row">${data.activity || '-'}</div> 
+            <div class="bubble-row"><b>IA Notes:</b> ${(data.iaNotes||'').replace(/\n/g,'<br>')}</div> 
+          </div> 
+          <div class="bubble-right"> 
+            <span class="bubble-time">${data.zulu || '-'}</span> 
+            <span>MGRS: ${data.mgrs || '-'}</span> 
+            <span>SLANT: ${(data.males||0)}/${(data.females||0)}/${(data.children||0)} &nbsp; V: ${(data.vehicles||0)}</span> 
+          </div> 
+        </div> 
+        <div style="font-size:0.85em; color:#888; margin-top:7px;"> 
+          By ${data.createdBy} &middot; ${(data.createdAt ? new Date(data.createdAt).toLocaleTimeString() : '')} 
+        </div> 
+      `; 
+      div.dataset.payload = JSON.stringify(data); 
+      if (append) panel.appendChild(div); 
+      else panel.prepend(div); 
+    } catch (error) {
+      console.error("Error creating bubble:", error);
+    }
+  }
+  
+  // Show callout menu
+  function showCalloutMenu(e, btn, id) {
+    try {
+      e.stopPropagation();
+      console.log("Opening callout menu for:", id);
+      document.getElementById('calloutMenuModal').style.display = 'flex';
+      const modalContent = document.getElementById('calloutMenuContent');
+      modalContent.innerHTML = `
+        <button class="modal-close" onclick="closeCalloutMenu()">&times;</button>
+        <div style="text-align:center; margin-bottom:20px; font-weight:bold;">Callout Options</div>
+        <div style="display:flex; gap:15px; flex-direction:column;">
+          <button class="nav-btn" onclick="deleteCallout('${id}')">Delete Callout</button>
+          <button class="nav-btn" onclick="editCallout('${id}')">Edit Callout</button>
+          <button class="nav-btn" onclick="addFollow('${id}')">Add Follow-on</button>
+          <button class="nav-btn" onclick="updateQC('${id}', 'qc-orange')">Set QC: In Progress</button>
+          <button class="nav-btn" onclick="updateQC('${id}', 'qc-yellow')">Set QC: In Review</button>
+          <button class="nav-btn" onclick="updateQC('${id}', 'qc-green')">Set QC: Approved</button>
+          <button class="nav-btn" onclick="updateQC('${id}', 'qc-red')">Set QC: Issues</button>
+        </div>
+      `;
+    } catch (error) {
+      console.error("Error showing callout menu:", error);
+    }
+  }
+  
+  // Socket.io event listeners
+  socket.on('new_callout', function(callout) {
+    console.log("New callout received:", callout);
+    callouts[callout._id] = callout;
+    createBubble(callout, false);
+  });
+  
+  socket.on('update_callout', function(callout) {
+    console.log("Updated callout received:", callout);
+    callouts[callout._id] = callout;
+    let old = document.getElementById('callout_'+callout._id);
+    if (old) old.remove();
+    createBubble(callout, false);
+  });
+  
+  socket.on('delete_callout', function(id) {
+    console.log("Delete callout received:", id);
+    let old = document.getElementById('callout_'+id);
+    if (old) old.remove();
+    delete callouts[id];
+  });
+
+  // Additional functions
+  function updateQC(id, qcClass) {
+    closeCalloutMenu();
+    console.log("Updating QC:", id, qcClass);
+    const callout = callouts[id];
+    if (!callout) return;
+    
+    fetch(`http://localhost:3001/api/callouts/${id}`, {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        ...callout,
+        qc: qcClass,
+        editedBy: localStorage.getItem('userName') || 'You'
+      })
+    })
+    .then(res => res.json())
+    .then(updated => {
+      callouts[id] = updated;
+      const bubble = document.getElementById('callout_' + id);
+      if (bubble) {
+        bubble.classList.remove('qc-orange', 'qc-yellow', 'qc-green', 'qc-red');
+        bubble.classList.add(qcClass);
+      }
+    })
+    .catch(error => {
+      console.error('Error updating QC:', error);
+    });
+  }
+  
+  function deleteCallout(id) {
+    closeCalloutMenu();
+    if (confirm('Are you sure you want to delete this callout?')) {
+      console.log("Deleting callout:", id);
+      fetch(`http://localhost:3001/api/callouts/${id}`, {
+        method: 'DELETE'
+      })
+      .then(() => {
+        const bubble = document.getElementById('callout_' + id);
+        if (bubble) bubble.remove();
+        delete callouts[id];
+      })
+      .catch(error => {
+        console.error('Error deleting callout:', error);
+      });
+    }
+  }
+  
+  function editCallout(id) {
+    closeCalloutMenu();
+    alert('Edit functionality will be implemented in a future update.');
+  }
+  
+  function addFollow(id) {
+    closeCalloutMenu();
+    console.log("Adding follow-on to:", id);
+    const callout = callouts[id];
+    if (!callout) return;
+    
+    const bubble = document.getElementById('callout_' + id);
+    if (!bubble) return;
+    
+    if (bubble.querySelector('.follow-section')) return;
+    
+    const followSection = document.createElement('div');
+    followSection.className = 'follow-section';
+    followSection.id = 'followSection';
+    followSection.innerHTML = `
+      <div class="follow-row">
+        <label style="margin-right:auto;">Name:</label>
+        <input type="text" id="followName" style="flex:1;" placeholder="Enter name">
+      </div>
+      <div class="follow-row follow-actions">
+        <button id="followStageBtn" class="stage-btn">WATCH</button>
+        <button class="action-btn" onclick="updateStage('WATCH')">WATCH</button>
+        <button class="action-btn" onclick="updateStage('TRACK')">TRACK</button>
+        <button class="action-btn" onclick="updateStage('TARGET')">TARGET</button>
+        <button class="action-btn" onclick="updateStage('ENGAGE')">ENGAGE</button>
+        <button class="action-btn" onclick="updateStage('ASSESS')">ASSESS</button>
+      </div>
+      <div class="follow-row" style="justify-content:flex-end; margin-top:10px;">
+        <button class="submit-btn" style="padding:8px 16px; margin:0;" onclick="submitFollow('${id}')">Submit Follow</button>
+      </div>
+    `;
+    
+    const timeText = bubble.querySelector('.bubble-right');
+    timeText.parentNode.insertBefore(followSection, timeText.nextSibling);
+  }
+  
+  function updateStage(stage) {
+    const stageBtn = document.getElementById('followStageBtn');
+    if (stageBtn) {
+      stageBtn.textContent = stage;
+      stageBtn.style.background = {
+        'WATCH': 'var(--qc-orange)',
+        'TRACK': 'var(--qc-yellow)',
+        'TARGET': 'var(--qc-green)',
+        'ENGAGE': 'var(--qc-red)',
+        'ASSESS': '#3b82f6'
+      }[stage] || 'var(--qc-orange)';
+    }
+  }
+  
+  function submitFollow(id) {
+    console.log("Submitting follow-on for:", id);
+    const callout = callouts[id];
+    if (!callout) return;
+    
+    const followName = document.getElementById('followName');
+    const followStage = document.getElementById('followStageBtn');
+    
+    if (!followName || !followStage) return;
+    if (!followName.value.trim()) {
+      alert('Please enter a name');
+      return;
+    }
+    
+    fetch(`http://localhost:3001/api/callouts/${id}`, {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        ...callout,
+        follow: {
+          name: followName.value.trim(),
+          stage: followStage.textContent
+        },
+        editedBy: localStorage.getItem('userName') || 'You'
+      })
+    })
+    .then(res => {
+      if (res.ok) {
+        console.log('Follow-on submitted successfully');
+      }
+    })
+    .catch(error => {
+      console.error('Error submitting follow-on:', error);
+    });
+  }
+  
+  // This is no longer needed as we're using window.onload now
+  // document.addEventListener('DOMContentLoaded', function() {
+  //   console.log("DOM loaded - initializing event handlers");
+  // 
     const joinButton = document.getElementById('joinRoomButton');
     if (joinButton) {
       joinButton.onclick = async function() {
