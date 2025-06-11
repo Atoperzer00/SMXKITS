@@ -645,6 +645,28 @@
   let socket = io(window.location.hostname === 'localhost' ? 'http://localhost:3001' : '');
   let callouts = {}; // id -> callout
   
+  // Initialize updateSidebarButtonStates function early
+  function updateSidebarButtonStates() {
+    const editCalloutBtn = document.getElementById('editCalloutBtn');
+    const viewHistoryBtn = document.getElementById('viewHistoryBtn');
+    
+    const hasCallouts = callouts && Object.keys(callouts).length > 0;
+    
+    if (editCalloutBtn) {
+      editCalloutBtn.disabled = !hasCallouts;
+      editCalloutBtn.title = hasCallouts ? 'Edit most recent callout' : 'No callouts available to edit';
+      editCalloutBtn.style.opacity = hasCallouts ? '1' : '0.6';
+      editCalloutBtn.style.cursor = hasCallouts ? 'pointer' : 'not-allowed';
+    }
+    
+    if (viewHistoryBtn) {
+      viewHistoryBtn.disabled = !hasCallouts;
+      viewHistoryBtn.title = hasCallouts ? 'View history of most recent callout' : 'No callout history available';
+      viewHistoryBtn.style.opacity = hasCallouts ? '1' : '0.6';
+      viewHistoryBtn.style.cursor = hasCallouts ? 'pointer' : 'not-allowed';
+    }
+  }
+  
   // Helper for growing textareas
   function autoGrow(el) {
     el.style.height = '38px';
@@ -1371,6 +1393,8 @@ if (document.querySelector('[data-follow-section="true"]')) {
         window.openFollow();
       });
       console.log("Create Follow button handler attached");
+    } else {
+      console.error("Create Follow button not found with ID 'createFollowBtn'");
     }
     
     // Initialize sidebar button states
@@ -1739,26 +1763,7 @@ if (document.querySelector('[data-follow-section="true"]')) {
     }
   }
   
-  // Function to update sidebar button states based on callout availability
-  function updateSidebarButtonStates() {
-    const editCalloutBtn = document.getElementById('editCalloutBtn');
-    const viewHistoryBtn = document.getElementById('viewHistoryBtn');
-    
-    const hasCallouts = Object.keys(callouts).length > 0;
-    
-    if (editCalloutBtn) {
-      editCalloutBtn.disabled = !hasCallouts;
-      editCalloutBtn.title = hasCallouts ? 'Edit most recent callout' : 'No callouts available to edit';
-      editCalloutBtn.style.opacity = hasCallouts ? '1' : '0.6';
-      editCalloutBtn.style.cursor = hasCallouts ? 'pointer' : 'not-allowed';
-    }
-    
-    if (viewHistoryBtn) {
-      viewHistoryBtn.disabled = !hasCallouts;
-      viewHistoryBtn.title = hasCallouts ? 'View history of most recent callout' : 'No callout history available';
-      viewHistoryBtn.style.opacity = hasCallouts ? '1' : '0.6';
-      viewHistoryBtn.style.cursor = hasCallouts ? 'pointer' : 'not-allowed';
-    }
+  // Function updateSidebarButtonStates is now defined at the top of the script
   }
 
   // Prefill zulu
