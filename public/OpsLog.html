@@ -1051,11 +1051,11 @@ if (document.querySelector('[data-follow-section="true"]')) {
             
             // Handle both formats
             if (bubbleData.zulu.includes(':')) {
-              // Old format
+              // Old format - convert HH:MM to a number
               const [bubbleHours, bubbleMinutes] = bubbleData.zulu.split(':').map(Number);
               bubbleTimeValue = bubbleHours * 100 + bubbleMinutes;
             } else {
-              // New format
+              // New format - already a 4-digit number as string
               bubbleTimeValue = parseInt(bubbleData.zulu, 10);
             }
             
@@ -2026,9 +2026,16 @@ if (document.querySelector('[data-follow-section="true"]')) {
     // Generate a random follow ID
     const followId = Math.random().toString(36).substr(2, 6).toUpperCase();
     
+    // Initialize follow state
+    window.followState = {
+      followId: followId,
+      stage: 'START',
+      ended: false
+    };
+    
     // Replace the button with the follow form
     followContainer.innerHTML = `
-      <div class="follow-section" id="followSection">
+      <div class="follow-section" id="followSection" data-follow-section="true">
         <div class="follow-row">
           <label style="margin-bottom:0;">Follow Name</label>
           <input type="text" id="followName" style="flex:1; min-width:120px;"/>
@@ -2074,6 +2081,12 @@ if (document.querySelector('[data-follow-section="true"]')) {
         "END": "var(--qc-red)"
       };
       this.style.background = colors[stages[currentStage]];
+
+      // Update global follow state
+      window.followState = {
+        stage: stages[currentStage],
+        ended: stages[currentStage] === "END"
+      };
     });
     
     // Handle continue button
