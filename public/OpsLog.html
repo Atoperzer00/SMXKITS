@@ -184,7 +184,7 @@
       padding: 10px 15px;
       border-radius: 8px;
     } /* Increased min-width and added styling */
-    .bubble-right .bubble-time { font-weight: bold; font-size: 1.1em; }
+    .bubble-right .bubble-time { font-weight: bold; font-size: 1.4em; color: var(--logo-color); }
     .bubble-right span { margin-bottom: 3px; }
     .bubble .menu-btn {
       position: absolute;
@@ -461,10 +461,6 @@
     <!-- Sidebar with form -->
     <aside class="sidebar">
       <div class="logo">SMXKITS</div>
-      <div class="nav">
-        <button id="editCalloutBtn" class="nav-btn">Edit Callout</button>
-        <button id="viewHistoryBtn" class="nav-btn">View History</button>
-      </div>
       <div class="divider"></div>
 
       <!-- Callout Form moved to sidebar -->
@@ -508,7 +504,7 @@
         
         <div class="form-group" style="margin-bottom: 12px;">
           <label>Zulu Time</label>
-          <input type="time" name="zulu" required/>
+          <input type="text" name="zulu" required placeholder="HHMM" pattern="[0-9]{4}" maxlength="4" oninput="this.value = this.value.replace(/[^0-9]/g, '');"/>
         </div>
         
         <div class="form-group" style="margin-bottom: 12px;">
@@ -634,6 +630,40 @@
   <div id="calloutMenuModal" class="modal" style="display:none;">
     <div class="modal-content" id="calloutMenuContent">
       <!-- Content filled by JS -->
+    </div>
+  </div>
+
+  <!-- Edit Bubble Overlay -->
+  <div id="editCalloutOverlay" class="modal" style="display:none;">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeEditCallout()">&times;</button>
+      <div style="font-weight:600; color:var(--logo-color); font-size:1.2em; margin-bottom:10px;">Edit Callout</div>
+      <form id="editCalloutForm">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px;">
+          <input type="text" name="classification" required placeholder="Classification"/>
+          <input type="text" name="asset" required placeholder="Asset"/>
+          <input type="text" name="sensor" required placeholder="Sensor"/>
+          <input type="text" name="operation" required placeholder="Operation"/>
+          <input type="text" name="countryCode" maxlength="3" placeholder="Country Code"/>
+          <input type="text" name="team" placeholder="Team"/>
+          <input type="text" name="zulu" required placeholder="Zulu Time (HHMM)" pattern="[0-9]{4}" maxlength="4" oninput="this.value = this.value.replace(/[^0-9]/g, '');"/>
+          <input type="text" name="mgrs" placeholder="MGRS"/>
+          <input type="text" name="location" placeholder="Location"/>
+          <textarea name="activity" rows="1" placeholder="Activity" oninput="autoGrow(this)"></textarea>
+          <input type="number" name="males" min="0" placeholder="Males"/>
+          <input type="number" name="females" min="0" placeholder="Females"/>
+          <input type="number" name="children" min="0" placeholder="Children"/>
+          <input type="number" name="vehicles" min="0" placeholder="Vehicles"/>
+          <textarea name="iaNotes" rows="1" placeholder="IA Notes" oninput="autoGrow(this)"></textarea>
+        </div>
+        <div style="margin-top:12px;">
+          <label>Follow Name</label>
+          <input type="text" name="followName" placeholder="Follow Name"/>
+          <label style="margin-left:12px;">Follow Stage</label>
+          <input type="text" name="followStage" placeholder="Follow Stage"/>
+        </div>
+        <button type="submit" class="submit-btn" style="margin-top:16px; width:100%;">Save Changes</button>
+      </form>
     </div>
   </div>
 
@@ -840,12 +870,41 @@ if (document.querySelector('[data-follow-section="true"]')) {
       tipDiv.innerHTML = '<i>Tip: Double-click any callout to edit it quickly</i>';
       feedPanel.appendChild(tipDiv);
       
-      // Sort logs by creation date (newest first)
-      logs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      // Sort logs by zulu time (latest time first)
+      logs.sort((a, b) => {
+        // Parse zulu times (in HHMM format)
+        let timeA = a.zulu || '0000';
+        let timeB = b.zulu || '0000';
+        
+        // Convert to numbers for comparison (HHMM as a 4-digit number)
+        // Make sure we handle both old HH:MM format and new HHMM format
+        let valueA, valueB;
+        
+        if (timeA.includes(':')) {
+          // Old format - convert HH:MM to a number
+          let [hoursA, minutesA] = timeA.split(':').map(Number);
+          valueA = hoursA * 100 + minutesA;
+        } else {
+          // New format - already a 4-digit number as string
+          valueA = parseInt(timeA, 10);
+        }
+        
+        if (timeB.includes(':')) {
+          // Old format - convert HH:MM to a number
+          let [hoursB, minutesB] = timeB.split(':').map(Number);
+          valueB = hoursB * 100 + minutesB;
+        } else {
+          // New format - already a 4-digit number as string
+          valueB = parseInt(timeB, 10);
+        }
+        
+        // Compare the numeric values (higher number = later time)
+        return valueB - valueA;
+      });
       
-      // Process logs in reverse order so the newest appears at the top
-      // Since createBubble always prepends, we need to process oldest first
-      for(const log of [...logs].reverse()) {
+      // Process logs in sorted order (latest zulu time to earliest)
+      // This creates the reverse chronological display order by zulu time
+      for(const log of logs) {
         callouts[log._id] = log;
         createBubble(log);
       }
@@ -862,6 +921,21 @@ if (document.querySelector('[data-follow-section="true"]')) {
   window.createBubble = function(data, append=false) {
     try {
       const panel = document.getElementById('feedPanel');
+      
+      // Check if this bubble already exists (for updates)
+      const existingBubble = document.getElementById('callout_' + data._id);
+      if (existingBubble) {
+        // Just update the existing bubble's class for QC status without moving it
+        existingBubble.className = "bubble " + (data.qc || "qc-orange");
+        if (data.follow && data.follow.name) {
+          existingBubble.classList.add('has-follow');
+        }
+        // Update the bubble content without recreating it
+        updateBubbleContent(existingBubble, data);
+        return;
+      }
+      
+      // This is a new bubble, create it from scratch
       const div = document.createElement('div');
       div.className = "bubble " + (data.qc || "qc-orange"); 
       div.id = 'callout_' + data._id;
@@ -946,13 +1020,158 @@ if (document.querySelector('[data-follow-section="true"]')) {
       div.appendChild(footer);
       div.dataset.payload = JSON.stringify(data);
       
-      // Always add to the top of the list regardless of the append parameter
-      panel.prepend(div);
+      // Insert the new callout in the correct position based on zulu time
+      if (data.zulu) {
+        // Parse the new callout's zulu time
+        let newTimeValue;
+        
+        // Handle both formats (old HH:MM and new HHMM)
+        if (data.zulu.includes(':')) {
+          // Old format
+          const [newHours, newMinutes] = data.zulu.split(':').map(Number);
+          newTimeValue = newHours * 100 + newMinutes;
+        } else {
+          // New format - already a 4-digit number as string
+          newTimeValue = parseInt(data.zulu, 10);
+        }
+        
+        // Check existing callouts to find the right position
+        let inserted = false;
+        const existingBubbles = panel.querySelectorAll('.bubble');
+        
+        // Skip the first element if it's the tip div
+        for (let i = 0; i < existingBubbles.length; i++) {
+          const bubble = existingBubbles[i];
+          const bubbleId = bubble.id.replace('callout_', '');
+          const bubbleData = callouts[bubbleId];
+          
+          if (bubbleData && bubbleData.zulu) {
+            // Parse this bubble's zulu time
+            let bubbleTimeValue;
+            
+            // Handle both formats
+            if (bubbleData.zulu.includes(':')) {
+              // Old format
+              const [bubbleHours, bubbleMinutes] = bubbleData.zulu.split(':').map(Number);
+              bubbleTimeValue = bubbleHours * 100 + bubbleMinutes;
+            } else {
+              // New format
+              bubbleTimeValue = parseInt(bubbleData.zulu, 10);
+            }
+            
+            // If new time is later than current bubble's time, insert before it
+            if (newTimeValue > bubbleTimeValue) {
+              panel.insertBefore(div, bubble);
+              inserted = true;
+              break;
+            }
+          }
+        }
+        
+        // If we couldn't find a position or the feed is empty, append to the end
+        if (!inserted) {
+          panel.appendChild(div);
+        }
+      } else {
+        // If no zulu time, add to the top as a fallback
+        panel.prepend(div);
+      }
       
       // Update sidebar button states after adding a new bubble
       updateSidebarButtonStates();
     } catch (error) {
       console.error("Error creating bubble:", error);
+    }
+  };
+  
+  // Helper function to format zulu time
+  function formatZuluTime(zuluTime) {
+    if (!zuluTime) return '-';
+    
+    // If it already contains a colon, it's in the old format
+    if (zuluTime.includes(':')) {
+      return zuluTime;
+    }
+    
+    // For 4-digit format, insert a colon between hours and minutes
+    // Handle both 3-digit and 4-digit cases
+    if (zuluTime.length === 3) {
+      // For 3 digits (e.g., "130" for 1:30), add leading zero
+      return "0" + zuluTime.charAt(0) + ":" + zuluTime.substring(1);
+    } else if (zuluTime.length === 4) {
+      return zuluTime.substring(0, 2) + ":" + zuluTime.substring(2);
+    }
+    
+    // Return as-is for any other format
+    return zuluTime;
+  }
+  
+  // Helper function to update existing bubble content without recreating the whole bubble
+  function updateBubbleContent(bubble, data) {
+    try {
+      const hasFollow = data.follow && data.follow.name;
+      
+      // Find or create the bubble-flex content div
+      let content = bubble.querySelector('.bubble-flex');
+      if (!content) {
+        content = document.createElement('div');
+        content.className = "bubble-flex";
+        bubble.appendChild(content);
+      }
+      
+      // Update the indicator if needed
+      if (hasFollow) {
+        let indicator = bubble.querySelector('.follow-indicator');
+        if (!indicator) {
+          indicator = document.createElement('div');
+          indicator.className = "follow-indicator";
+          bubble.appendChild(indicator);
+        }
+        indicator.title = data.follow.followId || "Follow";
+        indicator.classList.toggle('follow-ended', data.follow.ended || data.follow.stage === "END");
+      } else {
+        const indicator = bubble.querySelector('.follow-indicator');
+        if (indicator) indicator.remove();
+      }
+      
+      // Update the content HTML
+      content.innerHTML = `
+        <div class="bubble-left"> 
+          <div class="bubble-row"> 
+            <span><b>${data.operation || '-'}</b></span> 
+            <span style="margin: 0 9px; color: #444;">|</span> 
+            <span><b>${data.asset || '-'}</b></span> 
+          </div> 
+          <div class="bubble-row">${data.location || '-'}</div> 
+          ${ hasFollow ? `<div class="bubble-row follow-title">
+            <b>${data.follow.name} / ${data.follow.stage}</b>
+            ${data.follow.followId ? `<span class="follow-id">#${data.follow.followId}</span>` : ''}
+          </div>` : '' } 
+          <div class="bubble-row">${data.activity || '-'}</div> 
+          <div class="bubble-row"><b>IA Notes:</b> ${(data.iaNotes||'').replace(/\n/g,'<br>')}</div> 
+        </div> 
+        <div class="bubble-right"> 
+          <span class="bubble-time">${data.zulu || '-'}</span> 
+          <span><b>MGRS:</b> <span style="letter-spacing: 0.5px; font-size: 1.05em;">${data.mgrs || '-'}</span></span> 
+          <span><b>SLANT:</b> ${(data.males||0)}/${(data.females||0)}/${(data.children||0)} &nbsp; <b>V:</b> ${(data.vehicles||0)}</span> 
+        </div>
+      `;
+      
+      // Update footer information
+      let footer = bubble.querySelector('div[style*="font-size: 0.85em"]');
+      if (!footer) {
+        footer = document.createElement('div');
+        footer.style.fontSize = "0.85em";
+        footer.style.color = "#888";
+        footer.style.marginTop = "7px";
+        bubble.appendChild(footer);
+      }
+      footer.innerHTML = `By ${data.createdBy} &middot; ${(data.createdAt ? new Date(data.createdAt).toLocaleTimeString() : '')}`;
+      
+      // Update the data payload
+      bubble.dataset.payload = JSON.stringify(data);
+    } catch (error) {
+      console.error("Error updating bubble content:", error);
     }
   };
   
@@ -994,13 +1213,23 @@ if (document.querySelector('[data-follow-section="true"]')) {
       }
       
       // Add option buttons
-      options.appendChild(createActionButton("Delete Callout", () => deleteCallout(id)));
       options.appendChild(createActionButton("Edit Callout", () => editCallout(id)));
+      options.appendChild(createActionButton("View History", () => calloutHistory(id)));
       options.appendChild(createActionButton("Add Follow-on", () => addFollow(id)));
-      options.appendChild(createActionButton("Set QC: In Progress", () => updateQC(id, 'qc-orange')));
-      options.appendChild(createActionButton("Set QC: In Review", () => updateQC(id, 'qc-yellow')));
-      options.appendChild(createActionButton("Set QC: Approved", () => updateQC(id, 'qc-green')));
-      options.appendChild(createActionButton("Set QC: Issues", () => updateQC(id, 'qc-red')));
+      options.appendChild(createActionButton("Delete Callout", () => deleteCallout(id)));
+      
+      // QC options
+      const qcTitle = document.createElement('div');
+      qcTitle.style.marginTop = "10px";
+      qcTitle.style.marginBottom = "8px";
+      qcTitle.style.fontWeight = "bold";
+      qcTitle.textContent = "Quality Control:";
+      options.appendChild(qcTitle);
+      
+      options.appendChild(createActionButton("QC: In Progress", () => updateQC(id, 'qc-orange')));
+      options.appendChild(createActionButton("QC: In Review", () => updateQC(id, 'qc-yellow')));
+      options.appendChild(createActionButton("QC: Approved", () => updateQC(id, 'qc-green')));
+      options.appendChild(createActionButton("QC: Issues", () => updateQC(id, 'qc-red')));
       
       // Assemble modal content
       modalContent.appendChild(closeBtn);
@@ -1056,11 +1285,9 @@ if (document.querySelector('[data-follow-section="true"]')) {
       const updated = await response.json();
       callouts[id] = updated;
       
-      const bubble = document.getElementById('callout_' + id);
-      if (bubble) {
-        bubble.classList.remove('qc-orange', 'qc-yellow', 'qc-green', 'qc-red');
-        bubble.classList.add(qcClass);
-      }
+      // Use createBubble to update the existing callout in place
+      // This will not change its position in the feed
+      createBubble(updated);
     } catch (error) {
       console.error('Error updating QC:', error);
       alert('Error updating QC: ' + error.message);
@@ -1111,7 +1338,170 @@ if (document.querySelector('[data-follow-section="true"]')) {
   
   function editCallout(id) {
     closeCalloutMenu();
-    alert('Edit functionality will be implemented in a future update.');
+    console.log("Editing callout:", id);
+    const callout = callouts[id];
+    if (!callout) {
+      alert('Callout not found');
+      return;
+    }
+    
+    // Get the edit overlay and form
+    const overlay = document.getElementById('editCalloutOverlay');
+    const form = document.getElementById('editCalloutForm');
+    
+    if (!overlay || !form) {
+      alert('Edit form not found');
+      return;
+    }
+    
+    // Populate form fields with callout data
+    form.elements.classification.value = callout.classification || '';
+    form.elements.asset.value = callout.asset || '';
+    form.elements.sensor.value = callout.sensor || '';
+    form.elements.operation.value = callout.operation || '';
+    form.elements.countryCode.value = callout.countryCode || '';
+    form.elements.team.value = callout.team || '';
+    form.elements.zulu.value = callout.zulu || '';
+    form.elements.mgrs.value = callout.mgrs || '';
+    form.elements.location.value = callout.location || '';
+    form.elements.activity.value = callout.activity || '';
+    form.elements.males.value = callout.males || '';
+    form.elements.females.value = callout.females || '';
+    form.elements.children.value = callout.children || '';
+    form.elements.vehicles.value = callout.vehicles || '';
+    form.elements.iaNotes.value = callout.iaNotes || '';
+    
+    // Populate follow data if available
+    if (callout.follow) {
+      form.elements.followName.value = callout.follow.name || '';
+      form.elements.followStage.value = callout.follow.stage || '';
+    } else {
+      form.elements.followName.value = '';
+      form.elements.followStage.value = '';
+    }
+    
+    // Store the callout ID in a data attribute on the form
+    form.dataset.calloutId = id;
+    
+    // Auto-grow textareas to fit content
+    const textareas = form.querySelectorAll('textarea');
+    textareas.forEach(autoGrow);
+    
+    // Show the overlay
+    overlay.style.display = 'flex';
+    
+    // Add submit handler if not already added
+    if (!form.dataset.handlerAttached) {
+      form.addEventListener('submit', handleEditFormSubmit);
+      form.dataset.handlerAttached = 'true';
+    }
+  }
+  
+  function closeEditCallout() {
+    const overlay = document.getElementById('editCalloutOverlay');
+    if (overlay) {
+      overlay.style.display = 'none';
+    }
+  }
+  
+  async function handleEditFormSubmit(e) {
+    e.preventDefault();
+    
+    // Get form and callout ID
+    const form = e.target;
+    const id = form.dataset.calloutId;
+    if (!id || !callouts[id]) {
+      alert('Callout ID not found');
+      return;
+    }
+    
+    // Get original callout
+    const callout = callouts[id];
+    
+    // Gather form data
+    const formData = {
+      ...callout, // Keep original data
+      classification: form.elements.classification.value.trim(),
+      asset: form.elements.asset.value.trim(),
+      sensor: form.elements.sensor.value.trim(),
+      operation: form.elements.operation.value.trim(),
+      countryCode: form.elements.countryCode.value.trim(),
+      team: form.elements.team.value.trim(),
+      zulu: form.elements.zulu.value.trim(),
+      mgrs: form.elements.mgrs.value.trim(),
+      location: form.elements.location.value.trim(),
+      activity: form.elements.activity.value.trim(),
+      males: parseInt(form.elements.males.value) || 0,
+      females: parseInt(form.elements.females.value) || 0,
+      children: parseInt(form.elements.children.value) || 0,
+      vehicles: parseInt(form.elements.vehicles.value) || 0,
+      iaNotes: form.elements.iaNotes.value.trim(),
+      editedBy: localStorage.getItem('userName') || 'You'
+    };
+    
+    // Handle follow data
+    const followName = form.elements.followName.value.trim();
+    const followStage = form.elements.followStage.value.trim();
+    
+    if (followName && followStage) {
+      formData.follow = {
+        name: followName,
+        stage: followStage,
+        // Preserve existing follow data if it exists
+        ...(callout.follow || {})
+      };
+    }
+    
+    try {
+      // Create consistent API URL
+      const apiUrl = window.location.hostname === 'localhost' 
+        ? `http://localhost:3001/api/callouts/${id}`
+        : `/api/callouts/${id}`;
+        
+      const response = await fetch(apiUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(formData)
+      });
+      
+      if (!response.ok) {
+        if (response.status === 403) {
+          throw new Error('Permission denied. You do not have the required role to perform this action.');
+        }
+        throw new Error(`Server returned ${response.status}`);
+      }
+      
+      // Get the updated callout data
+      const updated = await response.json();
+      
+      // Update the callout in our local store
+      callouts[id] = updated;
+      
+      // Update the UI using our createBubble function (which now updates in place)
+      createBubble(updated);
+      
+      // Close the edit form
+      closeEditCallout();
+      
+      console.log('Callout updated successfully');
+    } catch (error) {
+      console.error('Error updating callout:', error);
+      alert('Error updating callout: ' + error.message);
+    }
+  }
+  
+  // Helper function to auto-grow textareas
+  function autoGrow(element) {
+    if (typeof element === 'string') {
+      element = document.getElementById(element);
+    }
+    if (!element) return;
+    
+    element.style.height = 'auto';
+    element.style.height = (element.scrollHeight) + 'px';
   }
   
   function addFollow(id) {
@@ -1226,9 +1616,16 @@ if (document.querySelector('[data-follow-section="true"]')) {
     }
     
     try {
-      const response = await fetch(`http://localhost:3001/api/callouts/${id}`, {
+      const apiUrl = window.location.hostname === 'localhost' 
+        ? `http://localhost:3001/api/callouts/${id}`
+        : `/api/callouts/${id}`;
+        
+      const response = await fetch(apiUrl, {
         method: 'PUT',
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
         body: JSON.stringify({
           ...callout,
           follow: {
@@ -1246,17 +1643,18 @@ if (document.querySelector('[data-follow-section="true"]')) {
       console.log('Follow-on submitted successfully');
       
       // Refresh the callout
-      const updatedResponse = await fetch(`http://localhost:3001/api/callouts/${id}`);
+      const updatedResponse = await fetch(apiUrl, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
       if (updatedResponse.ok) {
         const updatedCallout = await updatedResponse.json();
         callouts[id] = updatedCallout;
         
-        // Update UI
-        const bubble = document.getElementById('callout_' + id);
-        if (bubble) {
-          bubble.remove();
-          createBubble(updatedCallout, true);
-        }
+        // Update UI using the improved createBubble which updates in place
+        createBubble(updatedCallout);
       }
     } catch (error) {
       console.error('Error submitting follow-on:', error);
