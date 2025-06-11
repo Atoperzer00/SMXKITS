@@ -171,7 +171,9 @@ const calloutSchema = new mongoose.Schema({
   iaNotes: String,
   follow: {
     name: String,
-    stage: String
+    stage: String,
+    followId: { type: String, default: () => Math.random().toString(36).substr(2, 6).toUpperCase() },
+    ended: { type: Boolean, default: false }
   },
   qc: { type: String, default: "qc-orange" },
   createdBy: String,
