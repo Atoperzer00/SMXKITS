@@ -1215,7 +1215,7 @@ if (document.querySelector('[data-follow-section="true"]')) {
       // Add option buttons
       options.appendChild(createActionButton("Edit Callout", () => editCallout(id)));
       options.appendChild(createActionButton("View History", () => calloutHistory(id)));
-      options.appendChild(createActionButton("Add Follow-on", () => addFollow(id)));
+      // "Add Follow-on" button removed as per instructions
       options.appendChild(createActionButton("Delete Callout", () => deleteCallout(id)));
       
       // QC options
@@ -2012,21 +2012,22 @@ if (document.querySelector('[data-follow-section="true"]')) {
     window.closeCalloutMenu();
   };
 
-  // Follow logic - making these functions globally accessible
-  let followStageOrder = ["START", "STOP 1", "STOP 2", "END"];
-  
-  // Assign functions to window object to make them globally accessible
+  // Add function for Create Follow button
   window.openFollow = function() {
-    // Generate a random follow ID (6 characters, uppercase)
-    const followId = Math.random().toString(36).substr(2, 6).toUpperCase();
+    console.log("Opening follow form");
     
-    const fc = document.getElementById('followContainer');
-    if (!fc) {
+    // Get the follow container
+    const followContainer = document.getElementById('followContainer');
+    if (!followContainer) {
       console.error("Follow container not found");
       return;
     }
     
-    fc.innerHTML = `
+    // Generate a random follow ID
+    const followId = Math.random().toString(36).substr(2, 6).toUpperCase();
+    
+    // Replace the button with the follow form
+    followContainer.innerHTML = `
       <div class="follow-section" id="followSection">
         <div class="follow-row">
           <label style="margin-bottom:0;">Follow Name</label>
@@ -2037,132 +2038,71 @@ if (document.querySelector('[data-follow-section="true"]')) {
           <span>Follow ID: #${followId}</span>
         </div>
         <div class="follow-row follow-actions">
-          <button type="button" class="action-btn" onclick="followContinue()">Continue</button>
-          <button type="button" class="action-btn" onclick="followAdvance()">Advance</button>
-          <button type="button" class="action-btn" onclick="followEnd()">End</button>
+          <button type="button" class="action-btn" id="followContinueBtn">Continue</button>
+          <button type="button" class="action-btn" id="followAdvanceBtn">Advance</button>
+          <button type="button" class="action-btn" id="followEndBtn">End</button>
+          <button type="button" class="action-btn" id="followCancelBtn" style="color: var(--qc-red);">Cancel</button>
         </div>
       </div>
     `;
     
-    // Add a handler to transfer the follow data to the form fields when submitting
-    const logForm = document.getElementById('logForm');
-    const followNameInput = document.getElementById('followName');
-    const followStageBtn = document.getElementById('followStageBtn');
+    // Add event listeners for buttons
+    document.getElementById('followCancelBtn').addEventListener('click', function() {
+      // Restore the Create Follow button
+      followContainer.innerHTML = `
+        <button type="button" id="createFollowBtn" class="submit-btn" style="margin-bottom: 0; background:var(--qc-orange); color:#181c1c; font-weight:600; width: 100%;">Create Follow</button>
+      `;
+      
+      // Reattach the event listener
+      document.getElementById('createFollowBtn').addEventListener('click', window.openFollow);
+    });
     
-    if (followNameInput && logForm) {
-      followNameInput.addEventListener('input', function() {
-        // Update the form's hidden follow name field
-        const formFollowName = logForm.querySelector('input[name="followName"]');
-        if (formFollowName) {
-          formFollowName.value = this.value;
-        }
-      });
-    }
+    // Handle the stage button click
+    const stageBtn = document.getElementById('followStageBtn');
+    const stages = ["START", "STOP 1", "STOP 2", "END"];
+    let currentStage = 0;
     
-    window.followState = { 
-      stage: 0, 
-      cont: false, 
-      ended: false,
-      followId: followId
-    };
-    window.updateFollowStageBtn();
+    stageBtn.addEventListener('click', function() {
+      currentStage = (currentStage + 1) % stages.length;
+      this.textContent = stages[currentStage];
+      
+      // Update color based on stage
+      const colors = {
+        "START": "var(--qc-green)",
+        "STOP 1": "var(--qc-yellow)",
+        "STOP 2": "var(--qc-orange)",
+        "END": "var(--qc-red)"
+      };
+      this.style.background = colors[stages[currentStage]];
+    });
     
-    // Initialize the form's follow fields
-    const formFollowId = logForm?.querySelector('input[name="followId"]');
-    if (formFollowId) {
-      formFollowId.value = followId;
-    }
+    // Handle continue button
+    document.getElementById('followContinueBtn').addEventListener('click', function() {
+      alert("Follow continued with current stage: " + stages[currentStage]);
+    });
     
-    // Make sure stage value is also transferred to the form
-    const updateFormStage = function() {
-      const formFollowStage = logForm.querySelector('input[name="followStage"]');
-      if (formFollowStage && followStageBtn) {
-        formFollowStage.value = followStageBtn.textContent;
+    // Handle advance button
+    document.getElementById('followAdvanceBtn').addEventListener('click', function() {
+      if (currentStage < stages.length - 1) {
+        currentStage++;
+        stageBtn.textContent = stages[currentStage];
+        stageBtn.style.background = {
+          "START": "var(--qc-green)",
+          "STOP 1": "var(--qc-yellow)",
+          "STOP 2": "var(--qc-orange)",
+          "END": "var(--qc-red)"
+        }[stages[currentStage]];
       }
-    };
+    });
     
-    // Add listener to update form when stage changes
-    if (followStageBtn) {
-      const origText = followStageBtn.textContent;
-      updateFormStage(); // Initial update
-      
-      // Listen for changes to the stage button
-      const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-          if (mutation.type === 'characterData' || mutation.type === 'childList') {
-            updateFormStage();
-          }
-        });
-      });
-      
-      observer.observe(followStageBtn, { 
-        characterData: true, 
-        childList: true,
-        subtree: true
-      });
-    }
+    // Handle end button
+    document.getElementById('followEndBtn').addEventListener('click', function() {
+      currentStage = stages.length - 1;
+      stageBtn.textContent = stages[currentStage];
+      stageBtn.style.background = "var(--qc-red)";
+      alert("Follow ended");
+    });
   };
-  
-  window.followContinue = function() {
-    if(window.followState.ended) return;
-    window.followState.cont = true;
-    window.updateFollowStageBtn();
-    
-    // Update the form field
-    updateFormFollowStage();
-  };
-  
-  window.followAdvance = function() {
-    if(window.followState.ended) return;
-    if(window.followState.stage < 3) window.followState.stage++;
-    window.followState.cont = false;
-    window.updateFollowStageBtn();
-    
-    // Update the form field
-    updateFormFollowStage();
-  };
-  
-  window.followEnd = function() {
-    window.followState.stage = 3; // "END"
-    window.followState.cont = false;
-    window.followState.ended = true;
-    window.updateFollowStageBtn();
-    
-    const stageBtn = document.getElementById('followStageBtn');
-    if (stageBtn) {
-      stageBtn.disabled = true;
-      stageBtn.style.opacity = "0.6";
-      stageBtn.title = "Follow ended";
-    }
-    
-    // Update the form field
-    updateFormFollowStage();
-  };
-  
-  window.updateFollowStageBtn = function() {
-    let text = followStageOrder[window.followState.stage];
-    if(window.followState.cont && window.followState.stage < 3) text += " CONT.";
-    const btn = document.getElementById('followStageBtn');
-    if (btn) {
-      btn.textContent = text;
-    }
-  };
-  
-  // Helper function to update the follow stage in the form
-  function updateFormFollowStage() {
-    const logForm = document.getElementById('logForm');
-    if (!logForm) return;
-    
-    const formFollowStage = logForm.querySelector('input[name="followStage"]');
-    const stageBtn = document.getElementById('followStageBtn');
-    
-    if (formFollowStage && stageBtn) {
-      formFollowStage.value = stageBtn.textContent;
-    }
-  }
-  
-  // Function updateSidebarButtonStates is now defined at the top of the script
-  }
 
   // Prefill zulu
   document.addEventListener('DOMContentLoaded', function() {
