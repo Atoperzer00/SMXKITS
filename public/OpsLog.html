@@ -23,6 +23,8 @@
       --input-bg: #252a33;
       --input-border: #333c48;
       --logo-color: #22c55e;
+      --follow-blue: #3b82f6;
+      --follow-blue-dark: #2563eb;
     }
 
     body {
@@ -370,6 +372,42 @@
     }
     .modal-close:hover { color: var(--qc-red); }
 
+    /* Follow Indicator Styles */
+    .bubble.has-follow {
+      position: relative;
+      padding-left: 30px; /* Make room for the indicator */
+    }
+    
+    .follow-indicator {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 20px;
+      background: var(--follow-blue);
+      border-top-left-radius: 18px;
+      border-bottom-left-radius: 18px;
+      opacity: 0.85;
+      transition: background-color 0.2s;
+    }
+    
+    .follow-indicator.follow-ended {
+      background: var(--follow-blue-dark);
+      opacity: 0.5;
+    }
+    
+    .follow-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .follow-id {
+      font-size: 0.85em;
+      color: var(--follow-blue);
+      font-family: 'Consolas', 'Menlo', 'Monaco', monospace;
+    }
+    
     /* Animations */
     @keyframes fadeIn {
       from { opacity: 0; }
@@ -658,7 +696,9 @@
       if(document.getElementById('followSection')) {
         follow = {
           name: document.getElementById('followName').value,
-          stage: document.getElementById('followStageBtn').textContent
+          stage: document.getElementById('followStageBtn').textContent,
+          followId: window.followState?.followId || Math.random().toString(36).substr(2, 6).toUpperCase(),
+          ended: window.followState?.ended || (window.followState?.stage === 3) || false
         };
       }
       
@@ -731,23 +771,44 @@
   }
   
   // ------ UI Generation Functions ------
-  function createBubble(data, append=false) {
+  window.createBubble = function(data, append=false) {
     try {
       const panel = document.getElementById('feedPanel');
       const div = document.createElement('div');
       div.className = "bubble " + (data.qc || "qc-orange"); 
       div.id = 'callout_' + data._id; 
       
-      // Create menu button with dataset attribute instead of onclick
+      // Create menu button with direct onclick attribute
       const menuBtn = document.createElement('button');
       menuBtn.className = "menu-btn";
       menuBtn.title = "Options";
       menuBtn.innerHTML = "&#8942;";
-      menuBtn.dataset.calloutId = data._id;
+      menuBtn.setAttribute('onclick', `showCalloutMenu(event, this, '${data._id}')`);
+      
+      // Add follow indicator if this callout has a follow
+      const hasFollow = data.follow && data.follow.name;
+      if (hasFollow) {
+        div.classList.add('has-follow');
+      }
       
       // Create the rest of the content
       const content = document.createElement('div');
       content.className = "bubble-flex";
+      
+      // If has follow, add the vertical indicator bar
+      if (hasFollow) {
+        const followIndicator = document.createElement('div');
+        followIndicator.className = "follow-indicator";
+        followIndicator.title = data.follow.followId || "Follow";
+        
+        // If follow is ended, add specific class
+        if (data.follow.ended || data.follow.stage === "END") {
+          followIndicator.classList.add('follow-ended');
+        }
+        
+        div.appendChild(followIndicator);
+      }
+      
       content.innerHTML = `
         <div class="bubble-left"> 
           <div class="bubble-row"> 
@@ -756,7 +817,10 @@
             <span><b>${data.asset || '-'}</b></span> 
           </div> 
           <div class="bubble-row">${data.location || '-'}</div> 
-          ${ data.follow && data.follow.name ? `<div class="bubble-row"><b>${data.follow.name} / ${data.follow.stage}</b></div>` : '' } 
+          ${ hasFollow ? `<div class="bubble-row follow-title">
+            <b>${data.follow.name} / ${data.follow.stage}</b>
+            ${data.follow.followId ? `<span class="follow-id">#${data.follow.followId}</span>` : ''}
+          </div>` : '' } 
           <div class="bubble-row">${data.activity || '-'}</div> 
           <div class="bubble-row"><b>IA Notes:</b> ${(data.iaNotes||'').replace(/\n/g,'<br>')}</div> 
         </div> 
@@ -773,12 +837,6 @@
       footer.style.marginTop = "7px";
       footer.innerHTML = `By ${data.createdBy} &middot; ${(data.createdAt ? new Date(data.createdAt).toLocaleTimeString() : '')}`;
       
-      // Add event listener to menu button
-      menuBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        showCalloutMenu(e, this, this.dataset.calloutId);
-      });
-      
       // Assemble the bubble
       div.appendChild(menuBtn);
       div.appendChild(content);
@@ -790,7 +848,7 @@
     } catch (error) {
       console.error("Error creating bubble:", error);
     }
-  }
+  };
   
   function showCalloutMenu(e, btn, id) {
     try {
@@ -1157,6 +1215,15 @@
       console.log("Activity textarea handler attached");
     }
     
+    // Create Follow button handler
+    const createFollowBtn = document.querySelector('#followContainer button');
+    if (createFollowBtn) {
+      createFollowBtn.addEventListener('click', function() {
+        window.openFollow();
+      });
+      console.log("Create Follow button handler attached");
+    }
+    
     console.log("Event handlers attached, page ready.");
   });
 </script>
@@ -1175,7 +1242,8 @@
   // Removed redundant DOMContentLoaded event listener - we're already using one above
 
   // Edit / History / QC / Delete overlays
-  function showCalloutMenu(e, btn, id) {
+  // Make these functions globally accessible
+  window.showCalloutMenu = function(e, btn, id) {
     e.stopPropagation();
     let data = callouts[id];
     // Modal content
@@ -1195,11 +1263,15 @@
     document.getElementById('calloutMenuContent').innerHTML = html;
     document.getElementById('calloutMenuModal').style.display='flex';
     window._selectedCalloutId = id;
-  }
-  function closeCalloutMenu() { document.getElementById('calloutMenuModal').style.display='none'; window._selectedCalloutId = null; }
+  };
+  
+  window.closeCalloutMenu = function() { 
+    document.getElementById('calloutMenuModal').style.display='none'; 
+    window._selectedCalloutId = null; 
+  };
 
-  async function editCallout(id) {
-    closeCalloutMenu();
+  window.editCallout = async function(id) {
+    window.closeCalloutMenu();
     let data = callouts[id];
     // Open overlay with form (reuse your original form fields)
     let html = `<button class="modal-close" onclick="closeEditCallout()">&times;</button>
@@ -1235,7 +1307,12 @@
     document.getElementById('editForm').onsubmit = async function(e){
       e.preventDefault();
       let payload = Object.fromEntries(new FormData(this));
-      let follow = { name: payload.followName, stage: payload.followStage };
+      let follow = { 
+        name: payload.followName, 
+        stage: payload.followStage,
+        followId: callouts[id].follow?.followId || Math.random().toString(36).substr(2, 6).toUpperCase(),
+        ended: (payload.followStage === "END") || callouts[id].follow?.ended || false
+      };
       delete payload.followName; delete payload.followStage;
       const res = await fetch(`http://localhost:3001/api/callouts/${id}`, {
         method:'PUT', headers:{'Content-Type':'application/json'},
@@ -1251,13 +1328,16 @@
       let old = document.getElementById('callout_'+log._id);
       if (old) old.remove();
       createBubble(log, false);
-      closeEditCallout();
+      window.closeEditCallout();
     }
-  }
-  function closeEditCallout() { document.getElementById('calloutMenuModal').style.display='none'; }
+  };
+  
+  window.closeEditCallout = function() { 
+    document.getElementById('calloutMenuModal').style.display='none'; 
+  };
 
-  async function calloutHistory(id) {
-    closeCalloutMenu();
+  window.calloutHistory = async function(id) {
+    window.closeCalloutMenu();
     let res = await fetch(`http://localhost:3001/api/callouts/${id}/history`);
     let history = await res.json();
     let html = `<button class="modal-close" onclick="closeEditCallout()">&times;</button>
@@ -1274,23 +1354,29 @@
     }
     document.getElementById('calloutMenuContent').innerHTML = html;
     document.getElementById('calloutMenuModal').style.display='flex';
-  }
+  };
 
-  async function calloutQC(id, qc) {
+  window.calloutQC = async function(id, qc) {
     let res = await fetch(`http://localhost:3001/api/callouts/${id}`,{
       method:'PUT', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ ...callouts[id], qc, editedBy: localStorage.getItem('userName') || "You" })
     });
-    closeCalloutMenu();
-  }
-  async function deleteCallout(id) {
+    window.closeCalloutMenu();
+  };
+  
+  window.deleteCallout = async function(id) {
     await fetch(`http://localhost:3001/api/callouts/${id}`, {method:'DELETE'});
-    closeCalloutMenu();
-  }
+    window.closeCalloutMenu();
+  };
 
-  // Follow logic from previous code (unchanged)
+  // Follow logic - making these functions globally accessible
   let followStageOrder = ["START", "STOP 1", "STOP 2", "END"];
-  function openFollow() {
+  
+  // Assign functions to window object to make them globally accessible
+  window.openFollow = function() {
+    // Generate a random follow ID (6 characters, uppercase)
+    const followId = Math.random().toString(36).substr(2, 6).toUpperCase();
+    
     const fc = document.getElementById('followContainer');
     fc.innerHTML = `
       <div class="follow-section" id="followSection">
@@ -1299,6 +1385,9 @@
           <input type="text" id="followName" style="flex:1; min-width:120px;"/>
           <button type="button" class="stage-btn" id="followStageBtn">START</button>
         </div>
+        <div class="follow-row" style="font-size:0.9em; color:#88a8c9; margin-top:-5px; margin-bottom:5px;">
+          <span>Follow ID: #${followId}</span>
+        </div>
         <div class="follow-row follow-actions">
           <button type="button" class="action-btn" onclick="followContinue()">Continue</button>
           <button type="button" class="action-btn" onclick="followAdvance()">Advance</button>
@@ -1306,32 +1395,48 @@
         </div>
       </div>
     `;
-    window.followState = { stage: 0, cont: false, ended: false };
-    updateFollowStageBtn();
-  }
-  function followContinue() {
+    window.followState = { 
+      stage: 0, 
+      cont: false, 
+      ended: false,
+      followId: followId
+    };
+    window.updateFollowStageBtn();
+  };
+  
+  window.followContinue = function() {
     if(window.followState.ended) return;
     window.followState.cont = true;
-    updateFollowStageBtn();
-  }
-  function followAdvance() {
+    window.updateFollowStageBtn();
+  };
+  
+  window.followAdvance = function() {
     if(window.followState.ended) return;
     if(window.followState.stage < 3) window.followState.stage++;
     window.followState.cont = false;
-    updateFollowStageBtn();
-  }
-  function followEnd() {
+    window.updateFollowStageBtn();
+  };
+  
+  window.followEnd = function() {
     window.followState.stage = 3; // "END"
     window.followState.cont = false;
     window.followState.ended = true;
-    updateFollowStageBtn();
+    window.updateFollowStageBtn();
     document.getElementById('followStageBtn').disabled = true;
-  }
-  function updateFollowStageBtn() {
+    
+    // Mark visually
+    const stageBtn = document.getElementById('followStageBtn');
+    if (stageBtn) {
+      stageBtn.style.opacity = "0.6";
+      stageBtn.title = "Follow ended";
+    }
+  };
+  
+  window.updateFollowStageBtn = function() {
     let text = followStageOrder[window.followState.stage];
     if(window.followState.cont && window.followState.stage < 3) text += " CONT.";
     document.getElementById('followStageBtn').textContent = text;
-  }
+  };
 
   // Prefill zulu
   document.addEventListener('DOMContentLoaded', function() {
