@@ -1178,7 +1178,6 @@ if (document.querySelector('[data-follow-section="true"]')) {
       // Add option buttons
       options.appendChild(createActionButton("Edit Callout", () => editCallout(id)));
       options.appendChild(createActionButton("View History", () => calloutHistory(id)));
-      // "Add Follow-on" button removed as per instructions
       options.appendChild(createActionButton("Delete Callout", () => deleteCallout(id)));
       
       // QC options
@@ -1592,10 +1591,6 @@ if (document.querySelector('[data-follow-section="true"]')) {
     }
     
     // Create Follow button handler is now at the end of the script
-    } else {
-      console.error("Create Follow button not found with ID 'createFollowBtn'");
-    }
-    
     // Initialize sidebar button states
     updateSidebarButtonStates();
     
