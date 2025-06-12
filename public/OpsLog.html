@@ -633,37 +633,12 @@
     </div>
   </div>
 
-  <!-- Edit Bubble Overlay -->
-  <div id="editCalloutOverlay" class="modal" style="display:none;">
+  <!-- Change History Overlay -->
+  <div id="historyOverlay" class="modal" style="display:none;">
     <div class="modal-content">
-      <button class="modal-close" onclick="closeEditCallout()">&times;</button>
-      <div style="font-weight:600; color:var(--logo-color); font-size:1.2em; margin-bottom:10px;">Edit Callout</div>
-      <form id="editCalloutForm">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px;">
-          <input type="text" name="classification" required placeholder="Classification"/>
-          <input type="text" name="asset" required placeholder="Asset"/>
-          <input type="text" name="sensor" required placeholder="Sensor"/>
-          <input type="text" name="operation" required placeholder="Operation"/>
-          <input type="text" name="countryCode" maxlength="3" placeholder="Country Code"/>
-          <input type="text" name="team" placeholder="Team"/>
-          <input type="text" name="zulu" required placeholder="Zulu Time (HHMM)" pattern="[0-9]{4}" maxlength="4" oninput="this.value = this.value.replace(/[^0-9]/g, '');"/>
-          <input type="text" name="mgrs" placeholder="MGRS"/>
-          <input type="text" name="location" placeholder="Location"/>
-          <textarea name="activity" rows="1" placeholder="Activity" oninput="autoGrow(this)"></textarea>
-          <input type="number" name="males" min="0" placeholder="Males"/>
-          <input type="number" name="females" min="0" placeholder="Females"/>
-          <input type="number" name="children" min="0" placeholder="Children"/>
-          <input type="number" name="vehicles" min="0" placeholder="Vehicles"/>
-          <textarea name="iaNotes" rows="1" placeholder="IA Notes" oninput="autoGrow(this)"></textarea>
-        </div>
-        <div style="margin-top:12px;">
-          <label>Follow Name</label>
-          <input type="text" name="followName" placeholder="Follow Name"/>
-          <label style="margin-left:12px;">Follow Stage</label>
-          <input type="text" name="followStage" placeholder="Follow Stage"/>
-        </div>
-        <button type="submit" class="submit-btn" style="margin-top:16px; width:100%;">Save Changes</button>
-      </form>
+      <button class="modal-close" onclick="closeHistoryOverlay()">&times;</button>
+      <div style="font-weight:600; color:var(--logo-color); font-size:1.2em; margin-bottom:10px;">Change History</div>
+      <div id="historyLogContainer" style="max-height:60vh; overflow:auto; font-size:0.95em;"></div>
     </div>
   </div>
 
@@ -1786,10 +1761,76 @@ if (document.querySelector('[data-follow-section="true"]')) {
     
     // Create Follow button handler
     const createFollowBtn = document.getElementById('createFollowBtn');
-    if (createFollowBtn) {
-      createFollowBtn.addEventListener('click', function() {
-        window.openFollow();
-      });
+    let followContainer;
+
+createFollowBtn.addEventListener('click', function() {
+  if (followContainer) {
+    // If the container is already open, close it and revert the button text
+    followContainer.remove();
+    followContainer = null;
+    createFollowBtn.textContent = 'Create Follow';
+    console.log('Follow container closed');
+  } else {
+    // Create the follow container
+    followContainer = document.createElement('div');
+    followContainer.className = 'follow-container';
+    followContainer.style.marginTop = '10px';
+
+    // Follow Name
+    const nameRow = document.createElement('div');
+    nameRow.style.marginBottom = '10px';
+    const nameLabel = document.createElement('label');
+    nameLabel.textContent = 'Follow Name:';
+    nameLabel.style.marginRight = '10px';
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.id = 'followNameInput';
+    nameInput.placeholder = 'Enter follow name';
+    nameRow.appendChild(nameLabel);
+    nameRow.appendChild(nameInput);
+
+    // Follow ID (auto-generated)
+    const idRow = document.createElement('div');
+    idRow.style.marginBottom = '10px';
+    const idLabel = document.createElement('label');
+    idLabel.textContent = 'Follow ID:';
+    idLabel.style.marginRight = '10px';
+    const idDisplay = document.createElement('span');
+    idDisplay.id = 'followIdDisplay';
+    idDisplay.textContent = `ID-${Date.now()}`; // Auto-generated ID
+    idRow.appendChild(idLabel);
+    idRow.appendChild(idDisplay);
+
+    // Follow Stage
+    const stageRow = document.createElement('div');
+    stageRow.style.marginBottom = '10px';
+    const stageLabel = document.createElement('label');
+    stageLabel.textContent = 'Follow Stage:';
+    stageLabel.style.marginRight = '10px';
+    const stageSelect = document.createElement('select');
+    stageSelect.id = 'followStageSelect';
+    ['START', 'CONT.', 'ADV.', 'END'].forEach(stage => {
+      const option = document.createElement('option');
+      option.value = stage;
+      option.textContent = stage;
+      stageSelect.appendChild(option);
+    });
+    stageRow.appendChild(stageLabel);
+    stageRow.appendChild(stageSelect);
+
+    // Append rows to the container
+    followContainer.appendChild(nameRow);
+    followContainer.appendChild(idRow);
+    followContainer.appendChild(stageRow);
+
+    // Insert the container below the button
+    createFollowBtn.parentNode.insertBefore(followContainer, createFollowBtn.nextSibling);
+
+    // Change button text to "Cancel Follow"
+    createFollowBtn.textContent = 'Cancel Follow';
+    console.log('Follow container created');
+  }
+});
       console.log("Create Follow button handler attached");
     } else {
       console.error("Create Follow button not found with ID 'createFollowBtn'");
@@ -1798,406 +1839,81 @@ if (document.querySelector('[data-follow-section="true"]')) {
     // Initialize sidebar button states
     updateSidebarButtonStates();
     
+    // Attach event listeners for the history overlay using event delegation
+    const historyOverlay = document.getElementById('historyOverlay');
+    if (historyOverlay) {
+      historyOverlay.addEventListener('click', function(event) {
+        const target = event.target;
+        if (target.classList.contains('modal-close')) {
+          closeHistoryOverlay();
+        }
+      });
+      console.log('Event delegation for history overlay close button attached');
+    } else {
+      console.error('History overlay not found');
+    }
+    
     console.log("Event handlers attached, page ready.");
   });
-</script>
   
-  // Commented out redundant code - we're using the proper event listeners in the DOMContentLoaded event handler above
-  /*
-  const joinButton = document.getElementById('joinRoomButton');
-  if (joinButton) {
-    joinButton.onclick = async function() {
-      // This code is now handled by the event listener in the DOMContentLoaded event
-    };
-  }
-  */
+  async function calloutHistory(id) {
+    try {
+      console.log(`Fetching history for callout ID: ${id}`);
 
-  // Move all event handlers into DOMContentLoaded
-  // Removed redundant DOMContentLoaded event listener - we're already using one above
+      // Fetch history data from the API endpoint
+      const apiUrl = window.location.hostname === 'localhost' 
+        ? `http://localhost:3001/api/callouts/${id}/history` 
+        : `/api/callouts/${id}/history`;
 
-  // Edit / History / QC / Delete overlays
-  // Make these functions globally accessible
-  window.showCalloutMenu = function(e, btn, id) {
-    e.stopPropagation();
-    let data = callouts[id];
-    const userRole = localStorage.getItem('role');
-    
-    // Modal content with role-based permissions
-    let html = `
-      <button class="modal-close" onclick="closeCalloutMenu()">&times;</button>
-      <div style="margin-bottom:19px; font-size:1.1em; color:var(--logo-color); font-weight:600;">
-        Callout Options
-      </div>
-      <button class="submit-btn" style="width:100%; margin-bottom:10px;" onclick="editCallout('${id}')">Edit</button>
-      <button class="submit-btn" style="width:100%; background:var(--inactive); margin-bottom:10px;" onclick="calloutHistory('${id}')">History</button>
-    `;
-    
-    // Only show Delete option for instructors
-    if (userRole !== 'student') {
-      html += `
-        <button class="submit-btn" style="width:100%; background:var(--qc-red); color:#fff;" onclick="deleteCallout('${id}')">Delete</button>
-      `;
-    } else {
-      // Show disabled delete button for students
-      html += `
-        <button class="submit-btn" style="width:100%; background:var(--inactive); color:#999; cursor:not-allowed;" title="Only instructors can delete callouts">Delete (Instructor Only)</button>
-      `;
-    }
-    
-    document.getElementById('calloutMenuContent').innerHTML = html;
-    document.getElementById('calloutMenuModal').style.display='flex';
-    window._selectedCalloutId = id;
-  };
-  
-  // Add a new function for the QC menu
-  window.showQCMenu = function(e, btn, id) {
-    e.stopPropagation();
-    let data = callouts[id];
-    const userRole = localStorage.getItem('role');
-    
-    // Modal content with role-based permissions
-    let html = `
-      <button class="modal-close" onclick="closeCalloutMenu()">&times;</button>
-      <div style="margin-bottom:19px; font-size:1.1em; color:var(--logo-color); font-weight:600;">
-        Quality Control
-      </div>
-      
-      <!-- In-progress and In-review can be set by anyone -->
-      <button class="submit-btn" style="width:100%; background:var(--qc-orange); color:#111; margin-bottom:10px;" onclick="calloutQC('${id}', 'qc-orange')">QC: In Progress</button>
-      <button class="submit-btn" style="width:100%; background:var(--qc-yellow); color:#111; margin-bottom:10px;" onclick="calloutQC('${id}', 'qc-yellow')">QC: In Review</button>
-    `;
-    
-    // Only show Approved and Issues options for instructors
-    if (userRole !== 'student') {
-      html += `
-        <button class="submit-btn" style="width:100%; background:var(--qc-green); color:#111; margin-bottom:10px;" onclick="calloutQC('${id}', 'qc-green')">QC: Approved</button>
-        <button class="submit-btn" style="width:100%; background:var(--qc-red); color:#fff; margin-bottom:10px;" onclick="calloutQC('${id}', 'qc-red')">QC: Issues</button>
-      `;
-    } else {
-      // Show disabled buttons for students
-      html += `
-        <button class="submit-btn" style="width:100%; background:var(--inactive); color:#999; margin-bottom:10px; cursor:not-allowed;" title="Only instructors can set Approved status">QC: Approved (Instructor Only)</button>
-        <button class="submit-btn" style="width:100%; background:var(--inactive); color:#999; margin-bottom:10px; cursor:not-allowed;" title="Only instructors can set Issues status">QC: Issues (Instructor Only)</button>
-      `;
-    }
-    
-    document.getElementById('calloutMenuContent').innerHTML = html;
-    document.getElementById('calloutMenuModal').style.display='flex';
-    window._selectedCalloutId = id;
-  };
-  
-  window.closeCalloutMenu = function() { 
-    document.getElementById('calloutMenuModal').style.display='none'; 
-    window._selectedCalloutId = null; 
-  };
-
-  window.editCallout = async function(id) {
-    window.closeCalloutMenu();
-    let data = callouts[id];
-    
-    // Fill in the edit form with current values
-    const form = document.getElementById('editCalloutForm');
-    form.elements['classification'].value = data.classification || '';
-    form.elements['asset'].value = data.asset || '';
-    form.elements['sensor'].value = data.sensor || '';
-    form.elements['operation'].value = data.operation || '';
-    form.elements['countryCode'].value = data.countryCode || '';
-    form.elements['team'].value = data.team || '';
-    form.elements['zulu'].value = data.zulu || '';
-    form.elements['mgrs'].value = data.mgrs || '';
-    form.elements['location'].value = data.location || '';
-    form.elements['activity'].value = data.activity || '';
-    form.elements['males'].value = data.males || '';
-    form.elements['females'].value = data.females || '';
-    form.elements['children'].value = data.children || '';
-    form.elements['vehicles'].value = data.vehicles || '';
-    form.elements['iaNotes'].value = data.iaNotes || '';
-    form.elements['followName'].value = data.follow?.name || '';
-    form.elements['followStage'].value = data.follow?.stage || '';
-    
-    // Auto-grow any textareas
-    Array.from(form.querySelectorAll('textarea')).forEach(textarea => autoGrow(textarea));
-    
-    // Set the submit handler
-    form.onsubmit = async function(e) {
-      e.preventDefault();
-      let payload = Object.fromEntries(new FormData(this));
-      let follow = { 
-        name: payload.followName, 
-        stage: payload.followStage,
-        followId: callouts[id].follow?.followId || Math.random().toString(36).substr(2, 6).toUpperCase(),
-        ended: (payload.followStage === "END") || callouts[id].follow?.ended || false
-      };
-      delete payload.followName; delete payload.followStage;
-      const res = await fetch(`http://localhost:3001/api/callouts/${id}`, {
-        method:'PUT', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({
-          ...callouts[id],
-          ...payload,
-          follow,
-          editedBy: localStorage.getItem('userName') || "You"
-        })
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
       });
-      const log = await res.json();
-      callouts[log._id] = log;
-      let old = document.getElementById('callout_'+log._id);
-      if (old) old.remove();
-      createBubble(log, false);
-      window.closeEditCallout();
-    };
-    
-    // Show the edit overlay
-    document.getElementById('editCalloutOverlay').style.display = 'flex';
-  };
-  
-  window.closeEditCallout = function() { 
-    document.getElementById('editCalloutOverlay').style.display = 'none'; 
-  };
 
-  window.calloutHistory = async function(id) {
-    window.closeCalloutMenu();
-    
-    // Consistent API URL handling
-    const apiUrl = window.location.hostname === 'localhost' 
-      ? `http://localhost:3001/api/callouts/${id}/history`
-      : `/api/callouts/${id}/history`;
-      
-    let res = await fetch(apiUrl, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      if (!response.ok) {
+        throw new Error(`Failed to fetch history: ${response.status}`);
       }
-    });
-    
-    let history = await res.json();
-    let historyContainer = document.getElementById('historyLogContainer');
-    
-    // Clear previous content
-    historyContainer.innerHTML = '';
-    
-    if (!history.length) {
-      historyContainer.innerHTML = "<div>No history found for this callout.</div>";
+
+      const historyData = await response.json();
+
+      // Populate the #historyLogContainer with the retrieved data
+      const historyLogContainer = document.getElementById('historyLogContainer');
+      historyLogContainer.innerHTML = '';
+
+      if (Array.isArray(historyData) && historyData.length > 0) {
+        historyData.forEach(entry => {
+          const entryDiv = document.createElement('div');
+          entryDiv.style.marginBottom = '10px';
+          entryDiv.innerHTML = `
+            <div><strong>Date:</strong> ${new Date(entry.date).toLocaleString()}</div>
+            <div><strong>Change:</strong> ${entry.change}</div>
+            <div><strong>Updated By:</strong> ${entry.updatedBy}</div>
+          `;
+          historyLogContainer.appendChild(entryDiv);
+        });
+      } else {
+        historyLogContainer.innerHTML = '<div>No history available for this callout.</div>';
+      }
+
+      // Display the modal
+      document.getElementById('historyOverlay').style.display = 'flex';
+    } catch (error) {
+      console.error(`Error fetching callout history: ${error.message}`);
+      alert(`Error fetching callout history: ${error.message}`);
+    }
+  }
+
+  function closeHistoryOverlay() {
+    const historyOverlay = document.getElementById('historyOverlay');
+    if (historyOverlay) {
+        historyOverlay.style.display = 'none';
     } else {
-      history.reverse().forEach((h, idx) => {
-        let entryDiv = document.createElement('div');
-        entryDiv.style.marginBottom = '10px';
-        entryDiv.style.borderBottom = '1px solid #444';
-        entryDiv.style.paddingBottom = '7px';
-        
-        entryDiv.innerHTML = `
-          <b>Edited by:</b> ${h.editedBy || "Unknown"}<br>
-          <b>Edited at:</b> ${new Date(h.editedAt).toLocaleString()}<br>
-          <b>Changes:</b> <pre style="background:#181d21;border-radius:6px;padding:7px 12px;color:#efefef;overflow-x:auto;">${JSON.stringify(h.changes, null, 2)}</pre>
-        `;
-        historyContainer.appendChild(entryDiv);
-      });
+        console.error('History overlay not found');
     }
-    
-    // Show the history overlay
-    document.getElementById('historyOverlay').style.display = 'flex';
-  };
+}
   
-  window.closeHistoryOverlay = function() {
-    document.getElementById('historyOverlay').style.display = 'none';
-  };
-
-  window.calloutQC = async function(id, qc) {
-    // Use the existing updateQC function to maintain consistency and permission checks
-    await updateQC(id, qc);
-    window.closeCalloutMenu();
-  };
-  
-  window.deleteCallout = async function(id) {
-    // Use the existing deleteCallout function to maintain consistency and permission checks
-    await deleteCallout(id);
-    window.closeCalloutMenu();
-  };
-
-  // Add function for Create Follow button
-  window.openFollow = function() {
-    console.log("Opening follow form");
-    
-    // Get the follow container
-    const followContainer = document.getElementById('followContainer');
-    if (!followContainer) {
-      console.error("Follow container not found");
-      return;
-    }
-    
-    // Generate a random follow ID
-    const followId = Math.random().toString(36).substr(2, 6).toUpperCase();
-    
-    // Initialize follow state
-    window.followState = {
-      followId: followId,
-      stage: 'START',
-      ended: false
-    };
-    
-    // Replace the button with the follow form
-    followContainer.innerHTML = `
-      <div class="follow-section" id="followSection" data-follow-section="true">
-        <div class="follow-row">
-          <label style="margin-bottom:0;">Follow Name</label>
-          <input type="text" id="followName" style="flex:1; min-width:120px;"/>
-          <button type="button" class="stage-btn" id="followStageBtn">START</button>
-        </div>
-        <div class="follow-row" style="font-size:0.9em; color:#88a8c9; margin-top:-5px; margin-bottom:5px;">
-          <span>Follow ID: #${followId}</span>
-        </div>
-        <div class="follow-row follow-actions">
-          <button type="button" class="action-btn" id="followContinueBtn">Continue</button>
-          <button type="button" class="action-btn" id="followAdvanceBtn">Advance</button>
-          <button type="button" class="action-btn" id="followEndBtn">End</button>
-          <button type="button" class="action-btn" id="followCancelBtn" style="color: var(--qc-red);">Cancel</button>
-        </div>
-      </div>
-    `;
-    
-    // Add event listeners for buttons
-    document.getElementById('followCancelBtn').addEventListener('click', function() {
-      // Restore the Create Follow button
-      followContainer.innerHTML = `
-        <button type="button" id="createFollowBtn" class="submit-btn" style="margin-bottom: 0; background:var(--qc-orange); color:#181c1c; font-weight:600; width: 100%;">Create Follow</button>
-      `;
-      
-      // Reattach the event listener
-      document.getElementById('createFollowBtn').addEventListener('click', window.openFollow);
-    });
-    
-    // Handle the stage button click
-    const stageBtn = document.getElementById('followStageBtn');
-    const stages = ["START", "STOP 1", "STOP 2", "END"];
-    let currentStage = 0;
-    
-    stageBtn.addEventListener('click', function() {
-      currentStage = (currentStage + 1) % stages.length;
-      this.textContent = stages[currentStage];
-      
-      // Update color based on stage
-      const colors = {
-        "START": "var(--qc-green)",
-        "STOP 1": "var(--qc-yellow)",
-        "STOP 2": "var(--qc-orange)",
-        "END": "var(--qc-red)"
-      };
-      this.style.background = colors[stages[currentStage]];
-
-      // Update global follow state
-      window.followState = {
-        stage: stages[currentStage],
-        ended: stages[currentStage] === "END"
-      };
-    });
-    
-    // Handle continue button
-    document.getElementById('followContinueBtn').addEventListener('click', function() {
-      alert("Follow continued with current stage: " + stages[currentStage]);
-    });
-    
-    // Handle advance button
-    document.getElementById('followAdvanceBtn').addEventListener('click', function() {
-      if (currentStage < stages.length - 1) {
-        currentStage++;
-        stageBtn.textContent = stages[currentStage];
-        stageBtn.style.background = {
-          "START": "var(--qc-green)",
-          "STOP 1": "var(--qc-yellow)",
-          "STOP 2": "var(--qc-orange)",
-          "END": "var(--qc-red)"
-        }[stages[currentStage]];
-      }
-    });
-    
-    // Handle end button
-    document.getElementById('followEndBtn').addEventListener('click', function() {
-      currentStage = stages.length - 1;
-      stageBtn.textContent = stages[currentStage];
-      stageBtn.style.background = "var(--qc-red)";
-      alert("Follow ended");
-    });
-  };
-
-  // Prefill zulu
-  document.addEventListener('DOMContentLoaded', function() {
-    const now = new Date();
-    const zuluTime = now.toISOString().substr(11, 5);
-    const zuluInput = document.querySelector('input[name="zulu"]');
-    if (zuluInput && !zuluInput.value) zuluInput.value = zuluTime;
-    window.followState = null;
-    
-    // Add a version timestamp to force refresh if needed
-    localStorage.setItem('opsLogVersion', '1.1');
-  });
-  
-  // Function to force a hard refresh - can be useful to clear cache
-  function forceRefresh() {
-    localStorage.setItem('forceRefresh', 'true');
-    window.location.reload(true);
-  }
-
-  // Sidebar Navigation
-  function goDashboard() { window.location.href = '/dashboard.html'; }
-  function openMyLogs() { /* Implement as needed */ }
-  function logout() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('role');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('classId');
-    window.location.replace('/login.html');
-  }
-
-  // Close modals on outside click
-  window.onclick = function(e){
-    if(e.target.classList && e.target.classList.contains('modal')) {
-      e.target.style.display='none';
-    }
-  }
-  
-  // Socket.io event listeners already defined above - removing duplicates
 </script>
-
-<!-- Edit Bubble Overlay -->
-<div id="editCalloutOverlay" class="modal" style="display:none;">
-  <div class="modal-content">
-    <button class="modal-close" onclick="closeEditCallout()">&times;</button>
-    <div style="font-weight:600; color:var(--logo-color); font-size:1.2em; margin-bottom:10px;">Edit Callout</div>
-    <form id="editCalloutForm">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px;">
-        <input type="text" name="classification" required placeholder="Classification"/>
-        <input type="text" name="asset" required placeholder="Asset"/>
-        <input type="text" name="sensor" required placeholder="Sensor"/>
-        <input type="text" name="operation" required placeholder="Operation"/>
-        <input type="text" name="countryCode" maxlength="3" placeholder="Country Code"/>
-        <input type="text" name="team" placeholder="Team"/>
-        <input type="time" name="zulu" required placeholder="Zulu Time"/>
-        <input type="text" name="mgrs" placeholder="MGRS"/>
-        <input type="text" name="location" placeholder="Location"/>
-        <textarea name="activity" rows="1" placeholder="Activity" oninput="autoGrow(this)"></textarea>
-        <input type="number" name="males" min="0" placeholder="Males"/>
-        <input type="number" name="females" min="0" placeholder="Females"/>
-        <input type="number" name="children" min="0" placeholder="Children"/>
-        <input type="number" name="vehicles" min="0" placeholder="Vehicles"/>
-        <textarea name="iaNotes" rows="1" placeholder="IA Notes" oninput="autoGrow(this)"></textarea>
-      </div>
-      <div style="margin-top:12px;">
-        <label>Follow Name</label>
-        <input type="text" name="followName" placeholder="Follow Name"/>
-        <label style="margin-left:12px;">Follow Stage</label>
-        <input type="text" name="followStage" placeholder="Follow Stage"/>
-      </div>
-      <button type="submit" class="submit-btn" style="margin-top:16px; width:100%;">Save Changes</button>
-    </form>
-  </div>
-</div>
-
-<!-- Change History Overlay -->
-<div id="historyOverlay" class="modal" style="display:none;">
-  <div class="modal-content">
-    <button class="modal-close" onclick="closeHistoryOverlay()">&times;</button>
-    <div style="font-weight:600; color:var(--logo-color); font-size:1.2em; margin-bottom:10px;">Change History</div>
-    <div id="historyLogContainer" style="max-height:60vh; overflow:auto; font-size:0.95em;"></div>
-  </div>
-</div>
-
 </body>
 </html>
