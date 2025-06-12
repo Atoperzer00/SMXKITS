@@ -45,6 +45,8 @@
     /* Sidebar */
     .sidebar {
       width: 480px;
+      min-width: 300px;
+      max-width: 800px;
       background: var(--sidebar);
       padding: 28px 18px 18px 18px;
       display: flex;
@@ -53,6 +55,40 @@
       box-sizing: border-box;
       border-right: 2px solid var(--inactive);
       overflow-y: auto;
+      position: relative;
+      resize: horizontal;
+      overflow-x: hidden;
+    }
+    
+    /* Resize handle */
+    .resize-handle {
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 8px;
+      cursor: ew-resize;
+      background: transparent;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .resize-handle::after {
+      content: "";
+      height: 40px;
+      width: 4px;
+      background: rgba(34, 197, 94, 0.2);
+      border-radius: 2px;
+    }
+    
+    .resize-handle:hover {
+      background: rgba(34, 197, 94, 0.1);
+    }
+    
+    .resize-handle:hover::after {
+      background: rgba(34, 197, 94, 0.7);
     }
     .logo {
       font-size: 1.8em;
@@ -185,6 +221,17 @@
       border-radius: 8px;
     } /* Increased min-width and added styling */
     .bubble-right .bubble-time { font-weight: bold; font-size: 1.4em; color: var(--logo-color); }
+    .bubble-right .bubble-date-time { 
+      display: flex; 
+      align-items: center; 
+      justify-content: flex-end; 
+      gap: 15px;
+    }
+    .bubble-right .bubble-date { 
+      color: white; 
+      font-size: 1.05em;
+      letter-spacing: 0.5px;
+    }
     .bubble-right span { margin-bottom: 3px; }
     .bubble .menu-btn {
       position: absolute;
@@ -382,6 +429,90 @@
     }
     .modal-close:hover { color: var(--qc-red); }
 
+    /* Group selection checkbox */
+    .bubble-select-checkbox {
+      position: absolute;
+      left: -40px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 22px;
+      height: 22px;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background: rgba(35, 39, 46, 0.7);
+      border: 1px solid var(--inactive);
+      border-radius: 4px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      transition: all 0.2s;
+    }
+    
+    .bubble-select-checkbox:checked {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    
+    .bubble-select-checkbox:checked::after {
+      content: "✓";
+      position: absolute;
+      color: white;
+      font-weight: bold;
+      top: 0;
+      left: 6px;
+      font-size: 14px;
+    }
+    
+    .bubble-select-checkbox:hover {
+      background: rgba(35, 39, 46, 0.9);
+    }
+    
+    /* Group actions bar */
+    .group-actions-bar {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--sidebar);
+      border-radius: 10px;
+      padding: 10px 20px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      display: flex;
+      gap: 15px;
+      z-index: 100;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+    
+    .group-actions-bar.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .group-action-btn {
+      background: var(--button-bg);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 8px 15px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+    
+    .group-action-btn:hover {
+      background: var(--button-hover);
+    }
+    
+    .group-action-count {
+      background: var(--accent);
+      color: white;
+      border-radius: 15px;
+      padding: 2px 8px;
+      font-size: 0.85em;
+      margin-left: 8px;
+    }
+    
     /* Follow Indicator Styles */
     .bubble.has-follow {
       position: relative;
@@ -430,14 +561,114 @@
   </style>
 </head>
 <body>
+  <!-- Edit Callout Overlay -->
+  <div id="editCalloutOverlay" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 700px;">
+      <button class="modal-close" onclick="closeEditCallout()">&times;</button>
+      <h3 style="margin-top: 0; color: var(--logo-color); letter-spacing: 1px;">Edit Callout</h3>
+      
+      <form id="editCalloutForm" autocomplete="off">
+        <input type="hidden" name="calloutId">
+        
+        <div class="fields-grid">
+          <div class="form-group">
+            <label>Classification</label>
+            <select name="classification" required>
+              <option value="">Select</option>
+              <option>No Classification</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label>Asset Name</label>
+            <input type="text" name="asset" required/>
+          </div>
+          
+          <div class="form-group">
+            <label>Sensor</label>
+            <select name="sensor" required>
+              <option value="FMV">FMV</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label>Mission / Operation</label>
+            <input type="text" name="operation" required/>
+          </div>
+          
+          <div class="form-group">
+            <label>Country Code</label>
+            <input type="text" name="countryCode" maxlength="3"/>
+          </div>
+          
+          <div class="form-group">
+            <label>Team Name</label>
+            <input type="text" name="team"/>
+          </div>
+          
+          <div class="form-group">
+            <label>Zulu Time</label>
+            <input type="text" name="zulu" required placeholder="HHMM" pattern="[0-9]{4}" maxlength="4" 
+                  oninput="this.value = this.value.replace(/[^0-9]/g, '');"/>
+          </div>
+          
+          <div class="form-group">
+            <label>MGRS</label>
+            <input type="text" name="mgrs"/>
+          </div>
+          
+          <div class="form-group">
+            <label>Location</label>
+            <input type="text" name="location"/>
+          </div>
+          
+          <div class="form-group">
+            <label>Activity</label>
+            <input type="text" name="activity"/>
+          </div>
+          
+          <div class="form-group" style="grid-column: 1 / span 2;">
+            <label>IA Notes</label>
+            <textarea name="iaNotes" rows="3"></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label>Males</label>
+            <input type="number" name="males" min="0" value="0"/>
+          </div>
+          
+          <div class="form-group">
+            <label>Females</label>
+            <input type="number" name="females" min="0" value="0"/>
+          </div>
+          
+          <div class="form-group">
+            <label>Children</label>
+            <input type="number" name="children" min="0" value="0"/>
+          </div>
+          
+          <div class="form-group">
+            <label>Vehicles</label>
+            <input type="number" name="vehicles" min="0" value="0"/>
+          </div>
+        </div>
+        
+        <button type="submit" class="submit-btn" style="width: 100%; margin-top: 24px;">Save Changes</button>
+      </form>
+    </div>
+  </div>
+
   <div class="container">
     <!-- Sidebar with form -->
     <aside class="sidebar">
+      <div class="resize-handle" id="sidebar-resize-handle"></div>
       <div class="logo">SMXKITS</div>
       <div class="divider"></div>
 
       <!-- Callout Form moved to sidebar -->
-      <form id="logForm" autocomplete="off" style="margin-top: 10px;">
+      <form id="logForm" autocomplete="off" style="margin-top: 10px;" 
+            ondragover="event.preventDefault();" 
+            ondrop="handleFormDrop(event)">
         <div class="form-title" style="font-size: 1.1em; margin-bottom: 12px;">Submit New Callout</div>
         
         <div class="form-group" style="margin-bottom: 12px;">
@@ -504,17 +735,19 @@
             
             <div style="margin-bottom: 12px;">
               <label>Follow Stage:</label>
-              <div style="margin-top: 8px; display: flex; gap: 8px;">
+              
+              <!-- Stage display moved above the buttons -->
+              <div style="margin: 8px 0; text-align: center;">
+                <div id="followStageLabel" style="font-size: 1.2em; font-weight: bold; padding: 10px; background: var(--input-bg); border-radius: 5px;">START</div>
+                <input type="hidden" id="followStageSelected" value="START" />
+                <input type="hidden" id="followStopNumber" value="0" />
+              </div>
+              
+              <div style="display: flex; gap: 8px;">
                 <button type="button" class="stage-btn" data-stage="ADV." style="flex: 1; padding: 8px; border-radius: 5px; border: none; background: var(--button-bg); color: #fafafa; cursor: pointer;">ADVANCE</button>
                 <button type="button" class="stage-btn" data-stage="CONT." style="flex: 1; padding: 8px; border-radius: 5px; border: none; background: var(--button-bg); color: #fafafa; cursor: pointer;">CONT.</button>
                 <button type="button" class="stage-btn" data-stage="END" style="flex: 1; padding: 8px; border-radius: 5px; border: none; background: var(--button-bg); color: #fafafa; cursor: pointer;">END</button>
               </div>
-            </div>
-            
-            <div style="margin-bottom: 12px; text-align: center;">
-              <div id="followStageLabel" style="font-size: 1.2em; font-weight: bold; margin: 10px 0; padding: 8px; background: var(--input-bg); border-radius: 5px;">START</div>
-              <input type="hidden" id="followStageSelected" value="START" />
-              <input type="hidden" id="followStopNumber" value="0" />
             </div>
           </div>
         </div>
@@ -565,6 +798,14 @@
         <!-- Generated log/chat bubbles will appear here -->
       </section>
     </main>
+  </div>
+
+  <!-- Group Actions Bar -->
+  <div id="groupActionsBar" class="group-actions-bar">
+    <span id="selectedCount" style="color: #a9d4c6;">0 selected</span>
+    <button id="groupEditBtn" class="group-action-btn">Edit <span id="editCount" class="group-action-count">0</span></button>
+    <button id="groupQCBtn" class="group-action-btn">QC <span id="qcCount" class="group-action-count">0</span></button>
+    <button id="groupCancelBtn" class="group-action-btn" style="background: var(--qc-red);">Cancel</button>
   </div>
 
   <!-- Room Modal -->
@@ -741,13 +982,22 @@
       console.log("Log form submitted");
       const data = Object.fromEntries(new FormData(form));
 let follow = undefined;
-if (document.querySelector('[data-follow-section="true"]')) {
-  follow = {
-    name: document.getElementById('followName').value,
-    stage: document.getElementById('followStageBtn').textContent,
-    followId: window.followState?.followId || Math.random().toString(36).substr(2, 6).toUpperCase(),
-    ended: window.followState?.ended || (window.followState?.stage === 3) || false
-  };
+// Check if follow form is visible
+const followForm = document.getElementById('followForm');
+if (followForm && followForm.style.display !== 'none') {
+  const followNameInput = document.getElementById('followNameInput');
+  const followIdHidden = document.getElementById('followIdHidden');
+  const followStageHidden = document.getElementById('followStageHidden');
+  const stageLabel = document.getElementById('stageLabel');
+  
+  if (followNameInput && followNameInput.value) {
+    follow = {
+      name: followNameInput.value,
+      followId: followIdHidden ? followIdHidden.value : Math.random().toString(36).substr(2, 6).toUpperCase(),
+      stage: followStageHidden ? followStageHidden.value : (stageLabel ? stageLabel.textContent : 'START'),
+      ended: stageLabel && stageLabel.textContent === 'END'
+    };
+  }
 }
       
       const payload = {
@@ -906,6 +1156,22 @@ if (document.querySelector('[data-follow-section="true"]')) {
       div.style.cursor = 'pointer';
       div.title = 'Double-click to edit';
       
+      // Make callout draggable
+      div.setAttribute('draggable', 'true');
+      div.addEventListener('dragstart', function(e) {
+        e.dataTransfer.setData('text/plain', JSON.stringify(data));
+      });
+      
+      // Add selection checkbox for group operations
+      const selectCheckbox = document.createElement('input');
+      selectCheckbox.type = 'checkbox';
+      selectCheckbox.className = 'bubble-select-checkbox';
+      selectCheckbox.title = 'Select for group operation';
+      selectCheckbox.setAttribute('data-id', data._id);
+      selectCheckbox.addEventListener('change', function() {
+        updateGroupActionBar();
+      });
+      
       // Create menu button with direct onclick attribute
       const menuBtn = document.createElement('button');
       menuBtn.className = "menu-btn";
@@ -960,7 +1226,10 @@ if (document.querySelector('[data-follow-section="true"]')) {
           <div class="bubble-row"><b>IA Notes:</b> ${(data.iaNotes||'').replace(/\n/g,'<br>')}</div> 
         </div> 
         <div class="bubble-right"> 
-          <span class="bubble-time">${data.zulu || '-'}</span> 
+          <div class="bubble-date-time">
+            <span class="bubble-date">${formatDateForBubble(data.createdAt)}</span>
+            <span class="bubble-time">${data.zulu || '-'}</span>
+          </div>
           <span><b>MGRS:</b> <span style="letter-spacing: 0.5px; font-size: 1.05em;">${data.mgrs || '-'}</span></span> 
           <span><b>SLANT:</b> ${(data.males||0)}/${(data.females||0)}/${(data.children||0)} &nbsp; <b>V:</b> ${(data.vehicles||0)}</span> 
         </div>
@@ -970,9 +1239,10 @@ if (document.querySelector('[data-follow-section="true"]')) {
       footer.style.fontSize = "0.85em";
       footer.style.color = "#888";
       footer.style.marginTop = "7px";
-      footer.innerHTML = `By ${data.createdBy} &middot; ${(data.createdAt ? new Date(data.createdAt).toLocaleTimeString() : '')}`;
+      footer.innerHTML = `By ${data.createdBy} &middot; ${(data.createdAt ? new Date(data.createdAt).toLocaleDateString() : '')} &middot; ${(data.createdAt ? new Date(data.createdAt).toLocaleTimeString() : '')}`;
       
       // Assemble the bubble
+      div.appendChild(selectCheckbox);
       div.appendChild(menuBtn);
       div.appendChild(qcBtn);
       div.appendChild(content);
@@ -1043,6 +1313,25 @@ if (document.querySelector('[data-follow-section="true"]')) {
     }
   };
   
+  // Helper function to format date for bubble in MM/DD/YYYY format
+  function formatDateForBubble(dateString) {
+    if (!dateString) {
+      // If no date provided, use current date
+      const now = new Date();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const year = now.getFullYear();
+      return `${month}/${day}/${year}`;
+    }
+    
+    // Format the provided date
+    const date = new Date(dateString);
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${month}/${day}/${year}`;
+  }
+  
   // Helper function to format zulu time
   function formatZuluTime(zuluTime) {
     if (!zuluTime) return '-';
@@ -1106,7 +1395,10 @@ if (document.querySelector('[data-follow-section="true"]')) {
           <div class="bubble-row"><b>IA Notes:</b> ${(data.iaNotes||'').replace(/\n/g,'<br>')}</div> 
         </div> 
         <div class="bubble-right"> 
-          <span class="bubble-time">${data.zulu || '-'}</span> 
+          <div class="bubble-date-time">
+            <span class="bubble-date">${formatDateForBubble(data.createdAt)}</span>
+            <span class="bubble-time">${data.zulu || '-'}</span>
+          </div>
           <span><b>MGRS:</b> <span style="letter-spacing: 0.5px; font-size: 1.05em;">${data.mgrs || '-'}</span></span> 
           ${ hasFollow ? `
             <div style="margin-top: auto; padding-top: 15px; display: flex; flex-direction: column; align-items: flex-end;">
@@ -1129,7 +1421,7 @@ if (document.querySelector('[data-follow-section="true"]')) {
         footer.style.marginTop = "7px";
         bubble.appendChild(footer);
       }
-      footer.innerHTML = `By ${data.createdBy} &middot; ${(data.createdAt ? new Date(data.createdAt).toLocaleTimeString() : '')}`;
+      footer.innerHTML = `By ${data.createdBy} &middot; ${(data.createdAt ? new Date(data.createdAt).toLocaleDateString() : '')} &middot; ${(data.createdAt ? new Date(data.createdAt).toLocaleTimeString() : '')}`;
       
       // Update the data payload
       bubble.dataset.payload = JSON.stringify(data);
@@ -1206,7 +1498,7 @@ if (document.querySelector('[data-follow-section="true"]')) {
   }
   
   // ------ Action Functions ------
-  async function updateQC(id, qcClass) {
+  window.originalUpdateQC = async function(id, qcClass) {
     closeCalloutMenu();
     console.log("Updating QC:", id, qcClass);
     const callout = callouts[id];
@@ -1366,7 +1658,7 @@ if (document.querySelector('[data-follow-section="true"]')) {
     }
   }
   
-  async function handleEditFormSubmit(e) {
+  window.originalHandleEditFormSubmit = async function(e) {
     e.preventDefault();
     
     // Get form and callout ID
@@ -1493,6 +1785,9 @@ if (document.querySelector('[data-follow-section="true"]')) {
   // ------ Initialize All Event Handlers ------
   document.addEventListener('DOMContentLoaded', function() {
     console.log("DOM loaded - initializing event handlers");
+    
+    // Initialize sidebar resize functionality
+    initSidebarResize();
     
     // Dashboard button (top bar)
     const dashboardBtn = document.getElementById('dashboardBtn');
@@ -1677,7 +1972,244 @@ if (document.querySelector('[data-follow-section="true"]')) {
   }
   
   // --- FOLLOW LOGIC --- //
+  // Group selection functionality
+  let selectedBubbles = [];
+  
+  function updateGroupActionBar() {
+    // Get all selected checkboxes
+    const checkboxes = document.querySelectorAll('.bubble-select-checkbox:checked');
+    selectedBubbles = Array.from(checkboxes).map(cb => cb.getAttribute('data-id'));
+    
+    const actionBar = document.getElementById('groupActionsBar');
+    const selectedCount = document.getElementById('selectedCount');
+    const editCount = document.getElementById('editCount');
+    const qcCount = document.getElementById('qcCount');
+    
+    // Update counts
+    const count = selectedBubbles.length;
+    selectedCount.textContent = count + (count === 1 ? ' selected' : ' selected');
+    editCount.textContent = count;
+    qcCount.textContent = count;
+    
+    // Show/hide action bar based on selection count
+    if (count > 0) {
+      actionBar.classList.add('active');
+    } else {
+      actionBar.classList.remove('active');
+    }
+  }
+  
+  // Handle group edit
+  function handleGroupEdit() {
+    if (selectedBubbles.length === 0) return;
+    
+    // Use the last selected bubble for the form initialization
+    const lastId = selectedBubbles[selectedBubbles.length - 1];
+    
+    // Store the list of selected IDs in the form's dataset for later use
+    const editForm = document.getElementById('editCalloutForm');
+    if (editForm) {
+      editForm.dataset.groupEdit = JSON.stringify(selectedBubbles);
+    }
+    
+    // Call the normal edit function with the last selected bubble
+    editCallout(lastId);
+  }
+  
+  // Handle group QC
+  function handleGroupQC() {
+    if (selectedBubbles.length === 0) return;
+    
+    // Show a QC selection dialog
+    const qcDialog = document.createElement('div');
+    qcDialog.className = 'modal';
+    qcDialog.style.display = 'flex';
+    qcDialog.innerHTML = `
+      <div class="modal-content" style="max-width: 400px;">
+        <h3 style="margin-top: 0; color: var(--logo-color);">Apply QC Status</h3>
+        <p>Select a QC status to apply to ${selectedBubbles.length} callout(s):</p>
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 20px;">
+          <button class="group-action-btn" onclick="applyGroupQC('qc-orange')" style="border-left: 4px solid var(--qc-orange);">QC: In Progress</button>
+          <button class="group-action-btn" onclick="applyGroupQC('qc-yellow')" style="border-left: 4px solid var(--qc-yellow);">QC: In Review</button>
+          <button class="group-action-btn" onclick="applyGroupQC('qc-green')" style="border-left: 4px solid var(--qc-green);">QC: Approved</button>
+          <button class="group-action-btn" onclick="applyGroupQC('qc-red')" style="border-left: 4px solid var(--qc-red);">QC: Issues</button>
+        </div>
+        <button class="group-action-btn" onclick="closeGroupQCDialog()" style="width: 100%; margin-top: 20px; background: var(--qc-red);">Cancel</button>
+      </div>
+    `;
+    
+    document.body.appendChild(qcDialog);
+  }
+  
+  // Apply QC status to all selected bubbles
+  async function applyGroupQC(qcClass) {
+    // Close the QC dialog
+    closeGroupQCDialog();
+    
+    // Check user permissions
+    const userRole = localStorage.getItem('role');
+    if (userRole === 'student' && (qcClass === 'qc-green' || qcClass === 'qc-red')) {
+      alert('You do not have permission to set QC: Approved or QC: Issues. Only instructors can perform this action.');
+      return;
+    }
+    
+    // Process each selected bubble
+    for (const id of selectedBubbles) {
+      await updateQC(id, qcClass, true); // Pass true to skip menu closing
+    }
+    
+    // Clear selection after processing
+    clearBubbleSelection();
+  }
+  
+  // Close the group QC dialog
+  function closeGroupQCDialog() {
+    const dialogs = document.querySelectorAll('.modal');
+    dialogs.forEach(dialog => {
+      if (dialog.id !== 'editCalloutOverlay' && dialog.id !== 'roomModal' && dialog.id !== 'calloutMenuModal') {
+        dialog.remove();
+      }
+    });
+  }
+  
+  // Clear all bubble selections
+  function clearBubbleSelection() {
+    const checkboxes = document.querySelectorAll('.bubble-select-checkbox:checked');
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = false;
+    });
+    selectedBubbles = [];
+    updateGroupActionBar();
+  }
+  
+  // Define the updateQC function to support group operations
+  window.updateQC = function(id, qcClass, skipMenuClose = false) {
+    if (!skipMenuClose) {
+      closeCalloutMenu();
+    }
+    return window.originalUpdateQC(id, qcClass);
+  };
+  
+  // Define the editCallout submit handler to support group edits
+  window.handleEditFormSubmit = async function(e) {
+    e.preventDefault();
+    
+    // Get form and check if it's a group edit
+    const form = e.target;
+    const groupEditIds = form.dataset.groupEdit ? JSON.parse(form.dataset.groupEdit) : null;
+    
+    if (!groupEditIds || groupEditIds.length <= 1) {
+      // Regular single-callout edit
+      return originalHandleEditFormSubmit.call(this, e);
+    }
+    
+    // This is a group edit
+    const formData = new FormData(form);
+    const updatedFields = {};
+    
+    // Collect all changed fields
+    for (const [name, value] of formData.entries()) {
+      if (name !== 'calloutId' && value !== '') {
+        updatedFields[name] = value;
+      }
+    }
+    
+    // Check if any fields were actually changed
+    if (Object.keys(updatedFields).length === 0) {
+      alert('No fields were changed. Please modify at least one field to update the callouts.');
+      return;
+    }
+    
+    // Confirm the group edit operation
+    if (!confirm(`Are you sure you want to apply these changes to ${groupEditIds.length} callouts?`)) {
+      return;
+    }
+    
+    // Apply changes to all selected callouts
+    let successCount = 0;
+    let errorCount = 0;
+    
+    for (const id of groupEditIds) {
+      try {
+        // Get original callout
+        const callout = callouts[id];
+        if (!callout) continue;
+        
+        // Apply only the changed fields
+        const updatedCallout = { ...callout };
+        for (const [field, value] of Object.entries(updatedFields)) {
+          updatedCallout[field] = value;
+        }
+        
+        // Update the callout
+        const apiUrl = window.location.hostname === 'localhost' 
+          ? `http://localhost:3001/api/callouts/${id}`
+          : `/api/callouts/${id}`;
+          
+        const response = await fetch(apiUrl, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify({
+            ...updatedCallout,
+            editedBy: localStorage.getItem('userName') || 'You'
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Server returned ${response.status}`);
+        }
+        
+        // Update local data
+        const updatedData = await response.json();
+        callouts[id] = updatedData;
+        
+        // Update UI
+        const bubble = document.getElementById('callout_' + id);
+        if (bubble) {
+          updateBubbleContent(bubble, updatedData);
+        }
+        
+        successCount++;
+      } catch (error) {
+        console.error(`Error updating callout ${id}:`, error);
+        errorCount++;
+      }
+    }
+    
+    // Close the edit overlay
+    closeEditCallout();
+    
+    // Clear the group edit data
+    delete form.dataset.groupEdit;
+    
+    // Clear selection
+    clearBubbleSelection();
+    
+    // Show result message
+    alert(`Group update complete.\nSuccessfully updated: ${successCount} callouts\nErrors: ${errorCount}`);
+  };
+
   document.addEventListener('DOMContentLoaded', function () {
+    // Initialize group action buttons
+    const groupEditBtn = document.getElementById('groupEditBtn');
+    const groupQCBtn = document.getElementById('groupQCBtn');
+    const groupCancelBtn = document.getElementById('groupCancelBtn');
+    
+    if (groupEditBtn) {
+      groupEditBtn.addEventListener('click', handleGroupEdit);
+    }
+    
+    if (groupQCBtn) {
+      groupQCBtn.addEventListener('click', handleGroupQC);
+    }
+    
+    if (groupCancelBtn) {
+      groupCancelBtn.addEventListener('click', clearBubbleSelection);
+    }
+    
     const createFollowBtn = document.getElementById('createFollowBtn');
     const followForm = document.getElementById('followForm');
     const followNameInput = document.getElementById('followNameInput');
@@ -1766,6 +2298,109 @@ if (document.querySelector('[data-follow-section="true"]')) {
     }
   });
   
+  // Sidebar resize functionality
+  function initSidebarResize() {
+    const handle = document.getElementById('sidebar-resize-handle');
+    const sidebar = document.querySelector('.sidebar');
+    
+    if (!handle || !sidebar) return;
+    
+    let startX, startWidth;
+    
+    const startDrag = (e) => {
+      startX = e.clientX;
+      startWidth = parseInt(getComputedStyle(sidebar).width, 10);
+      document.addEventListener('mousemove', doDrag);
+      document.addEventListener('mouseup', stopDrag);
+      document.body.style.cursor = 'ew-resize';
+      document.body.style.userSelect = 'none';
+    };
+    
+    const doDrag = (e) => {
+      const newWidth = startWidth + e.clientX - startX;
+      // Apply constraints (min and max width)
+      if (newWidth >= 300 && newWidth <= 800) {
+        sidebar.style.width = `${newWidth}px`;
+      }
+    };
+    
+    const stopDrag = () => {
+      document.removeEventListener('mousemove', doDrag);
+      document.removeEventListener('mouseup', stopDrag);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+    
+    handle.addEventListener('mousedown', startDrag);
+    
+    console.log("Sidebar resize functionality initialized");
+  }
+  
+  // Initialize sidebar resize functionality when the page loads
+  document.addEventListener('DOMContentLoaded', function() {
+    initSidebarResize();
+  });
+  
+  // Handle dropping a callout onto the form
+  function handleFormDrop(event) {
+    event.preventDefault();
+    try {
+      const data = JSON.parse(event.dataTransfer.getData('text/plain'));
+      console.log("Dropped callout data:", data);
+      
+      // Fill form with callout data
+      const form = document.getElementById('logForm');
+      if (form) {
+        if (data.classification) form.elements.classification.value = data.classification;
+        if (data.asset) form.elements.asset.value = data.asset;
+        if (data.sensor) form.elements.sensor.value = data.sensor;
+        if (data.operation) form.elements.operation.value = data.operation;
+        if (data.countryCode) form.elements.countryCode.value = data.countryCode;
+        if (data.team) form.elements.team.value = data.team;
+        if (data.zulu) form.elements.zulu.value = data.zulu.replace(':', '');
+        if (data.mgrs) form.elements.mgrs.value = data.mgrs;
+        if (data.location) form.elements.location.value = data.location;
+        if (data.activity) form.elements.activity.value = data.activity;
+        if (data.iaNotes) form.elements.iaNotes.value = data.iaNotes;
+        if (data.males) form.elements.males.value = data.males;
+        if (data.females) form.elements.females.value = data.females;
+        if (data.children) form.elements.children.value = data.children;
+        if (data.vehicles) form.elements.vehicles.value = data.vehicles;
+        
+        // Handle follow information if present
+        if (data.follow && data.follow.name) {
+          const createFollowBtn = document.getElementById('createFollowBtn');
+          if (createFollowBtn) {
+            // Show the follow form by simulating a click
+            createFollowBtn.click();
+            
+            // Fill in follow data
+            const followNameInput = document.getElementById('followNameInput');
+            if (followNameInput) followNameInput.value = data.follow.name;
+            
+            if (data.follow.followId) {
+              const followIdHidden = document.getElementById('followIdHidden');
+              const followIdDisplay = document.getElementById('followIdDisplay');
+              if (followIdHidden) followIdHidden.value = data.follow.followId;
+              if (followIdDisplay) followIdDisplay.textContent = data.follow.followId;
+            }
+            
+            // Try to set follow stage
+            if (data.follow.stage) {
+              const followStageHidden = document.getElementById('followStageHidden');
+              if (followStageHidden) followStageHidden.value = data.follow.stage;
+              
+              // Update the stage display
+              const stageLabel = document.getElementById('stageLabel');
+              if (stageLabel) stageLabel.textContent = data.follow.stage;
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error handling drop:", error);
+    }
+  }
 </script>
 </body>
 </html>
