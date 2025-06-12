@@ -346,36 +346,7 @@
       align-items: center;
       gap: 15px;
     }
-    .stage-btn {
-      background: var(--qc-orange);
-      color: #181c1c;
-      border: none;
-      border-radius: 7px;
-      font-weight: 700;
-      font-size: 1em;
-      padding: 10px 21px;
-      cursor: pointer;
-      outline: none;
-      margin-right: 6px;
-      min-width: 95px;
-    }
-    .follow-actions .action-btn {
-      background: var(--button-bg);
-      color: #eee;
-      border: 1.5px solid var(--input-border);
-      border-radius: 7px;
-      padding: 8px 17px;
-      font-size: 1em;
-      margin-right: 10px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background 0.13s, border 0.13s;
-    }
-    .follow-actions .action-btn:hover {
-      background: var(--button-hover);
-      border-color: var(--accent);
-      color: var(--accent);
-    }
+    /* Removed unused follow action styling */
 
     /* Overlay/Modal */
     .modal {
@@ -515,14 +486,8 @@
         </div>
         
         <!-- Follow container moved here -->
-        <div id="followContainer" style="margin-bottom: 12px; position: relative; z-index: 10;">
-          <button type="button" id="createFollowBtn" class="submit-btn" 
-            style="margin-bottom: 0; background:var(--qc-orange); color:#181c1c; 
-            font-weight:600; width: 100%; font-size: 1.1em; padding: 15px; 
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2); position: relative; z-index: 20; 
-            cursor: pointer; border: 2px solid #d68000;">
-            Create Follow
-          </button>
+        <div id="followContainer" style="margin-bottom: 12px;">
+          <button type="button" id="createFollowBtn" class="submit-btn" style="margin-bottom: 0; background:var(--qc-orange); color:#181c1c; font-weight:600; width: 100%;">Create Follow</button>
         </div>
         
         <div class="form-group" style="margin-bottom: 12px;">
@@ -765,13 +730,22 @@
       console.log("Log form submitted");
       const data = Object.fromEntries(new FormData(form));
 let follow = undefined;
-if (document.querySelector('[data-follow-section="true"]')) {
-  follow = {
-    name: document.getElementById('followName').value,
-    stage: document.getElementById('followStageBtn').textContent,
-    followId: window.followState?.followId || Math.random().toString(36).substr(2, 6).toUpperCase(),
-    ended: window.followState?.ended || (window.followState?.stage === 3) || false
-  };
+// Check if follow information is being provided
+if (document.getElementById('followNameInput') && document.getElementById('followStageSelect')) {
+  const followName = document.getElementById('followNameInput').value;
+  const followStage = document.getElementById('followStageSelect').value;
+  const followId = document.getElementById('followIdDisplay') ? 
+    document.getElementById('followIdDisplay').textContent : 
+    Math.random().toString(36).substr(2, 6).toUpperCase();
+    
+  if (followName && followStage) {
+    follow = {
+      name: followName,
+      stage: followStage,
+      followId: followId,
+      ended: followStage === 'END'
+    };
+  }
 }
       
       const payload = {
@@ -1487,163 +1461,11 @@ if (document.querySelector('[data-follow-section="true"]')) {
     element.style.height = (element.scrollHeight) + 'px';
   }
   
-  function addFollow(id) {
-    closeCalloutMenu();
-    console.log("Adding follow-on to:", id);
-    const callout = callouts[id];
-    if (!callout) return;
-    
-    const bubble = document.getElementById('callout_' + id);
-    if (!bubble || bubble.querySelector('.follow-section')) return;
-    
-    const followSection = document.createElement('div');
-  followSection.className = 'follow-section';
-  followSection.dataset.followSection = 'true';   // or append unique suffix
-    
-    // Create name input row
-    const nameRow = document.createElement('div');
-    nameRow.className = 'follow-row';
-    
-    const nameLabel = document.createElement('label');
-    nameLabel.style.marginRight = 'auto';
-    nameLabel.textContent = 'Name:';
-    
-    const nameInput = document.createElement('input');
-    nameInput.type = 'text';
-    nameInput.id = 'followName';
-    nameInput.style.flex = '1';
-    nameInput.placeholder = 'Enter name';
-    
-    nameRow.appendChild(nameLabel);
-    nameRow.appendChild(nameInput);
-    
-    // Create stage buttons row
-    const stageRow = document.createElement('div');
-    stageRow.className = 'follow-row follow-actions';
-    
-    const stageBtn = document.createElement('button');
-    stageBtn.id = 'followStageBtn';
-    stageBtn.className = 'stage-btn';
-    stageBtn.textContent = 'WATCH';
-    
-    // Helper function for stage buttons
-    function createStageButton(stage) {
-      const btn = document.createElement('button');
-      btn.className = 'action-btn';
-      btn.textContent = stage;
-      btn.addEventListener('click', function() {
-        updateStage(stage);
-      });
-      return btn;
-    }
-    
-    stageRow.appendChild(stageBtn);
-    stageRow.appendChild(createStageButton('WATCH'));
-    stageRow.appendChild(createStageButton('TRACK'));
-    stageRow.appendChild(createStageButton('TARGET'));
-    stageRow.appendChild(createStageButton('ENGAGE'));
-    stageRow.appendChild(createStageButton('ASSESS'));
-    
-    // Create submit button row
-    const submitRow = document.createElement('div');
-    submitRow.className = 'follow-row';
-    submitRow.style.justifyContent = 'flex-end';
-    submitRow.style.marginTop = '10px';
-    
-    const submitBtn = document.createElement('button');
-    submitBtn.className = 'submit-btn';
-    submitBtn.style.padding = '8px 16px';
-    submitBtn.style.margin = '0';
-    submitBtn.textContent = 'Submit Follow';
-    submitBtn.addEventListener('click', function() {
-      submitFollow(id);
-    });
-    
-    submitRow.appendChild(submitBtn);
-    
-    // Assemble and insert follow section
-    followSection.appendChild(nameRow);
-    followSection.appendChild(stageRow);
-    followSection.appendChild(submitRow);
-    
-    const timeText = bubble.querySelector('.bubble-right');
-    timeText.parentNode.insertBefore(followSection, timeText.nextSibling);
-  }
+  // Functions addFollow() and updateStage() were removed as they were unused
+  // The follow creation is now handled by the createFollowBtn click handler
   
-  function updateStage(stage) {
-    const stageBtn = document.getElementById('followStageBtn');
-    if (stageBtn) {
-      stageBtn.textContent = stage;
-      stageBtn.style.background = {
-        'WATCH': 'var(--qc-orange)',
-        'TRACK': 'var(--qc-yellow)',
-        'TARGET': 'var(--qc-green)',
-        'ENGAGE': 'var(--qc-red)',
-        'ASSESS': '#3b82f6'
-      }[stage] || 'var(--qc-orange)';
-    }
-  }
-  
-  async function submitFollow(id) {
-    console.log("Submitting follow-on for:", id);
-    const callout = callouts[id];
-    if (!callout) return;
-    
-    const followName = document.getElementById('followName');
-    const followStage = document.getElementById('followStageBtn');
-    
-    if (!followName || !followStage) return;
-    if (!followName.value.trim()) {
-      alert('Please enter a name');
-      return;
-    }
-    
-    try {
-      const apiUrl = window.location.hostname === 'localhost' 
-        ? `http://localhost:3001/api/callouts/${id}`
-        : `/api/callouts/${id}`;
-        
-      const response = await fetch(apiUrl, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          ...callout,
-          follow: {
-            name: followName.value.trim(),
-            stage: followStage.textContent
-          },
-          editedBy: localStorage.getItem('userName') || 'You'
-        })
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Server returned ${response.status}`);
-      }
-      
-      console.log('Follow-on submitted successfully');
-      
-      // Refresh the callout
-      const updatedResponse = await fetch(apiUrl, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      
-      if (updatedResponse.ok) {
-        const updatedCallout = await updatedResponse.json();
-        callouts[id] = updatedCallout;
-        
-        // Update UI using the improved createBubble which updates in place
-        createBubble(updatedCallout);
-      }
-    } catch (error) {
-      console.error('Error submitting follow-on:', error);
-      alert('Error submitting follow-on: ' + error.message);
-    }
-  }
+  // The submitFollow function was removed as it was only used with the removed addFollow function
+  // Follow creation is now handled through the form submission
   
   // ------ Socket.io Event Listeners ------
   socket.on('new_callout', function(callout) {
@@ -1767,72 +1589,23 @@ if (document.querySelector('[data-follow-section="true"]')) {
       console.log("Activity textarea handler attached");
     }
     
-    // DEBUG: Log all form buttons to check for issues
-    console.log("All buttons on page:", document.querySelectorAll('button'));
-    console.log("Button with ID 'createFollowBtn':", document.getElementById('createFollowBtn'));
-    
-    // Create Follow button handler - completely rewritten for clarity
-    function setupFollowButtonHandler() {
-      console.log("Setting up follow button handler...");
-      
-      // Get the button and verify it exists
-      const createFollowBtn = document.getElementById('createFollowBtn');
-      
-      if (!createFollowBtn) {
-        console.error("CRITICAL ERROR: Create Follow button not found with ID 'createFollowBtn'");
-        return; // Exit if button not found
-      }
-      
-      console.log("Found create follow button:", createFollowBtn);
-      
-      // Make sure button is visible and clickable
-      createFollowBtn.style.display = 'block';
-      createFollowBtn.style.position = 'relative';
-      createFollowBtn.style.zIndex = '20';
-      
-      // Add a highlight to test visibility
-      createFollowBtn.style.border = '2px solid red';
-      
-      // Variable to track the follow container
-      let followContainer = null;
-      
-      // Add debug style to clearly see when button is being hovered
-      createFollowBtn.addEventListener('mouseover', function() {
-        console.log("Button hovered!");
-      });
-      
-      // Attach click handler
-      createFollowBtn.addEventListener('click', function(event) {
-        console.log("Follow button clicked!");
-        
-        // Stop event from propagating
-        event.preventDefault();
-        event.stopPropagation();
-        
+    // Create Follow button handler
+    const createFollowBtn = document.getElementById('createFollowBtn');
+    if (createFollowBtn) {
+      let followContainer;
+
+      createFollowBtn.addEventListener('click', function() {
         if (followContainer) {
-          // If the container is already open, close it
-          console.log("Closing follow container");
+          // If the container is already open, close it and revert the button text
           followContainer.remove();
           followContainer = null;
           createFollowBtn.textContent = 'Create Follow';
-          alert("Follow container closed");
+          console.log('Follow container closed');
         } else {
           // Create the follow container
-          console.log("Creating follow container");
-          
           followContainer = document.createElement('div');
           followContainer.className = 'follow-container';
           followContainer.style.marginTop = '10px';
-          followContainer.style.padding = '10px';
-          followContainer.style.border = '1px solid #ccc';
-          followContainer.style.borderRadius = '5px';
-          followContainer.style.background = '#f9f9f9';
-          
-          // Create a visible heading
-          const heading = document.createElement('h3');
-          heading.textContent = 'Create Follow';
-          heading.style.marginTop = '0';
-          followContainer.appendChild(heading);
 
           // Follow Name
           const nameRow = document.createElement('div');
@@ -1865,55 +1638,31 @@ if (document.querySelector('[data-follow-section="true"]')) {
           const stageLabel = document.createElement('label');
           stageLabel.textContent = 'Follow Stage:';
           stageLabel.style.marginRight = '10px';
-          const stageSelect = document.createElement('select');
-          stageSelect.id = 'followStageSelect';
-          ['START', 'CONT.', 'ADV.', 'END'].forEach(stage => {
-            const option = document.createElement('option');
-            option.value = stage;
-            option.textContent = stage;
-            stageSelect.appendChild(option);
-          });
+          // Using a simpler input for follow stage
+          const stageInput = document.createElement('input');
+          stageInput.type = 'text';
+          stageInput.id = 'followStageSelect';
+          stageInput.placeholder = 'Enter stage';
           stageRow.appendChild(stageLabel);
-          stageRow.appendChild(stageSelect);
+          stageRow.appendChild(stageInput);
 
           // Append rows to the container
           followContainer.appendChild(nameRow);
           followContainer.appendChild(idRow);
           followContainer.appendChild(stageRow);
-          
-          // Add a submit button
-          const submitBtn = document.createElement('button');
-          submitBtn.textContent = 'Submit Follow';
-          submitBtn.style.background = 'var(--accent)';
-          submitBtn.style.color = 'white';
-          submitBtn.style.border = 'none';
-          submitBtn.style.padding = '8px 16px';
-          submitBtn.style.borderRadius = '5px';
-          submitBtn.style.marginTop = '10px';
-          submitBtn.style.cursor = 'pointer';
-          followContainer.appendChild(submitBtn);
 
-          // Insert the container after the button
-          const targetContainer = document.getElementById('followContainer');
-          if (targetContainer) {
-            console.log("Inserting follow form into container");
-            targetContainer.appendChild(followContainer);
-            alert("Follow form created - check below the button");
-          } else {
-            console.error("Cannot find followContainer to insert form");
-            alert("Error: Cannot find container to insert form");
-          }
+          // Insert the container below the button
+          createFollowBtn.parentNode.insertBefore(followContainer, createFollowBtn.nextSibling);
 
-          // Change button text
+          // Change button text to "Cancel Follow"
           createFollowBtn.textContent = 'Cancel Follow';
+          console.log('Follow container created');
         }
       });
-      
-      console.log("Create Follow button handler attached successfully");
+      console.log("Create Follow button handler attached");
+    } else {
+      console.error("Create Follow button not found with ID 'createFollowBtn'");
     }
-    
-    // Call the setup function
-    setupFollowButtonHandler();
     
     // Initialize sidebar button states
     updateSidebarButtonStates();
