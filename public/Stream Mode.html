@@ -397,13 +397,23 @@
     const stopBtn = document.getElementById('stopBtn');
     const streamStatus = document.getElementById('streamStatus');
     let liveState = 'offline'; // 'offline' | 'live' | 'paused'
-    function setStatus(status) {
+    async function setStatus(status) {
       liveState = status;
       streamStatus.className = 'status-badge status-' + status;
       streamStatus.textContent = status === 'live' ? 'LIVE' : status === 'paused' ? 'PAUSED' : 'OFFLINE';
       goLiveBtn.disabled = (status === 'live');
       pauseBtn.disabled = (status !== 'live');
       stopBtn.disabled = (status === 'offline');
+
+      try {
+        await fetch(`${apiBaseUrl}/stream/status`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status })
+        });
+      } catch (error) {
+        console.error('Error updating stream status:', error);
+      }
     }
     goLiveBtn.onclick = () => setStatus('live');
     pauseBtn.onclick = () => setStatus('paused');
@@ -438,32 +448,59 @@
       const file = fileInput.files[0];
       handleFileUpload(file);
     });
-    function handleFileUpload(file) {
+    async function handleFileUpload(file) {
       if (!file || !file.name.endsWith('.mp4')) {
         uploadStatus.textContent = 'Please select an MP4 file.';
         return;
       }
       uploadStatus.textContent = 'Uploading "' + file.name + '"...';
       progressFill.style.width = '30%';
-      // TODO: Upload file to backend and start streaming
-      setTimeout(() => {
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const response = await fetch(`${apiBaseUrl}/stream/upload`, {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to upload file');
+        }
+
         progressFill.style.width = '100%';
         uploadStatus.textContent = 'Streaming "' + file.name + '" to students!';
+
         setTimeout(() => {
           uploadStatus.textContent = '';
           progressFill.style.width = '0';
         }, 2200);
-      }, 1400);
+      } catch (error) {
+        console.error('Error uploading file:', error);
+        uploadStatus.textContent = 'Error uploading file.';
+      }
     }
 
     // --- Instructor notice/message demo ---
-    document.getElementById('noticeSendBtn').onclick = () => {
+    async function sendNotice() {
       const val = document.getElementById('noticeInput').value.trim();
       if (!val) return;
-      // TODO: Send this message to all students in the class (backend call)
-      alert('Notice sent: ' + val);
-      document.getElementById('noticeInput').value = '';
-    };
+
+      try {
+        await fetch(`${apiBaseUrl}/stream/notice`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: val })
+        });
+
+        alert('Notice sent: ' + val);
+        document.getElementById('noticeInput').value = '';
+      } catch (error) {
+        console.error('Error sending notice:', error);
+      }
+    }
+    document.getElementById('noticeSendBtn').onclick = sendNotice;
 
     // --- Bookmarks/timeline ---
     const timelineBar = document.getElementById('timelineBar');
@@ -490,9 +527,14 @@
     }
 
     // --- Mock: Viewer count ---
-    setInterval(() => {
-      document.getElementById('viewerCount').textContent = (liveState === 'live')
-        ? Math.floor(Math.random()*8)+10 : 0;
+    setInterval(async () => {
+      try {
+        const response = await fetch(`${apiBaseUrl}/stream/viewers`);
+        const data = await response.json();
+        document.getElementById('viewerCount').textContent = data.count || 0;
+      } catch (error) {
+        console.error('Error fetching viewer count:', error);
+      }
     }, 1800);
 
     // TODO: Connect to backend APIs for all dynamic controls.

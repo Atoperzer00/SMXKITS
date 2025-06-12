@@ -1349,7 +1349,7 @@ if (followForm && followForm.style.display !== 'none') {
             ${data.follow.followId ? `<span class="follow-id">#${data.follow.followId}</span>` : ''}
           </div>` : '' } 
           <div class="bubble-row">${data.activity || '-'}</div> 
-          ${data.iaNotes && data.iaNotes.trim() ? `<div class="bubble-row"><b>IA Notes:</b> ${data.iaNotes.replace(/\n/g,'<br>')}</div>` : ''}
+          ${data.iaNotes && data.iaNotes.trim() ? '<div class="bubble-row"><b>IA Notes:</b> ' + data.iaNotes.replace(/\n/g,'<br>') + '</div>' : ''}
         </div> 
         <div class="bubble-right"> 
           <div class="bubble-date-time">
@@ -1518,7 +1518,7 @@ if (followForm && followForm.style.display !== 'none') {
           </div> 
           <div class="bubble-row">${data.location || '-'}</div> 
           <div class="bubble-row">${data.activity || '-'}</div> 
-          ${data.iaNotes && data.iaNotes.trim() ? `<div class="bubble-row"><b>IA Notes:</b> ${data.iaNotes.replace(/\n/g,'<br>')}</div>` : ''}
+          ${data.iaNotes && data.iaNotes.trim() ? '<div class="bubble-row"><b>IA Notes:</b> ' + data.iaNotes.replace(/\n/g,'<br>') + '</div>' : ''}
         </div> 
         <div class="bubble-right"> 
           <div class="bubble-date-time">
