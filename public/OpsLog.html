@@ -568,7 +568,7 @@
       <h3 style="margin-top: 0; color: var(--logo-color); letter-spacing: 1px;">Edit Callout</h3>
       
       <form id="editCalloutForm" autocomplete="off">
-        <input type="hidden" name="calloutId">
+        <input type="hidden" name="calloutId" id="editCalloutId">
         
         <div class="fields-grid">
           <div class="form-group">
@@ -1151,6 +1151,7 @@ if (followForm && followForm.style.display !== 'none') {
       
       // Add double-click handler to open edit menu
       div.ondblclick = function() {
+        console.log('Double-click detected on callout:', data._id);
         editCallout(data._id);
       };
       div.style.cursor = 'pointer';
@@ -1468,7 +1469,10 @@ if (followForm && followForm.style.display !== 'none') {
       }
       
       // Add option buttons
-      options.appendChild(createActionButton("Edit Callout", () => editCallout(id)));
+      options.appendChild(createActionButton("Edit Callout", () => {
+        console.log('Menu edit button clicked for callout:', id);
+        editCallout(id);
+      }));
       options.appendChild(createActionButton("View History", () => calloutHistory(id)));
       options.appendChild(createActionButton("Delete Callout", () => deleteCallout(id)));
       
@@ -1595,6 +1599,7 @@ if (followForm && followForm.style.display !== 'none') {
     console.log("Editing callout:", id);
     const callout = callouts[id];
     if (!callout) {
+      console.error('Callout not found for ID:', id);
       alert('Callout not found');
       return;
     }
@@ -1604,11 +1609,15 @@ if (followForm && followForm.style.display !== 'none') {
     const form = document.getElementById('editCalloutForm');
     
     if (!overlay || !form) {
+      console.error('Edit form elements not found. Overlay:', overlay, 'Form:', form);
       alert('Edit form not found');
       return;
     }
     
+    console.log('Opening edit form for callout:', callout);
+    
     // Populate form fields with callout data
+    form.elements.calloutId.value = id;
     form.elements.classification.value = callout.classification || '';
     form.elements.asset.value = callout.asset || '';
     form.elements.sensor.value = callout.sensor || '';
@@ -1625,16 +1634,7 @@ if (followForm && followForm.style.display !== 'none') {
     form.elements.vehicles.value = callout.vehicles || '';
     form.elements.iaNotes.value = callout.iaNotes || '';
     
-    // Populate follow data if available
-    if (callout.follow) {
-      form.elements.followName.value = callout.follow.name || '';
-      form.elements.followStage.value = callout.follow.stage || '';
-    } else {
-      form.elements.followName.value = '';
-      form.elements.followStage.value = '';
-    }
-    
-    // Store the callout ID in a data attribute on the form
+    // Store the callout ID in a data attribute on the form for group edits
     form.dataset.calloutId = id;
     
     // Auto-grow textareas to fit content
@@ -1642,12 +1642,16 @@ if (followForm && followForm.style.display !== 'none') {
     textareas.forEach(autoGrow);
     
     // Show the overlay
+    console.log('Showing edit overlay');
     overlay.style.display = 'flex';
     
     // Add submit handler if not already added
     if (!form.dataset.handlerAttached) {
+      console.log('Attaching submit handler to edit form');
       form.addEventListener('submit', window.handleEditFormSubmit);
       form.dataset.handlerAttached = 'true';
+    } else {
+      console.log('Submit handler already attached to edit form');
     }
   }
   
@@ -1660,11 +1664,15 @@ if (followForm && followForm.style.display !== 'none') {
   
   window.originalHandleEditFormSubmit = async function(e) {
     e.preventDefault();
+    console.log('Edit form submitted');
     
     // Get form and callout ID
     const form = e.target;
-    const id = form.dataset.calloutId;
+    const id = form.elements.calloutId.value;
+    console.log('Callout ID from form:', id);
+    
     if (!id || !callouts[id]) {
+      console.error('Callout ID not found. ID:', id, 'Available callouts:', Object.keys(callouts));
       alert('Callout ID not found');
       return;
     }
@@ -1693,17 +1701,9 @@ if (followForm && followForm.style.display !== 'none') {
       editedBy: localStorage.getItem('userName') || 'You'
     };
     
-    // Handle follow data
-    const followName = form.elements.followName.value.trim();
-    const followStage = form.elements.followStage.value.trim();
-    
-    if (followName && followStage) {
-      formData.follow = {
-        name: followName,
-        stage: followStage,
-        // Preserve existing follow data if it exists
-        ...(callout.follow || {})
-      };
+    // Preserve existing follow data if it exists (edit form doesn't modify follow data)
+    if (callout.follow) {
+      formData.follow = callout.follow;
     }
     
     try {
@@ -2001,15 +2001,18 @@ if (followForm && followForm.style.display !== 'none') {
   
   // Handle group edit
   function handleGroupEdit() {
+    console.log('Group edit triggered, selected bubbles:', selectedBubbles);
     if (selectedBubbles.length === 0) return;
     
     // Use the last selected bubble for the form initialization
     const lastId = selectedBubbles[selectedBubbles.length - 1];
+    console.log('Using last selected ID for group edit:', lastId);
     
     // Store the list of selected IDs in the form's dataset for later use
     const editForm = document.getElementById('editCalloutForm');
     if (editForm) {
       editForm.dataset.groupEdit = JSON.stringify(selectedBubbles);
+      console.log('Stored group edit IDs in form dataset');
     }
     
     // Call the normal edit function with the last selected bubble
