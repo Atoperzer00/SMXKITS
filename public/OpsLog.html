@@ -1646,12 +1646,12 @@ if (followForm && followForm.style.display !== 'none') {
     
     // Add submit handler if not already added
     if (!form.dataset.handlerAttached) {
-      form.addEventListener('submit', handleEditFormSubmit);
+      form.addEventListener('submit', window.handleEditFormSubmit);
       form.dataset.handlerAttached = 'true';
     }
   }
   
-  function closeEditCallout() {
+  window.closeEditCallout = function() {
     const overlay = document.getElementById('editCalloutOverlay');
     if (overlay) {
       overlay.style.display = 'none';
