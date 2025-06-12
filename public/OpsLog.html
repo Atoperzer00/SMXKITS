@@ -488,6 +488,35 @@
         <!-- Follow container moved here -->
         <div id="followContainer" style="margin-bottom: 12px;">
           <button type="button" id="createFollowBtn" class="submit-btn" style="margin-bottom: 0; background:var(--qc-orange); color:#181c1c; font-weight:600; width: 100%;">Create Follow</button>
+          
+          <!-- Follow Form (initially hidden) -->
+          <div id="followForm" style="display: none; margin-top: 15px; background: var(--panel); border-radius: 8px; padding: 15px;">
+            <div style="margin-bottom: 12px;">
+              <label>Follow Name</label>
+              <input type="text" id="followNameInput" placeholder="Enter follow name"/>
+            </div>
+            
+            <div style="margin-bottom: 12px; display: flex; align-items: center;">
+              <label style="margin-right: 10px;">Follow ID:</label>
+              <span id="followIdDisplay" style="font-family: monospace; font-weight: bold;"></span>
+              <input type="hidden" id="followIdHidden" />
+            </div>
+            
+            <div style="margin-bottom: 12px;">
+              <label>Follow Stage:</label>
+              <div style="margin-top: 8px; display: flex; gap: 8px;">
+                <button type="button" class="stage-btn" data-stage="ADV." style="flex: 1; padding: 8px; border-radius: 5px; border: none; background: var(--button-bg); color: #fafafa; cursor: pointer;">ADVANCE</button>
+                <button type="button" class="stage-btn" data-stage="CONT." style="flex: 1; padding: 8px; border-radius: 5px; border: none; background: var(--button-bg); color: #fafafa; cursor: pointer;">CONT.</button>
+                <button type="button" class="stage-btn" data-stage="END" style="flex: 1; padding: 8px; border-radius: 5px; border: none; background: var(--button-bg); color: #fafafa; cursor: pointer;">END</button>
+              </div>
+            </div>
+            
+            <div style="margin-bottom: 12px; text-align: center;">
+              <div id="followStageLabel" style="font-size: 1.2em; font-weight: bold; margin: 10px 0; padding: 8px; background: var(--input-bg); border-radius: 5px;">START</div>
+              <input type="hidden" id="followStageSelected" value="START" />
+              <input type="hidden" id="followStopNumber" value="0" />
+            </div>
+          </div>
         </div>
         
         <div class="form-group" style="margin-bottom: 12px;">
@@ -500,25 +529,7 @@
           <textarea id="activityTextarea" name="activity" rows="1"></textarea>
         </div>
         
-        <div class="form-group" style="margin-bottom: 12px;">
-          <label>Males</label>
-          <input type="number" name="males" min="0"/>
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 12px;">
-          <label>Females</label>
-          <input type="number" name="females" min="0"/>
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 12px;">
-          <label>Children</label>
-          <input type="number" name="children" min="0"/>
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 12px;">
-          <label>Vehicles</label>
-          <input type="number" name="vehicles" min="0"/>
-        </div>
+        <div class="divider" style="margin: 15px 0;"></div>
         
         <div class="form-group" style="margin-bottom: 12px;">
           <label>IA Notes</label>
@@ -1091,17 +1102,21 @@ if (document.querySelector('[data-follow-section="true"]')) {
             <span><b>${data.asset || '-'}</b></span> 
           </div> 
           <div class="bubble-row">${data.location || '-'}</div> 
-          ${ hasFollow ? `<div class="bubble-row follow-title">
-            <b>${data.follow.name} / ${data.follow.stage}</b>
-            ${data.follow.followId ? `<span class="follow-id">#${data.follow.followId}</span>` : ''}
-          </div>` : '' } 
           <div class="bubble-row">${data.activity || '-'}</div> 
           <div class="bubble-row"><b>IA Notes:</b> ${(data.iaNotes||'').replace(/\n/g,'<br>')}</div> 
         </div> 
         <div class="bubble-right"> 
           <span class="bubble-time">${data.zulu || '-'}</span> 
           <span><b>MGRS:</b> <span style="letter-spacing: 0.5px; font-size: 1.05em;">${data.mgrs || '-'}</span></span> 
-          <span><b>SLANT:</b> ${(data.males||0)}/${(data.females||0)}/${(data.children||0)} &nbsp; <b>V:</b> ${(data.vehicles||0)}</span> 
+          ${ hasFollow ? `
+            <div style="margin-top: auto; padding-top: 15px; display: flex; flex-direction: column; align-items: flex-end;">
+              <span style="font-weight: bold; color: var(--follow-blue); text-align: right;">${data.follow.name}</span>
+              <span style="font-weight: bold; color: var(--follow-blue); margin-top: 3px;">
+                ${data.follow.stage}
+                ${data.follow.followId ? `<span style="font-size: 0.8em; display: block; text-align: right;">#${data.follow.followId}</span>` : ''}
+              </span>
+            </div>
+          ` : '' }
         </div>
       `;
       
@@ -1452,11 +1467,7 @@ if (document.querySelector('[data-follow-section="true"]')) {
     element.style.height = (element.scrollHeight) + 'px';
   }
   
-  // Functions addFollow() and updateStage() were removed as they were unused
-  // The follow creation is now handled by the createFollowBtn click handler
-  
-  // The submitFollow function was removed as it was only used with the removed addFollow function
-  // Follow creation is now handled through the form submission
+  // Follow functionality has been moved to the end of the script
   
   // ------ Socket.io Event Listeners ------
   socket.on('new_callout', function(callout) {
@@ -1580,113 +1591,7 @@ if (document.querySelector('[data-follow-section="true"]')) {
       console.log("Activity textarea handler attached");
     }
     
-    // Create Follow button handler
-    const createFollowBtn = document.getElementById('createFollowBtn');
-    if (createFollowBtn) {
-      let followContainer;
-
-      createFollowBtn.addEventListener('click', function() {
-        if (followContainer) {
-          // If the container is already open, close it and revert the button text
-          followContainer.remove();
-          followContainer = null;
-          createFollowBtn.textContent = 'Create Follow';
-          console.log('Follow container closed');
-        } else {
-          // Create the follow container
-          followContainer = document.createElement('div');
-          followContainer.className = 'follow-section'; // Using the existing follow-section class
-          followContainer.dataset.followSection = 'true'; // Add data attribute for detection
-          followContainer.style.marginTop = '10px';
-
-          // Follow Name
-          const nameRow = document.createElement('div');
-          nameRow.style.marginBottom = '10px';
-          const nameLabel = document.createElement('label');
-          nameLabel.textContent = 'Follow Name:';
-          nameLabel.style.marginRight = '10px';
-          const nameInput = document.createElement('input');
-          nameInput.type = 'text';
-          nameInput.id = 'followName';  // Changed to match the expected ID
-          nameInput.placeholder = 'Enter follow name';
-          nameRow.appendChild(nameLabel);
-          nameRow.appendChild(nameInput);
-
-          // Follow ID (auto-generated)
-          const idRow = document.createElement('div');
-          idRow.style.marginBottom = '10px';
-          const idLabel = document.createElement('label');
-          idLabel.textContent = 'Follow ID:';
-          idLabel.style.marginRight = '10px';
-          const idDisplay = document.createElement('span');
-          idDisplay.id = 'followIdDisplay';
-          idDisplay.textContent = `ID-${Date.now()}`; // Auto-generated ID
-          idRow.appendChild(idLabel);
-          idRow.appendChild(idDisplay);
-
-          // Follow Stage
-          const stageRow = document.createElement('div');
-          stageRow.style.marginBottom = '10px';
-          const stageLabel = document.createElement('label');
-          stageLabel.textContent = 'Follow Stage:';
-          stageLabel.style.marginRight = '10px';
-          // Create a button that behaves like the original followStageBtn
-          const stageBtn = document.createElement('button');
-          stageBtn.type = 'button';
-          stageBtn.id = 'followStageBtn';
-          stageBtn.className = 'submit-btn';
-          stageBtn.textContent = 'START';  // Default stage
-          stageBtn.style.padding = '8px 12px';
-          stageBtn.style.minWidth = '100px';
-          stageBtn.style.backgroundColor = 'var(--qc-orange)';
-          
-          // Create a dropdown for selecting stages
-          const stageSelect = document.createElement('select');
-          stageSelect.id = 'stageSelector';
-          stageSelect.style.marginLeft = '10px';
-          
-          // Add stage options
-          ['START', 'CONT.', 'ADV.', 'END'].forEach(stage => {
-            const option = document.createElement('option');
-            option.value = stage;
-            option.textContent = stage;
-            stageSelect.appendChild(option);
-          });
-          
-          // Update the button text when selection changes
-          stageSelect.addEventListener('change', function() {
-            stageBtn.textContent = this.value;
-            // Update window.followState when stage changes
-            if (!window.followState) window.followState = {};
-            window.followState.stage = this.value;
-            window.followState.ended = this.value === 'END';
-          });
-          
-          stageRow.appendChild(stageLabel);
-          stageRow.appendChild(stageBtn);
-          stageRow.appendChild(stageSelect);
-
-          // Append rows to the container
-          followContainer.appendChild(nameRow);
-          followContainer.appendChild(idRow);
-          followContainer.appendChild(stageRow);
-
-          // Initialize window.followState
-          window.followState = {
-            followId: idDisplay.textContent,
-            stage: 'START',
-            ended: false
-          };
-          
-          // Insert the container below the button
-          createFollowBtn.parentNode.insertBefore(followContainer, createFollowBtn.nextSibling);
-
-          // Change button text to "Cancel Follow"
-          createFollowBtn.textContent = 'Cancel Follow';
-          console.log('Follow container created with ID:', idDisplay.textContent);
-        }
-      });
-      console.log("Create Follow button handler attached");
+    // Create Follow button handler is now at the end of the script
     } else {
       console.error("Create Follow button not found with ID 'createFollowBtn'");
     }
@@ -1767,7 +1672,104 @@ if (document.querySelector('[data-follow-section="true"]')) {
     } else {
         console.error('History overlay not found');
     }
-}
+  }
+  
+  // Function to directly set QC to "In Review" when the QC button is clicked
+  function showQCMenu(event, btn, id) {
+    event.stopPropagation();
+    // Directly set the QC status to "In Review" (yellow)
+    updateQC(id, 'qc-yellow');
+  }
+  
+  // --- FOLLOW LOGIC --- //
+  document.addEventListener('DOMContentLoaded', function () {
+    const createFollowBtn = document.getElementById('createFollowBtn');
+    const followForm = document.getElementById('followForm');
+    const followNameInput = document.getElementById('followNameInput');
+    const followIdDisplay = document.getElementById('followIdDisplay');
+    const followIdHidden = document.getElementById('followIdHidden');
+    const followStageHidden = document.getElementById('followStageSelected');
+    const followStopNumberInput = document.getElementById('followStopNumber');
+    const stageLabel = document.getElementById('followStageLabel');
+    let stopNumber = 0; // 0 means START, 1+ means STOP N
+    let showCont = false;
+    let ended = false;
+    let prevStageText = "START";
+    
+    createFollowBtn.onclick = () => {
+      const open = followForm.style.display === 'block';
+      followForm.style.display = open ? 'none' : 'block';
+      createFollowBtn.textContent = open ? "Create Follow" : "Remove Follow";
+      if (!open) {
+        const id = Math.random().toString(36).substr(2, 6).toUpperCase();
+        followIdHidden.value = id;
+        followIdDisplay.textContent = id;
+        followNameInput.value = '';
+        stopNumber = 0;
+        showCont = false;
+        ended = false;
+        prevStageText = "START";
+        followStopNumberInput.value = stopNumber;
+        followStageHidden.value = "START";
+        updateStageLabel();
+        updateStageButtons();
+      } else {
+        followIdHidden.value = '';
+        followIdDisplay.textContent = '';
+        followNameInput.value = '';
+        followStageHidden.value = '';
+        stageLabel.textContent = '';
+      }
+    };
+    
+    document.querySelectorAll('.stage-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const stage = btn.dataset.stage;
+        if (stage === "ADV.") {
+          if (!ended) {
+            stopNumber += 1;
+            followStopNumberInput.value = stopNumber;
+          }
+        } else if (stage === "CONT.") {
+          showCont = !showCont;
+        } else if (stage === "END") {
+          if (!ended) {
+            prevStageText = stageLabel.textContent;
+            ended = true;
+          } else {
+            ended = false;
+          }
+        }
+        updateStageLabel();
+        updateStageButtons();
+      });
+    });
+    
+    function updateStageLabel() {
+      if (ended) {
+        stageLabel.textContent = "END";
+        followStageHidden.value = "END";
+        return;
+      }
+      let labelText = stopNumber === 0 ? "START" : "STOP " + stopNumber;
+      if (showCont) {
+        labelText += " CONT.";
+      }
+      stageLabel.textContent = labelText;
+      followStageHidden.value = labelText;
+    }
+    
+    function updateStageButtons() {
+      document.querySelectorAll('.stage-btn').forEach(btn => {
+        let active = false;
+        const stage = btn.dataset.stage;
+        if (stage === "END" && ended) active = true;
+        if (stage === "CONT." && showCont && !ended) active = true;
+        btn.style.background = active ? 'var(--qc-orange)' : 'var(--button-bg)';
+        btn.style.color = active ? '#181c1c' : '#fafafa';
+      });
+    }
+  });
   
 </script>
 </body>
