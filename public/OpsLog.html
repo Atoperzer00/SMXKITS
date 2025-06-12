@@ -48,11 +48,7 @@
       min-width: 300px;
       max-width: 800px;
       background: var(--sidebar);
-      padding: 28px 18px 18px 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-      box-sizing: border-box;
+      padding: 28px 18px;
       border-right: 2px solid var(--inactive);
       overflow-y: auto;
       position: relative;
@@ -185,11 +181,11 @@
 
     /* Log Bubbles */
     .bubble {
-      background: var(--bubble-bg);
+      background: linear-gradient(135deg, #1e1e1e, #23272e);
       color: var(--bubble-text);
       border: 2.5px solid var(--inactive);
       border-radius: 18px;
-      box-shadow: 0 4px 28px #00000045;
+      box-shadow: 0 4px 28px rgba(0, 0, 0, 0.45);
       padding: 24px 34px 19px 24px;
       position: relative;
       transition: border-color 0.22s, box-shadow 0.22s, transform 0.15s;
@@ -216,7 +212,7 @@
     }
     
     .bubble.qc-green.student-locked::before {
-      content: "🔒 APPROVED";
+      content: "APPROVED";
       position: absolute;
       top: -8px;
       right: 10px;
@@ -372,13 +368,16 @@
       font-size: 0.98em;
     }
     select {
-      cursor: pointer;
-      appearance: none;
-      -webkit-appearance: none;
-      background-image: url('data:image/svg+xml;utf8,<svg fill="gray" height="16" viewBox="0 0 20 20" width="16" xmlns="http://www.w3.org/2000/svg"><path d="M7.293 8.293l3.293 3.293 3.293-3.293 1.414 1.414-4.707 4.707-4.707-4.707z"/></svg>');
-      background-repeat: no-repeat;
-      background-position: right 14px center;
-      padding-right: 34px;
+      background: var(--input-bg);
+      color: var(--bubble-text);
+      border: 2px solid var(--input-border);
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 1em;
+    }
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent);
     }
     .submit-btn {
       background: var(--accent);
@@ -441,6 +440,9 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--inactive) transparent;
     }
     
     .modal-content h3 {
@@ -1767,6 +1769,7 @@ if (followForm && followForm.style.display !== 'none') {
     }
   }
   
+ 
   
   async function deleteCallout(id) {
     closeCalloutMenu();
@@ -2016,6 +2019,30 @@ if (followForm && followForm.style.display !== 'none') {
     
     input.value = value;
   }
+  
+  /* Added logic to populate follow info in the create follow bubble */
+const calloutElements = document.querySelectorAll('.bubble');
+const createFollowBubble = document.getElementById('createFollowBubble');
+
+calloutElements.forEach(callout => {
+  callout.addEventListener('dragstart', (e) => {
+    e.dataTransfer.setData('calloutInfo', JSON.stringify({
+      id: callout.dataset.id,
+      content: callout.textContent.trim()
+    }));
+  });
+});
+
+createFollowBubble.addEventListener('dragover', (e) => {
+  e.preventDefault();
+});
+
+createFollowBubble.addEventListener('drop', (e) => {
+  e.preventDefault();
+  const calloutInfo = JSON.parse(e.dataTransfer.getData('calloutInfo'));
+  const followContent = document.getElementById('followContent');
+  followContent.textContent = calloutInfo.content;
+});
   
   // Follow functionality has been moved to the end of the script
   
@@ -2546,10 +2573,10 @@ if (followForm && followForm.style.display !== 'none') {
       // Handle Enter key and blur to save
       function saveFollowId() {
         const newId = followIdEdit.value.trim().toUpperCase();
-        if (newId && newId.length <= 10) { // Validate length
+        if (newId && newId.length <= 10) // Validate length
           followIdHidden.value = newId;
           followIdDisplay.textContent = newId;
-        }
+        
         // Hide input, show display
         followIdEdit.style.display = 'none';
         followIdDisplay.style.display = 'inline-block';
