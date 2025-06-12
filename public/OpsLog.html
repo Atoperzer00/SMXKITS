@@ -430,23 +430,41 @@
     .modal-content {
       background: var(--sidebar);
       color: #f5f6f7;
-      padding: 34px 38px 32px 38px;
       border-radius: 14px;
-      min-width: 400px;
-      max-width: 98vw;
-      max-height: 85vh;
+      width: 700px;
+      height: 80vh;
+      max-width: 95vw;
+      max-height: 90vh;
       box-shadow: 0 10px 60px #00000069;
       position: relative;
       font-size: 1.08em;
       display: flex;
       flex-direction: column;
+      overflow: hidden;
+    }
+    
+    .modal-content h3 {
+      margin: 0 0 20px 0;
+      padding: 20px 30px 0 30px;
+      color: var(--logo-color);
+      letter-spacing: 1px;
+      flex-shrink: 0;
     }
     
     .modal-content .fields-grid {
+      flex: 1;
       overflow-y: auto;
-      max-height: calc(85vh - 150px);
-      padding-right: 10px;
-      margin-bottom: 20px;
+      padding: 0 30px 20px 30px;
+      margin: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px 24px;
+      align-items: flex-start;
+    }
+    
+    .modal-content .submit-btn {
+      margin: 0 30px 30px 30px;
+      flex-shrink: 0;
     }
     
     .modal-content .fields-grid::-webkit-scrollbar {
@@ -612,12 +630,13 @@
 <body>
   <!-- Edit Callout Overlay -->
   <div id="editCalloutOverlay" class="modal" style="display: none;">
-    <div class="modal-content" style="max-width: 700px;">
+    <div class="modal-content">
       <button class="modal-close" onclick="closeEditCallout()">&times;</button>
-      <h3 style="margin-top: 0; color: var(--logo-color); letter-spacing: 1px;">Edit Callout</h3>
       
       <form id="editCalloutForm" autocomplete="off">
         <input type="hidden" name="calloutId" id="editCalloutId">
+        
+        <h3>Edit Callout</h3>
         
         <div class="fields-grid">
           <div class="form-group">
@@ -678,7 +697,7 @@
           
           <div class="form-group" style="grid-column: 1 / span 2;">
             <label>IA Notes</label>
-            <textarea name="iaNotes" rows="3"></textarea>
+            <textarea name="iaNotes" rows="3" oninput="autoGrow(this)"></textarea>
           </div>
           
           <!-- SLANT and Vehicles row -->
@@ -694,7 +713,7 @@
           </div>
         </div>
         
-        <button type="submit" class="submit-btn" style="width: 100%; margin-top: 24px;">Save Changes</button>
+        <button type="submit" class="submit-btn">Save Changes</button>
       </form>
     </div>
   </div>
@@ -770,8 +789,10 @@
             
             <div style="margin-bottom: 12px; display: flex; align-items: center;">
               <label style="margin-right: 10px;">Follow ID:</label>
-              <span id="followIdDisplay" style="font-family: monospace; font-weight: bold;"></span>
+              <span id="followIdDisplay" style="font-family: monospace; font-weight: bold; cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background 0.2s;" 
+                    title="Double-click to edit"></span>
               <input type="hidden" id="followIdHidden" />
+              <input type="text" id="followIdEdit" style="font-family: monospace; font-weight: bold; display: none; width: 80px; padding: 2px 4px; border: 1px solid var(--accent); border-radius: 3px; background: var(--input-bg); color: #f5f6f7;" />
             </div>
             
             <div style="margin-bottom: 12px;">
@@ -1722,6 +1743,19 @@ if (followForm && followForm.style.display !== 'none') {
       }
       
       const updated = await response.json();
+      console.log('QC Update - Original callout:', callout);
+      console.log('QC Update - Updated callout from server:', updated);
+      
+      // Ensure SLANT and vehicles are preserved if missing from server response
+      if (!updated.slant && callout.slant) {
+        updated.slant = callout.slant;
+        console.log('Preserved SLANT:', updated.slant);
+      }
+      if (updated.vehicles === undefined && callout.vehicles !== undefined) {
+        updated.vehicles = callout.vehicles;
+        console.log('Preserved vehicles:', updated.vehicles);
+      }
+      
       callouts[id] = updated;
       
       // Use createBubble to update the existing callout in place
@@ -1926,6 +1960,18 @@ if (followForm && followForm.style.display !== 'none') {
       
       // Get the updated callout data
       const updated = await response.json();
+      console.log('Edit Form - Form data sent:', formData);
+      console.log('Edit Form - Updated callout from server:', updated);
+      
+      // Ensure SLANT and vehicles are preserved if missing from server response
+      if (!updated.slant && formData.slant) {
+        updated.slant = formData.slant;
+        console.log('Preserved SLANT from form:', updated.slant);
+      }
+      if (updated.vehicles === undefined && formData.vehicles !== undefined) {
+        updated.vehicles = formData.vehicles;
+        console.log('Preserved vehicles from form:', updated.vehicles);
+      }
       
       // Update the callout in our local store
       callouts[id] = updated;
@@ -2464,6 +2510,56 @@ if (followForm && followForm.style.display !== 'none') {
       }
     };
     
+    // Hidden feature: Double-click follow ID to edit
+    const followIdEdit = document.getElementById('followIdEdit');
+    if (followIdDisplay && followIdEdit) {
+      // Add hover effect
+      followIdDisplay.addEventListener('mouseenter', function() {
+        this.style.background = 'rgba(34, 197, 94, 0.1)';
+      });
+      
+      followIdDisplay.addEventListener('mouseleave', function() {
+        this.style.background = 'transparent';
+      });
+      
+      // Double-click to edit
+      followIdDisplay.addEventListener('dblclick', function() {
+        if (this.textContent.trim() === '') return; // Don't edit if empty
+        
+        // Hide display, show input
+        followIdDisplay.style.display = 'none';
+        followIdEdit.style.display = 'inline-block';
+        followIdEdit.value = this.textContent;
+        followIdEdit.focus();
+        followIdEdit.select();
+      });
+      
+      // Handle Enter key and blur to save
+      function saveFollowId() {
+        const newId = followIdEdit.value.trim().toUpperCase();
+        if (newId && newId.length <= 10) { // Validate length
+          followIdHidden.value = newId;
+          followIdDisplay.textContent = newId;
+        }
+        // Hide input, show display
+        followIdEdit.style.display = 'none';
+        followIdDisplay.style.display = 'inline-block';
+      }
+      
+      followIdEdit.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          saveFollowId();
+        } else if (e.key === 'Escape') {
+          // Cancel edit
+          followIdEdit.style.display = 'none';
+          followIdDisplay.style.display = 'inline-block';
+        }
+      });
+      
+      followIdEdit.addEventListener('blur', saveFollowId);
+    }
+    
     document.querySelectorAll('.stage-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const stage = btn.dataset.stage;
@@ -2563,6 +2659,13 @@ if (followForm && followForm.style.display !== 'none') {
       const data = JSON.parse(event.dataTransfer.getData('text/plain'));
       console.log("Dropped callout data:", data);
       
+      // Debug follow data specifically
+      if (data.follow) {
+        console.log("Follow data found in dropped callout:", data.follow);
+      } else {
+        console.log("No follow data in dropped callout");
+      }
+      
       // Fill form with callout data
       const form = document.getElementById('logForm');
       if (form) {
@@ -2591,8 +2694,18 @@ if (followForm && followForm.style.display !== 'none') {
             const isFormOpen = followForm.style.display === 'block';
             
             if (!isFormOpen) {
-              // Show the follow form by simulating a click
-              createFollowBtn.click();
+              // Manually expand the follow form instead of clicking
+              followForm.style.display = 'block';
+              createFollowBtn.textContent = "Remove Follow";
+              
+              // Generate a new ID if needed
+              const followIdHidden = document.getElementById('followIdHidden');
+              const followIdDisplay = document.getElementById('followIdDisplay');
+              if (!followIdHidden.value) {
+                const newId = Math.random().toString(36).substr(2, 6).toUpperCase();
+                followIdHidden.value = newId;
+                followIdDisplay.textContent = newId;
+              }
             }
             
             // Wait a moment for the form to appear, then fill in follow data
@@ -2603,7 +2716,7 @@ if (followForm && followForm.style.display !== 'none') {
                 console.log('Set follow name:', data.follow.name);
               }
               
-              // Set follow ID (overwrite the auto-generated one)
+              // Set follow ID (overwrite the auto-generated one if provided)
               const followIdHidden = document.getElementById('followIdHidden');
               const followIdDisplay = document.getElementById('followIdDisplay');
               if (data.follow.followId) {
@@ -2631,8 +2744,20 @@ if (followForm && followForm.style.display !== 'none') {
                   followStageLabel.textContent = data.follow.stage;
                   console.log('Set follow stage label:', data.follow.stage);
                 }
+                
+                // Also update the stop number if it's a STOP stage
+                const followStopNumber = document.getElementById('followStopNumber');
+                if (followStopNumber && data.follow.stage.startsWith('STOP')) {
+                  const stopNum = data.follow.stage.match(/\d+/);
+                  if (stopNum) {
+                    followStopNumber.value = stopNum[0];
+                    console.log('Set follow stop number:', stopNum[0]);
+                  }
+                }
               }
-            }, 150); // Slightly longer delay to ensure form is fully rendered
+              
+              console.log('Follow form populated successfully');
+            }, 100); // Reduced delay since we're not clicking
           }
         }
       }
