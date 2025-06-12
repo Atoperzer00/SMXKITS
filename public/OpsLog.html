@@ -730,22 +730,13 @@
       console.log("Log form submitted");
       const data = Object.fromEntries(new FormData(form));
 let follow = undefined;
-// Check if follow information is being provided
-if (document.getElementById('followNameInput') && document.getElementById('followStageSelect')) {
-  const followName = document.getElementById('followNameInput').value;
-  const followStage = document.getElementById('followStageSelect').value;
-  const followId = document.getElementById('followIdDisplay') ? 
-    document.getElementById('followIdDisplay').textContent : 
-    Math.random().toString(36).substr(2, 6).toUpperCase();
-    
-  if (followName && followStage) {
-    follow = {
-      name: followName,
-      stage: followStage,
-      followId: followId,
-      ended: followStage === 'END'
-    };
-  }
+if (document.querySelector('[data-follow-section="true"]')) {
+  follow = {
+    name: document.getElementById('followName').value,
+    stage: document.getElementById('followStageBtn').textContent,
+    followId: window.followState?.followId || Math.random().toString(36).substr(2, 6).toUpperCase(),
+    ended: window.followState?.ended || (window.followState?.stage === 3) || false
+  };
 }
       
       const payload = {
@@ -1604,7 +1595,8 @@ if (document.getElementById('followNameInput') && document.getElementById('follo
         } else {
           // Create the follow container
           followContainer = document.createElement('div');
-          followContainer.className = 'follow-container';
+          followContainer.className = 'follow-section'; // Using the existing follow-section class
+          followContainer.dataset.followSection = 'true'; // Add data attribute for detection
           followContainer.style.marginTop = '10px';
 
           // Follow Name
@@ -1615,7 +1607,7 @@ if (document.getElementById('followNameInput') && document.getElementById('follo
           nameLabel.style.marginRight = '10px';
           const nameInput = document.createElement('input');
           nameInput.type = 'text';
-          nameInput.id = 'followNameInput';
+          nameInput.id = 'followName';  // Changed to match the expected ID
           nameInput.placeholder = 'Enter follow name';
           nameRow.appendChild(nameLabel);
           nameRow.appendChild(nameInput);
@@ -1638,25 +1630,60 @@ if (document.getElementById('followNameInput') && document.getElementById('follo
           const stageLabel = document.createElement('label');
           stageLabel.textContent = 'Follow Stage:';
           stageLabel.style.marginRight = '10px';
-          // Using a simpler input for follow stage
-          const stageInput = document.createElement('input');
-          stageInput.type = 'text';
-          stageInput.id = 'followStageSelect';
-          stageInput.placeholder = 'Enter stage';
+          // Create a button that behaves like the original followStageBtn
+          const stageBtn = document.createElement('button');
+          stageBtn.type = 'button';
+          stageBtn.id = 'followStageBtn';
+          stageBtn.className = 'submit-btn';
+          stageBtn.textContent = 'START';  // Default stage
+          stageBtn.style.padding = '8px 12px';
+          stageBtn.style.minWidth = '100px';
+          stageBtn.style.backgroundColor = 'var(--qc-orange)';
+          
+          // Create a dropdown for selecting stages
+          const stageSelect = document.createElement('select');
+          stageSelect.id = 'stageSelector';
+          stageSelect.style.marginLeft = '10px';
+          
+          // Add stage options
+          ['START', 'CONT.', 'ADV.', 'END'].forEach(stage => {
+            const option = document.createElement('option');
+            option.value = stage;
+            option.textContent = stage;
+            stageSelect.appendChild(option);
+          });
+          
+          // Update the button text when selection changes
+          stageSelect.addEventListener('change', function() {
+            stageBtn.textContent = this.value;
+            // Update window.followState when stage changes
+            if (!window.followState) window.followState = {};
+            window.followState.stage = this.value;
+            window.followState.ended = this.value === 'END';
+          });
+          
           stageRow.appendChild(stageLabel);
-          stageRow.appendChild(stageInput);
+          stageRow.appendChild(stageBtn);
+          stageRow.appendChild(stageSelect);
 
           // Append rows to the container
           followContainer.appendChild(nameRow);
           followContainer.appendChild(idRow);
           followContainer.appendChild(stageRow);
 
+          // Initialize window.followState
+          window.followState = {
+            followId: idDisplay.textContent,
+            stage: 'START',
+            ended: false
+          };
+          
           // Insert the container below the button
           createFollowBtn.parentNode.insertBefore(followContainer, createFollowBtn.nextSibling);
 
           // Change button text to "Cancel Follow"
           createFollowBtn.textContent = 'Cancel Follow';
-          console.log('Follow container created');
+          console.log('Follow container created with ID:', idDisplay.textContent);
         }
       });
       console.log("Create Follow button handler attached");
