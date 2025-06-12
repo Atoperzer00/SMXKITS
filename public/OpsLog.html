@@ -957,6 +957,20 @@
     el.style.height = (el.scrollHeight)+'px';
   }
   
+  // Format SLANT input to #/#/# pattern
+  function formatSlant(input) {
+    let value = input.value.replace(/[^0-9]/g, ''); // Remove non-digits
+    if (value.length > 0) {
+      if (value.length <= 1) {
+        input.value = value;
+      } else if (value.length <= 2) {
+        input.value = value.charAt(0) + '/' + value.charAt(1);
+      } else {
+        input.value = value.charAt(0) + '/' + value.charAt(1) + '/' + value.substring(2, 3);
+      }
+    }
+  }
+  
   // ------ Core UI Functions ------
   function openRoomModal() { 
     console.log("Opening room modal");
