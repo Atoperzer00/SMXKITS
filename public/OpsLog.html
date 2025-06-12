@@ -208,6 +208,27 @@
     .bubble.qc-yellow { border-color: var(--qc-yellow);}
     .bubble.qc-green  { border-color: var(--qc-green);}
     .bubble.qc-red    { border-color: var(--qc-red);}
+    
+    /* Approved callout styling for students */
+    .bubble.qc-green.student-locked {
+      position: relative;
+      opacity: 0.9;
+    }
+    
+    .bubble.qc-green.student-locked::before {
+      content: "🔒 APPROVED";
+      position: absolute;
+      top: -8px;
+      right: 10px;
+      background: var(--qc-green);
+      color: #000;
+      font-size: 0.7em;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 10px;
+      z-index: 5;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
     .bubble-flex { display: flex; justify-content: space-between; align-items: flex-start; gap: 40px; } 
     .bubble-left, .bubble-right { display: flex; flex-direction: column; gap: 8px; } 
     .bubble-left { flex: 1; width: 70%; } /* Increased width for left section */
@@ -413,9 +434,37 @@
       border-radius: 14px;
       min-width: 400px;
       max-width: 98vw;
+      max-height: 85vh;
       box-shadow: 0 10px 60px #00000069;
       position: relative;
       font-size: 1.08em;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .modal-content .fields-grid {
+      overflow-y: auto;
+      max-height: calc(85vh - 150px);
+      padding-right: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .modal-content .fields-grid::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    .modal-content .fields-grid::-webkit-scrollbar-track {
+      background: var(--input-bg);
+      border-radius: 4px;
+    }
+    
+    .modal-content .fields-grid::-webkit-scrollbar-thumb {
+      background: var(--accent);
+      border-radius: 4px;
+    }
+    
+    .modal-content .fields-grid::-webkit-scrollbar-thumb:hover {
+      background: #28dd6c;
     }
     .modal-close {
       position: absolute;
@@ -632,24 +681,16 @@
             <textarea name="iaNotes" rows="3"></textarea>
           </div>
           
+          <!-- SLANT and Vehicles row -->
           <div class="form-group">
-            <label>Males</label>
-            <input type="number" name="males" min="0" value="0"/>
-          </div>
-          
-          <div class="form-group">
-            <label>Females</label>
-            <input type="number" name="females" min="0" value="0"/>
-          </div>
-          
-          <div class="form-group">
-            <label>Children</label>
-            <input type="number" name="children" min="0" value="0"/>
+            <label>SLANT</label>
+            <input type="text" name="slant" placeholder="#/#/#" maxlength="10" 
+                   oninput="formatSlant(this)" title="Format: #/#/# (Size/Activity/Location)"/>
           </div>
           
           <div class="form-group">
             <label>Vehicles</label>
-            <input type="number" name="vehicles" min="0" value="0"/>
+            <input type="number" name="vehicles" min="0" value="0" style="text-align: center;"/>
           </div>
         </div>
         
@@ -767,6 +808,19 @@
         <div class="form-group" style="margin-bottom: 12px;">
           <label>IA Notes</label>
           <textarea name="iaNotes" rows="1" oninput="autoGrow(this)"></textarea>
+        </div>
+        
+        <!-- SLANT and Vehicles row -->
+        <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+          <div class="form-group" style="flex: 2;">
+            <label>SLANT</label>
+            <input type="text" name="slant" placeholder="#/#/#" maxlength="10" 
+                   oninput="formatSlant(this)" title="Format: #/#/# (Size/Activity/Location)"/>
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label>Vehicles</label>
+            <input type="number" name="vehicles" min="0" value="0" style="text-align: center;"/>
+          </div>
         </div>
         
         <button type="submit" class="submit-btn" style="width: 100%;">Submit</button>
@@ -1139,6 +1193,15 @@ if (followForm && followForm.style.display !== 'none') {
         if (data.follow && data.follow.name) {
           existingBubble.classList.add('has-follow');
         }
+        
+        // Add student-locked class for approved callouts when user is student
+        const userRole = localStorage.getItem('role') || 'student';
+        if (userRole === 'student' && data.qc === 'qc-green') {
+          existingBubble.classList.add('student-locked');
+        } else {
+          existingBubble.classList.remove('student-locked');
+        }
+        
         // Update the bubble content without recreating it
         updateBubbleContent(existingBubble, data);
         return;
@@ -1149,17 +1212,44 @@ if (followForm && followForm.style.display !== 'none') {
       div.className = "bubble " + (data.qc || "qc-orange"); 
       div.id = 'callout_' + data._id;
       
+      // Add student-locked class for approved callouts when user is student
+      const userRole = localStorage.getItem('role') || 'student';
+      if (userRole === 'student' && data.qc === 'qc-green') {
+        div.classList.add('student-locked');
+      }
+      
       // Add double-click handler to open edit menu
       div.ondblclick = function() {
         console.log('Double-click detected on callout:', data._id);
+        const userRole = localStorage.getItem('role') || 'student';
+        const isApproved = data.qc === 'qc-green';
+        
+        if (userRole === 'student' && isApproved) {
+          alert('Access Denied: Students cannot edit approved callouts.\n\nThis callout has been approved and can only be modified by instructors.');
+          return;
+        }
+        
         editCallout(data._id);
       };
       div.style.cursor = 'pointer';
-      div.title = 'Double-click to edit';
+      
+      // Update title based on permissions
+      const userRole = localStorage.getItem('role') || 'student';
+      const isApproved = data.qc === 'qc-green';
+      if (userRole === 'student' && isApproved) {
+        div.title = 'Approved callout - Instructor access required to edit';
+        div.style.cursor = 'not-allowed';
+      } else {
+        div.title = 'Double-click to edit';
+      }
       
       // Make callout draggable
       div.setAttribute('draggable', 'true');
       div.addEventListener('dragstart', function(e) {
+        console.log('Dragging callout with data:', data);
+        if (data.follow) {
+          console.log('Follow data included:', data.follow);
+        }
         e.dataTransfer.setData('text/plain', JSON.stringify(data));
       });
       
@@ -1232,7 +1322,7 @@ if (followForm && followForm.style.display !== 'none') {
             <span class="bubble-time">${data.zulu || '-'}</span>
           </div>
           <span><b>MGRS:</b> <span style="letter-spacing: 0.5px; font-size: 1.05em;">${data.mgrs || '-'}</span></span> 
-          <span><b>SLANT:</b> ${(data.males||0)}/${(data.females||0)}/${(data.children||0)} &nbsp; <b>V:</b> ${(data.vehicles||0)}</span> 
+          <span><b>S:</b> ${data.slant || '-'} &nbsp; <b>VIC:</b> ${data.vehicles || '0'}</span> 
         </div>
       `;
       
@@ -1401,6 +1491,7 @@ if (followForm && followForm.style.display !== 'none') {
             <span class="bubble-time">${data.zulu || '-'}</span>
           </div>
           <span><b>MGRS:</b> <span style="letter-spacing: 0.5px; font-size: 1.05em;">${data.mgrs || '-'}</span></span> 
+          <span><b>S:</b> ${data.slant || '-'} &nbsp; <b>VIC:</b> ${data.vehicles || '0'}</span>
           ${ hasFollow ? `
             <div style="margin-top: auto; padding-top: 15px; display: flex; flex-direction: column; align-items: flex-end;">
               <span style="font-weight: bold; color: var(--follow-blue); text-align: right;">${data.follow.name}</span>
@@ -1468,15 +1559,43 @@ if (followForm && followForm.style.display !== 'none') {
         return button;
       }
       
-      // Add option buttons
-      options.appendChild(createActionButton("Edit Callout", () => {
-        console.log('Menu edit button clicked for callout:', id);
-        editCallout(id);
-      }));
-      options.appendChild(createActionButton("View History", () => calloutHistory(id)));
-      options.appendChild(createActionButton("Delete Callout", () => deleteCallout(id)));
+      // Check user role and callout status for restrictions
+      const userRole = localStorage.getItem('role') || 'student';
+      const callout = callouts[id];
+      const isApproved = callout && callout.qc === 'qc-green';
+      const isStudent = userRole === 'student';
       
-      // QC options
+      // Add option buttons with restrictions
+      if (isStudent && isApproved) {
+        // For students viewing approved callouts, show restricted options
+        const restrictedEditBtn = createActionButton("Edit Callout 🔒", () => {
+          alert('Access Denied: Students cannot edit approved callouts.\n\nThis callout has been approved and can only be modified by instructors.');
+        });
+        restrictedEditBtn.style.opacity = '0.6';
+        restrictedEditBtn.style.color = '#999';
+        options.appendChild(restrictedEditBtn);
+      } else {
+        options.appendChild(createActionButton("Edit Callout", () => {
+          console.log('Menu edit button clicked for callout:', id);
+          editCallout(id);
+        }));
+      }
+      
+      options.appendChild(createActionButton("View History", () => calloutHistory(id)));
+      
+      if (isStudent && isApproved) {
+        // For students viewing approved callouts, show restricted delete option
+        const restrictedDeleteBtn = createActionButton("Delete Callout 🔒", () => {
+          alert('Access Denied: Students cannot delete approved callouts.\n\nThis callout has been approved and can only be deleted by instructors.');
+        });
+        restrictedDeleteBtn.style.opacity = '0.6';
+        restrictedDeleteBtn.style.color = '#999';
+        options.appendChild(restrictedDeleteBtn);
+      } else {
+        options.appendChild(createActionButton("Delete Callout", () => deleteCallout(id)));
+      }
+      
+      // QC options with restrictions
       const qcTitle = document.createElement('div');
       qcTitle.style.marginTop = "10px";
       qcTitle.style.marginBottom = "8px";
@@ -1484,10 +1603,49 @@ if (followForm && followForm.style.display !== 'none') {
       qcTitle.textContent = "Quality Control:";
       options.appendChild(qcTitle);
       
-      options.appendChild(createActionButton("QC: In Progress", () => updateQC(id, 'qc-orange')));
-      options.appendChild(createActionButton("QC: In Review", () => updateQC(id, 'qc-yellow')));
-      options.appendChild(createActionButton("QC: Approved", () => updateQC(id, 'qc-green')));
-      options.appendChild(createActionButton("QC: Issues", () => updateQC(id, 'qc-red')));
+      if (isStudent && isApproved) {
+        // For students viewing approved callouts, show all QC options as restricted
+        const restrictedMsg = document.createElement('div');
+        restrictedMsg.style.fontSize = '0.9em';
+        restrictedMsg.style.color = '#999';
+        restrictedMsg.style.fontStyle = 'italic';
+        restrictedMsg.style.marginBottom = '8px';
+        restrictedMsg.textContent = '🔒 QC status locked - Instructor access required';
+        options.appendChild(restrictedMsg);
+        
+        const restrictedQCBtn = createActionButton("Current: Approved (Locked)", () => {
+          alert('Access Denied: Students cannot modify QC status of approved callouts.\n\nThis callout has been approved and can only be modified by instructors.');
+        });
+        restrictedQCBtn.style.opacity = '0.6';
+        restrictedQCBtn.style.color = '#22c55e';
+        restrictedQCBtn.style.fontWeight = 'bold';
+        options.appendChild(restrictedQCBtn);
+      } else {
+        // Normal QC options
+        options.appendChild(createActionButton("QC: In Progress", () => updateQC(id, 'qc-orange')));
+        options.appendChild(createActionButton("QC: In Review", () => updateQC(id, 'qc-yellow')));
+        
+        if (isStudent) {
+          // Students can't set to Approved or Issues
+          const restrictedApproved = createActionButton("QC: Approved 🔒", () => {
+            alert('Access Denied: Students cannot set QC status to "Approved".\n\nOnly instructors can approve callouts.');
+          });
+          restrictedApproved.style.opacity = '0.6';
+          restrictedApproved.style.color = '#999';
+          options.appendChild(restrictedApproved);
+          
+          const restrictedIssues = createActionButton("QC: Issues 🔒", () => {
+            alert('Access Denied: Students cannot set QC status to "Issues".\n\nOnly instructors can mark callouts as having issues.');
+          });
+          restrictedIssues.style.opacity = '0.6';
+          restrictedIssues.style.color = '#999';
+          options.appendChild(restrictedIssues);
+        } else {
+          // Instructors/admins can set all QC statuses
+          options.appendChild(createActionButton("QC: Approved", () => updateQC(id, 'qc-green')));
+          options.appendChild(createActionButton("QC: Issues", () => updateQC(id, 'qc-red')));
+        }
+      }
       
       // Assemble modal content
       modalContent.appendChild(closeBtn);
@@ -1509,9 +1667,18 @@ if (followForm && followForm.style.display !== 'none') {
     if (!callout) return;
     
     // Check user permissions
-    const userRole = localStorage.getItem('role');
+    const userRole = localStorage.getItem('role') || 'student';
+    const isCurrentlyApproved = callout.qc === 'qc-green';
+    
+    // Students cannot set QC to Approved or Issues
     if (userRole === 'student' && (qcClass === 'qc-green' || qcClass === 'qc-red')) {
-      alert('You do not have permission to set QC: Approved or QC: Issues. Only instructors can perform this action.');
+      alert('Access Denied: Students cannot set QC status to "Approved" or "Issues".\n\nOnly instructors can perform this action.');
+      return;
+    }
+    
+    // Students cannot modify already approved callouts
+    if (userRole === 'student' && isCurrentlyApproved) {
+      alert('Access Denied: Students cannot modify approved callouts.\n\nThis callout has been approved and can only be modified by instructors.');
       return;
     }
     
@@ -1556,10 +1723,20 @@ if (followForm && followForm.style.display !== 'none') {
     closeCalloutMenu();
     
     // Check user permissions
-    const userRole = localStorage.getItem('role');
+    const userRole = localStorage.getItem('role') || 'student';
+    const callout = callouts[id];
+    const isApproved = callout && callout.qc === 'qc-green';
+    
     if (userRole === 'student') {
-      alert('You do not have permission to delete callouts. Only instructors can perform this action.');
+      alert('Access Denied: Students do not have permission to delete callouts.\n\nOnly instructors can perform this action.');
       return;
+    }
+    
+    // Additional check for approved callouts (even for instructors, might want confirmation)
+    if (isApproved) {
+      if (!confirm('This callout has been APPROVED. Are you sure you want to delete it?\n\nThis action cannot be undone.')) {
+        return;
+      }
     }
     
     if (confirm('Are you sure you want to delete this callout?')) {
@@ -1604,6 +1781,15 @@ if (followForm && followForm.style.display !== 'none') {
       return;
     }
     
+    // Check if user is student and callout is approved (qc-green)
+    const userRole = localStorage.getItem('role') || 'student';
+    const isApproved = callout.qc === 'qc-green';
+    
+    if (userRole === 'student' && isApproved) {
+      alert('Access Denied: Students cannot edit approved callouts.\n\nThis callout has been approved and can only be modified by instructors.');
+      return;
+    }
+    
     // Get the edit overlay and form
     const overlay = document.getElementById('editCalloutOverlay');
     const form = document.getElementById('editCalloutForm');
@@ -1628,10 +1814,8 @@ if (followForm && followForm.style.display !== 'none') {
     form.elements.mgrs.value = callout.mgrs || '';
     form.elements.location.value = callout.location || '';
     form.elements.activity.value = callout.activity || '';
-    form.elements.males.value = callout.males || '';
-    form.elements.females.value = callout.females || '';
-    form.elements.children.value = callout.children || '';
-    form.elements.vehicles.value = callout.vehicles || '';
+    form.elements.slant.value = callout.slant || '';
+    form.elements.vehicles.value = callout.vehicles || '0';
     form.elements.iaNotes.value = callout.iaNotes || '';
     
     // Store the callout ID in a data attribute on the form for group edits
@@ -1693,9 +1877,7 @@ if (followForm && followForm.style.display !== 'none') {
       mgrs: form.elements.mgrs.value.trim(),
       location: form.elements.location.value.trim(),
       activity: form.elements.activity.value.trim(),
-      males: parseInt(form.elements.males.value) || 0,
-      females: parseInt(form.elements.females.value) || 0,
-      children: parseInt(form.elements.children.value) || 0,
+      slant: form.elements.slant.value.trim(),
       vehicles: parseInt(form.elements.vehicles.value) || 0,
       iaNotes: form.elements.iaNotes.value.trim(),
       editedBy: localStorage.getItem('userName') || 'You'
@@ -1756,6 +1938,22 @@ if (followForm && followForm.style.display !== 'none') {
     
     element.style.height = 'auto';
     element.style.height = (element.scrollHeight) + 'px';
+  }
+  
+  // Helper function to format SLANT input
+  function formatSlant(input) {
+    let value = input.value.replace(/[^0-9]/g, ''); // Remove non-numeric characters
+    
+    // Format as #/#/# pattern
+    if (value.length >= 1) {
+      if (value.length >= 3) {
+        value = value.substring(0, 1) + '/' + value.substring(1, 2) + '/' + value.substring(2, 3);
+      } else if (value.length >= 2) {
+        value = value.substring(0, 1) + '/' + value.substring(1, 2);
+      }
+    }
+    
+    input.value = value;
   }
   
   // Follow functionality has been moved to the end of the script
@@ -2365,38 +2563,62 @@ if (followForm && followForm.style.display !== 'none') {
         if (data.location) form.elements.location.value = data.location;
         if (data.activity) form.elements.activity.value = data.activity;
         if (data.iaNotes) form.elements.iaNotes.value = data.iaNotes;
-        if (data.males) form.elements.males.value = data.males;
-        if (data.females) form.elements.females.value = data.females;
-        if (data.children) form.elements.children.value = data.children;
+        if (data.slant) form.elements.slant.value = data.slant;
         if (data.vehicles) form.elements.vehicles.value = data.vehicles;
         
         // Handle follow information if present
         if (data.follow && data.follow.name) {
+          console.log('Processing follow data:', data.follow);
           const createFollowBtn = document.getElementById('createFollowBtn');
-          if (createFollowBtn) {
-            // Show the follow form by simulating a click
-            createFollowBtn.click();
+          const followForm = document.getElementById('followForm');
+          
+          if (createFollowBtn && followForm) {
+            // Check if follow form is already open
+            const isFormOpen = followForm.style.display === 'block';
             
-            // Fill in follow data
-            const followNameInput = document.getElementById('followNameInput');
-            if (followNameInput) followNameInput.value = data.follow.name;
+            if (!isFormOpen) {
+              // Show the follow form by simulating a click
+              createFollowBtn.click();
+            }
             
-            if (data.follow.followId) {
+            // Wait a moment for the form to appear, then fill in follow data
+            setTimeout(() => {
+              const followNameInput = document.getElementById('followNameInput');
+              if (followNameInput) {
+                followNameInput.value = data.follow.name;
+                console.log('Set follow name:', data.follow.name);
+              }
+              
+              // Set follow ID (overwrite the auto-generated one)
               const followIdHidden = document.getElementById('followIdHidden');
               const followIdDisplay = document.getElementById('followIdDisplay');
-              if (followIdHidden) followIdHidden.value = data.follow.followId;
-              if (followIdDisplay) followIdDisplay.textContent = data.follow.followId;
-            }
-            
-            // Try to set follow stage
-            if (data.follow.stage) {
-              const followStageHidden = document.getElementById('followStageHidden');
-              if (followStageHidden) followStageHidden.value = data.follow.stage;
+              if (data.follow.followId) {
+                if (followIdHidden) {
+                  followIdHidden.value = data.follow.followId;
+                  console.log('Set follow ID hidden:', data.follow.followId);
+                }
+                if (followIdDisplay) {
+                  followIdDisplay.textContent = data.follow.followId;
+                  console.log('Set follow ID display:', data.follow.followId);
+                }
+              }
               
-              // Update the stage display
-              const stageLabel = document.getElementById('stageLabel');
-              if (stageLabel) stageLabel.textContent = data.follow.stage;
-            }
+              // Set follow stage using correct element IDs
+              if (data.follow.stage) {
+                const followStageSelected = document.getElementById('followStageSelected');
+                if (followStageSelected) {
+                  followStageSelected.value = data.follow.stage;
+                  console.log('Set follow stage selected:', data.follow.stage);
+                }
+                
+                // Update the stage display label
+                const followStageLabel = document.getElementById('followStageLabel');
+                if (followStageLabel) {
+                  followStageLabel.textContent = data.follow.stage;
+                  console.log('Set follow stage label:', data.follow.stage);
+                }
+              }
+            }, 150); // Slightly longer delay to ensure form is fully rendered
           }
         }
       }
