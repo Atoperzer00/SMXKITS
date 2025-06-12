@@ -1230,7 +1230,7 @@ if (followForm && followForm.style.display !== 'none') {
         }
         
         // Add student-locked class for approved callouts when user is student
-        const userRole = localStorage.getItem('role') || 'student';
+        let userRole = localStorage.getItem('role') || 'student';
         if (userRole === 'student' && data.qc === 'qc-green') {
           existingBubble.classList.add('student-locked');
         } else {
@@ -1248,7 +1248,7 @@ if (followForm && followForm.style.display !== 'none') {
       div.id = 'callout_' + data._id;
       
       // Add student-locked class for approved callouts when user is student
-      const userRole = localStorage.getItem('role') || 'student';
+      let userRole = localStorage.getItem('role') || 'student';
       if (userRole === 'student' && data.qc === 'qc-green') {
         div.classList.add('student-locked');
       }
@@ -1256,7 +1256,7 @@ if (followForm && followForm.style.display !== 'none') {
       // Add double-click handler to open edit menu
       div.ondblclick = function() {
         console.log('Double-click detected on callout:', data._id);
-        const userRole = localStorage.getItem('role') || 'student';
+        let userRole = localStorage.getItem('role') || 'student';
         const isApproved = data.qc === 'qc-green';
         
         if (userRole === 'student' && isApproved) {
@@ -1269,7 +1269,7 @@ if (followForm && followForm.style.display !== 'none') {
       div.style.cursor = 'pointer';
       
       // Update title based on permissions
-      const userRole = localStorage.getItem('role') || 'student';
+      userRole = localStorage.getItem('role') || 'student';
       const isApproved = data.qc === 'qc-green';
       if (userRole === 'student' && isApproved) {
         div.title = 'Approved callout - Instructor access required to edit';
@@ -1595,7 +1595,7 @@ if (followForm && followForm.style.display !== 'none') {
       }
       
       // Check user role and callout status for restrictions
-      const userRole = localStorage.getItem('role') || 'student';
+      let userRole = localStorage.getItem('role') || 'student';
       const callout = callouts[id];
       const isApproved = callout && callout.qc === 'qc-green';
       const isStudent = userRole === 'student';
@@ -1702,7 +1702,7 @@ if (followForm && followForm.style.display !== 'none') {
     if (!callout) return;
     
     // Check user permissions
-    const userRole = localStorage.getItem('role') || 'student';
+    let userRole = localStorage.getItem('role') || 'student';
     const isCurrentlyApproved = callout.qc === 'qc-green';
     
     // Students cannot set QC to Approved or Issues
@@ -1766,6 +1766,7 @@ if (followForm && followForm.style.display !== 'none') {
       alert('Error updating QC: ' + error.message);
     }
   }
+  
   
   async function deleteCallout(id) {
     closeCalloutMenu();
