@@ -831,17 +831,17 @@
           <textarea name="iaNotes" rows="1" oninput="autoGrow(this)"></textarea>
         </div>
         
-        <!-- SLANT and Vehicles row -->
-        <div style="display: flex; gap: 12px; margin-bottom: 12px;">
-          <div class="form-group" style="flex: 2;">
-            <label>SLANT</label>
-            <input type="text" name="slant" placeholder="#/#/#" maxlength="10" 
-                   oninput="formatSlant(this)" title="Format: #/#/# (Size/Activity/Location)"/>
-          </div>
-          <div class="form-group" style="flex: 1;">
-            <label>Vehicles</label>
-            <input type="number" name="vehicles" min="0" value="0" style="text-align: center;"/>
-          </div>
+        <!-- SLANT field -->
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>SLANT</label>
+          <input type="text" name="slant" placeholder="#/#/#" maxlength="10" 
+                 oninput="formatSlant(this)" title="Format: #/#/# (Size/Activity/Location)"/>
+        </div>
+        
+        <!-- Vehicles field -->
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Vehicles</label>
+          <input type="number" name="vehicles" min="0" value="0" style="text-align: center;"/>
         </div>
         
         <button type="submit" class="submit-btn" style="width: 100%;">Submit</button>
@@ -1349,12 +1349,12 @@ if (followForm && followForm.style.display !== 'none') {
             ${data.follow.followId ? `<span class="follow-id">#${data.follow.followId}</span>` : ''}
           </div>` : '' } 
           <div class="bubble-row">${data.activity || '-'}</div> 
-          <div class="bubble-row"><b>IA Notes:</b> ${(data.iaNotes||'').replace(/\n/g,'<br>')}</div> 
+          ${data.iaNotes && data.iaNotes.trim() ? `<div class="bubble-row"><b>IA Notes:</b> ${data.iaNotes.replace(/\n/g,'<br>')}</div>` : ''}
         </div> 
         <div class="bubble-right"> 
           <div class="bubble-date-time">
             <span class="bubble-date">${formatDateForBubble(data.createdAt)}</span>
-            <span class="bubble-time">${data.zulu || '-'}</span>
+            <span class="bubble-time">${data.zulu ? data.zulu + 'Z' : '-'}</span>
           </div>
           <span><b>MGRS:</b> <span style="letter-spacing: 0.5px; font-size: 1.05em;">${data.mgrs || '-'}</span></span> 
           <span><b>S:</b> ${data.slant || '-'} &nbsp; <b>VIC:</b> ${data.vehicles || '0'}</span> 
@@ -1518,12 +1518,12 @@ if (followForm && followForm.style.display !== 'none') {
           </div> 
           <div class="bubble-row">${data.location || '-'}</div> 
           <div class="bubble-row">${data.activity || '-'}</div> 
-          <div class="bubble-row"><b>IA Notes:</b> ${(data.iaNotes||'').replace(/\n/g,'<br>')}</div> 
+          ${data.iaNotes && data.iaNotes.trim() ? `<div class="bubble-row"><b>IA Notes:</b> ${data.iaNotes.replace(/\n/g,'<br>')}</div>` : ''}
         </div> 
         <div class="bubble-right"> 
           <div class="bubble-date-time">
             <span class="bubble-date">${formatDateForBubble(data.createdAt)}</span>
-            <span class="bubble-time">${data.zulu || '-'}</span>
+            <span class="bubble-time">${data.zulu ? data.zulu + 'Z' : '-'}</span>
           </div>
           <span><b>MGRS:</b> <span style="letter-spacing: 0.5px; font-size: 1.05em;">${data.mgrs || '-'}</span></span> 
           <span><b>S:</b> ${data.slant || '-'} &nbsp; <b>VIC:</b> ${data.vehicles || '0'}</span>
@@ -1747,11 +1747,11 @@ if (followForm && followForm.style.display !== 'none') {
       console.log('QC Update - Updated callout from server:', updated);
       
       // Ensure SLANT and vehicles are preserved if missing from server response
-      if (!updated.slant && callout.slant) {
+      if ((!updated.slant || updated.slant === '') && callout.slant) {
         updated.slant = callout.slant;
         console.log('Preserved SLANT:', updated.slant);
       }
-      if (updated.vehicles === undefined && callout.vehicles !== undefined) {
+      if ((updated.vehicles === undefined || updated.vehicles === null || updated.vehicles === '') && callout.vehicles !== undefined) {
         updated.vehicles = callout.vehicles;
         console.log('Preserved vehicles:', updated.vehicles);
       }
@@ -1964,11 +1964,11 @@ if (followForm && followForm.style.display !== 'none') {
       console.log('Edit Form - Updated callout from server:', updated);
       
       // Ensure SLANT and vehicles are preserved if missing from server response
-      if (!updated.slant && formData.slant) {
+      if ((!updated.slant || updated.slant === '') && formData.slant) {
         updated.slant = formData.slant;
         console.log('Preserved SLANT from form:', updated.slant);
       }
-      if (updated.vehicles === undefined && formData.vehicles !== undefined) {
+      if ((updated.vehicles === undefined || updated.vehicles === null || updated.vehicles === '') && formData.vehicles !== undefined) {
         updated.vehicles = formData.vehicles;
         console.log('Preserved vehicles from form:', updated.vehicles);
       }
@@ -2524,7 +2524,15 @@ if (followForm && followForm.style.display !== 'none') {
       
       // Double-click to edit
       followIdDisplay.addEventListener('dblclick', function() {
-        if (this.textContent.trim() === '') return; // Don't edit if empty
+        console.log('Double-click detected on follow ID:', this.textContent);
+        
+        // If empty, generate a new ID first
+        if (this.textContent.trim() === '') {
+          const newId = Math.random().toString(36).substr(2, 6).toUpperCase();
+          followIdHidden.value = newId;
+          this.textContent = newId;
+          console.log('Generated new follow ID:', newId);
+        }
         
         // Hide display, show input
         followIdDisplay.style.display = 'none';
