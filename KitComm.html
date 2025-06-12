@@ -15,6 +15,23 @@
       background: rgba(255, 255, 255, 0.25);
       border-radius: 3px;
     }
+    
+    /* Restricted role options styling */
+    #roleSelect option:disabled {
+      color: #666 !important;
+      background-color: #333 !important;
+      font-style: italic;
+    }
+    
+    /* Add visual indicator for restricted roles */
+    .role-restricted {
+      position: relative;
+    }
+    
+    .role-restricted::after {
+      content: " 🔒";
+      color: #ef4444;
+    }
   </style>
 </head>
 <body class="h-screen w-screen bg-zinc-900 text-zinc-100 flex">
@@ -41,6 +58,8 @@
           <option value="JTAC">JTAC</option>
           <option value="SA">SA</option>
         </select>
+        <span class="text-xs opacity-70">|</span>
+        <span id="userInfo" class="text-xs opacity-70">Loading...</span>
       </div>
       <button id="toggleSidebar" class="text-sm bg-zinc-700 px-3 py-1.5 rounded-md hover:bg-zinc-600 hidden md:inline">Toggle Channels</button>
     </header>
@@ -138,10 +157,98 @@
       socket?.send(JSON.stringify(msg));
       chatInputEl.value = "";
     });
+    // ===== Role-based restrictions =====
+    function applyRoleRestrictions() {
+      const userRole = localStorage.getItem('role') || 'student'; // Default to student if no role found
+      const roleSelect = document.getElementById('roleSelect');
+      
+      if (!roleSelect) {
+        console.error('Role select element not found');
+        return;
+      }
+      
+      // Restricted roles that only instructors/admins can use
+      const restrictedRoles = ['ITC', 'Pilot', 'JTAC', 'SA'];
+      
+      console.log('Current user role:', userRole);
+      
+      if (userRole === 'student') {
+        console.log('Applying role restrictions for student user');
+        
+        // Disable restricted options for students
+        Array.from(roleSelect.options).forEach(option => {
+          if (restrictedRoles.includes(option.value)) {
+            option.disabled = true;
+            option.style.color = '#666';
+            option.style.backgroundColor = '#333';
+            option.title = 'This role is restricted to instructors only';
+            // Add lock icon to restricted roles
+            if (!option.textContent.includes('🔒')) {
+              option.textContent = option.textContent + ' 🔒';
+            }
+          }
+        });
+        
+        // If current selection is restricted, change to SCR
+        if (restrictedRoles.includes(roleSelect.value)) {
+          roleSelect.value = 'SCR';
+        }
+        
+        // Add event listener to prevent selection of restricted roles
+        roleSelect.addEventListener('change', function(e) {
+          if (restrictedRoles.includes(e.target.value)) {
+            alert('Access Denied: This role is restricted to instructors only.\n\nAvailable roles for students:\n• SCR (Screener)\n• IA (Intelligence Analyst)');
+            e.target.value = 'SCR'; // Reset to default allowed role
+          }
+        });
+        
+        // Add visual indicator to the select element
+        roleSelect.style.borderLeft = '3px solid #f59e0b';
+        roleSelect.title = 'Some roles are restricted to instructors only';
+        
+      } else {
+        console.log('User has instructor/admin privileges - all roles available');
+        // Remove any restrictions if user is instructor/admin
+        Array.from(roleSelect.options).forEach(option => {
+          option.disabled = false;
+          option.style.color = '';
+          option.style.backgroundColor = '';
+          option.title = '';
+          // Remove lock icons if they exist
+          option.textContent = option.textContent.replace(' 🔒', '');
+        });
+      }
+    }
+    
+    // ===== User Info Display =====
+    function displayUserInfo() {
+      const userName = localStorage.getItem('userName') || 'User';
+      const userRole = localStorage.getItem('role') || 'student';
+      const userInfoEl = document.getElementById('userInfo');
+      
+      // Capitalize first letter of role
+      const roleDisplay = userRole.charAt(0).toUpperCase() + userRole.slice(1);
+      
+      if (userInfoEl) {
+        userInfoEl.textContent = `${userName} (${roleDisplay})`;
+        
+        // Add color coding based on role
+        if (userRole === 'admin') {
+          userInfoEl.style.color = '#ef4444'; // Red for admin
+        } else if (userRole === 'instructor') {
+          userInfoEl.style.color = '#f59e0b'; // Orange for instructor
+        } else {
+          userInfoEl.style.color = '#10b981'; // Green for student
+        }
+      }
+    }
+    
     // ===== Init =====
     renderChannels();
     switchChannel(currentChannel);
     initSocket();
+    displayUserInfo();
+    applyRoleRestrictions();
   </script>
 </body>
 </html>
