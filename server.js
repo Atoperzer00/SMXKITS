@@ -328,14 +328,19 @@ io.on('connection', socket => {
   const activeStreamRooms = new Set();
   
   // Join stream room
-  socket.on('joinStream', async (streamKey) => {
-    if (!streamKey) return;
+  socket.on('join-stream', async (streamKey) => {
+    console.log('🔌 Student attempting to join stream with key:', streamKey);
+    
+    if (!streamKey) {
+      console.log('❌ No stream key provided');
+      return;
+    }
     
     const roomName = `stream:${streamKey}`;
     socket.join(roomName);
     activeStreamRooms.add(roomName);
     
-    console.log(`👤 User joined stream: ${streamKey}`);
+    console.log(`✅ User joined stream room: ${roomName}`);
     
     try {
       // Find class by stream key
