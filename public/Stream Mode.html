@@ -98,7 +98,7 @@
       color: var(--accent);
       margin-bottom: 14px;
     }
-    .class-select, .lesson-select {
+    .class-select {
       width: 100%;
       background: var(--control-bg);
       color: var(--text-main);
@@ -177,6 +177,25 @@
       font-size: 0.8rem;
       font-weight: 600;
     }
+    .video-preview.drop-target {
+      border: 3px dashed var(--accent);
+      background: rgba(69, 162, 255, 0.1);
+      transform: scale(1.02);
+    }
+    .video-preview.drop-target::after {
+      content: '📹 Drop video here to load';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: var(--accent);
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      z-index: 10;
+      pointer-events: none;
+    }
     .controls-row {
       display: flex;
       gap: 18px;
@@ -242,6 +261,22 @@
     .file-drop.dragover::before {
       content: '⬇';
       animation: bounce 0.6s infinite alternate;
+    }
+    .file-drop.has-file {
+      border-color: var(--success);
+      background: linear-gradient(135deg, #0a1a0a 0%, #0f1f0f 100%);
+    }
+    .file-drop.has-file::before {
+      content: '🎬';
+      color: var(--success);
+    }
+    .file-drop.has-file:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+    .file-drop.dragging {
+      opacity: 0.7;
+      transform: rotate(3deg) scale(0.95);
     }
     @keyframes bounce {
       0% { transform: translateY(0); }
@@ -311,10 +346,21 @@
       margin-top: 12px;
       border-left: 4px solid var(--accent);
       display: none;
+      cursor: grab;
+      transition: all 0.2s ease;
     }
     .file-info.show {
       display: block;
       animation: slideIn 0.3s ease;
+    }
+    .file-info:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(69, 162, 255, 0.2);
+    }
+    .file-info.dragging {
+      cursor: grabbing;
+      opacity: 0.7;
+      transform: rotate(5deg) scale(0.95);
     }
     @keyframes slideIn {
       from { opacity: 0; transform: translateY(-10px); }
@@ -329,56 +375,7 @@
       color: var(--text-secondary);
       font-size: 0.9rem;
     }
-    .notice-board {
-      margin-top: 17px;
-      background: var(--control-bg);
-      border-radius: 7px;
-      padding: 13px 12px 11px 12px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .notice-input {
-      flex: 1;
-      background: #141f2b;
-      color: var(--text-main);
-      border: 1px solid var(--border);
-      border-radius: 7px;
-      padding: 8px 12px;
-      font-size: 1rem;
-      font-family: inherit;
-      margin-right: 10px;
-    }
-    .notice-send {
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      padding: 8px 18px;
-      border-radius: 7px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .timeline-bar {
-      background: #172336;
-      height: 8px;
-      border-radius: 8px;
-      margin-top: 14px;
-      position: relative;
-    }
-    .timeline-marker {
-      position: absolute;
-      top: -7px;
-      width: 3px;
-      height: 22px;
-      background: var(--success);
-      border-radius: 3px;
-    }
-    .bookmark-list {
-      margin-top: 12px;
-      color: var(--accent);
-      font-size: .97rem;
-      line-height: 1.8;
-    }
+
     /* Right Panel */
     .settings-section {
       margin-bottom: 30px;
@@ -434,7 +431,7 @@
           <div class="section-title">Stream Preview</div>
           <div class="video-preview" id="videoPreview">
             <div class="placeholder"></div>
-            <video id="previewVideo" style="display:none;" muted controls></video>
+            <video id="previewVideo" style="display:none;" controls></video>
             <div class="video-overlay" id="videoOverlay" style="display:none;">
               <div class="play-button" id="playButton">▶</div>
             </div>
@@ -444,22 +441,14 @@
         <div class="controls-row">
           <button class="control-btn" id="goLiveBtn">Go Live</button>
           <button class="control-btn paused" id="pauseBtn" disabled>Pause</button>
-          <button class="control-btn stop" id="stopBtn" disabled>Stop</button>
+          <button class="control-btn stop" id="stopBtn" disabled>End Live</button>
           <span class="viewers-label">Viewers: <span id="viewerCount">0</span></span>
         </div>
+      </div>
+      <!-- Right: File Upload and Info -->
+      <div class="right-panel">
         <div class="panel-section">
-          <div class="section-title">Lesson / Exercise Library</div>
-          <select id="lessonSelect" class="lesson-select">
-            <option value="">Choose a lesson/exercise...</option>
-            <option value="ex1p1">Exercise 1: Practice 1</option>
-            <option value="ex1p2">Exercise 1: Practice 2</option>
-            <option value="ex2p1">Exercise 2: Practice 1</option>
-            <!-- Dynamically populated from backend -->
-          </select>
-          <button class="control-btn" id="playLessonBtn" style="width:100%;margin:13px 0 0 0;">Stream Selected Lesson</button>
-        </div>
-        <div class="panel-section">
-          <div class="section-title">Stream New Video</div>
+          <div class="section-title">Upload Video</div>
           <div class="file-drop" id="fileDrop">
             <input type="file" id="fileInput" accept="video/mp4" style="display:none;">
             <div><strong>Drop your MP4 video here</strong></div>
@@ -469,30 +458,21 @@
             <div style="margin-top: 12px; font-size: 0.85rem; opacity: 0.6;">
               Maximum file size: 4GB • Auto-deleted after 24 hours
             </div>
-          </div>
-          <div class="file-info" id="fileInfo">
-            <div class="file-info-title" id="fileInfoTitle"></div>
-            <div class="file-info-details" id="fileInfoDetails"></div>
+            <div class="drag-instruction" id="dragInstruction" style="margin-top: 8px; font-size: 0.8rem; color: var(--success); display: none;">
+              💡 You can drag this area to the video player to load the file
+            </div>
           </div>
           <div class="upload-status" id="uploadStatus"></div>
           <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-        </div>
-        <div class="panel-section">
-          <div class="section-title">Instructor Notice / Message</div>
-          <div class="notice-board">
-            <input class="notice-input" id="noticeInput" type="text" maxlength="150" placeholder="Type a message for all students..." />
-            <button class="notice-send" id="noticeSendBtn">Send</button>
+          <div class="file-info" id="fileInfo">
+            <div class="file-info-title" id="fileInfoTitle"></div>
+            <div class="file-info-details" id="fileInfoDetails"></div>
+            <div class="drag-hint" id="dragHint" style="font-size:0.8rem; color:var(--accent); margin-top:8px; display:none;">
+              🎬 Drag this to the video player to load it
+            </div>
+            <button class="control-btn" id="uploadBtn" style="width:100%; margin-top:12px; display:none;">Upload to Server</button>
           </div>
         </div>
-        <div class="panel-section">
-          <div class="section-title">Session Timeline / Bookmarks</div>
-          <div class="timeline-bar" id="timelineBar"></div>
-          <button class="control-btn" id="bookmarkBtn" style="margin-top:10px;">Add Bookmark (Now)</button>
-          <div class="bookmark-list" id="bookmarkList"></div>
-        </div>
-      </div>
-      <!-- Right: Stream settings, OBS instructions, stats -->
-      <div class="right-panel">
         <div class="settings-section">
           <div class="settings-title">Stream Information</div>
           <div class="settings-row">Class: <span id="classLabel">Not selected</span></div>
@@ -547,16 +527,9 @@
     // --- Class select, dynamic labels ---
     const classSelect = document.getElementById('classSelect');
     const classLabel = document.getElementById('classLabel');
-    const streamKey = document.getElementById('streamKey');
     classSelect.addEventListener('change', () => {
       currentClassId = classSelect.value;
       classLabel.textContent = classSelect.options[classSelect.selectedIndex].text;
-      streamKey.textContent = classSelect.value ? 'STREAM_' + classSelect.value : '---';
-      
-      // Load lessons for the selected class
-      if (currentClassId) {
-        loadLessons();
-      }
     });
 
     // --- Video Preview controls (stub/demo for now) ---
@@ -569,11 +542,22 @@
       liveState = status;
       streamStatus.className = 'status-badge status-' + status;
       streamStatus.textContent = status === 'live' ? 'LIVE' : status === 'paused' ? 'PAUSED' : 'OFFLINE';
+      document.getElementById('streamStatusInfo').textContent = status === 'live' ? 'Live' : status === 'paused' ? 'Paused' : 'Offline';
       goLiveBtn.disabled = (status === 'live');
       pauseBtn.disabled = (status !== 'live');
       stopBtn.disabled = (status === 'offline');
 
       try {
+        if (!currentClassId) {
+          alert('Please select a class first before going live.');
+          return;
+        }
+        
+        if (!authToken) {
+          alert('Please login first.');
+          return;
+        }
+        
         if (currentClassId && authToken) {
           const endpoint = status === 'live' ? 'start' : status === 'paused' ? 'pause' : 'stop';
           
@@ -591,8 +575,15 @@
               originalName: window.currentUploadedVideo.originalName
             };
           }
+          // If we only have a local video, warn user to upload first
+          else if (status === 'live' && window.currentLocalVideo && !window.currentUploadedVideo) {
+            alert('Please upload your video to the server first before going live. Click the "Upload to Server" button.');
+            return;
+          }
           
-          await fetch(`${apiBaseUrl}/streams/${endpoint}/${currentClassId}`, {
+          console.log(`🎥 ${status.toUpperCase()} stream for class:`, currentClassId, 'with data:', requestBody);
+          
+          const response = await fetch(`${apiBaseUrl}/streams/${endpoint}/${currentClassId}`, {
             method: 'POST',
             headers: { 
               'Content-Type': 'application/json',
@@ -601,8 +592,16 @@
             body: JSON.stringify(requestBody)
           });
           
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `Failed to ${endpoint} stream`);
+          }
+          
+          const result = await response.json();
+          console.log(`✅ Stream ${endpoint} successful:`, result);
+          
           // Control video playback based on status
-          if (window.currentUploadedVideo) {
+          if (window.currentUploadedVideo || window.currentLocalVideo) {
             const previewVideo = document.getElementById('previewVideo');
             const videoOverlay = document.getElementById('videoOverlay');
             
@@ -630,6 +629,16 @@
         }
       } catch (error) {
         console.error('Error updating stream status:', error);
+        alert(`Error ${status === 'live' ? 'starting' : status === 'paused' ? 'pausing' : 'stopping'} stream: ${error.message}`);
+        
+        // Reset UI state on error
+        liveState = 'offline';
+        streamStatus.className = 'status-badge status-offline';
+        streamStatus.textContent = 'OFFLINE';
+        document.getElementById('streamStatusInfo').textContent = 'Offline';
+        goLiveBtn.disabled = false;
+        pauseBtn.disabled = true;
+        stopBtn.disabled = true;
       }
     }
     goLiveBtn.onclick = () => setStatus('live');
@@ -652,7 +661,7 @@
     
     // Show overlay when video is paused
     previewVideo.addEventListener('pause', () => {
-      if (window.currentUploadedVideo) {
+      if (window.currentUploadedVideo || window.currentLocalVideo) {
         videoOverlay.style.display = 'flex';
       }
     });
@@ -662,66 +671,7 @@
       videoOverlay.style.display = 'none';
     });
 
-    // --- Lesson picker and play ---
-    const lessonSelect = document.getElementById('lessonSelect');
-    
-    // Load lessons when class changes
-    async function loadLessons() {
-      try {
-        if (!currentClassId || !authToken) return;
-        
-        const response = await fetch(`${apiBaseUrl}/streams/lessons?classId=${currentClassId}`, {
-          headers: {
-            'Authorization': `Bearer ${authToken}`
-          }
-        });
-        
-        if (response.ok) {
-          const lessons = await response.json();
-          
-          // Clear existing options except the first one
-          while (lessonSelect.children.length > 1) {
-            lessonSelect.removeChild(lessonSelect.lastChild);
-          }
-          
-          // Add lessons to dropdown
-          lessons.forEach(lesson => {
-            const option = document.createElement('option');
-            option.value = lesson._id;
-            option.textContent = lesson.title;
-            lessonSelect.appendChild(option);
-          });
-        }
-      } catch (error) {
-        console.error('Error loading lessons:', error);
-      }
-    }
-    
-    document.getElementById('playLessonBtn').onclick = async () => {
-      if (!lessonSelect.value) return alert('Choose a lesson/exercise!');
-      if (!currentClassId || !authToken) return alert('Please select a class and ensure you are logged in.');
-      
-      try {
-        const response = await fetch(`${apiBaseUrl}/streams/play/${currentClassId}/${lessonSelect.value}`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${authToken}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        if (response.ok) {
-          alert('Streaming ' + lessonSelect.options[lessonSelect.selectedIndex].text + ' to students.');
-          setStatus('live');
-        } else {
-          const error = await response.json();
-          alert('Error: ' + (error.error || 'Failed to start lesson'));
-        }
-      } catch (error) {
-        console.error('Error playing lesson:', error);
-        alert('Error starting lesson. Please try again.');
-      }
-    };
+
 
     // --- File drop (Instant Stream) demo ---
     const fileDrop = document.getElementById('fileDrop');
@@ -739,12 +689,143 @@
       const displaySize = file.size > 1024 * 1024 * 1024 ? sizeGB + 'GB' : sizeMB + 'MB';
       
       fileInfoTitle.textContent = file.name;
-      fileInfoDetails.textContent = `Size: ${displaySize} • Type: MP4 Video • Ready to upload`;
+      fileInfoDetails.textContent = `Size: ${displaySize} • Type: MP4 Video • Loaded in player`;
       fileInfo.classList.add('show');
       
-      uploadStatus.textContent = 'File selected and ready to upload';
+      // Show upload button and drag hint
+      document.getElementById('uploadBtn').style.display = 'block';
+      document.getElementById('dragHint').style.display = 'block';
+      
+      uploadStatus.textContent = 'File loaded in player for preview';
       uploadStatus.className = 'upload-status info';
       progressFill.style.width = '0';
+      
+      // Load the file into the video player for immediate preview
+      loadFileIntoPlayer(file);
+      
+      // Make file info draggable
+      setupFileDragAndDrop(file);
+    }
+    
+    function loadFileIntoPlayer(file) {
+      if (!file || !file.type.startsWith('video/')) {
+        console.warn('Invalid file type for video preview');
+        return;
+      }
+      
+      const previewVideo = document.getElementById('previewVideo');
+      const placeholder = document.querySelector('.video-preview .placeholder');
+      const videoOverlay = document.getElementById('videoOverlay');
+      const videoReady = document.getElementById('videoReady');
+      
+      // Create a local URL for the file
+      const fileURL = URL.createObjectURL(file);
+      
+      // Load the video
+      previewVideo.src = fileURL;
+      previewVideo.style.display = 'block';
+      placeholder.style.display = 'none';
+      videoOverlay.style.display = 'flex';
+      videoReady.style.display = 'block';
+      
+      // Store the local file info
+      window.currentLocalVideo = {
+        file: file,
+        url: fileURL,
+        name: file.name
+      };
+      
+      uploadStatus.textContent = `"${file.name}" loaded in player! You can preview it now or upload to stream.`;
+      uploadStatus.className = 'upload-status success';
+      
+      // Add visual indicator to file drop area
+      document.getElementById('fileDrop').classList.add('has-file');
+      document.getElementById('dragInstruction').style.display = 'block';
+      
+      // Clean up the previous URL if it exists
+      if (window.previousVideoURL) {
+        URL.revokeObjectURL(window.previousVideoURL);
+      }
+      window.previousVideoURL = fileURL;
+    }
+    
+    // Setup drag and drop from file info to video player
+    function setupFileDragAndDrop(file) {
+      const fileInfo = document.getElementById('fileInfo');
+      const fileDrop = document.getElementById('fileDrop');
+      const videoPreview = document.getElementById('videoPreview');
+      
+      // Make file info draggable
+      fileInfo.draggable = true;
+      
+      // Also make the file drop area draggable when it has a file
+      fileDrop.draggable = true;
+      
+      fileInfo.addEventListener('dragstart', (e) => {
+        fileInfo.classList.add('dragging');
+        e.dataTransfer.setData('text/plain', 'video-file');
+        e.dataTransfer.effectAllowed = 'move';
+        
+        // Store file reference for drop handler
+        window.draggedFile = file;
+      });
+      
+      fileInfo.addEventListener('dragend', (e) => {
+        fileInfo.classList.remove('dragging');
+      });
+      
+      // Add drag handlers for file drop area too
+      fileDrop.addEventListener('dragstart', (e) => {
+        if (window.currentLocalVideo) {
+          fileDrop.classList.add('dragging');
+          e.dataTransfer.setData('text/plain', 'video-file');
+          e.dataTransfer.effectAllowed = 'move';
+          window.draggedFile = window.currentLocalVideo.file;
+        } else {
+          e.preventDefault(); // Don't allow dragging if no file
+        }
+      });
+      
+      fileDrop.addEventListener('dragend', (e) => {
+        fileDrop.classList.remove('dragging');
+      });
+      
+      // Setup video player as drop target
+      videoPreview.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        videoPreview.classList.add('drop-target');
+      });
+      
+      videoPreview.addEventListener('dragleave', (e) => {
+        // Only remove if we're actually leaving the video preview area
+        if (!videoPreview.contains(e.relatedTarget)) {
+          videoPreview.classList.remove('drop-target');
+        }
+      });
+      
+      videoPreview.addEventListener('drop', (e) => {
+        e.preventDefault();
+        videoPreview.classList.remove('drop-target');
+        
+        if (window.draggedFile && e.dataTransfer.getData('text/plain') === 'video-file') {
+          // Load the dragged file into the video player
+          loadFileIntoPlayer(window.draggedFile);
+          
+          // Show success feedback
+          const uploadStatus = document.getElementById('uploadStatus');
+          uploadStatus.textContent = `"${window.draggedFile.name}" loaded into player!`;
+          uploadStatus.className = 'upload-status success';
+          
+          // Clear after 3 seconds
+          setTimeout(() => {
+            uploadStatus.textContent = '';
+            uploadStatus.className = 'upload-status';
+          }, 3000);
+          
+          window.draggedFile = null;
+        }
+      });
     }
     
     function hideFileInfo() {
@@ -761,15 +842,24 @@
       const file = e.dataTransfer.files[0];
       if (file) {
         showFileInfo(file);
+        // Don't auto-upload, just load for preview
+        // User can manually upload later if needed
       }
-      handleFileUpload(file);
     });
     fileInput.addEventListener('change', e => {
       const file = fileInput.files[0];
       if (file) {
         showFileInfo(file);
+        // Don't auto-upload, just load for preview
+        // User can manually upload later if needed
       }
-      handleFileUpload(file);
+    });
+    
+    // Upload button handler
+    document.getElementById('uploadBtn').addEventListener('click', () => {
+      if (window.currentLocalVideo && window.currentLocalVideo.file) {
+        handleFileUpload(window.currentLocalVideo.file);
+      }
     });
     async function handleFileUpload(file) {
       if (!file || !file.name.endsWith('.mp4')) {
@@ -825,16 +915,27 @@
 
         const result = await response.json();
         progressFill.style.width = '100%';
-        uploadStatus.textContent = `Video uploaded successfully! Click "Go Live" to start streaming.`;
+        uploadStatus.textContent = `Video uploaded successfully! Ready to stream.`;
         uploadStatus.className = 'upload-status success';
         
-        // Load the uploaded video into the preview
+        // Hide upload button since file is now uploaded
+        document.getElementById('uploadBtn').style.display = 'none';
+        
+        // Update file info
+        fileInfoDetails.textContent = fileInfoDetails.textContent.replace('Loaded in player', 'Uploaded to server');
+        
+        // Load the uploaded video into the preview (replace local version)
         const previewVideo = document.getElementById('previewVideo');
         const placeholder = document.querySelector('.video-preview .placeholder');
         const videoOverlay = document.getElementById('videoOverlay');
         const videoReady = document.getElementById('videoReady');
         
         if (result.streamUrl) {
+          // Clean up local video URL
+          if (window.currentLocalVideo && window.currentLocalVideo.url) {
+            URL.revokeObjectURL(window.currentLocalVideo.url);
+          }
+          
           previewVideo.src = result.streamUrl;
           previewVideo.style.display = 'block';
           placeholder.style.display = 'none';
@@ -847,6 +948,9 @@
             filename: result.filename,
             originalName: file.name
           };
+          
+          // Clear local video reference
+          window.currentLocalVideo = null;
           
           uploadStatus.textContent = `"${file.name}" ready to stream! Click "Go Live" to broadcast.`;
         }
@@ -872,58 +976,7 @@
       }
     }
 
-    // --- Instructor notice/message demo ---
-    async function sendNotice() {
-      const val = document.getElementById('noticeInput').value.trim();
-      if (!val) return;
 
-      try {
-        if (!currentClassId || !authToken) {
-          alert('Please select a class and ensure you are logged in.');
-          return;
-        }
-        
-        await fetch(`${apiBaseUrl}/stream/notice/${currentClassId}`, {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`
-          },
-          body: JSON.stringify({ message: val })
-        });
-
-        alert('Notice sent: ' + val);
-        document.getElementById('noticeInput').value = '';
-      } catch (error) {
-        console.error('Error sending notice:', error);
-        alert('Error sending notice. Please try again.');
-      }
-    }
-    document.getElementById('noticeSendBtn').onclick = sendNotice;
-
-    // --- Bookmarks/timeline ---
-    const timelineBar = document.getElementById('timelineBar');
-    const bookmarkList = document.getElementById('bookmarkList');
-    let bookmarks = [];
-    document.getElementById('bookmarkBtn').onclick = () => {
-      const time = new Date();
-      const label = 'Bookmark at ' + time.toLocaleTimeString();
-      bookmarks.push({ time: time.getTime(), label });
-      updateBookmarks();
-    };
-    function updateBookmarks() {
-      bookmarkList.innerHTML = bookmarks.map(bm => `<div>• ${bm.label}</div>`).join('');
-      timelineBar.innerHTML = bookmarks.map((bm,i) =>
-        `<div class="timeline-marker" style="left:${i*12+8}px"></div>`).join('');
-    }
-
-    // --- Copy to clipboard ---
-    function copyToClipboard(id) {
-      const val = document.getElementById(id).textContent;
-      navigator.clipboard.writeText(val).then(() => {
-        alert('Copied: ' + val);
-      });
-    }
 
     // --- Viewer count ---
     setInterval(async () => {
@@ -937,6 +990,7 @@
           if (response.ok) {
             const data = await response.json();
             document.getElementById('viewerCount').textContent = data.count || 0;
+            document.getElementById('viewerCountInfo').textContent = data.count || 0;
           }
         }
       } catch (error) {

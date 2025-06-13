@@ -473,6 +473,7 @@
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
   <nav class="navbar">
@@ -687,47 +688,88 @@
     // Fetch class information from the backend
     async function fetchClassInfo() {
       try {
-        const response = await fetch('/api/class-info'); // Update with actual API endpoint
+        // Get classId from URL parameters or localStorage
+        const urlParams = new URLSearchParams(window.location.search);
+        const classId = urlParams.get('classId') || localStorage.getItem('currentClassId');
+        
+        if (!classId) {
+          throw new Error('No class ID provided');
+        }
+        
+        const authToken = localStorage.getItem('token');
+        const response = await fetch(`/api/stream/status/${classId}`, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
+        
         if (!response.ok) {
           throw new Error('Failed to fetch class information');
         }
-        const { classKey } = await response.json();
+        
+        const data = await response.json();
+        const streamKey = data.streamKey;
+        const streamStatus = data.status;
+        const currentSource = data.currentSource;
 
-        // Update this to your actual HLS stream URL based on classKey
-        const streamUrl = `http://127.0.0.1:8888/live/${classKey}/index.m3u8`;
-    
-        // Initialize HLS.js
-        if (Hls.isSupported()) {
-          hlsInstance = new Hls({
-            enableWorker: true,
-            lowLatencyMode: true,
-            backBufferLength: 90
-          });
-          hlsInstance.loadSource(streamUrl);
-          hlsInstance.attachMedia(video);
-          hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
-            video.play();
-          });
+        // Check if stream is active
+        if (streamStatus !== 'live') {
+          console.log('Stream is not live, waiting for instructor...');
+          loading.style.display = 'block';
+          // Retry after 3 seconds
+          setTimeout(() => fetchClassInfo(), 3000);
+          return;
+        }
+
+        // Handle different stream sources
+        if (currentSource === 'upload' && data.session && data.session.uploadPath) {
+          // For uploaded videos, use direct video URL
+          const videoUrl = `/api/stream/video/${data.session.uploadFilename}`;
+          console.log('Loading uploaded video:', videoUrl);
+          
+          // Use direct video playback for uploaded files
+          video.src = videoUrl;
+          video.load();
+          video.play().catch(e => console.log('Video autoplay prevented:', e));
+          
+        } else {
+          // For live streams, use HLS
+          const streamUrl = `http://127.0.0.1:8888/live/${streamKey}/index.m3u8`;
+          console.log('Loading HLS stream:', streamUrl);
+          
+          // Initialize HLS.js
+          if (Hls.isSupported()) {
+            hlsInstance = new Hls({
+              enableWorker: true,
+              lowLatencyMode: true,
+              backBufferLength: 90
+            });
+            hlsInstance.loadSource(streamUrl);
+            hlsInstance.attachMedia(video);
+            hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
+              video.play();
+            });
           
           // Generate thumbnails when video metadata is loaded
           video.addEventListener('loadedmetadata', function() {
             generateThumbnails();
           }, { once: true });
 
-          hlsInstance.on(Hls.Events.ERROR, function(event, data) {
-            console.error('HLS error:', data);
-            if (data.fatal) {
-              setTimeout(() => fetchClassInfo(), 5000); // Retry after 5 seconds
-            }
-          });
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-          video.src = streamUrl;
-          video.addEventListener('loadedmetadata', function() {
-            video.play();
-            generateThumbnails();
-          });
-        } else {
-          console.error('HLS is not supported in this browser');
+            hlsInstance.on(Hls.Events.ERROR, function(event, data) {
+              console.error('HLS error:', data);
+              if (data.fatal) {
+                setTimeout(() => fetchClassInfo(), 5000); // Retry after 5 seconds
+              }
+            });
+          } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = streamUrl;
+            video.addEventListener('loadedmetadata', function() {
+              video.play();
+              generateThumbnails();
+            });
+          } else {
+            console.error('HLS is not supported in this browser');
+          }
         }
         
         video.addEventListener('canplay', function() {
@@ -741,8 +783,67 @@
         video.addEventListener('playing', function() {
           loading.style.display = 'none';
         });
+        
+        // Connect to Socket.IO for real-time updates
+        if (streamKey && typeof io !== 'undefined') {
+          const socket = io();
+          socket.emit('join-stream', streamKey);
+          
+          socket.on('streamStatus', (data) => {
+            console.log('Stream status update:', data);
+            if (data.status === 'offline') {
+              // Stream ended
+              if (hlsInstance) {
+                hlsInstance.destroy();
+                hlsInstance = null;
+              }
+              video.src = '';
+              video.pause();
+              loading.style.display = 'block';
+            } else if (data.status === 'live') {
+              // New stream started
+              loading.style.display = 'none';
+              
+              if (data.source === 'upload' && data.streamUrl) {
+                // Switch to uploaded video
+                if (hlsInstance) {
+                  hlsInstance.destroy();
+                  hlsInstance = null;
+                }
+                video.src = data.streamUrl;
+                video.load();
+                video.play().catch(e => console.log('Video autoplay prevented:', e));
+              } else {
+                // Switch to live HLS stream
+                const newStreamUrl = `http://127.0.0.1:8888/live/${streamKey}/index.m3u8`;
+                if (hlsInstance) {
+                  hlsInstance.loadSource(newStreamUrl);
+                } else if (Hls.isSupported()) {
+                  hlsInstance = new Hls({
+                    enableWorker: true,
+                    lowLatencyMode: true,
+                    backBufferLength: 90
+                  });
+                  hlsInstance.loadSource(newStreamUrl);
+                  hlsInstance.attachMedia(video);
+                }
+              }
+            } else if (data.status === 'paused') {
+              video.pause();
+            }
+          });
+          
+          socket.on('notice', (data) => {
+            // Display instructor notice
+            console.log('Instructor notice:', data.message);
+            // You can add UI to display notices here
+          });
+        }
+        
       } catch (error) {
         console.error('Error fetching class information:', error);
+        // Retry after 5 seconds
+        setTimeout(() => fetchClassInfo(), 5000);
       }
     }
     
