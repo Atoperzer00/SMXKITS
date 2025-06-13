@@ -24,8 +24,14 @@ const StreamSessionSchema = new mongoose.Schema({
   },
   currentSource: {
     type: String,
-    enum: ['mp4', 'live', 'other'],
+    enum: ['mp4', 'live', 'upload', 'other'],
     default: 'live'
+  },
+  uploadPath: {
+    type: String
+  },
+  uploadFilename: {
+    type: String
   },
   viewerCount: {
     type: Number,

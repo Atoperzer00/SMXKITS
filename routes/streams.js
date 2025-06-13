@@ -37,6 +37,34 @@ const upload = multer({
   }
 });
 
+// Set up multer for temporary video uploads (for streaming)
+const tempStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const tempDir = path.join(__dirname, '..', 'temp');
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir, { recursive: true });
+    }
+    cb(null, tempDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, 'stream-' + uniqueSuffix + ext);
+  }
+});
+
+const tempUpload = multer({ 
+  storage: tempStorage,
+  limits: { fileSize: 500 * 1024 * 1024 }, // 500MB limit
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'video/mp4') {
+      cb(null, true);
+    } else {
+      cb(new Error('Only MP4 files are allowed for streaming'));
+    }
+  }
+});
+
 // Get stream key for a class
 router.get('/key/:classId', auth(['admin', 'instructor']), async (req, res) => {
   try {
@@ -608,6 +636,103 @@ router.get('/status/:classId', auth(), async (req, res) => {
   } catch (error) {
     console.error('❌ Error getting stream status:', error);
     res.status(500).json({ error: 'Server error getting stream status' });
+  }
+});
+
+// Upload video for immediate streaming
+router.post('/upload', auth(['admin', 'instructor']), tempUpload.single('video'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const { classId } = req.body;
+    
+    if (!classId) {
+      return res.status(400).json({ error: 'Class ID is required' });
+    }
+
+    // Check if user has access to this class
+    const classObj = await Class.findById(classId);
+    
+    if (!classObj) {
+      return res.status(404).json({ error: 'Class not found' });
+    }
+    
+    if (req.user.role !== 'admin' && 
+        !classObj.instructors.includes(req.user.id) && 
+        classObj.instructorId?.toString() !== req.user.id) {
+      return res.status(403).json({ error: 'Not authorized for this class' });
+    }
+
+    const filename = req.file.filename;
+    const tempPath = req.file.path;
+    
+    // Generate stream URL - this would typically point to your streaming service
+    // For now, we'll create a local stream URL that can be used by the frontend
+    const streamUrl = `${process.env.HLS_SERVER_URL || 'http://localhost:8888'}/temp/${filename}`;
+    
+    // Update class to indicate we're streaming an uploaded file
+    classObj.streamStatus = 'live';
+    classObj.currentStreamSource = 'upload';
+    classObj.currentUploadPath = tempPath;
+    await classObj.save();
+
+    // Create or update stream session
+    let session = await StreamSession.findOne({ 
+      classId: classObj._id, 
+      status: { $ne: 'offline' } 
+    });
+    
+    if (!session) {
+      session = new StreamSession({
+        classId: classObj._id,
+        status: 'live',
+        startedAt: new Date(),
+        currentSource: 'upload',
+        uploadPath: tempPath
+      });
+    } else {
+      session.status = 'live';
+      session.currentSource = 'upload';
+      session.uploadPath = tempPath;
+    }
+    
+    await session.save();
+
+    // Notify connected clients
+    const io = req.app.get('io');
+    io.to(`stream:${classObj.streamKey}`).emit('streamStatus', { 
+      status: 'live',
+      source: 'upload',
+      streamUrl: streamUrl
+    });
+
+    // Optional: delete file after 5 minutes
+    setTimeout(() => {
+      fs.unlink(tempPath, (err) => {
+        if (err) console.error('Failed to delete temp file:', tempPath);
+        else console.log('✅ Deleted temp file:', tempPath);
+      });
+    }, 5 * 60 * 1000); // 5 minutes
+
+    res.json({ 
+      streamUrl,
+      filename,
+      status: 'live',
+      message: 'Video uploaded and streaming started'
+    });
+  } catch (error) {
+    console.error('❌ Error uploading video for stream:', error);
+    
+    // Clean up file if there was an error
+    if (req.file && req.file.path) {
+      fs.unlink(req.file.path, (err) => {
+        if (err) console.error('Failed to delete temp file after error:', req.file.path);
+      });
+    }
+    
+    res.status(500).json({ error: 'Server error uploading video' });
   }
 });
 
