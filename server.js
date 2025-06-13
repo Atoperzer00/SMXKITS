@@ -197,6 +197,7 @@ app.use('/api/progress', require('./routes/progress'));
 app.use('/api/chat', require('./routes/chat'));
 app.use('/api/kitcomm', require('./routes/kitcomm'));
 app.use('/api/streams', require('./routes/streams'));
+app.use('/api/stream', require('./routes/stream-upload.route'));
 
 // ===== OpsLog API Routes =====
 // Get all callouts for a room
@@ -274,6 +275,9 @@ app.get('/api/callouts/:id/history', async (req, res) => {
 
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Serve temporary stream files (for testing/preview)
+app.use('/temp', express.static(path.join(__dirname, 'temp')));
 
 // Protected routes - require authentication
 const jwt = require('jsonwebtoken');

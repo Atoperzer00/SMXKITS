@@ -23,7 +23,9 @@ const ClassSchema = new mongoose.Schema({
   streamKey: { type: String, unique: true, sparse: true },
   streamStatus: { type: String, enum: ['offline', 'live', 'paused'], default: 'offline' },
   currentLesson: { type: mongoose.Schema.Types.ObjectId, ref: 'Lesson' },
-  currentStreamSource: { type: String, enum: ['live', 'mp4', 'other'], default: 'live' },
+  currentStreamSource: { type: String, enum: ['live', 'mp4', 'upload', 'other'], default: 'live' },
+  currentUploadPath: { type: String }, // Path to uploaded video file
+  currentUploadFilename: { type: String }, // Filename of uploaded video
   bookmarks: [BookmarkSchema],
   
   createdAt: { type: Date, default: Date.now }
