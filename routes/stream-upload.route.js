@@ -113,8 +113,8 @@ router.post('/upload', auth(['admin', 'instructor']), upload.single('video'), as
     const filename = req.file.filename;
     const tempPath = req.file.path;
     
-    // Generate stream URL for smxstream.new or HLS stream service
-    const streamUrl = `https://smxstream.new/stream/${filename}.m3u8`;
+    // Generate stream URL for the uploaded file
+    const streamUrl = `${req.protocol}://${req.get('host')}/api/stream/video/${filename}`;
     
     // Update class to indicate we're streaming an uploaded file
     classObj.streamStatus = 'live';
@@ -327,6 +327,52 @@ router.get('/viewers/:classId', auth(), async (req, res) => {
   } catch (error) {
     console.error('❌ Error getting viewer count:', error);
     res.status(500).json({ error: 'Server error getting viewer count' });
+  }
+});
+
+// Serve uploaded video files
+router.get('/video/:filename', (req, res) => {
+  try {
+    const filename = req.params.filename;
+    const filePath = path.join(__dirname, '..', 'temp', filename);
+    
+    // Check if file exists
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'Video file not found' });
+    }
+    
+    // Get file stats for range requests (for video seeking)
+    const stat = fs.statSync(filePath);
+    const fileSize = stat.size;
+    const range = req.headers.range;
+    
+    if (range) {
+      // Handle range requests for video seeking
+      const parts = range.replace(/bytes=/, "").split("-");
+      const start = parseInt(parts[0], 10);
+      const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+      const chunksize = (end - start) + 1;
+      const file = fs.createReadStream(filePath, { start, end });
+      const head = {
+        'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+        'Accept-Ranges': 'bytes',
+        'Content-Length': chunksize,
+        'Content-Type': 'video/mp4',
+      };
+      res.writeHead(206, head);
+      file.pipe(res);
+    } else {
+      // Serve the entire file
+      const head = {
+        'Content-Length': fileSize,
+        'Content-Type': 'video/mp4',
+      };
+      res.writeHead(200, head);
+      fs.createReadStream(filePath).pipe(res);
+    }
+  } catch (error) {
+    console.error('Error serving video file:', error);
+    res.status(500).json({ error: 'Error serving video file' });
   }
 });
 

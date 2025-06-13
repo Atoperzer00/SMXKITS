@@ -148,15 +148,31 @@ router.post('/start/:classId', auth(['admin', 'instructor']), async (req, res) =
       if (req.body.lessonId) session.currentLesson = req.body.lessonId;
     }
     
+    // If this is an uploaded video, store the stream info
+    if (req.body.source === 'upload' && req.body.streamUrl) {
+      session.uploadPath = req.body.streamUrl;
+      session.uploadFilename = req.body.filename;
+      session.uploadOriginalName = req.body.originalName;
+    }
+    
     await session.save();
     
-    // Notify connected clients
-    const io = req.app.get('io');
-    io.to(`stream:${classObj.streamKey}`).emit('streamStatus', { 
+    // Prepare notification data
+    let notificationData = { 
       status: 'live',
       source: classObj.currentStreamSource,
       lessonId: classObj.currentLesson
-    });
+    };
+    
+    // Add stream URL for uploaded videos
+    if (req.body.source === 'upload' && req.body.streamUrl) {
+      notificationData.streamUrl = req.body.streamUrl;
+      notificationData.filename = req.body.originalName;
+    }
+    
+    // Notify connected clients
+    const io = req.app.get('io');
+    io.to(`stream:${classObj.streamKey}`).emit('streamStatus', notificationData);
     
     res.json({ 
       status: 'live',
