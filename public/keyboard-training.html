@@ -314,5 +314,30 @@
     // Render modules on load
     document.addEventListener('DOMContentLoaded', renderModuleList);
   </script>
+
+  <script type="module">
+    import TypingEngine from "../typing-engine.js";
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const typingEngine = new TypingEngine(1, 1); // Example module and practice
+
+      document.getElementById("launch-button").addEventListener("click", async () => {
+        await typingEngine.loadText();
+        typingEngine.startTest();
+
+        const inputField = document.getElementById("typing-input");
+        inputField.addEventListener("input", (event) => {
+          typingEngine.updateInput(event.target.value);
+          document.getElementById("wpm-display").textContent = typingEngine.wpm;
+          document.getElementById("accuracy-display").textContent = typingEngine.accuracy;
+        });
+
+        document.getElementById("submit-button").addEventListener("click", async () => {
+          await typingEngine.submitProgress();
+          alert("Progress submitted!");
+        });
+      });
+    });
+  </script>
 </body>
 </html>
