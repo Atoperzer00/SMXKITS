@@ -198,6 +198,8 @@ router.post('/upload', auth(['admin', 'instructor']), upload.single('video'), as
 // GET /api/stream/status/:classId - Get current stream status
 router.get('/status/:classId', auth(), async (req, res) => {
   try {
+    console.log('📊 Student requesting stream status for class:', req.params.classId);
+    
     const classObj = await Class.findById(req.params.classId)
       .populate('currentLesson');
     
@@ -225,7 +227,7 @@ router.get('/status/:classId', auth(), async (req, res) => {
     const connectedSockets = io?.sockets.adapter.rooms.get(`stream:${classObj.streamKey}`);
     const viewerCount = connectedSockets ? connectedSockets.size : 0;
     
-    res.json({
+    const responseData = {
       status: classObj.streamStatus,
       streamKey: classObj.streamKey,
       currentLesson: classObj.currentLesson,
@@ -235,7 +237,10 @@ router.get('/status/:classId', auth(), async (req, res) => {
       streamUrl: classObj.streamStatus === 'live' && classObj.streamKey 
         ? `${process.env.HLS_SERVER_URL || 'http://localhost:8888'}/live/${classObj.streamKey}/index.m3u8`
         : null
-    });
+    };
+    
+    console.log('📤 Sending stream status response:', responseData);
+    res.json(responseData);
   } catch (error) {
     console.error('❌ Error getting stream status:', error);
     res.status(500).json({ error: 'Server error getting stream status' });

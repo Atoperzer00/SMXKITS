@@ -708,13 +708,19 @@
         }
         
         const data = await response.json();
+        console.log('📊 Stream status data:', data);
+        
         const streamKey = data.streamKey;
         const streamStatus = data.status;
         const currentSource = data.currentSource;
 
+        console.log('🔑 StreamKey:', streamKey);
+        console.log('📡 Status:', streamStatus);
+        console.log('📹 Source:', currentSource);
+
         // Check if stream is active
         if (streamStatus !== 'live') {
-          console.log('Stream is not live, waiting for instructor...');
+          console.log('⏸️ Stream is not live, waiting for instructor...');
           loading.style.display = 'block';
           // Retry after 3 seconds
           setTimeout(() => fetchClassInfo(), 3000);
@@ -722,15 +728,22 @@
         }
 
         // Handle different stream sources
-        if (currentSource === 'upload' && data.session && data.session.uploadPath) {
+        if (currentSource === 'upload' && data.session && data.session.uploadFilename) {
           // For uploaded videos, use direct video URL
           const videoUrl = `/api/stream/video/${data.session.uploadFilename}`;
-          console.log('Loading uploaded video:', videoUrl);
+          console.log('📹 Loading uploaded video:', videoUrl);
+          console.log('📁 Upload filename:', data.session.uploadFilename);
           
           // Use direct video playback for uploaded files
           video.src = videoUrl;
           video.load();
-          video.play().catch(e => console.log('Video autoplay prevented:', e));
+          
+          video.addEventListener('loadstart', () => console.log('🔄 Video load started'));
+          video.addEventListener('loadeddata', () => console.log('✅ Video data loaded'));
+          video.addEventListener('canplay', () => console.log('▶️ Video can play'));
+          video.addEventListener('error', (e) => console.error('❌ Video error:', e));
+          
+          video.play().catch(e => console.log('🔇 Video autoplay prevented:', e));
           
         } else {
           // For live streams, use HLS
@@ -787,10 +800,19 @@
         // Connect to Socket.IO for real-time updates
         if (streamKey && typeof io !== 'undefined') {
           const socket = io();
+          console.log('🔌 Connecting to Socket.IO with streamKey:', streamKey);
           socket.emit('join-stream', streamKey);
           
+          socket.on('connect', () => {
+            console.log('✅ Socket.IO connected successfully');
+          });
+          
+          socket.on('disconnect', () => {
+            console.log('❌ Socket.IO disconnected');
+          });
+          
           socket.on('streamStatus', (data) => {
-            console.log('Stream status update:', data);
+            console.log('📡 Stream status update:', data);
             if (data.status === 'offline') {
               // Stream ended
               if (hlsInstance) {
