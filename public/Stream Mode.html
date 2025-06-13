@@ -133,6 +133,50 @@
       background: #151d27 url('SMX%20Stream%20Loading%20Image.png') center/cover no-repeat;
       filter: brightness(.82) blur(.3px);
     }
+    .video-preview .video-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.3s;
+      border-radius: 13px;
+    }
+    .video-preview:hover .video-overlay {
+      opacity: 1;
+    }
+    .video-preview .play-button {
+      width: 60px;
+      height: 60px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .video-preview .play-button:hover {
+      transform: scale(1.1);
+    }
+    .video-preview .video-ready {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: var(--success);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
     .controls-row {
       display: flex;
       gap: 18px;
@@ -357,23 +401,7 @@
       justify-content: space-between;
       align-items: center;
     }
-    .copy-btn {
-      background: none;
-      border: none;
-      color: var(--accent);
-      cursor: pointer;
-      font-size: .97rem;
-      margin-left: 6px;
-      transition: color .12s;
-    }
-    .copy-btn:hover { color: var(--accent-fade);}
-    .obs-section {
-      margin-top: 21px;
-      color: var(--text-secondary);
-      font-size: 0.98rem;
-    }
-    .obs-section ul { margin: 8px 0 0 18px; }
-    .obs-section li { margin-bottom: 6px;}
+
     @media (max-width: 1000px) {
       .main-panel { flex-direction: column; gap: 18px;}
       .right-panel { max-width: 100%;}
@@ -406,7 +434,11 @@
           <div class="section-title">Stream Preview</div>
           <div class="video-preview" id="videoPreview">
             <div class="placeholder"></div>
-            <video id="previewVideo" style="display:none;" autoplay muted controls></video>
+            <video id="previewVideo" style="display:none;" muted controls></video>
+            <div class="video-overlay" id="videoOverlay" style="display:none;">
+              <div class="play-button" id="playButton">▶</div>
+            </div>
+            <div class="video-ready" id="videoReady" style="display:none;">Ready to Stream</div>
           </div>
         </div>
         <div class="controls-row">
@@ -462,25 +494,10 @@
       <!-- Right: Stream settings, OBS instructions, stats -->
       <div class="right-panel">
         <div class="settings-section">
-          <div class="settings-title">Streaming Details</div>
+          <div class="settings-title">Stream Information</div>
           <div class="settings-row">Class: <span id="classLabel">Not selected</span></div>
-          <div class="settings-row">Server URL: 
-            <span id="serverUrl">rtmp://127.0.0.1:1935/live</span> 
-            <button class="copy-btn" onclick="copyToClipboard('serverUrl')">Copy</button>
-          </div>
-          <div class="settings-row">Stream Key: 
-            <span id="streamKey">---</span>
-            <button class="copy-btn" onclick="copyToClipboard('streamKey')">Copy</button>
-          </div>
-        </div>
-        <div class="obs-section">
-          <strong>Streaming with OBS or similar?</strong>
-          <ul>
-            <li>Open OBS Studio and go to <b>Settings → Stream</b>.</li>
-            <li>Paste the Server URL and your class Stream Key.</li>
-            <li>Click <b>Start Streaming</b> to broadcast live.</li>
-            <li>You can also stream an MP4 or lesson instantly above.</li>
-          </ul>
+          <div class="settings-row">Status: <span id="streamStatusInfo">Offline</span></div>
+          <div class="settings-row">Viewers: <span id="viewerCountInfo">0</span></div>
         </div>
       </div>
     </div>
@@ -559,14 +576,57 @@
       try {
         if (currentClassId && authToken) {
           const endpoint = status === 'live' ? 'start' : status === 'paused' ? 'pause' : 'stop';
+          
+          // Determine the source type
+          let source = 'live';
+          let requestBody = { source };
+          
+          // If we have an uploaded video and we're going live, use that
+          if (status === 'live' && window.currentUploadedVideo) {
+            source = 'upload';
+            requestBody = { 
+              source,
+              streamUrl: window.currentUploadedVideo.url,
+              filename: window.currentUploadedVideo.filename,
+              originalName: window.currentUploadedVideo.originalName
+            };
+          }
+          
           await fetch(`${apiBaseUrl}/streams/${endpoint}/${currentClassId}`, {
             method: 'POST',
             headers: { 
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${authToken}`
             },
-            body: JSON.stringify({ source: 'live' })
+            body: JSON.stringify(requestBody)
           });
+          
+          // Control video playback based on status
+          if (window.currentUploadedVideo) {
+            const previewVideo = document.getElementById('previewVideo');
+            const videoOverlay = document.getElementById('videoOverlay');
+            
+            if (status === 'live') {
+              // Start playing the video when going live
+              if (previewVideo && previewVideo.src) {
+                previewVideo.play().catch(e => console.log('Video autoplay prevented:', e));
+                videoOverlay.style.display = 'none';
+              }
+            } else if (status === 'paused') {
+              // Pause the video
+              if (previewVideo && !previewVideo.paused) {
+                previewVideo.pause();
+                videoOverlay.style.display = 'flex';
+              }
+            } else if (status === 'offline') {
+              // Stop the video and reset
+              if (previewVideo) {
+                previewVideo.pause();
+                previewVideo.currentTime = 0;
+                videoOverlay.style.display = 'flex';
+              }
+            }
+          }
         }
       } catch (error) {
         console.error('Error updating stream status:', error);
@@ -576,6 +636,31 @@
     pauseBtn.onclick = () => setStatus('paused');
     stopBtn.onclick = () => setStatus('offline');
     setStatus('offline');
+    
+    // Video preview controls
+    const playButton = document.getElementById('playButton');
+    const videoOverlay = document.getElementById('videoOverlay');
+    const previewVideo = document.getElementById('previewVideo');
+    
+    playButton.onclick = () => {
+      if (previewVideo.src) {
+        previewVideo.play().then(() => {
+          videoOverlay.style.display = 'none';
+        }).catch(e => console.log('Video play error:', e));
+      }
+    };
+    
+    // Show overlay when video is paused
+    previewVideo.addEventListener('pause', () => {
+      if (window.currentUploadedVideo) {
+        videoOverlay.style.display = 'flex';
+      }
+    });
+    
+    // Hide overlay when video is playing
+    previewVideo.addEventListener('play', () => {
+      videoOverlay.style.display = 'none';
+    });
 
     // --- Lesson picker and play ---
     const lessonSelect = document.getElementById('lessonSelect');
@@ -740,18 +825,32 @@
 
         const result = await response.json();
         progressFill.style.width = '100%';
-        uploadStatus.textContent = `Now streaming "${file.name}" to students!`;
+        uploadStatus.textContent = `Video uploaded successfully! Click "Go Live" to start streaming.`;
         uploadStatus.className = 'upload-status success';
         
-        // Update stream status
-        setStatus('live');
-
-        // Show success message for longer
-        setTimeout(() => {
-          uploadStatus.textContent = 'Upload complete - Stream is live';
-          uploadStatus.className = 'upload-status success';
-        }, 3000);
+        // Load the uploaded video into the preview
+        const previewVideo = document.getElementById('previewVideo');
+        const placeholder = document.querySelector('.video-preview .placeholder');
+        const videoOverlay = document.getElementById('videoOverlay');
+        const videoReady = document.getElementById('videoReady');
         
+        if (result.streamUrl) {
+          previewVideo.src = result.streamUrl;
+          previewVideo.style.display = 'block';
+          placeholder.style.display = 'none';
+          videoOverlay.style.display = 'flex';
+          videoReady.style.display = 'block';
+          
+          // Store the stream info for when user clicks "Go Live"
+          window.currentUploadedVideo = {
+            url: result.streamUrl,
+            filename: result.filename,
+            originalName: file.name
+          };
+          
+          uploadStatus.textContent = `"${file.name}" ready to stream! Click "Go Live" to broadcast.`;
+        }
+
         // Clear after 8 seconds
         setTimeout(() => {
           uploadStatus.textContent = '';
