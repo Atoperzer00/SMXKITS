@@ -62,26 +62,54 @@
     
     .btn {
       font-size: 1rem;
-      background: rgba(255,255,255,0.05);
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
       color: var(--fg);
-      border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 5px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 0.75rem 1.5rem;
+      border-radius: 50px;
       cursor: pointer;
       text-decoration: none;
-      transition: background 0.2s;
+      transition: all 0.3s ease;
+      box-shadow: 
+        0 4px 15px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      font-weight: 500;
+      white-space: nowrap;
     }
     
     .btn:hover {
-      background: var(--hover);
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.4);
+      transform: translateY(-2px);
+      box-shadow: 
+        0 8px 25px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+    
+    .btn:active {
+      transform: translateY(0);
+      box-shadow: 
+        0 2px 10px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
     
     .btn-primary {
-      background: var(--accent);
+      background: linear-gradient(135deg, var(--accent), #ff1744);
+      border-color: var(--accent);
+      color: white;
+      box-shadow: 
+        0 4px 15px rgba(233, 30, 99, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
     }
     
     .btn-primary:hover {
-      background: #c41a53;
+      background: linear-gradient(135deg, #ff1744, var(--accent));
+      transform: translateY(-2px);
+      box-shadow: 
+        0 8px 25px rgba(233, 30, 99, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
     }
     
     .main-content {
@@ -90,19 +118,25 @@
     }
     
     .player-wrapper {
-      background: var(--track);
-      border-radius: 10px;
+      background: rgba(28, 28, 28, 0.8);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 25px;
       overflow: hidden;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
       margin-bottom: 1.5rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
     
     .video-container {
       width: 100%;
       position: relative;
       padding-top: 56.25%; /* 16:9 aspect ratio */
-      background: #000;
-      border-radius: 10px 10px 0 0;
+      background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(20, 20, 20, 0.8));
+      border-radius: 25px 25px 0 0;
+      overflow: hidden;
     }
     
     video {
@@ -111,11 +145,16 @@
       left: 0;
       width: 100%;
       height: 100%;
-      border-radius: 10px 10px 0 0;
+      border-radius: 25px 25px 0 0;
+      box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.3);
     }
     
     .video-info {
-      padding: 1.5rem;
+      padding: 2rem;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
     }
     
     .video-title {
@@ -129,37 +168,115 @@
     
     .controls {
       display: flex;
-      padding: 1rem;
-      background: rgba(0,0,0,0.2);
-      border-radius: 0 0 10px 10px;
+      padding: 1.5rem;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border-radius: 0 0 25px 25px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      gap: 1rem;
+      align-items: center;
+      justify-content: center;
     }
     
     #timeline {
       position: relative;
-      height: 10px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 5px;
+      height: 12px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      border-radius: 50px;
       cursor: pointer;
       flex: 1;
       margin: 0 1rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 
+        inset 0 2px 4px rgba(0, 0, 0, 0.3),
+        0 1px 0 rgba(255, 255, 255, 0.1);
     }
     
     #progress {
       height: 100%;
-      background: var(--accent);
-      border-radius: 5px;
+      background: linear-gradient(90deg, var(--accent), #ff1744);
+      border-radius: 50px;
       width: 0;
+      box-shadow: 
+        0 0 10px rgba(233, 30, 99, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      transition: width 0.1s ease;
     }
     
     #playhead {
       position: absolute;
-      width: 15px;
-      height: 15px;
-      background: var(--accent);
+      width: 20px;
+      height: 20px;
+      background: linear-gradient(135deg, #ffffff, #f0f0f0);
+      border: 3px solid var(--accent);
       border-radius: 50%;
-      top: -2.5px;
-      margin-left: -7.5px;
+      top: -4px;
+      margin-left: -10px;
       left: 0%;
+      box-shadow: 
+        0 4px 15px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      cursor: grab;
+      transition: all 0.2s ease;
+    }
+    
+    #playhead:hover {
+      transform: scale(1.2);
+      box-shadow: 
+        0 6px 20px rgba(0, 0, 0, 0.4),
+        0 0 15px rgba(233, 30, 99, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+    
+    #playhead:active {
+      cursor: grabbing;
+      transform: scale(1.1);
+    }
+    
+    .thumbnail-preview {
+      position: absolute;
+      bottom: 120px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 2px solid rgba(233, 30, 99, 0.8);
+      border-radius: 20px;
+      padding: 12px;
+      display: none;
+      z-index: 1000;
+      pointer-events: none;
+      box-shadow: 
+        0 10px 30px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+    
+    .thumbnail-preview img {
+      width: 120px;
+      height: 70px;
+      border-radius: 12px;
+      box-shadow: 
+        0 4px 15px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+    
+    .thumbnail-preview .time-label {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 12px;
+      text-align: center;
+      margin-top: 8px;
+      font-family: monospace;
+      font-weight: 600;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+      background: rgba(233, 30, 99, 0.2);
+      padding: 4px 8px;
+      border-radius: 10px;
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
     }
     
     .loading-spinner {
@@ -167,12 +284,18 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 50px;
-      height: 50px;
-      border: 5px solid rgba(255,255,255,0.1);
-      border-top-color: var(--accent);
+      width: 60px;
+      height: 60px;
+      border: 4px solid rgba(255, 255, 255, 0.1);
+      border-top: 4px solid var(--accent);
+      border-right: 4px solid rgba(233, 30, 99, 0.6);
       border-radius: 50%;
       animation: spin 1s infinite linear;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 
+        0 8px 25px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
     
     @keyframes spin {
@@ -182,15 +305,171 @@
     
     .live-badge {
       position: absolute;
-      top: 1rem;
-      right: 1rem;
-      background: var(--accent);
+      top: 1.5rem;
+      right: 1.5rem;
+      background: linear-gradient(135deg, var(--accent), #ff1744);
       color: white;
-      padding: 0.25rem 0.75rem;
-      border-radius: 4px;
+      padding: 0.5rem 1rem;
+      border-radius: 25px;
       font-weight: bold;
       font-size: 0.9rem;
       z-index: 10;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 
+        0 6px 20px rgba(233, 30, 99, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      animation: pulse 2s infinite;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+    
+    @keyframes pulse {
+      0%, 100% { 
+        opacity: 1; 
+        transform: scale(1);
+      }
+      50% { 
+        opacity: 0.8; 
+        transform: scale(1.05);
+      }
+    }
+    
+    .select-enhanced {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 16px;
+      padding-right: 40px;
+    }
+    
+    .select-enhanced option {
+      background: rgba(28, 28, 28, 0.95);
+      color: white;
+      padding: 8px;
+    }
+    
+    /* Welcome Modal Styles */
+    .welcome-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+    
+    .welcome-modal.show {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .welcome-content {
+      background: linear-gradient(135deg, rgba(28, 28, 28, 0.95), rgba(40, 40, 40, 0.95));
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 2px solid rgba(233, 30, 99, 0.3);
+      border-radius: 25px;
+      padding: 2.5rem;
+      max-width: 500px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      position: relative;
+      animation: modalSlideIn 0.4s ease-out;
+    }
+    
+    @keyframes modalSlideIn {
+      from {
+        transform: translateY(-50px) scale(0.9);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+      }
+    }
+    
+    .welcome-title {
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--accent);
+      margin-bottom: 1.5rem;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      background: linear-gradient(135deg, var(--accent), #ff1744);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .welcome-text {
+      color: rgba(255, 255, 255, 0.9);
+      line-height: 1.6;
+      margin-bottom: 2rem;
+      font-size: 1.1rem;
+    }
+    
+    .welcome-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      align-items: center;
+    }
+    
+    .welcome-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+    
+    .welcome-checkbox input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    
+    .welcome-close {
+      background: linear-gradient(135deg, var(--accent), #ff1744);
+      color: white;
+      border: none;
+      padding: 0.75rem 2rem;
+      border-radius: 50px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 
+        0 4px 15px rgba(233, 30, 99, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+    
+    .welcome-close:hover {
+      transform: translateY(-2px);
+      box-shadow: 
+        0 8px 25px rgba(233, 30, 99, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+    
+    .welcome-close:active {
+      transform: translateY(0);
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
@@ -226,13 +505,31 @@
         </div>
         
         <div class="controls">
+          <button id="rewind30" class="btn">⏪ 30s</button>
+          <button id="rewind10" class="btn">⏪ 10s</button>
           <button id="playBtn" class="btn">Play</button>
+          <button id="forward10" class="btn">10s ⏩</button>
+          <button id="forward30" class="btn">30s ⏩</button>
+          <button id="rateBtn" class="btn">1x</button>
+          <button id="liveBtn" class="btn">LIVE</button>
           <div id="timeline">
             <div id="progress"></div>
             <div id="playhead"></div>
           </div>
           <button id="fullscreenBtn" class="btn">Fullscreen</button>
+          <select id="streamMode" class="btn select-enhanced">
+            <option value="live">Live Stream</option>
+            <option value="local">Local File</option>
+          </select>
         </div>
+        
+        <!-- Thumbnail preview -->
+        <div class="thumbnail-preview" id="thumbnailPreview">
+          <img id="thumbnailImg" src="" alt="Preview">
+          <div class="time-label" id="thumbnailTime">0:00</div>
+        </div>
+        
+        <input type="file" id="fileInput" accept="video/mp4" style="display:none;">
       </div>
       
       <div style="margin-top: 2rem; text-align: center;">
@@ -247,7 +544,73 @@
     </div>
   </div>
   
+  <!-- Welcome Modal -->
+  <div class="welcome-modal" id="welcomeModal">
+    <div class="welcome-content">
+      <h2 class="welcome-title">WELCOME TO SMX STREAM</h2>
+      <div class="welcome-text">
+        <p>SMX Stream is your live training platform for Security Mission Exercises. Watch live training sessions, access recorded content, and interact with instructors in real-time. Use the controls below to navigate through streams, adjust playback settings, and switch between live and local content.</p>
+      </div>
+      <div class="welcome-actions">
+        <div class="welcome-checkbox">
+          <input type="checkbox" id="dontShowAgain">
+          <label for="dontShowAgain">Don't show this again</label>
+        </div>
+        <button class="welcome-close" id="closeWelcome">Get Started</button>
+      </div>
+    </div>
+  </div>
+  
   <script>
+    // Welcome Modal Functionality
+    const welcomeModal = document.getElementById('welcomeModal');
+    const closeWelcomeBtn = document.getElementById('closeWelcome');
+    const dontShowAgainCheckbox = document.getElementById('dontShowAgain');
+    
+    // Check if user has chosen not to show the welcome modal
+    function shouldShowWelcome() {
+      return localStorage.getItem('smx-stream-hide-welcome') !== 'true';
+    }
+    
+    // Show welcome modal on page load
+    function showWelcomeModal() {
+      if (shouldShowWelcome()) {
+        setTimeout(() => {
+          welcomeModal.classList.add('show');
+        }, 500); // Small delay for better UX
+      }
+    }
+    
+    // Close welcome modal
+    function closeWelcomeModal() {
+      welcomeModal.classList.remove('show');
+      
+      // Save preference if checkbox is checked
+      if (dontShowAgainCheckbox.checked) {
+        localStorage.setItem('smx-stream-hide-welcome', 'true');
+      }
+    }
+    
+    // Event listeners for welcome modal
+    closeWelcomeBtn.addEventListener('click', closeWelcomeModal);
+    
+    // Close modal when clicking outside the content
+    welcomeModal.addEventListener('click', function(e) {
+      if (e.target === welcomeModal) {
+        closeWelcomeModal();
+      }
+    });
+    
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && welcomeModal.classList.contains('show')) {
+        closeWelcomeModal();
+      }
+    });
+    
+    // Show welcome modal when page loads
+    window.addEventListener('load', showWelcomeModal);
+    
     const video = document.getElementById('video');
     const playBtn = document.getElementById('playBtn');
     const timeline = document.getElementById('timeline');
@@ -255,6 +618,71 @@
     const playhead = document.getElementById('playhead');
     const fullscreenBtn = document.getElementById('fullscreenBtn');
     const loading = document.getElementById('loading');
+    const rateBtn = document.getElementById('rateBtn');
+    const liveBtn = document.getElementById('liveBtn');
+    const streamMode = document.getElementById('streamMode');
+    const fileInput = document.getElementById('fileInput');
+    const thumbnailPreview = document.getElementById('thumbnailPreview');
+    const thumbnailImg = document.getElementById('thumbnailImg');
+    const thumbnailTime = document.getElementById('thumbnailTime');
+    
+    // Skip buttons
+    document.getElementById('rewind10').onclick = () => video.currentTime -= 10;
+    document.getElementById('rewind30').onclick = () => video.currentTime -= 30;
+    document.getElementById('forward10').onclick = () => video.currentTime += 10;
+    document.getElementById('forward30').onclick = () => video.currentTime += 30;
+    
+    let hlsInstance = null;
+    
+    // Thumbnail generation functionality
+    let thumbnailCache = [];
+    
+    function generateThumbnails() {
+      const offscreen = document.createElement('canvas');
+      offscreen.width = 120;
+      offscreen.height = 70;
+      const offCtx = offscreen.getContext('2d');
+
+      let current = 0;
+      const end = Math.floor(video.duration);
+
+      function snapNext() {
+        if (current > end) return;
+
+        video.currentTime = current;
+        video.addEventListener('seeked', function capture() {
+          offCtx.drawImage(video, 0, 0, offscreen.width, offscreen.height);
+          const img = new Image();
+          img.src = offscreen.toDataURL();
+          thumbnailCache.push({ time: current, img });
+
+          current++;
+          video.removeEventListener('seeked', capture);
+          setTimeout(snapNext, 200); // short delay ensures rendering stability
+        }, { once: true });
+      }
+
+      snapNext();
+    }
+    
+    // Function to get thumbnail for a specific time
+    function getThumbnailForTime(time) {
+      if (thumbnailCache.length === 0) return null;
+      
+      // Find the closest thumbnail
+      let closest = thumbnailCache[0];
+      let minDiff = Math.abs(closest.time - time);
+      
+      for (let i = 1; i < thumbnailCache.length; i++) {
+        const diff = Math.abs(thumbnailCache[i].time - time);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closest = thumbnailCache[i];
+        }
+      }
+      
+      return closest;
+    }
     
     // Fetch class information from the backend
     async function fetchClassInfo() {
@@ -270,20 +698,33 @@
     
         // Initialize HLS.js
         if (Hls.isSupported()) {
-          const hls = new Hls();
-          hls.loadSource(streamUrl);
-          hls.attachMedia(video);
-          hls.on(Hls.Events.MANIFEST_PARSED, function() {
+          hlsInstance = new Hls({
+            enableWorker: true,
+            lowLatencyMode: true,
+            backBufferLength: 90
+          });
+          hlsInstance.loadSource(streamUrl);
+          hlsInstance.attachMedia(video);
+          hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
             video.play();
           });
+          
+          // Generate thumbnails when video metadata is loaded
+          video.addEventListener('loadedmetadata', function() {
+            generateThumbnails();
+          }, { once: true });
 
-          hls.on(Hls.Events.ERROR, function(event, data) {
+          hlsInstance.on(Hls.Events.ERROR, function(event, data) {
             console.error('HLS error:', data);
+            if (data.fatal) {
+              setTimeout(() => fetchClassInfo(), 5000); // Retry after 5 seconds
+            }
           });
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
           video.src = streamUrl;
           video.addEventListener('loadedmetadata', function() {
             video.play();
+            generateThumbnails();
           });
         } else {
           console.error('HLS is not supported in this browser');
@@ -335,6 +776,37 @@
       video.currentTime = pos * video.duration;
     });
     
+    // Timeline hover for thumbnail preview
+    timeline.addEventListener('mousemove', function(e) {
+      if (!video.duration || thumbnailCache.length === 0) return;
+      
+      const rect = timeline.getBoundingClientRect();
+      const pos = (e.clientX - rect.left) / rect.width;
+      const hoverTime = pos * video.duration;
+      
+      const thumbnail = getThumbnailForTime(hoverTime);
+      if (thumbnail) {
+        thumbnailImg.src = thumbnail.img.src;
+        thumbnailTime.textContent = formatTime(hoverTime);
+        
+        // Position the preview
+        const previewX = e.clientX - rect.left;
+        thumbnailPreview.style.left = previewX + 'px';
+        thumbnailPreview.style.display = 'block';
+      }
+    });
+    
+    timeline.addEventListener('mouseleave', function() {
+      thumbnailPreview.style.display = 'none';
+    });
+    
+    // Helper function to format time
+    function formatTime(seconds) {
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+    
     // Fullscreen
     fullscreenBtn.addEventListener('click', function() {
       if (video.requestFullscreen) {
@@ -344,6 +816,78 @@
       } else if (video.msRequestFullscreen) {
         video.msRequestFullscreen();
       }
+    });
+    
+    // ⏩ Playback rate toggle
+    rateBtn.addEventListener('click', function() {
+      video.playbackRate = video.playbackRate === 1 ? 2 : video.playbackRate === 2 ? 0.5 : 1;
+      rateBtn.textContent = video.playbackRate + 'x';
+    });
+    
+    // 🔄 LIVE button
+    liveBtn.addEventListener('click', function() {
+      if (video.duration) {
+        video.currentTime = video.duration - 0.05;
+      }
+    });
+    
+    // Update live status
+    setInterval(() => {
+      if (video.duration) {
+        const live = Math.abs(video.duration - video.currentTime) < 2;
+        liveBtn.style.display = live ? 'none' : 'inline-block';
+      }
+    }, 500);
+    
+    // 📦 Stream mode selector
+    streamMode.addEventListener('change', function() {
+      if (streamMode.value === 'local') {
+        fileInput.click();
+      } else {
+        fetchClassInfo();
+      }
+    });
+    
+    fileInput.addEventListener('change', function() {
+      const file = fileInput.files[0];
+      if (file) {
+        if (hlsInstance) {
+          hlsInstance.destroy();
+          hlsInstance = null;
+        }
+        const url = URL.createObjectURL(file);
+        video.src = url;
+        loading.style.display = 'block';
+        
+        // Generate thumbnails for local file
+        video.addEventListener('loadedmetadata', function() {
+          generateThumbnails();
+        }, { once: true });
+      }
+    });
+    
+    // ⌨️ Keyboard shortcuts
+    window.addEventListener('keydown', function(e) {
+      if (e.key === 'k' || e.key === ' ') {
+        e.preventDefault();
+        playBtn.click();
+      }
+      else if (e.key === 'j') video.currentTime -= 10;
+      else if (e.key === 'l') video.currentTime += 10;
+      else if (e.key === 'f') fullscreenBtn.click();
+      else if (e.key === 'm') video.muted = !video.muted;
+      else if (e.key === 'ArrowLeft') video.currentTime -= 5;
+      else if (e.key === 'ArrowRight') video.currentTime += 5;
+    });
+    
+    // Enhanced video event listeners
+    video.addEventListener('playing', function() {
+      loading.style.display = 'none';
+      playBtn.textContent = 'Pause';
+    });
+    
+    video.addEventListener('pause', function() {
+      playBtn.textContent = 'Play';
     });
   </script>
 </body>
