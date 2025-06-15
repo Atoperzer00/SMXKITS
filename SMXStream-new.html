@@ -114,29 +114,139 @@
     
     .main-content {
       flex: 1;
-      padding: 2rem 0;
+      padding: 0;
     }
     
     .player-wrapper {
       background: rgba(28, 28, 28, 0.8);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      border-radius: 25px;
+      border-radius: 0;
       overflow: hidden;
       box-shadow: 
         0 8px 32px rgba(0, 0, 0, 0.4),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      margin-bottom: 1.5rem;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      margin: 0;
+      border: none;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
     }
     
     .video-container {
       width: 100%;
       position: relative;
-      padding-top: 56.25%; /* 16:9 aspect ratio */
+      flex: 1;
       background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(20, 20, 20, 0.8));
-      border-radius: 25px 25px 0 0;
+      border-radius: 0;
       overflow: hidden;
+    }
+
+    /* Video Overlay Controls */
+    .video-controls-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+      backdrop-filter: blur(5px);
+    }
+
+    .video-container:hover .video-controls-overlay {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .video-control-btn {
+      background: rgba(0, 0, 0, 0.7);
+      border: 2px solid rgba(233, 30, 99, 0.3);
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      color: white;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(10px);
+    }
+
+    .video-control-btn:hover {
+      background: rgba(233, 30, 99, 0.8);
+      border-color: rgba(233, 30, 99, 0.8);
+      transform: scale(1.1);
+      box-shadow: 0 5px 15px rgba(233, 30, 99, 0.4);
+    }
+
+    .play-pause-btn {
+      width: 80px;
+      height: 80px;
+      font-size: 1.5rem;
+    }
+
+    .live-btn {
+      width: auto;
+      padding: 0 1rem;
+      border-radius: 25px;
+      font-size: 0.9rem;
+      font-weight: bold;
+      gap: 0.5rem;
+    }
+
+    .live-btn:hover {
+      background: rgba(255, 71, 87, 0.8);
+      border-color: rgba(255, 71, 87, 0.8);
+    }
+
+    .zoom-controls {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .zoom-btn {
+      width: 45px;
+      height: 45px;
+      font-size: 1rem;
+    }
+
+    .time-display {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-family: monospace;
+      font-size: 0.9rem;
+      color: white;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(233, 30, 99, 0.2);
+    }
+
+    /* Hide default video controls */
+    .video-container video::-webkit-media-controls {
+      display: none !important;
+    }
+
+    .video-container video::-moz-media-controls {
+      display: none !important;
+    }
+
+    .video-container video {
+      outline: none;
     }
     
     video {
@@ -145,16 +255,18 @@
       left: 0;
       width: 100%;
       height: 100%;
-      border-radius: 25px 25px 0 0;
+      border-radius: 0;
       box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.3);
+      object-fit: cover;
     }
     
     .video-info {
-      padding: 2rem;
+      padding: 1rem 2rem;
       background: rgba(255, 255, 255, 0.05);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
       border-top: 1px solid rgba(255, 255, 255, 0.1);
+      flex-shrink: 0;
     }
     
     .video-title {
@@ -172,68 +284,134 @@
       background: rgba(0, 0, 0, 0.4);
       backdrop-filter: blur(15px);
       -webkit-backdrop-filter: blur(15px);
-      border-radius: 0 0 25px 25px;
+      border-radius: 0;
       border-top: 1px solid rgba(255, 255, 255, 0.1);
       gap: 1rem;
       align-items: center;
       justify-content: center;
+      flex-shrink: 0;
     }
     
     #timeline {
       position: relative;
-      height: 12px;
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(5px);
-      -webkit-backdrop-filter: blur(5px);
-      border-radius: 50px;
-      cursor: pointer;
-      flex: 1;
-      margin: 0 1rem;
+      width: 100%;
+      height: 120px;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 10px;
+      overflow-x: auto;
+      overflow-y: hidden;
       border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 
-        inset 0 2px 4px rgba(0, 0, 0, 0.3),
-        0 1px 0 rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      scrollbar-width: thin;
+      scrollbar-color: var(--accent) transparent;
+      margin: 1rem 0;
+      flex: none;
     }
-    
-    #progress {
-      height: 100%;
+
+    #timeline::-webkit-scrollbar {
+      height: 8px;
+    }
+
+    #timeline::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+
+    #timeline::-webkit-scrollbar-thumb {
       background: linear-gradient(90deg, var(--accent), #ff1744);
-      border-radius: 50px;
-      width: 0;
-      box-shadow: 
-        0 0 10px rgba(233, 30, 99, 0.5),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
-      transition: width 0.1s ease;
+      border-radius: 4px;
     }
-    
-    #playhead {
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      background: linear-gradient(135deg, #ffffff, #f0f0f0);
-      border: 3px solid var(--accent);
-      border-radius: 50%;
-      top: -4px;
-      margin-left: -10px;
-      left: 0%;
-      box-shadow: 
-        0 4px 15px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.8);
-      cursor: grab;
+
+    .timeline-container {
+      position: relative;
+      height: 100%;
+      display: flex;
+      align-items: stretch;
+      min-width: 100%;
+    }
+
+    .thumbnail-frame {
+      position: relative;
+      height: 100%;
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+      cursor: pointer;
       transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .thumbnail-frame:hover {
+      transform: scale(1.02);
+      z-index: 10;
+      box-shadow: 0 5px 15px rgba(233, 30, 99, 0.3);
+    }
+
+    .thumbnail-frame img {
+      width: 100%;
+      height: calc(100% - 20px);
+      object-fit: cover;
+      border-radius: 4px 4px 0 0;
+    }
+
+    .time-tick {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      font-size: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: monospace;
+      border-radius: 0 0 4px 4px;
     }
     
-    #playhead:hover {
-      transform: scale(1.2);
-      box-shadow: 
-        0 6px 20px rgba(0, 0, 0, 0.4),
-        0 0 15px rgba(233, 30, 99, 0.5),
-        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    #scrubber {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 3px;
+      height: 100%;
+      background: linear-gradient(180deg, var(--accent), #ff1744);
+      z-index: 100;
+      cursor: grab;
+      box-shadow: 0 0 10px rgba(233, 30, 99, 0.8);
+      transition: left 0.1s ease;
     }
-    
-    #playhead:active {
+
+    #scrubber:active {
       cursor: grabbing;
-      transform: scale(1.1);
+    }
+
+    #scrubber.dragging {
+      transition: none;
+    }
+
+    #scrubber::before {
+      content: '';
+      position: absolute;
+      top: -8px;
+      left: -6px;
+      width: 15px;
+      height: 15px;
+      background: var(--accent);
+      border-radius: 50%;
+      box-shadow: 0 2px 8px rgba(233, 30, 99, 0.6);
+    }
+
+    #scrubber::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: -6px;
+      width: 15px;
+      height: 15px;
+      background: var(--accent);
+      border-radius: 50%;
+      box-shadow: 0 2px 8px rgba(233, 30, 99, 0.6);
     }
     
     .thumbnail-preview {
@@ -495,7 +673,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      border-radius: 25px 25px 0 0;
+      border-radius: 0;
       object-fit: cover;
     }
   </style>
@@ -519,8 +697,7 @@
   </nav>
   
   <div class="main-content">
-    <div class="container">
-      <div class="player-wrapper">
+    <div class="player-wrapper">
         <div class="video-container">
           <div class="live-badge">LIVE</div>
           <video id="video" autoplay muted></video>
@@ -529,6 +706,45 @@
           <div class="stream-type-indicator" id="streamTypeIndicator">File Stream</div>
           <div class="webrtc-status" id="webrtcStatus" style="display:none; position:absolute; top:60px; right:20px; background:rgba(139, 92, 246, 0.9); color:white; padding:8px 12px; border-radius:6px; font-size:12px; font-weight:600;">
             🔴 LIVE WebRTC
+          </div>
+          
+          <!-- Video Overlay Controls (Hidden by default, show on hover) -->
+          <div class="video-controls-overlay">
+            <!-- Play/Pause Button -->
+            <button class="video-control-btn play-pause-btn" onclick="togglePlayPause()">
+              <i class="fas fa-play">▶</i>
+            </button>
+            
+            <!-- Rewind Button -->
+            <button class="video-control-btn rewind-btn" onclick="rewindVideo()">
+              <span>⏪</span>
+            </button>
+            
+            <!-- Fast Forward Button -->
+            <button class="video-control-btn forward-btn" onclick="forwardVideo()">
+              <span>⏩</span>
+            </button>
+            
+            <!-- Jump to Live Button (for live streams) -->
+            <button class="video-control-btn live-btn" onclick="jumpToLive()">
+              <span style="color: #ff4757;">●</span>
+              <span>LIVE</span>
+            </button>
+            
+            <!-- Zoom Controls -->
+            <div class="zoom-controls">
+              <button class="video-control-btn zoom-btn" onclick="zoomTimeline(0.5)">
+                <span>🔍-</span>
+              </button>
+              <button class="video-control-btn zoom-btn" onclick="zoomTimeline(2)">
+                <span>🔍+</span>
+              </button>
+            </div>
+            
+            <!-- Time Display -->
+            <div class="time-display">
+              <span id="currentTime">0:00</span> / <span id="totalTime">0:00</span>
+            </div>
           </div>
         </div>
         
@@ -546,8 +762,7 @@
           <button id="rateBtn" class="btn">1x</button>
           <button id="liveBtn" class="btn">LIVE</button>
           <div id="timeline">
-            <div id="progress"></div>
-            <div id="playhead"></div>
+            <div id="scrubber"></div>
           </div>
           <button id="fullscreenBtn" class="btn">Fullscreen</button>
           <select id="streamMode" class="btn select-enhanced">
@@ -564,17 +779,6 @@
         
         <input type="file" id="fileInput" accept="video/mp4" style="display:none;">
       </div>
-      
-      <div style="margin-top: 2rem; text-align: center;">
-        <p style="margin-bottom: 1rem; color: rgba(255,255,255,0.7);">
-          To stream to this page, use OBS or other streaming software with the following settings:
-        </p>
-        <div style="background: var(--track); padding: 1rem; border-radius: 5px; display: inline-block; text-align: left;">
-          <p><strong>Server:</strong> rtmp://127.0.0.1:1935/live</p>
-          <p><strong>Stream Key:</strong> Contact administrator for your stream key</p>
-        </div>
-      </div>
-    </div>
   </div>
   
   <!-- Welcome Modal -->
@@ -1879,6 +2083,385 @@
     video.addEventListener('pause', function() {
       playBtn.textContent = 'Play';
     });
+
+    // Advanced Video Timeline Component
+    class VideoTimeline {
+      constructor(videoId, timelineId) {
+        this.video = document.getElementById(videoId);
+        this.timeline = document.getElementById(timelineId);
+        this.scrubber = document.getElementById('scrubber');
+        this.thumbnails = [];
+        this.zoomLevel = 1;
+        this.visibleDuration = 60; // seconds visible at zoom level 1
+        this.thumbnailInterval = 2; // seconds between thumbnails
+        this.isDragging = false;
+        this.dragStartX = 0;
+        this.dragStartTime = 0;
+        
+        this.init();
+      }
+
+      init() {
+        if (!this.video || !this.timeline) return;
+        
+        // Wait for video metadata to load
+        this.video.addEventListener('loadedmetadata', () => {
+          this.generateThumbnails();
+          this.setupEventListeners();
+        });
+
+        // If metadata is already loaded
+        if (this.video.readyState >= 1) {
+          this.generateThumbnails();
+          this.setupEventListeners();
+        }
+      }
+
+      async generateThumbnails() {
+        const duration = this.video.duration;
+        if (!duration) return;
+
+        // Create container for thumbnails
+        const container = document.createElement('div');
+        container.className = 'timeline-container';
+        this.timeline.appendChild(container);
+
+        // Generate thumbnails every 2 seconds
+        for (let time = 0; time < duration; time += this.thumbnailInterval) {
+          const thumbnail = await this.captureThumbnail(time);
+          const frame = this.createThumbnailFrame(thumbnail, time);
+          container.appendChild(frame);
+          this.thumbnails.push({ element: frame, time: time });
+        }
+
+        this.updateTimelineWidth();
+      }
+
+      async captureThumbnail(time) {
+        return new Promise((resolve) => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          // Create a temporary video element for capture
+          const tempVideo = this.video.cloneNode();
+          tempVideo.muted = true;
+          tempVideo.currentTime = time;
+          
+          tempVideo.addEventListener('seeked', () => {
+            canvas.width = 160;
+            canvas.height = 90;
+            ctx.drawImage(tempVideo, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL());
+          }, { once: true });
+        });
+      }
+
+      createThumbnailFrame(thumbnailSrc, time) {
+        const frame = document.createElement('div');
+        frame.className = 'thumbnail-frame';
+        
+        const img = document.createElement('img');
+        img.src = thumbnailSrc;
+        img.alt = `Frame at ${this.formatTime(time)}`;
+        
+        const tick = document.createElement('div');
+        tick.className = 'time-tick';
+        tick.textContent = this.formatTime(time);
+        
+        frame.appendChild(img);
+        frame.appendChild(tick);
+        
+        // Click to seek
+        frame.addEventListener('click', () => {
+          this.video.currentTime = time;
+        });
+        
+        return frame;
+      }
+
+      setupEventListeners() {
+        // Update scrubber position on time update (only when not dragging)
+        this.video.addEventListener('timeupdate', () => {
+          if (!this.isDragging) {
+            this.updateScrubberPosition();
+          }
+        });
+
+        // Zoom with mouse wheel
+        this.timeline.addEventListener('wheel', (e) => {
+          e.preventDefault();
+          const zoomFactor = e.deltaY > 0 ? 0.8 : 1.25;
+          this.zoomLevel *= zoomFactor;
+          this.zoomLevel = Math.max(0.1, Math.min(10, this.zoomLevel));
+          this.updateTimelineWidth();
+        });
+
+        // Scrubber drag functionality
+        this.setupScrubberDrag();
+
+        // Click on timeline to seek
+        this.timeline.addEventListener('click', (e) => {
+          if (e.target === this.timeline || e.target.classList.contains('timeline-container')) {
+            this.seekToPosition(e);
+          }
+        });
+      }
+
+      setupScrubberDrag() {
+        // Mouse events
+        this.scrubber.addEventListener('mousedown', (e) => {
+          this.startDrag(e);
+        });
+
+        document.addEventListener('mousemove', (e) => {
+          if (this.isDragging) {
+            this.handleDrag(e);
+          }
+        });
+
+        document.addEventListener('mouseup', () => {
+          this.endDrag();
+        });
+
+        // Touch events for mobile
+        this.scrubber.addEventListener('touchstart', (e) => {
+          e.preventDefault();
+          this.startDrag(e.touches[0]);
+        });
+
+        document.addEventListener('touchmove', (e) => {
+          if (this.isDragging) {
+            e.preventDefault();
+            this.handleDrag(e.touches[0]);
+          }
+        });
+
+        document.addEventListener('touchend', () => {
+          this.endDrag();
+        });
+      }
+
+      startDrag(event) {
+        this.isDragging = true;
+        this.dragStartX = event.clientX;
+        this.dragStartTime = this.video.currentTime;
+        this.scrubber.classList.add('dragging');
+        
+        // Pause video during drag for smoother scrubbing
+        this.wasPlaying = !this.video.paused;
+        this.video.pause();
+      }
+
+      handleDrag(event) {
+        if (!this.isDragging) return;
+
+        const container = this.timeline.querySelector('.timeline-container');
+        if (!container) return;
+
+        const timelineRect = this.timeline.getBoundingClientRect();
+        const relativeX = event.clientX - timelineRect.left + this.timeline.scrollLeft;
+        const timelineWidth = container.offsetWidth;
+        
+        // Calculate new time based on position
+        const progress = Math.max(0, Math.min(1, relativeX / timelineWidth));
+        const newTime = progress * this.video.duration;
+        
+        // Update video time and scrubber position
+        this.video.currentTime = newTime;
+        this.updateScrubberPosition();
+        
+        // Show time tooltip during drag
+        this.showTimeTooltip(event.clientX, newTime);
+      }
+
+      endDrag() {
+        if (!this.isDragging) return;
+        
+        this.isDragging = false;
+        this.scrubber.classList.remove('dragging');
+        this.hideTimeTooltip();
+        
+        // Resume playback if it was playing before drag
+        if (this.wasPlaying) {
+          this.video.play();
+        }
+      }
+
+      seekToPosition(event) {
+        const container = this.timeline.querySelector('.timeline-container');
+        if (!container) return;
+
+        const timelineRect = this.timeline.getBoundingClientRect();
+        const relativeX = event.clientX - timelineRect.left + this.timeline.scrollLeft;
+        const timelineWidth = container.offsetWidth;
+        
+        const progress = Math.max(0, Math.min(1, relativeX / timelineWidth));
+        const newTime = progress * this.video.duration;
+        
+        this.video.currentTime = newTime;
+      }
+
+      showTimeTooltip(x, time) {
+        let tooltip = document.getElementById('scrubber-tooltip');
+        if (!tooltip) {
+          tooltip = document.createElement('div');
+          tooltip.id = 'scrubber-tooltip';
+          tooltip.style.cssText = `
+            position: fixed;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-family: monospace;
+            pointer-events: none;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(233, 30, 99, 0.2);
+          `;
+          document.body.appendChild(tooltip);
+        }
+        
+        tooltip.textContent = this.formatTime(time);
+        tooltip.style.left = `${x - 25}px`;
+        tooltip.style.top = `${this.timeline.getBoundingClientRect().top - 30}px`;
+        tooltip.style.display = 'block';
+      }
+
+      hideTimeTooltip() {
+        const tooltip = document.getElementById('scrubber-tooltip');
+        if (tooltip) {
+          tooltip.style.display = 'none';
+        }
+      }
+
+      updateScrubberPosition() {
+        if (!this.video.duration) return;
+        
+        const container = this.timeline.querySelector('.timeline-container');
+        if (!container) return;
+        
+        const progress = this.video.currentTime / this.video.duration;
+        const timelineWidth = container.offsetWidth;
+        const scrubberPosition = progress * timelineWidth;
+        
+        this.scrubber.style.left = `${scrubberPosition}px`;
+        
+        // Auto-scroll to keep scrubber visible (only when not dragging)
+        if (!this.isDragging) {
+          const timelineScrollLeft = this.timeline.scrollLeft;
+          const timelineVisibleWidth = this.timeline.offsetWidth;
+          
+          if (scrubberPosition < timelineScrollLeft || scrubberPosition > timelineScrollLeft + timelineVisibleWidth) {
+            this.timeline.scrollLeft = scrubberPosition - timelineVisibleWidth / 2;
+          }
+        }
+      }
+
+      updateTimelineWidth() {
+        const container = this.timeline.querySelector('.timeline-container');
+        if (!container) return;
+        
+        const frameWidth = 160 * this.zoomLevel;
+        const totalFrames = this.thumbnails.length;
+        const totalWidth = totalFrames * frameWidth;
+        
+        container.style.minWidth = `${totalWidth}px`;
+        
+        // Update frame widths
+        this.thumbnails.forEach(({ element }) => {
+          element.style.width = `${frameWidth}px`;
+        });
+      }
+
+      formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+      }
+
+      zoom(factor) {
+        this.zoomLevel *= factor;
+        this.zoomLevel = Math.max(0.1, Math.min(10, this.zoomLevel));
+        this.updateTimelineWidth();
+      }
+    }
+
+    // Global functions for video controls
+    function togglePlayPause() {
+      const video = document.getElementById('video');
+      const playPauseBtn = document.querySelector('.play-pause-btn');
+      
+      if (video.paused) {
+        video.play();
+        playPauseBtn.innerHTML = '<span>⏸</span>';
+      } else {
+        video.pause();
+        playPauseBtn.innerHTML = '<span>▶</span>';
+      }
+    }
+
+    function rewindVideo() {
+      const video = document.getElementById('video');
+      video.currentTime = Math.max(0, video.currentTime - 10);
+    }
+
+    function forwardVideo() {
+      const video = document.getElementById('video');
+      video.currentTime = Math.min(video.duration, video.currentTime + 10);
+    }
+
+    function jumpToLive() {
+      const video = document.getElementById('video');
+      // For recorded videos, jump to end
+      // For live streams, this would jump to the live edge
+      video.currentTime = video.duration;
+    }
+
+    function zoomTimeline(factor) {
+      if (window.videoTimeline) {
+        window.videoTimeline.zoom(factor);
+      }
+    }
+
+    // Update time display
+    function updateTimeDisplay() {
+      const video = document.getElementById('video');
+      const currentTimeEl = document.getElementById('currentTime');
+      const totalTimeEl = document.getElementById('totalTime');
+      
+      if (currentTimeEl && totalTimeEl) {
+        currentTimeEl.textContent = formatTime(video.currentTime);
+        totalTimeEl.textContent = formatTime(video.duration || 0);
+      }
+    }
+
+    function formatTime(seconds) {
+      if (isNaN(seconds)) return '0:00';
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    // Initialize advanced timeline
+    setTimeout(() => {
+      window.videoTimeline = new VideoTimeline('video', 'timeline');
+      
+      // Set up video event listeners for time display
+      const video = document.getElementById('video');
+      if (video) {
+        video.addEventListener('timeupdate', updateTimeDisplay);
+        video.addEventListener('loadedmetadata', updateTimeDisplay);
+        video.addEventListener('play', () => {
+          const btn = document.querySelector('.play-pause-btn');
+          if (btn) btn.innerHTML = '<span>⏸</span>';
+        });
+        video.addEventListener('pause', () => {
+          const btn = document.querySelector('.play-pause-btn');
+          if (btn) btn.innerHTML = '<span>▶</span>';
+        });
+      }
+    }, 1000);
   </script>
 </body>
 </html>

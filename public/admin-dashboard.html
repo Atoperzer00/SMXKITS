@@ -3,252 +3,553 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin Dashboard – SMX KITS</title>
+  <title>SMX KITS - Instructor Command Center</title>
   <link rel="stylesheet" href="style.css" />
   <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
   <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
   <script src="/socket.io/socket.io.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    body {
-      /* Remove the login page background for dashboard */
-      background: #181f25;
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      display: block;
-      /* Removed Sign in Screen.jpg or any background image */
+    :root {
+      --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      --dark-gradient: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 100%);
+      --card-gradient: linear-gradient(145deg, #16213e 0%, #0f1419 100%);
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --text-primary: #ffffff;
+      --text-secondary: #b8c5d6;
+      --text-accent: #64b5f6;
+      --shadow-primary: 0 20px 40px rgba(0, 0, 0, 0.3);
+      --shadow-hover: 0 30px 60px rgba(0, 0, 0, 0.4);
+      --border-radius: 20px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--dark-gradient);
+      color: var(--text-primary);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* Animated background particles */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.1) 0%, transparent 50%);
+      z-index: -1;
+      animation: float 20s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      33% { transform: translateY(-20px) rotate(1deg); }
+      66% { transform: translateY(10px) rotate(-1deg); }
+    }
+
     .admin-layout {
       display: flex;
+      min-height: 100vh;
     }
+
+    /* Sidebar Redesign */
     .admin-sidebar {
-      background: #002d62;
-      width: 260px;
-      color: #fff;
+      width: 280px;
+      background: rgba(15, 20, 25, 0.95);
+      backdrop-filter: blur(20px);
+      border-right: 1px solid var(--glass-border);
       display: flex;
       flex-direction: column;
-      align-items: center;
-      padding-top: 28px;
-      padding-bottom: 28px;
-    }
-    .admin-logo {
-      width: 180px;
-      margin-bottom: 36px;
-      filter: drop-shadow(0 2px 10px rgba(0,0,0,0.16));
-    }
-    .admin-nav {
-      list-style: none;
-      padding: 0;
-      width: 100%;
-    }
-    .admin-nav li {
-      padding: 15px 32px;
-      font-size: 1.13rem;
-      border-left: 4px solid transparent;
-      cursor: pointer;
-      transition: background 0.14s, border-color 0.17s;
-    }
-    .admin-nav li.active,
-    .admin-nav li:hover {
-      background: rgba(0,60,140,0.26);
-      border-left: 4px solid #1da1f2;
-    }
-    .admin-content {
-      flex: 1;
-      background: linear-gradient(120deg, #212e42 0%, #1e2738 100%);
-      padding: 36px 46px 36px 46px;
-    }
-    .dashboard-title {
-      font-size: 2.35rem;
-      font-weight: 700;
-      color: #fff;
-      margin-bottom: 18px;
-      letter-spacing: 1.2px;
-      text-shadow: 0 3px 18px #002d6238;
-    }
-    .dashboard-tiles {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 26px;
-      margin-bottom: 36px;
-    }
-    .dashboard-tile {
-      background: linear-gradient(135deg, #192234c4 0%, #24344dbe 100%);
-      color: #fff;
-      min-width: 210px;
-      flex: 1 0 210px;
-      max-width: 270px;
-      border-radius: 24px;
-      box-shadow: 0 6px 28px rgba(0,34,75,0.11);
-      padding: 36px 20px 32px 20px;
-      text-align: center;
-      font-size: 1.1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.17s, transform 0.13s, box-shadow 0.16s;
+      padding: 2rem 0;
       position: relative;
       overflow: hidden;
-      border: 1.2px solid #1a345b55;
     }
-    .dashboard-tile:hover {
-      background: linear-gradient(120deg, #22417e 0%, #1e2738 80%);
-      transform: translateY(-3px) scale(1.04);
-      box-shadow: 0 12px 34px 0 #0059b166;
-      border-color: #338bfc;
-    }
-    .tile-badge {
+
+    .admin-sidebar::before {
+      content: '';
       position: absolute;
-      top: 20px;
-      right: 28px;
-      background: #1da1f2;
-      color: #fff;
-      border-radius: 16px;
-      font-size: 0.89rem;
-      padding: 4px 11px;
-      font-weight: 700;
-      opacity: 0.88;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, rgba(102, 126, 234, 0.1) 0%, transparent 100%);
+      z-index: -1;
     }
-    .dashboard-widgets {
-      display: flex;
-      gap: 36px;
-      flex-wrap: wrap;
-      align-items: flex-start;
+
+    .admin-logo {
+      width: 200px;
+      margin: 0 auto 3rem;
+      filter: drop-shadow(0 10px 30px rgba(102, 126, 234, 0.3));
+      transition: var(--transition);
     }
-    .widget-card {
-      background: linear-gradient(120deg, #202c41 0%, #162132 100%);
-      border-radius: 20px;
-      box-shadow: 0 4px 24px rgba(0,34,75,0.13);
-      padding: 24px;
-      color: #fff;
-      flex: 1 0 320px;
-      min-width: 320px;
-      min-height: 360px;
-      margin-bottom: 24px;
-      border: 1.1px solid #2c426777;
-      display: flex;
-      flex-direction: column;
+
+    .admin-logo:hover {
+      transform: scale(1.05);
+      filter: drop-shadow(0 15px 40px rgba(102, 126, 234, 0.5));
     }
-    .widget-title {
-      font-size: 1.2rem;
-      font-weight: 600;
-      color: #89bcf4;
-      margin-bottom: 18px;
-      letter-spacing: 1.1px;
+
+    .admin-nav {
+      list-style: none;
+      padding: 0 1rem;
     }
-    /* Chatbox styles */
-    .chatbox {
-      background: #1c2837;
-      border: 1px solid #2e3c4d;
-      border-radius: 12px;
-      padding: 18px;
-      color: #e0e6ed;
-      margin-top: 36px;
-      max-width: 100%;
-    }
-    .chatbox h3 {
-      margin-top: 0;
-      margin-bottom: 14px;
-      color: #89bcf4;
-    }
-    .chatbox-messages {
-      height: 300px;
-      overflow-y: auto;
-      background: #121c2b;
-      padding: 16px;
-      border-radius: 8px;
-      margin-bottom: 12px;
-      font-size: 0.95rem;
-    }
-    .chatbox-inputs input, .chatbox-inputs button {
-      padding: 10px;
-      border-radius: 6px;
-      border: none;
-    }
-    .chatbox-inputs input[type="file"] {
-      color: white;
-      max-width: 200px;
-    }
-    .chatbox-inputs input[type="text"] {
-      flex-grow: 1;
-      margin-right: 12px;
-      background: #232e3c;
-      color: #fff;
-      border: 1px solid #2e3c4d;
-    }
-    .chatbox-inputs {
-      display: flex;
-      gap: 10px;
-    }
-    .chatbox-inputs button {
-      background: #1da1f2;
-      color: #fff;
+
+    .admin-nav li {
+      margin-bottom: 0.5rem;
+      padding: 1rem 1.5rem;
+      border-radius: 15px;
       cursor: pointer;
-    }
-    .chat-message {
-      margin-bottom: 14px;
-      padding: 8px 12px;
-      border-radius: 8px;
-      background: #1a2c3f;
-      animation: fadeIn 0.3s ease;
-    }
-    .chat-message.current-user {
-      background: #1a3a5e;
-    }
-    .chat-header {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 6px;
-    }
-    .chat-time {
-      font-size: 0.8em;
-      color: #8faac7;
-    }
-    .chat-content {
-      word-break: break-word;
-    }
-    .chat-attachment {
-      margin-top: 10px;
-      padding: 8px;
-      background: #1e2f41;
-      border-radius: 6px;
-    }
-    .attachment-name {
-      margin-top: 5px;
-      font-size: 0.85em;
-      color: #8faac7;
-    }
-    .file-link {
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+      font-weight: 500;
       display: flex;
       align-items: center;
-      color: #70b8ff;
-      text-decoration: none;
+      gap: 12px;
     }
-    .attachment-icon {
-      margin-right: 8px;
-      font-size: 1.2em;
+
+    .admin-nav li::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: var(--primary-gradient);
+      transition: var(--transition);
+      z-index: -1;
     }
-    .chat-loading, .chat-empty, .chat-error {
-      color: #8faac7;
+
+    .admin-nav li:hover::before,
+    .admin-nav li.active::before {
+      left: 0;
+    }
+
+    .admin-nav li:hover,
+    .admin-nav li.active {
+      color: white;
+      transform: translateX(5px);
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    }
+
+    /* Main Content Area */
+    .admin-content {
+      flex: 1;
+      padding: 2rem;
+      background: transparent;
+      overflow-y: auto;
+    }
+
+    /* Header Section */
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 3rem;
+      padding: 2rem;
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border-radius: var(--border-radius);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+    }
+
+    .dashboard-title {
+      font-size: 3rem;
+      font-weight: 800;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin: 0;
+      letter-spacing: -0.02em;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.5rem;
+      background: var(--glass-bg);
+      border-radius: 50px;
+      border: 1px solid var(--glass-border);
+    }
+
+    .user-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: var(--accent-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+
+    /* Essential Tools Section */
+    .essential-tools {
+      margin-bottom: 3rem;
+    }
+
+    .section-title {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      color: var(--text-accent);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .section-title::before {
+      content: '';
+      width: 4px;
+      height: 40px;
+      background: var(--accent-gradient);
+      border-radius: 2px;
+    }
+
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .tool-card {
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tool-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--primary-gradient);
+      opacity: 0;
+      transition: var(--transition);
+    }
+
+    .tool-card:hover::before {
+      opacity: 0.1;
+    }
+
+    .tool-card:hover {
+      transform: translateY(-10px) scale(1.02);
+      box-shadow: var(--shadow-hover);
+      border-color: rgba(102, 126, 234, 0.5);
+    }
+
+    .tool-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .tool-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+
+    .tool-description {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    /* Quick Actions Grid */
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+
+    .action-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border-radius: var(--border-radius);
+      padding: 1.5rem;
+      border: 1px solid var(--glass-border);
+      cursor: pointer;
+      transition: var(--transition);
       text-align: center;
-      padding: 20px;
+      position: relative;
+      overflow: hidden;
     }
-    .chat-error {
-      color: #e57373;
+
+    .action-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: var(--secondary-gradient);
+      transition: var(--transition);
+      z-index: -1;
     }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(5px); }
-      to { opacity: 1; transform: translateY(0); }
+
+    .action-card:hover::before {
+      left: 0;
     }
-    @media (max-width: 1020px) {
+
+    .action-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 35px rgba(245, 87, 108, 0.3);
+      color: white;
+    }
+
+    .action-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      opacity: 0.8;
+    }
+
+    .action-title {
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .badge {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: var(--secondary-gradient);
+      color: white;
+      border-radius: 20px;
+      padding: 0.3rem 0.8rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    /* Dashboard Widgets */
+    .dashboard-widgets {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 3rem;
+    }
+
+    .widget-card {
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+      transition: var(--transition);
+    }
+
+    .widget-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .widget-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-accent);
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Calendar Widget */
+    .calendar-widget {
+      grid-column: 1 / -1;
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+      margin-bottom: 2rem;
+    }
+
+    #calendar {
+      background: transparent;
+      border-radius: 15px;
+      overflow: hidden;
+    }
+
+    /* Chat Section */
+    .chat-section {
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+      margin-bottom: 2rem;
+    }
+
+    .chatbox-messages {
+      height: 400px;
+      overflow-y: auto;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 15px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border: 1px solid var(--glass-border);
+    }
+
+    .chatbox-inputs {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .chatbox-inputs input[type="text"] {
+      flex: 1;
+      padding: 1rem;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 25px;
+      color: var(--text-primary);
+      font-size: 1rem;
+    }
+
+    .chatbox-inputs button {
+      padding: 1rem 2rem;
+      background: var(--accent-gradient);
+      border: none;
+      border-radius: 25px;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .chatbox-inputs button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 10px 25px rgba(79, 172, 254, 0.4);
+    }
+
+    /* Progress Bars */
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 1rem 0;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--accent-gradient);
+      border-radius: 4px;
+      transition: width 1s ease;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
       .dashboard-widgets {
+        grid-template-columns: 1fr;
+      }
+      
+      .tools-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .admin-layout {
         flex-direction: column;
       }
-      .admin-content {
-        padding: 22px 8vw;
+      
+      .admin-sidebar {
+        width: 100%;
+        height: auto;
       }
-      .dashboard-tiles {
-        gap: 13px;
+      
+      .admin-content {
+        padding: 1rem;
+      }
+      
+      .dashboard-title {
+        font-size: 2rem;
+      }
+      
+      .dashboard-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
       }
     }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--accent-gradient);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--primary-gradient);
+    }
+
+    /* Animation Classes */
+    .fade-in {
+      animation: fadeInUp 0.6s ease forwards;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .stagger-1 { animation-delay: 0.1s; }
+    .stagger-2 { animation-delay: 0.2s; }
+    .stagger-3 { animation-delay: 0.3s; }
+    .stagger-4 { animation-delay: 0.4s; }
+
+
   </style>
 </head>
 <body>
@@ -273,135 +574,452 @@
     <aside class="admin-sidebar">
       <img src="SMXKITS.png" alt="SMXKITS Logo" class="admin-logo" />
       <ul class="admin-nav">
-        <li class="active">Dashboard</li>
-        <li>Training Hub</li>
-        <li>Calendar</li>
-        <li>Classes</li>
-        <li>Students</li>
-        <li>Student Grading</li>
-        <li>Lessons Learned</li>
-        <li>Inbox</li>
-        <li>Attendance Tracking</li>
-        <li>Reports & Analytics</li>
-        <li>Live Training Controls</li>
-        <li>Course Feedback</li>
-        <li>Templates / Resources</li>
-        <li>Certificate Generation</li>
-        <li>Bulk Upload / Import</li>
-        <li onclick="window.location.href='edit-typing-tests.html'">Edit Typing Tests</li>
-        <li>Settings</li>
-        <li onclick="logout()">Logout</li>
+        <li class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</li>
+        <li><i class="fas fa-graduation-cap"></i> Training Hub <span style="font-size: 0.7rem; color: #f093fb; opacity: 0.8;">(Needs link)</span></li>
+        <li><i class="fas fa-calendar-alt"></i> Calendar <span style="font-size: 0.7rem; color: #f093fb; opacity: 0.8;">(Needs link)</span></li>
+        <li><i class="fas fa-chalkboard-teacher"></i> Classes <span style="font-size: 0.7rem; color: #f093fb; opacity: 0.8;">(Needs link)</span></li>
+        <li><i class="fas fa-user-graduate"></i> Students <span style="font-size: 0.7rem; color: #f093fb; opacity: 0.8;">(Needs link)</span></li>
+        <li><i class="fas fa-star"></i> Student Grading <span style="font-size: 0.7rem; color: #f093fb; opacity: 0.8;">(Needs link)</span></li>
+        <li><i class="fas fa-lightbulb"></i> Lessons Learned <span style="font-size: 0.7rem; color: #f093fb; opacity: 0.8;">(Needs link)</span></li>
+        <li><i class="fas fa-inbox"></i> Inbox <span style="font-size: 0.7rem; color: #f093fb; opacity: 0.8;">(Needs link)</span></li>
+        <li><i class="fas fa-clipboard-check"></i> Attendance <span style="font-size: 0.7rem; color: #f093fb; opacity: 0.8;">(Needs link)</span></li>
+        <li><i class="fas fa-chart-bar"></i> Analytics <span style="font-size: 0.7rem; color: #f093fb; opacity: 0.8;">(Needs link)</span></li>
+        <li><i class="fas fa-broadcast-tower"></i> Live Controls <span style="font-size: 0.7rem; color: #f093fb; opacity: 0.8;">(Needs link)</span></li>
+        <li><i class="fas fa-comments"></i> Feedback <span style="font-size: 0.7rem; color: #f093fb; opacity: 0.8;">(Needs link)</span></li>
+        <li><i class="fas fa-folder-open"></i> Resources <span style="font-size: 0.7rem; color: #f093fb; opacity: 0.8;">(Needs link)</span></li>
+        <li><i class="fas fa-certificate"></i> Certificates <span style="font-size: 0.7rem; color: #f093fb; opacity: 0.8;">(Needs link)</span></li>
+        <li><i class="fas fa-upload"></i> Bulk Import <span style="font-size: 0.7rem; color: #f093fb; opacity: 0.8;">(Needs link)</span></li>
+        <li><i class="fas fa-cog"></i> Settings <span style="font-size: 0.7rem; color: #f093fb; opacity: 0.8;">(Needs link)</span></li>
+        <li onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</li>
       </ul>
     </aside>
+
     <!-- Main Content -->
     <main class="admin-content">
-      <div class="dashboard-title">Admin / Instructor Dashboard</div>
-      <!-- Quick Action Tiles -->
-      <section class="dashboard-tiles">
-        <div class="dashboard-tile" onclick="window.location.href='users-roles.html'">
-          Users & Roles
+      <!-- Header Section -->
+      <header class="dashboard-header fade-in">
+        <div>
+          <h1 class="dashboard-title">Instructor Command Center</h1>
+          <p style="color: var(--text-secondary); font-size: 1.1rem; margin-top: 0.5rem;">
+            Welcome back! Manage your classes, students, and training resources.
+          </p>
         </div>
-        <div class="dashboard-tile" onclick="window.location.href='add-class.html'">
-          Add New Class
+        <div class="user-info">
+          <div class="user-avatar">
+            <i class="fas fa-user"></i>
+          </div>
+          <div>
+            <div style="font-weight: 600;">Instructor</div>
+            <div style="font-size: 0.9rem; color: var(--text-secondary);">Admin Access</div>
+          </div>
         </div>
-        <div class="dashboard-tile" onclick="window.location.href='add-student.html'">
-          Add New Student
+      </header>
+
+      <!-- Essential Tools Section -->
+      <section class="essential-tools fade-in stagger-1">
+        <h2 class="section-title">
+          <i class="fas fa-tools"></i>
+          Essential Instructor Tools
+        </h2>
+        <div class="tools-grid">
+          <div class="tool-card" onclick="window.open('Stream Mode.html', '_blank')">
+            <div class="tool-icon"><i class="fas fa-video"></i></div>
+            <h3 class="tool-title">Instructor Stream Mode</h3>
+            <p class="tool-description">Advanced streaming interface with full instructor controls and real-time student interaction capabilities.</p>
+          </div>
+          
+          <div class="tool-card" onclick="window.open('kitcomm.html', '_blank')">
+            <div class="tool-icon"><i class="fas fa-comments"></i></div>
+            <h3 class="tool-title">KitComm</h3>
+            <p class="tool-description">Comprehensive communication hub for instructor-student messaging and collaboration.</p>
+          </div>
+          
+          <div class="tool-card" onclick="window.open('../OpsLog.html', '_blank')">
+            <div class="tool-icon"><i class="fas fa-clipboard-list"></i></div>
+            <h3 class="tool-title">Operations Log</h3>
+            <p class="tool-description">Monitor system activities, track user actions, and maintain operational oversight.</p>
+          </div>
+          
+          <div class="tool-card" onclick="alert('Upload Templates functionality coming soon!')">
+            <div class="tool-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+            <h3 class="tool-title">Upload Templates <span style="font-size: 0.7rem; color: #f093fb; font-weight: 400;">(Needs link)</span></h3>
+            <p class="tool-description">Manage and upload course templates, resources, and educational materials.</p>
+          </div>
+          
+          <div class="tool-card" onclick="window.location.href='edit-typing-tests.html'">
+            <div class="tool-icon"><i class="fas fa-keyboard"></i></div>
+            <h3 class="tool-title">Edit Typing Tests</h3>
+            <p class="tool-description">Create, modify, and manage typing assessments and skill evaluation tests.</p>
+          </div>
         </div>
-        <div class="dashboard-tile">Manage Attendance</div>
-        <div class="dashboard-tile">Instructor Inbox <span class="tile-badge">3</span></div>
-        <div class="dashboard-tile" onclick="window.open('../SMXStream-integrated.html', '_blank')">
-          SMX Stream Instructor
-        </div>
-        <div class="dashboard-tile" onclick="window.open('../SMXStream-new.html', '_blank')">
-          SMX Stream Student
-        </div>
-        <div class="dashboard-tile" onclick="window.open('../OpsLog.html', '_blank')">
-          Operations Log
-        </div>
-        <div class="dashboard-tile">Grading</div>
-        <div class="dashboard-tile" onclick="window.open('Stream Mode.html', '_blank')">
-          Instructor Stream Mode
-        </div>
-        <div class="dashboard-tile">Upload Templates</div>
       </section>
-      <!-- Instructions for streaming options -->
-      <div class="dashboard-tile" style="background:#1e2738; color:#fff; font-size:0.98rem; cursor:default;">
-        <b>Streaming Options:</b><br>
-        - <b>SMX Stream Instructor:</b> Full control panel for instructors to manage streams and interact with students.<br>
-        - <b>SMX Stream Student:</b> Student view of streams with chat capabilities.<br>
-        - <b>Instructor Stream Mode:</b> Alternative streaming interface for instructors.<br><br>
-        <span style="color:#89bcf4;">(Instructors: Choose your preferred interface to broadcast your live feed. Students will access through the SMX Stream Student view.)</span>
-      </div>
-      
-      <!-- Full-width Calendar Widget -->
-      <div class="widget-card" style="width: 100%; max-width: 100%; margin-top: 25px;">
-        <div class="widget-title">Course Calendar</div>
-        <div id="calendar" style="margin-top: 24px; width:100%; max-width:1300px; min-height: 650px;"></div>
-      </div>
+
+      <!-- Quick Actions Grid -->
+      <section class="fade-in stagger-2">
+        <h2 class="section-title">
+          <i class="fas fa-bolt"></i>
+          Quick Actions
+        </h2>
+        <div class="quick-actions">
+          <div class="action-card" onclick="window.location.href='users-roles.html'">
+            <div class="action-icon"><i class="fas fa-users-cog"></i></div>
+            <div class="action-title">Users & Roles</div>
+          </div>
+          
+          <div class="action-card" onclick="window.location.href='add-class.html'">
+            <div class="action-icon"><i class="fas fa-plus-circle"></i></div>
+            <div class="action-title">Add New Class</div>
+          </div>
+          
+          <div class="action-card" onclick="window.location.href='add-student.html'">
+            <div class="action-icon"><i class="fas fa-user-plus"></i></div>
+            <div class="action-title">Add New Student</div>
+          </div>
+          
+          <div class="action-card">
+            <div class="action-icon"><i class="fas fa-clipboard-check"></i></div>
+            <div class="action-title">Manage Attendance <span style="font-size: 0.7rem; color: #f093fb; font-weight: 400;">(Needs link)</span></div>
+          </div>
+          
+          <div class="action-card">
+            <div class="action-icon"><i class="fas fa-inbox"></i></div>
+            <div class="action-title">Instructor Inbox <span style="font-size: 0.7rem; color: #f093fb; font-weight: 400;">(Needs link)</span></div>
+            <span class="badge">3</span>
+          </div>
+          
+          <div class="action-card" onclick="window.open('../SMXStream-integrated.html', '_blank')">
+            <div class="action-icon"><i class="fas fa-broadcast-tower"></i></div>
+            <div class="action-title">SMX Stream Instructor</div>
+          </div>
+          
+          <div class="action-card" onclick="window.open('../SMXStream-new.html', '_blank')">
+            <div class="action-icon"><i class="fas fa-desktop"></i></div>
+            <div class="action-title">SMX Stream Student</div>
+          </div>
+          
+          <div class="action-card">
+            <div class="action-icon"><i class="fas fa-star"></i></div>
+            <div class="action-title">Grading <span style="font-size: 0.7rem; color: #f093fb; font-weight: 400;">(Needs link)</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Calendar Widget -->
+      <section class="calendar-widget fade-in stagger-3">
+        <h2 class="widget-title">
+          <i class="fas fa-calendar-alt"></i>
+          Course Calendar
+        </h2>
+        <div id="calendar"></div>
+      </section>
+
+      <!-- Dashboard Widgets -->
+      <section class="dashboard-widgets fade-in stagger-4">
+        <div class="widget-card">
+          <h3 class="widget-title">
+            <i class="fas fa-chart-line"></i>
+            Analytics & Progress
+          </h3>
+          <div style="margin-top: 1.5rem;">
+            <div style="background: rgba(0,0,0,0.3); padding: 1.5rem; border-radius: 15px; margin-bottom: 1rem;">
+              <h4 style="margin: 0 0 1rem 0; color: var(--text-accent);">Student Progress Overview</h4>
+              <div style="margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                  <span>Alpha Class</span>
+                  <span>65%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 65%;"></div>
+                </div>
+              </div>
+              <div style="margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                  <span>Bravo Class</span>
+                  <span>82%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 82%;"></div>
+                </div>
+              </div>
+              <div style="display: flex; justify-content: space-between; color: var(--text-secondary); font-size: 0.9rem;">
+                <span>Total Students: 68</span>
+                <span>Active Classes: 3</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="widget-card">
+          <h3 class="widget-title">
+            <i class="fas fa-clock"></i>
+            Upcoming Sessions
+          </h3>
+          <div style="margin-top: 1.5rem;">
+            <div style="padding: 1rem; border-left: 4px solid #4facfe; margin-bottom: 1rem; background: rgba(79, 172, 254, 0.1); border-radius: 0 10px 10px 0;">
+              <div style="font-weight: 600; margin-bottom: 0.5rem;">Alpha Class - Module 3</div>
+              <div style="color: var(--text-secondary); font-size: 0.9rem;">
+                <i class="fas fa-calendar"></i> October 9, 2023 • 09:00 - 12:00
+              </div>
+            </div>
+            <div style="padding: 1rem; border-left: 4px solid #f093fb; margin-bottom: 1rem; background: rgba(240, 147, 251, 0.1); border-radius: 0 10px 10px 0;">
+              <div style="font-weight: 600; margin-bottom: 0.5rem;">Bravo Class - Module 1</div>
+              <div style="color: var(--text-secondary); font-size: 0.9rem;">
+                <i class="fas fa-calendar"></i> October 15, 2023 • 13:00 - 16:00
+              </div>
+            </div>
+            <div style="padding: 1rem; border-left: 4px solid #667eea; margin-bottom: 1rem; background: rgba(102, 126, 234, 0.1); border-radius: 0 10px 10px 0;">
+              <div style="font-weight: 600; margin-bottom: 0.5rem;">Charlie Class - Assessment</div>
+              <div style="color: var(--text-secondary); font-size: 0.9rem;">
+                <i class="fas fa-calendar"></i> October 18, 2023 • 14:00 - 17:00
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Instructor Chat Section -->
+      <section class="chat-section fade-in stagger-4">
+        <h3 style="color: var(--text-accent); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+          <i class="fas fa-comments"></i>
+          Instructor Chat Hub
+        </h3>
+        <div class="chatbox-messages" id="chatMessages">
+          <div class="chat-loading">Loading messages...</div>
+        </div>
+        <div class="chatbox-inputs">
+          <input type="text" id="chatInput" placeholder="Type your message to students and staff..." />
+          <input type="file" id="chatFile" name="file" style="display: none;" />
+          <button type="button" onclick="document.getElementById('chatFile').click()">
+            <i class="fas fa-paperclip"></i>
+          </button>
+          <button type="button" onclick="sendChatMessage()">
+            <i class="fas fa-paper-plane"></i> Send
+          </button>
+        </div>
+        <div id="uploadStatus" style="margin-top: 1rem; color: var(--text-secondary); font-size: 0.9rem;"></div>
+      </section>
+    </main>
+  </div>
       
       <script>
-        // Example: Your class events fetched from backend
+        // Enhanced class events with more variety
         const classEvents = [
           {
             id: 'CLS-01',
-            title: 'Alpha 1',
-            start: '2025-06-10',
-            end: '2025-06-15',
-            display: 'background', // makes it a thin colored bar, can customize
-            color: '#1da1f2',      // accent color for classes
-            textColor: '#fff'
+            title: 'Alpha Class - Module 3',
+            start: '2024-01-15',
+            end: '2024-01-19',
+            color: '#667eea',
+            textColor: '#fff',
+            extendedProps: {
+              instructor: 'John Smith',
+              students: 26
+            }
           },
           {
             id: 'CLS-02',
-            title: 'Bravo 2',
-            start: '2025-06-12',
-            end: '2025-06-19',
-            display: 'background',
-            color: '#ffab00',
+            title: 'Bravo Class - Assessment',
+            start: '2024-01-22',
+            end: '2024-01-26',
+            color: '#f093fb',
+            textColor: '#fff',
+            extendedProps: {
+              instructor: 'Sarah Johnson',
+              students: 18
+            }
+          },
+          {
+            id: 'CLS-03',
+            title: 'Charlie Class - Practical',
+            start: '2024-01-29',
+            end: '2024-02-02',
+            color: '#4facfe',
+            textColor: '#fff',
+            extendedProps: {
+              instructor: 'Mike Davis',
+              students: 24
+            }
+          },
+          {
+            id: 'EXAM-01',
+            title: 'Final Examinations',
+            start: '2024-02-05',
+            color: '#ff6b6b',
             textColor: '#fff'
           }
         ];
         
         document.addEventListener('DOMContentLoaded', function() {
+          // Initialize animations
+          initializeAnimations();
+          
+          // Initialize calendar
           var calendarEl = document.getElementById('calendar');
           var calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             height: 'auto',
             selectable: true,
+            headerToolbar: {
+              left: 'prev,next today',
+              center: 'title',
+              right: 'dayGridMonth,timeGridWeek,listWeek'
+            },
             select: function(info) {
-              // Open a prompt or modal to add a custom event
-              const eventTitle = prompt('New calendar event title?');
+              const eventTitle = prompt('📅 Add new event:');
               if (eventTitle) {
-                calendar.addEvent({
+                const newEvent = {
                   title: eventTitle,
                   start: info.startStr,
                   end: info.endStr,
                   allDay: true,
-                  color: '#8bc34a'
-                });
+                  color: '#8bc34a',
+                  textColor: '#fff'
+                };
+                calendar.addEvent(newEvent);
+                showNotification('✅ Event added successfully!', 'success');
                 // TODO: Save to backend
               }
             },
             events: classEvents,
             eventDidMount: function(info) {
-              // For thin lines with small text
-              if (info.event.display === 'background') {
-                info.el.style.borderRadius = '7px';
-                info.el.style.opacity = 0.75;
-                // Optionally, add label overlay
-                const label = document.createElement('span');
-                label.style.position = 'absolute';
-                label.style.left = '8px';
-                label.style.top = '2px';
-                label.style.fontSize = '0.75em';
-                label.style.color = info.event.extendedProps.textColor || '#fff';
-                label.textContent = info.event.title;
-                info.el.appendChild(label);
-              }
+              // Enhanced event styling
+              info.el.style.borderRadius = '8px';
+              info.el.style.border = 'none';
+              info.el.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+              info.el.style.transition = 'all 0.3s ease';
+              
+              // Add hover effects
+              info.el.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.02)';
+                this.style.boxShadow = '0 8px 25px rgba(0,0,0,0.25)';
+              });
+              
+              info.el.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+                this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+              });
+            },
+            eventClick: function(info) {
+              const event = info.event;
+              const props = event.extendedProps;
+              let details = `📚 ${event.title}\n📅 ${event.start.toDateString()}`;
+              if (props.instructor) details += `\n👨‍🏫 Instructor: ${props.instructor}`;
+              if (props.students) details += `\n👥 Students: ${props.students}`;
+              
+              alert(details);
             }
           });
           calendar.render();
+          
+          // Initialize progress bars animation
+          setTimeout(() => {
+            document.querySelectorAll('.progress-fill').forEach(bar => {
+              const width = bar.style.width;
+              bar.style.width = '0%';
+              setTimeout(() => {
+                bar.style.width = width;
+              }, 500);
+            });
+          }, 1000);
         });
+
+        // Animation initialization
+        function initializeAnimations() {
+          const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+          };
+
+          const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+              if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+              }
+            });
+          }, observerOptions);
+
+          document.querySelectorAll('.fade-in').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+            observer.observe(el);
+          });
+        }
+
+        // Notification system
+        function showNotification(message, type = 'info') {
+          const notification = document.createElement('div');
+          notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            background: ${type === 'success' ? 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'};
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            z-index: 10000;
+            font-weight: 500;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+          `;
+          notification.textContent = message;
+          document.body.appendChild(notification);
+          
+          setTimeout(() => notification.style.transform = 'translateX(0)', 100);
+          setTimeout(() => {
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => document.body.removeChild(notification), 300);
+          }, 3000);
+        }
+
+        // Enhanced user experience features
+        document.addEventListener('DOMContentLoaded', function() {
+          // Add ripple effect to clickable elements
+          document.querySelectorAll('.tool-card, .action-card').forEach(card => {
+            card.addEventListener('click', function(e) {
+              const ripple = document.createElement('span');
+              const rect = this.getBoundingClientRect();
+              const size = Math.max(rect.width, rect.height);
+              const x = e.clientX - rect.left - size / 2;
+              const y = e.clientY - rect.top - size / 2;
+              
+              ripple.style.cssText = `
+                position: absolute;
+                width: ${size}px;
+                height: ${size}px;
+                left: ${x}px;
+                top: ${y}px;
+                background: rgba(255,255,255,0.3);
+                border-radius: 50%;
+                transform: scale(0);
+                animation: ripple 0.6s ease-out;
+                pointer-events: none;
+              `;
+              
+              this.style.position = 'relative';
+              this.style.overflow = 'hidden';
+              this.appendChild(ripple);
+              
+              setTimeout(() => ripple.remove(), 600);
+            });
+          });
+          
+          // Add CSS for ripple animation
+          const style = document.createElement('style');
+          style.textContent = `
+            @keyframes ripple {
+              to {
+                transform: scale(2);
+                opacity: 0;
+              }
+            }
+          `;
+          document.head.appendChild(style);
+        });
+
+
       </script>
       
       <!-- Instructor Chat Box -->
@@ -468,12 +1086,22 @@
       window.location.replace('/login.html');
     }
 
-    // Display user information
+    // Display user information and initialize dashboard
     document.addEventListener('DOMContentLoaded', function() {
-      const userName = localStorage.getItem('userName') || 'Admin';
+      const userName = localStorage.getItem('userName') || 'Instructor';
       const role = localStorage.getItem('role') || 'admin';
       
-      // You can add user info display here if needed
+      // Update user info in header
+      const userInfo = document.querySelector('.user-info div:last-child div:first-child');
+      if (userInfo) {
+        userInfo.textContent = userName;
+      }
+      
+      // Show welcome notification
+      setTimeout(() => {
+        showNotification(`🎉 Welcome back, ${userName}!`, 'success');
+      }, 1000);
+      
       console.log('Logged in as:', userName, '(' + role + ')');
     });
     
@@ -551,7 +1179,7 @@
       }
     }
     
-    // Display a message in the chat container
+    // Enhanced message display with better styling
     function displayMessage(message) {
       const container = document.getElementById('chatMessages');
       const div = document.createElement('div');
@@ -567,6 +1195,18 @@
       
       const senderName = isCurrentUser ? 'You' : message.sender?.name || 'Unknown';
       
+      // Enhanced styling for messages
+      div.style.cssText = `
+        margin-bottom: 1rem;
+        padding: 1rem;
+        border-radius: 15px;
+        background: ${isCurrentUser ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'rgba(255,255,255,0.05)'};
+        border: 1px solid ${isCurrentUser ? 'rgba(102, 126, 234, 0.3)' : 'rgba(255,255,255,0.1)'};
+        animation: messageSlideIn 0.3s ease;
+        position: relative;
+        backdrop-filter: blur(10px);
+      `;
+      
       // Handle message with or without attachment
       if (message.attachment) {
         // Message with attachment
@@ -575,62 +1215,85 @@
         const path = message.attachment.path;
         
         if (message.attachment.type.startsWith('image/')) {
-          attachmentHtml = `<div class="chat-attachment">
+          attachmentHtml = `<div style="margin-top: 0.5rem; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 10px;">
             <a href="${path}" target="_blank">
-              <img src="${path}" alt="${filename}" style="max-width: 200px; max-height: 150px;">
+              <img src="${path}" alt="${filename}" style="max-width: 200px; max-height: 150px; border-radius: 8px;">
             </a>
-            <div class="attachment-name">📎 ${filename}</div>
+            <div style="margin-top: 0.5rem; font-size: 0.8rem; color: rgba(255,255,255,0.7);">📎 ${filename}</div>
           </div>`;
         } else {
-          attachmentHtml = `<div class="chat-attachment">
-            <a href="${path}" target="_blank" class="file-link">
-              <div class="attachment-icon">📎</div>
-              <div class="attachment-name">${filename}</div>
+          attachmentHtml = `<div style="margin-top: 0.5rem; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 10px;">
+            <a href="${path}" target="_blank" style="color: #4facfe; text-decoration: none; display: flex; align-items: center; gap: 0.5rem;">
+              <i class="fas fa-file"></i>
+              <span>${filename}</span>
             </a>
           </div>`;
         }
         
         div.innerHTML = `
-          <div class="chat-header">
-            <strong>${senderName}:</strong>
-            <span class="chat-time">${timeStr}</span>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <strong style="color: ${isCurrentUser ? '#fff' : '#4facfe'};">${senderName}</strong>
+            <span style="font-size: 0.8rem; color: rgba(255,255,255,0.6);">${timeStr}</span>
           </div>
-          <div class="chat-content">${message.content}</div>
+          <div style="color: ${isCurrentUser ? '#fff' : '#e0e6ed'}; line-height: 1.4;">${message.content}</div>
           ${attachmentHtml}
         `;
       } else {
         // Simple text message
         div.innerHTML = `
-          <div class="chat-header">
-            <strong>${senderName}:</strong>
-            <span class="chat-time">${timeStr}</span>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <strong style="color: ${isCurrentUser ? '#fff' : '#4facfe'};">${senderName}</strong>
+            <span style="font-size: 0.8rem; color: rgba(255,255,255,0.6);">${timeStr}</span>
           </div>
-          <div class="chat-content">${message.content}</div>
+          <div style="color: ${isCurrentUser ? '#fff' : '#e0e6ed'}; line-height: 1.4;">${message.content}</div>
         `;
       }
       
-      // Apply special styling for current user's messages
-      if (isCurrentUser) {
-        div.classList.add('current-user');
-      }
-      
       container.appendChild(div);
+      
+      // Add animation styles if not already added
+      if (!document.getElementById('chatAnimations')) {
+        const style = document.createElement('style');
+        style.id = 'chatAnimations';
+        style.textContent = `
+          @keyframes messageSlideIn {
+            from {
+              opacity: 0;
+              transform: translateY(20px) scale(0.95);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0) scale(1);
+            }
+          }
+        `;
+        document.head.appendChild(style);
+      }
     }
     
-    // Send a chat message
+    // Enhanced chat message sending with better UX
     async function sendChatMessage() {
       const input = document.getElementById('chatInput');
       const file = document.getElementById('chatFile');
+      const sendButton = document.querySelector('.chatbox-inputs button[onclick="sendChatMessage()"]');
       const msg = input.value.trim();
       
       if (!msg && file.files.length === 0) {
-        return; // Nothing to send
+        input.focus();
+        input.style.borderColor = '#f093fb';
+        setTimeout(() => input.style.borderColor = '', 1000);
+        return;
       }
+      
+      // Disable send button and show loading state
+      const originalButtonText = sendButton.innerHTML;
+      sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+      sendButton.disabled = true;
       
       try {
         const token = localStorage.getItem('token');
         if (!token) {
-          alert('Authentication token missing. Please log in again.');
+          showNotification('❌ Authentication required. Please log in again.', 'error');
           return;
         }
         
@@ -643,8 +1306,10 @@
           }
           formData.append('channel', chatChannel);
           
-          // Show upload status
-          document.getElementById('uploadStatus').textContent = 'Uploading file...';
+          // Show upload progress
+          const statusEl = document.getElementById('uploadStatus');
+          statusEl.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Uploading file...';
+          statusEl.style.color = '#4facfe';
           
           const response = await fetch('/api/chat/upload', {
             method: 'POST',
@@ -659,12 +1324,14 @@
             throw new Error(error.error || 'Failed to upload file');
           }
           
-          document.getElementById('uploadStatus').textContent = 'File uploaded successfully!';
+          statusEl.innerHTML = '<i class="fas fa-check-circle"></i> File uploaded successfully!';
+          statusEl.style.color = '#4facfe';
           setTimeout(() => {
-            document.getElementById('uploadStatus').textContent = '';
+            statusEl.textContent = '';
           }, 3000);
           
           file.value = '';
+          showNotification('📎 File shared successfully!', 'success');
         } else {
           // Text message only
           const response = await fetch('/api/chat', {
@@ -683,15 +1350,52 @@
             const error = await response.json();
             throw new Error(error.error || 'Failed to send message');
           }
+          
+          showNotification('💬 Message sent!', 'success');
         }
         
-        // Clear input after successful send
+        // Clear input and scroll to bottom
         input.value = '';
+        const chatContainer = document.getElementById('chatMessages');
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        
+        // Add a subtle success animation to the input
+        input.style.background = 'rgba(79, 172, 254, 0.1)';
+        setTimeout(() => {
+          input.style.background = '';
+        }, 500);
         
       } catch (error) {
         console.error('Error sending message:', error);
-        alert(`Error: ${error.message}`);
+        showNotification(`❌ Error: ${error.message}`, 'error');
+        
+        // Add error animation to input
+        input.style.borderColor = '#f5576c';
+        input.style.animation = 'shake 0.5s ease-in-out';
+        setTimeout(() => {
+          input.style.borderColor = '';
+          input.style.animation = '';
+        }, 1000);
+      } finally {
+        // Re-enable send button
+        sendButton.innerHTML = originalButtonText;
+        sendButton.disabled = false;
+        input.focus();
       }
+    }
+    
+    // Add shake animation for error states
+    if (!document.getElementById('shakeAnimation')) {
+      const style = document.createElement('style');
+      style.id = 'shakeAnimation';
+      style.textContent = `
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-5px); }
+          75% { transform: translateX(5px); }
+        }
+      `;
+      document.head.appendChild(style);
     }
     
     // Allow sending message with Enter key
