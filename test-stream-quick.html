@@ -70,6 +70,7 @@
             <p>Open the stream page with the test class:</p>
             <button onclick="openStream()">Open Stream Page</button>
             <button onclick="openStreamDebug()">Open with Debug</button>
+            <button onclick="openStreamAuto()">Test Auto Class Detection</button>
             <div id="streamStatus" class="status">Stream not opened</div>
         </div>
         
@@ -211,6 +212,32 @@
             
             document.getElementById('streamStatus').textContent = '✅ Opened stream with debug tool';
             document.getElementById('streamStatus').className = 'status success';
+        }
+        
+        function openStreamAuto() {
+            const statusDiv = document.getElementById('streamStatus');
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                statusDiv.textContent = '❌ Please login first to test auto-detection';
+                statusDiv.className = 'status error';
+                return;
+            }
+            
+            // Clear stored class ID to force auto-detection
+            localStorage.removeItem('currentClassId');
+            
+            // Open stream page without class ID parameter
+            const streamUrl = `/SMXStream-new.html`;
+            window.open(streamUrl, '_blank');
+            
+            statusDiv.textContent = '🔍 Testing automatic class detection...';
+            statusDiv.className = 'status warning';
+            
+            setTimeout(() => {
+                statusDiv.textContent = '✅ Auto-detection test started - check the new tab';
+                statusDiv.className = 'status success';
+            }, 1000);
         }
         
         function openDebugTool() {
