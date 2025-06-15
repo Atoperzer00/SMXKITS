@@ -695,9 +695,367 @@
       window.open('/debug-stream.html', '_blank');
     }
     
+    // Test streaming connection end-to-end
+    async function testStreamingConnection() {
+      console.log('🧪 Testing streaming connection...');
+      
+      const results = {
+        classId: classId || 'Not set',
+        streamKey: streamKey || 'Not set',
+        socketConnection: false,
+        hlsServer: false,
+        streamEndpoint: false,
+        streamStatus: 'Unknown'
+      };
+      
+      try {
+        // Test 1: Check if we have class ID and stream key
+        if (!classId) {
+          console.error('❌ No class ID available');
+          return results;
+        }
+        
+        if (!streamKey) {
+          console.error('❌ No stream key available');
+          return results;
+        }
+        
+        // Test 2: Check Socket.IO connection
+        if (typeof io !== 'undefined') {
+          results.socketConnection = true;
+          console.log('✅ Socket.IO is available');
+        } else {
+          console.error('❌ Socket.IO not available');
+        }
+        
+        // Test 3: Check HLS server
+        try {
+          const hlsTestUrl = `http://127.0.0.1:8888/live/${streamKey}/index.m3u8`;
+          const hlsResponse = await fetch(hlsTestUrl, { method: 'HEAD' });
+          results.hlsServer = hlsResponse.ok;
+          console.log(hlsResponse.ok ? '✅ HLS server responding' : '❌ HLS server not responding');
+        } catch (error) {
+          console.error('❌ HLS server test failed:', error.message);
+        }
+        
+        // Test 4: Check stream status endpoint
+        try {
+          const authToken = localStorage.getItem('token');
+          const statusResponse = await fetch(`/api/stream/status/${classId}`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+          });
+          
+          if (statusResponse.ok) {
+            const statusData = await statusResponse.json();
+            results.streamStatus = statusData.status;
+            results.streamEndpoint = true;
+            console.log('✅ Stream status endpoint working, status:', statusData.status);
+          } else {
+            console.error('❌ Stream status endpoint failed:', statusResponse.status);
+          }
+        } catch (error) {
+          console.error('❌ Stream status test failed:', error.message);
+        }
+        
+        // Test 5: Test stream start simulation (for instructors only)
+        const userRole = localStorage.getItem('role');
+        if (userRole === 'instructor' || userRole === 'admin') {
+          console.log('👨‍🏫 Instructor detected - testing stream start capability');
+          try {
+            const authToken = localStorage.getItem('token');
+            const testResponse = await fetch(`/api/streams/start/${classId}`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+              },
+              body: JSON.stringify({ source: 'test' })
+            });
+            
+            if (testResponse.ok) {
+              console.log('✅ Stream start endpoint accessible');
+              // Immediately stop the test stream
+              await fetch(`/api/streams/stop/${classId}`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${authToken}`
+                },
+                body: JSON.stringify({})
+              });
+            } else {
+              console.error('❌ Stream start endpoint failed:', testResponse.status);
+            }
+          } catch (error) {
+            console.error('❌ Stream start test failed:', error.message);
+          }
+        }
+        
+        console.log('🧪 Streaming connection test results:', results);
+        return results;
+        
+      } catch (error) {
+        console.error('❌ Streaming connection test failed:', error);
+        return results;
+      }
+    }
+    
+    // Pre-Stream Checklist System
+    async function runPreStreamChecklist() {
+      console.log('🔍 Running Pre-Stream Checklist...');
+      
+      const checklist = {
+        authentication: { status: 'pending', message: 'Checking authentication...' },
+        classAccess: { status: 'pending', message: 'Verifying class access...' },
+        streamKey: { status: 'pending', message: 'Validating stream key...' },
+        studentEnrollment: { status: 'pending', message: 'Checking student enrollment...' },
+        streamingInfrastructure: { status: 'pending', message: 'Testing streaming infrastructure...' },
+        socketConnection: { status: 'pending', message: 'Establishing real-time connection...' },
+        streamStatus: { status: 'pending', message: 'Initializing stream status...' }
+      };
+      
+      // Show checklist if instructor
+      const userRole = localStorage.getItem('role');
+      if (userRole === 'instructor') {
+        showPreStreamChecklist(checklist);
+      }
+      
+      try {
+        // 1. Authentication Check
+        const authToken = localStorage.getItem('token');
+        if (!authToken) {
+          checklist.authentication = { status: 'failed', message: 'No authentication token found' };
+          throw new Error('Authentication required');
+        }
+        
+        // Verify token with server
+        const authResponse = await fetch('/api/auth/verify', {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        
+        if (!authResponse.ok) {
+          checklist.authentication = { status: 'failed', message: 'Invalid or expired token' };
+          throw new Error('Authentication failed');
+        }
+        
+        checklist.authentication = { status: 'success', message: 'Authentication verified' };
+        updateChecklistItem('authentication', checklist.authentication);
+        
+        // 2. Class Access Check
+        const classResponse = await fetch(`/api/stream/status/${classId}`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        
+        if (!classResponse.ok) {
+          if (classResponse.status === 403) {
+            checklist.classAccess = { status: 'failed', message: 'Access denied to this class' };
+          } else if (classResponse.status === 404) {
+            checklist.classAccess = { status: 'failed', message: 'Class not found' };
+          } else {
+            checklist.classAccess = { status: 'failed', message: `Server error: ${classResponse.status}` };
+          }
+          throw new Error('Class access failed');
+        }
+        
+        const classData = await classResponse.json();
+        checklist.classAccess = { status: 'success', message: `Access granted to "${classData.currentLesson?.title || 'class'}"` };
+        updateChecklistItem('classAccess', checklist.classAccess);
+        
+        // 3. Stream Key Validation
+        if (!classData.streamKey) {
+          checklist.streamKey = { status: 'warning', message: 'No stream key configured - will generate one' };
+          // Auto-generate stream key for the class
+          await generateStreamKey(classId);
+        } else {
+          checklist.streamKey = { status: 'success', message: `Stream key ready: ${classData.streamKey.substring(0, 8)}...` };
+        }
+        updateChecklistItem('streamKey', checklist.streamKey);
+        
+        // 4. Student Enrollment Check
+        const enrollmentCount = classData.session?.enrolledStudents || 0;
+        if (enrollmentCount === 0) {
+          checklist.studentEnrollment = { status: 'warning', message: 'No students enrolled yet' };
+        } else {
+          checklist.studentEnrollment = { status: 'success', message: `${enrollmentCount} students enrolled` };
+        }
+        updateChecklistItem('studentEnrollment', checklist.studentEnrollment);
+        
+        // 5. Streaming Infrastructure Check
+        const hlsServerUrl = process.env.HLS_SERVER_URL || 'http://127.0.0.1:8888';
+        try {
+          const infraResponse = await fetch(`${hlsServerUrl}/health`, { method: 'HEAD' });
+          if (infraResponse.ok) {
+            checklist.streamingInfrastructure = { status: 'success', message: 'Streaming server ready' };
+          } else {
+            checklist.streamingInfrastructure = { status: 'warning', message: 'Streaming server may not be ready' };
+          }
+        } catch (error) {
+          checklist.streamingInfrastructure = { status: 'warning', message: 'Cannot verify streaming server' };
+        }
+        updateChecklistItem('streamingInfrastructure', checklist.streamingInfrastructure);
+        
+        // 6. Socket.IO Connection
+        if (typeof io !== 'undefined') {
+          checklist.socketConnection = { status: 'success', message: 'Real-time connection ready' };
+        } else {
+          checklist.socketConnection = { status: 'warning', message: 'Socket.IO not available' };
+        }
+        updateChecklistItem('socketConnection', checklist.socketConnection);
+        
+        // 7. Stream Status Initialization
+        checklist.streamStatus = { status: 'success', message: `Stream status: ${classData.status}` };
+        updateChecklistItem('streamStatus', checklist.streamStatus);
+        
+        console.log('✅ Pre-Stream Checklist completed successfully');
+        return { success: true, checklist };
+        
+      } catch (error) {
+        console.error('❌ Pre-Stream Checklist failed:', error);
+        return { success: false, checklist, error: error.message };
+      }
+    }
+    
+    // Generate stream key for class
+    async function generateStreamKey(classId) {
+      try {
+        const authToken = localStorage.getItem('token');
+        const response = await fetch(`/api/classes/${classId}/generate-stream-key`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('✅ Stream key generated:', data.streamKey);
+          return data.streamKey;
+        }
+      } catch (error) {
+        console.error('❌ Failed to generate stream key:', error);
+      }
+      return null;
+    }
+    
+    // Show pre-stream checklist for instructors
+    function showPreStreamChecklist(checklist) {
+      const checklistOverlay = document.createElement('div');
+      checklistOverlay.className = 'welcome-modal show';
+      checklistOverlay.id = 'preStreamChecklist';
+      checklistOverlay.innerHTML = `
+        <div class="welcome-content">
+          <h2 class="welcome-title">🔍 Pre-Stream Checklist</h2>
+          <div class="welcome-text">
+            <p>Verifying all systems are ready for streaming...</p>
+            <div id="checklistItems" style="margin: 20px 0; text-align: left;">
+              ${Object.entries(checklist).map(([key, item]) => `
+                <div class="checklist-item" id="checklist-${key}" style="
+                  padding: 10px;
+                  margin: 8px 0;
+                  background: rgba(255, 255, 255, 0.05);
+                  border-radius: 8px;
+                  border-left: 4px solid #fbbf24;
+                  display: flex;
+                  align-items: center;
+                ">
+                  <div class="status-icon" style="margin-right: 10px; font-size: 1.2em;">⏳</div>
+                  <div class="status-text">${item.message}</div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+          <div class="welcome-actions">
+            <button class="welcome-close" onclick="closePreStreamChecklist()" disabled id="checklistCloseBtn">Please Wait...</button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(checklistOverlay);
+    }
+    
+    // Update individual checklist item
+    function updateChecklistItem(key, item) {
+      const checklistItem = document.getElementById(`checklist-${key}`);
+      if (!checklistItem) return;
+      
+      const statusIcon = checklistItem.querySelector('.status-icon');
+      const statusText = checklistItem.querySelector('.status-text');
+      
+      let color, icon;
+      switch (item.status) {
+        case 'success':
+          color = '#22c55e';
+          icon = '✅';
+          break;
+        case 'warning':
+          color = '#fbbf24';
+          icon = '⚠️';
+          break;
+        case 'failed':
+          color = '#ef4444';
+          icon = '❌';
+          break;
+        default:
+          color = '#fbbf24';
+          icon = '⏳';
+      }
+      
+      checklistItem.style.borderLeftColor = color;
+      statusIcon.textContent = icon;
+      statusText.textContent = item.message;
+      
+      // Check if all items are complete
+      setTimeout(() => {
+        const allItems = document.querySelectorAll('.checklist-item .status-icon');
+        const allComplete = Array.from(allItems).every(icon => 
+          icon.textContent === '✅' || icon.textContent === '⚠️' || icon.textContent === '❌'
+        );
+        
+        if (allComplete) {
+          const closeBtn = document.getElementById('checklistCloseBtn');
+          if (closeBtn) {
+            closeBtn.disabled = false;
+            closeBtn.textContent = 'Continue';
+          }
+        }
+      }, 100);
+    }
+    
+    // Close pre-stream checklist
+    function closePreStreamChecklist() {
+      const checklistOverlay = document.getElementById('preStreamChecklist');
+      if (checklistOverlay) {
+        checklistOverlay.remove();
+      }
+    }
+    
+    // Auto-assign class ID for students based on their enrollment
+    async function autoAssignStudentClass() {
+      const userRole = localStorage.getItem('role');
+      if (userRole !== 'student') return null;
+      
+      try {
+        const authToken = localStorage.getItem('token');
+        const response = await fetch('/api/auth/verify', {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        
+        if (response.ok) {
+          const userData = await response.json();
+          if (userData.user.classId) {
+            console.log('📚 Auto-assigned student to class:', userData.user.classId);
+            localStorage.setItem('currentClassId', userData.user.classId);
+            return userData.user.classId;
+          }
+        }
+      } catch (error) {
+        console.error('❌ Failed to auto-assign student class:', error);
+      }
+      
+      return null;
+    }
+    
     function showWaitingMessage() {
       // Update the stream type indicator
-      streamTypeIndicator.textContent = 'Waiting for Stream...';
+      updateStreamTypeIndicator('Waiting for Stream...');
       
       // Create a waiting overlay
       const waitingOverlay = document.createElement('div');
@@ -734,219 +1092,109 @@
       }
     }
     
-    // Function to fetch user's assigned classes and find the best one for streaming
-    async function fetchUserClasses() {
+    // Update stream type indicator with class information
+    function updateStreamTypeIndicator(streamType = 'Stream') {
+      const className = localStorage.getItem('currentClassName');
+      if (className) {
+        streamTypeIndicator.textContent = `${className} - ${streamType}`;
+      } else {
+        streamTypeIndicator.textContent = streamType;
+      }
+    }
+    
+    // Automatically fetch user's assigned class ID
+    async function fetchUserAssignedClass() {
       try {
         const authToken = localStorage.getItem('token');
         if (!authToken) {
-          console.log('❌ No auth token available for fetching classes');
+          console.log('❌ No auth token available');
           return null;
         }
         
-        console.log('📡 Fetching user classes from server...');
+        console.log('📡 Fetching user\'s assigned class from server...');
         
-        // First, try to get user's enrolled classes
-        const response = await fetch('/api/classes/my-classes', {
+        // First, try to get user info which should include their assigned class
+        const userResponse = await fetch('/api/auth/verify', {
           headers: {
             'Authorization': `Bearer ${authToken}`
           }
         });
         
-        if (!response.ok) {
-          // Fallback: try to get all classes the user has access to
-          console.log('⚠️ My-classes endpoint not available, trying general classes endpoint...');
-          const fallbackResponse = await fetch('/api/classes', {
-            headers: {
-              'Authorization': `Bearer ${authToken}`
-            }
-          });
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          console.log('👤 User data:', userData.user);
           
-          if (!fallbackResponse.ok) {
-            console.error('❌ Failed to fetch classes:', fallbackResponse.status);
-            return null;
+          // Check if user has a direct class assignment
+          if (userData.user.classId) {
+            console.log('✅ Found direct class assignment:', userData.user.classId);
+            return userData.user.classId;
           }
-          
-          const allClasses = await fallbackResponse.json();
-          return await selectBestClass(allClasses);
         }
         
-        const userClasses = await response.json();
-        console.log('📚 Found user classes:', userClasses.length);
-        
-        return await selectBestClass(userClasses);
-        
-      } catch (error) {
-        console.error('❌ Error fetching user classes:', error);
-        return null;
-      }
-    }
-    
-    // Function to select the best class for streaming
-    async function selectBestClass(classes) {
-      if (!classes || classes.length === 0) {
-        console.log('📭 No classes found');
-        return null;
-      }
-      
-      console.log('🔍 Analyzing classes for streaming...');
-      
-      // Priority order for class selection:
-      // 1. Classes with active streams (status: 'live')
-      // 2. Classes with recent activity
-      // 3. Most recently created class
-      
-      let scoredClasses = [];
-      
-      classes.forEach((cls, index) => {
-        let score = 0;
-        
-        console.log(`📋 Class ${index + 1}: ${cls.name} (Status: ${cls.streamStatus || 'unknown'})`);
-        
-        // Highest priority: active streams
-        if (cls.streamStatus === 'live') {
-          score += 1000;
-          console.log('  🔴 Active stream detected! +1000 points');
-        }
-        
-        // High priority: recently active streams
-        if (cls.streamStatus === 'paused') {
-          score += 500;
-          console.log('  ⏸️ Paused stream detected! +500 points');
-        }
-        
-        // Medium priority: classes with stream keys (configured for streaming)
-        if (cls.streamKey) {
-          score += 100;
-          console.log('  🔑 Has stream key! +100 points');
-        }
-        
-        // Low priority: recent classes (newer = higher score)
-        const classAge = Date.now() - new Date(cls.createdAt || 0).getTime();
-        const daysSinceCreated = classAge / (1000 * 60 * 60 * 24);
-        const recencyScore = Math.max(0, 50 - daysSinceCreated);
-        score += recencyScore;
-        console.log(`  📅 Recency score: +${recencyScore.toFixed(1)} points`);
-        
-        console.log(`  📊 Total score: ${score}`);
-        
-        scoredClasses.push({ class: cls, score: score });
-      });
-      
-      // Sort by score (highest first)
-      scoredClasses.sort((a, b) => b.score - a.score);
-      
-      // If we have a clear winner (score > 100 higher than second place), use it
-      if (scoredClasses.length === 1 || 
-          (scoredClasses.length > 1 && scoredClasses[0].score - scoredClasses[1].score > 100)) {
-        
-        const bestClass = scoredClasses[0].class;
-        console.log(`✅ Auto-selected class: ${bestClass.name} (ID: ${bestClass._id})`);
-        console.log(`🏆 Final score: ${scoredClasses[0].score}`);
-        
-        // Store the selected class ID for future use
-        localStorage.setItem('currentClassId', bestClass._id);
-        localStorage.setItem('currentClassName', bestClass.name);
-        
-        return bestClass._id;
-      }
-      
-      // If we have multiple good options, show a selection dialog
-      if (scoredClasses.length > 1) {
-        console.log('🤔 Multiple classes available, showing selection dialog...');
-        return await showClassSelectionDialog(scoredClasses);
-      }
-      
-      // If we only have low-scoring classes, still pick the best one
-      if (scoredClasses.length > 0) {
-        const bestClass = scoredClasses[0].class;
-        console.log(`⚠️ Selected best available class: ${bestClass.name} (ID: ${bestClass._id})`);
-        
-        localStorage.setItem('currentClassId', bestClass._id);
-        localStorage.setItem('currentClassName', bestClass.name);
-        
-        return bestClass._id;
-      }
-      
-      console.log('❌ No suitable class found');
-      return null;
-    }
-    
-    // Function to show class selection dialog
-    function showClassSelectionDialog(scoredClasses) {
-      return new Promise((resolve) => {
-        // Hide loading spinner
-        loading.style.display = 'none';
-        
-        // Create selection dialog
-        const selectionOverlay = document.createElement('div');
-        selectionOverlay.className = 'welcome-modal show';
-        selectionOverlay.innerHTML = `
-          <div class="welcome-content">
-            <h2 class="welcome-title">📚 Select Your Class</h2>
-            <div class="welcome-text">
-              <p>You have access to multiple classes. Please select which one you'd like to stream:</p>
-              <div style="margin: 20px 0; max-height: 300px; overflow-y: auto;">
-                ${scoredClasses.map((item, index) => `
-                  <div class="class-option" data-class-id="${item.class._id}" style="
-                    padding: 15px;
-                    margin: 10px 0;
-                    background: rgba(255, 255, 255, 0.1);
-                    border-radius: 10px;
-                    cursor: pointer;
-                    border: 2px solid transparent;
-                    transition: all 0.3s ease;
-                  " onmouseover="this.style.borderColor='#22c55e'" onmouseout="this.style.borderColor='transparent'">
-                    <div style="font-weight: bold; font-size: 1.1em; margin-bottom: 5px;">
-                      ${item.class.name}
-                      ${item.class.streamStatus === 'live' ? ' 🔴 LIVE' : ''}
-                      ${item.class.streamStatus === 'paused' ? ' ⏸️ PAUSED' : ''}
-                    </div>
-                    <div style="font-size: 0.9em; opacity: 0.8;">
-                      ${item.class.description || 'No description'}
-                    </div>
-                    <div style="font-size: 0.8em; opacity: 0.6; margin-top: 5px;">
-                      ${item.class.streamKey ? '🔑 Stream Ready' : '⚠️ No Stream Key'} • 
-                      Score: ${item.score.toFixed(0)}
-                    </div>
-                  </div>
-                `).join('')}
-              </div>
-            </div>
-            <div class="welcome-actions">
-              <button class="welcome-close" onclick="cancelClassSelection()">Cancel</button>
-            </div>
-          </div>
-        `;
-        
-        document.body.appendChild(selectionOverlay);
-        
-        // Add click handlers to class options
-        selectionOverlay.querySelectorAll('.class-option').forEach(option => {
-          option.addEventListener('click', function() {
-            const selectedClassId = this.getAttribute('data-class-id');
-            const selectedClass = scoredClasses.find(item => item.class._id === selectedClassId);
-            
-            if (selectedClass) {
-              console.log(`✅ User selected class: ${selectedClass.class.name}`);
-              localStorage.setItem('currentClassId', selectedClassId);
-              localStorage.setItem('currentClassName', selectedClass.class.name);
-              
-              // Remove dialog
-              selectionOverlay.remove();
-              
-              // Resolve with selected class ID
-              resolve(selectedClassId);
-            }
-          });
+        // If no direct assignment, try to get user's enrolled classes
+        const classesResponse = await fetch('/api/classes/my-classes', {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
         });
         
-        // Global function for cancel button
-        window.cancelClassSelection = function() {
-          selectionOverlay.remove();
-          resolve(null);
-        };
-      });
+        if (classesResponse.ok) {
+          const userClasses = await classesResponse.json();
+          console.log('📚 Found user classes:', userClasses.length);
+          
+          if (userClasses.length > 0) {
+            // Prioritize classes with active streams, then most recent
+            const sortedClasses = userClasses.sort((a, b) => {
+              // Live streams first
+              if (a.streamStatus === 'live' && b.streamStatus !== 'live') return -1;
+              if (b.streamStatus === 'live' && a.streamStatus !== 'live') return 1;
+              
+              // Then by most recent update
+              return new Date(b.updatedAt) - new Date(a.updatedAt);
+            });
+            
+            const selectedClass = sortedClasses[0];
+            console.log('✅ Auto-selected class:', selectedClass.name, selectedClass._id);
+            
+            // Store class name for display
+            localStorage.setItem('currentClassName', selectedClass.name);
+            
+            return selectedClass._id;
+          }
+        }
+        
+        // Fallback: try to get any accessible class for this user
+        console.log('⚠️ No enrolled classes found, checking accessible classes...');
+        const allClassesResponse = await fetch('/api/classes', {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
+        
+        if (allClassesResponse.ok) {
+          const allClasses = await allClassesResponse.json();
+          if (allClasses.length > 0) {
+            // For instructors, they might have access to classes they teach
+            const userRole = localStorage.getItem('role');
+            if (userRole === 'instructor' || userRole === 'admin') {
+              const firstClass = allClasses[0];
+              console.log('✅ Instructor/Admin assigned to first available class:', firstClass._id);
+              localStorage.setItem('currentClassName', firstClass.name);
+              return firstClass._id;
+            }
+          }
+        }
+        
+        console.log('❌ No accessible classes found');
+        return null;
+        
+      } catch (error) {
+        console.error('❌ Error fetching user assigned class:', error);
+        return null;
+      }
     }
+    
+
     
     const video = document.getElementById('video');
     const webrtcVideo = document.getElementById('webrtcVideo');
@@ -1049,7 +1297,7 @@
       webrtcSocket.on('instructor-started-webrtc', (data) => {
         console.log('🔴 Instructor started WebRTC stream:', data.mediaType);
         switchToWebRTCMode();
-        streamTypeIndicator.textContent = `Live ${data.mediaType}`;
+        updateStreamTypeIndicator(`Live ${data.mediaType}`);
       });
       
       webrtcSocket.on('instructor-stopped-webrtc', (data) => {
@@ -1143,7 +1391,7 @@
       // Hide file-based controls
       document.getElementById('controls').style.display = 'none';
       
-      streamTypeIndicator.textContent = 'Live WebRTC Stream';
+      updateStreamTypeIndicator('Live WebRTC Stream');
       loading.style.display = 'block';
     }
     
@@ -1157,7 +1405,7 @@
       // Show file-based controls
       document.getElementById('controls').style.display = 'flex';
       
-      streamTypeIndicator.textContent = 'File Stream';
+      updateStreamTypeIndicator('File Stream');
       
       if (webrtcVideo.srcObject) {
         webrtcVideo.srcObject = null;
@@ -1171,17 +1419,23 @@
         const urlParams = new URLSearchParams(window.location.search);
         classId = urlParams.get('classId') || localStorage.getItem('currentClassId');
         
+        // If no class ID, automatically fetch user's assigned class
         if (!classId) {
-          console.log('🔍 No class ID provided, attempting to fetch user classes...');
-          const fetchedClassId = await fetchUserClasses();
-          if (fetchedClassId) {
-            classId = fetchedClassId;
-            console.log('✅ Using fetched class ID:', classId);
-          } else {
+          console.log('🔍 No class ID provided, fetching user\'s assigned class...');
+          classId = await fetchUserAssignedClass();
+          
+          if (!classId) {
             console.error('❌ No class ID available');
-            showErrorMessage('No Class ID Found', 'You are not currently enrolled in any classes with active streams. Please contact your instructor or check your class assignments.');
+            showErrorMessage('No Class Assignment Found', 'You are not currently enrolled in any classes. Please contact your instructor or check your enrollment status.');
             return;
           }
+          
+          // Store the fetched class ID for future use
+          localStorage.setItem('currentClassId', classId);
+          console.log('✅ Auto-assigned to class:', classId);
+          
+          // Update stream type indicator with class info
+          updateStreamTypeIndicator();
         }
         
         const authToken = localStorage.getItem('token');
@@ -1315,8 +1569,15 @@
           console.log('🔌 Connecting to Socket.IO with streamKey:', streamKey);
           socket.emit('join-stream', streamKey);
           
+          // Also join WebRTC room for live streaming
+          socket.emit('student-join-class', { classId: classId });
+          console.log('🎓 Joining WebRTC class as student:', classId);
+          
           socket.on('connect', () => {
             console.log('✅ Socket.IO connected successfully');
+            // Re-join rooms on reconnection
+            socket.emit('join-stream', streamKey);
+            socket.emit('student-join-class', { classId: classId });
           });
           
           socket.on('disconnect', () => {
@@ -1395,7 +1656,7 @@
     console.log('🔐 Auth Token:', authToken ? 'Present' : 'Missing');
     
     if (!urlClassId && !storedClassId) {
-      console.log('🔍 No class ID found - will attempt to fetch user classes automatically');
+      console.log('🔍 No class ID found - will automatically fetch user\'s assigned class');
     }
     
     if (!authToken) {

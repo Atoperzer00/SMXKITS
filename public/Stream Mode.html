@@ -1193,6 +1193,15 @@
         document.getElementById('stopMediaBtn').style.display = 'inline-block';
         
         console.log('✅ Camera started successfully');
+        
+        // Notify students that WebRTC streaming has started
+        if (socket && currentClassId) {
+          socket.emit('instructor-started-webrtc', { 
+            classId: currentClassId,
+            mediaType: 'Camera'
+          });
+          console.log('📡 Notified students: WebRTC Camera streaming started');
+        }
       } catch (error) {
         console.error('❌ Camera error:', error);
         alert('Failed to access camera. Please check permissions.');
@@ -1219,6 +1228,15 @@
         });
         
         console.log('✅ Screen share started successfully');
+        
+        // Notify students that WebRTC streaming has started
+        if (socket && currentClassId) {
+          socket.emit('instructor-started-webrtc', { 
+            classId: currentClassId,
+            mediaType: 'Screen Share'
+          });
+          console.log('📡 Notified students: WebRTC Screen Share streaming started');
+        }
       } catch (error) {
         console.error('❌ Screen share error:', error);
         alert('Failed to start screen share. Please check permissions.');
@@ -1240,6 +1258,14 @@
         }
         
         console.log('⏹️ Live media stopped');
+        
+        // Notify students that WebRTC streaming has stopped
+        if (socket && currentClassId) {
+          socket.emit('instructor-stopped-webrtc', { 
+            classId: currentClassId
+          });
+          console.log('📡 Notified students: WebRTC streaming stopped');
+        }
       }
     }
     

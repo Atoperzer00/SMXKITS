@@ -257,4 +257,33 @@ router.delete('/:id/students/:studentId', auth(['admin', 'instructor']), async (
   }
 });
 
+// Generate stream key for class
+router.post('/:id/generate-stream-key', auth(['admin', 'instructor']), async (req, res) => {
+  try {
+    const classObj = await Class.findById(req.params.id);
+    if (!classObj) {
+      return res.status(404).json({ error: 'Class not found' });
+    }
+    
+    // Generate a unique stream key
+    const streamKey = `stream_${req.params.id}_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+    
+    // Update class with new stream key
+    await Class.findByIdAndUpdate(req.params.id, {
+      $set: { streamKey: streamKey }
+    });
+    
+    console.log(`✅ Generated stream key for class ${classObj.name}: ${streamKey}`);
+    
+    res.json({ 
+      message: 'Stream key generated successfully',
+      streamKey: streamKey,
+      classId: req.params.id
+    });
+  } catch (error) {
+    console.error('❌ Error generating stream key:', error);
+    res.status(500).json({ error: 'Server error generating stream key' });
+  }
+});
+
 module.exports = router;
