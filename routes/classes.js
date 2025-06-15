@@ -59,6 +59,64 @@ router.get('/', auth(['admin', 'instructor']), async (req, res) => {
   }
 });
 
+// Get user's assigned classes (students get their enrolled classes, instructors get their teaching classes)
+router.get('/my-classes', auth(), async (req, res) => {
+  try {
+    console.log(`📚 Fetching classes for user: ${req.user.id} (${req.user.role})`);
+    
+    let classes = [];
+    
+    if (req.user.role === 'student') {
+      // For students: find classes they are enrolled in
+      classes = await Class.find({
+        students: req.user.id
+      })
+      .populate('instructorId', 'name email')
+      .select('name description streamStatus streamKey currentStreamSource createdAt updatedAt')
+      .sort({ updatedAt: -1 });
+      
+      console.log(`📖 Found ${classes.length} classes for student`);
+      
+    } else if (req.user.role === 'instructor') {
+      // For instructors: find classes they are teaching
+      classes = await Class.find({
+        $or: [
+          { instructorId: req.user.id },
+          { instructors: req.user.id }
+        ]
+      })
+      .populate('instructorId', 'name email')
+      .select('name description streamStatus streamKey currentStreamSource createdAt updatedAt students instructors')
+      .sort({ updatedAt: -1 });
+      
+      console.log(`👨‍🏫 Found ${classes.length} classes for instructor`);
+      
+    } else if (req.user.role === 'admin') {
+      // For admins: get all classes
+      classes = await Class.find()
+        .populate('instructorId', 'name email')
+        .select('name description streamStatus streamKey currentStreamSource createdAt updatedAt')
+        .sort({ updatedAt: -1 });
+        
+      console.log(`👑 Found ${classes.length} classes for admin`);
+    }
+    
+    // Add some metadata for better class selection
+    const enrichedClasses = classes.map(cls => ({
+      ...cls.toObject(),
+      hasActiveStream: cls.streamStatus === 'live',
+      isStreamReady: !!cls.streamKey,
+      studentCount: cls.students ? cls.students.length : 0
+    }));
+    
+    res.json(enrichedClasses);
+    
+  } catch (error) {
+    console.error('❌ Error fetching user classes:', error);
+    res.status(500).json({ error: 'Server error fetching user classes' });
+  }
+});
+
 // Get single class by ID
 router.get('/:id', auth(['admin', 'instructor']), async (req, res) => {
   try {

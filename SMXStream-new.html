@@ -734,6 +734,220 @@
       }
     }
     
+    // Function to fetch user's assigned classes and find the best one for streaming
+    async function fetchUserClasses() {
+      try {
+        const authToken = localStorage.getItem('token');
+        if (!authToken) {
+          console.log('❌ No auth token available for fetching classes');
+          return null;
+        }
+        
+        console.log('📡 Fetching user classes from server...');
+        
+        // First, try to get user's enrolled classes
+        const response = await fetch('/api/classes/my-classes', {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
+        
+        if (!response.ok) {
+          // Fallback: try to get all classes the user has access to
+          console.log('⚠️ My-classes endpoint not available, trying general classes endpoint...');
+          const fallbackResponse = await fetch('/api/classes', {
+            headers: {
+              'Authorization': `Bearer ${authToken}`
+            }
+          });
+          
+          if (!fallbackResponse.ok) {
+            console.error('❌ Failed to fetch classes:', fallbackResponse.status);
+            return null;
+          }
+          
+          const allClasses = await fallbackResponse.json();
+          return await selectBestClass(allClasses);
+        }
+        
+        const userClasses = await response.json();
+        console.log('📚 Found user classes:', userClasses.length);
+        
+        return await selectBestClass(userClasses);
+        
+      } catch (error) {
+        console.error('❌ Error fetching user classes:', error);
+        return null;
+      }
+    }
+    
+    // Function to select the best class for streaming
+    async function selectBestClass(classes) {
+      if (!classes || classes.length === 0) {
+        console.log('📭 No classes found');
+        return null;
+      }
+      
+      console.log('🔍 Analyzing classes for streaming...');
+      
+      // Priority order for class selection:
+      // 1. Classes with active streams (status: 'live')
+      // 2. Classes with recent activity
+      // 3. Most recently created class
+      
+      let scoredClasses = [];
+      
+      classes.forEach((cls, index) => {
+        let score = 0;
+        
+        console.log(`📋 Class ${index + 1}: ${cls.name} (Status: ${cls.streamStatus || 'unknown'})`);
+        
+        // Highest priority: active streams
+        if (cls.streamStatus === 'live') {
+          score += 1000;
+          console.log('  🔴 Active stream detected! +1000 points');
+        }
+        
+        // High priority: recently active streams
+        if (cls.streamStatus === 'paused') {
+          score += 500;
+          console.log('  ⏸️ Paused stream detected! +500 points');
+        }
+        
+        // Medium priority: classes with stream keys (configured for streaming)
+        if (cls.streamKey) {
+          score += 100;
+          console.log('  🔑 Has stream key! +100 points');
+        }
+        
+        // Low priority: recent classes (newer = higher score)
+        const classAge = Date.now() - new Date(cls.createdAt || 0).getTime();
+        const daysSinceCreated = classAge / (1000 * 60 * 60 * 24);
+        const recencyScore = Math.max(0, 50 - daysSinceCreated);
+        score += recencyScore;
+        console.log(`  📅 Recency score: +${recencyScore.toFixed(1)} points`);
+        
+        console.log(`  📊 Total score: ${score}`);
+        
+        scoredClasses.push({ class: cls, score: score });
+      });
+      
+      // Sort by score (highest first)
+      scoredClasses.sort((a, b) => b.score - a.score);
+      
+      // If we have a clear winner (score > 100 higher than second place), use it
+      if (scoredClasses.length === 1 || 
+          (scoredClasses.length > 1 && scoredClasses[0].score - scoredClasses[1].score > 100)) {
+        
+        const bestClass = scoredClasses[0].class;
+        console.log(`✅ Auto-selected class: ${bestClass.name} (ID: ${bestClass._id})`);
+        console.log(`🏆 Final score: ${scoredClasses[0].score}`);
+        
+        // Store the selected class ID for future use
+        localStorage.setItem('currentClassId', bestClass._id);
+        localStorage.setItem('currentClassName', bestClass.name);
+        
+        return bestClass._id;
+      }
+      
+      // If we have multiple good options, show a selection dialog
+      if (scoredClasses.length > 1) {
+        console.log('🤔 Multiple classes available, showing selection dialog...');
+        return await showClassSelectionDialog(scoredClasses);
+      }
+      
+      // If we only have low-scoring classes, still pick the best one
+      if (scoredClasses.length > 0) {
+        const bestClass = scoredClasses[0].class;
+        console.log(`⚠️ Selected best available class: ${bestClass.name} (ID: ${bestClass._id})`);
+        
+        localStorage.setItem('currentClassId', bestClass._id);
+        localStorage.setItem('currentClassName', bestClass.name);
+        
+        return bestClass._id;
+      }
+      
+      console.log('❌ No suitable class found');
+      return null;
+    }
+    
+    // Function to show class selection dialog
+    function showClassSelectionDialog(scoredClasses) {
+      return new Promise((resolve) => {
+        // Hide loading spinner
+        loading.style.display = 'none';
+        
+        // Create selection dialog
+        const selectionOverlay = document.createElement('div');
+        selectionOverlay.className = 'welcome-modal show';
+        selectionOverlay.innerHTML = `
+          <div class="welcome-content">
+            <h2 class="welcome-title">📚 Select Your Class</h2>
+            <div class="welcome-text">
+              <p>You have access to multiple classes. Please select which one you'd like to stream:</p>
+              <div style="margin: 20px 0; max-height: 300px; overflow-y: auto;">
+                ${scoredClasses.map((item, index) => `
+                  <div class="class-option" data-class-id="${item.class._id}" style="
+                    padding: 15px;
+                    margin: 10px 0;
+                    background: rgba(255, 255, 255, 0.1);
+                    border-radius: 10px;
+                    cursor: pointer;
+                    border: 2px solid transparent;
+                    transition: all 0.3s ease;
+                  " onmouseover="this.style.borderColor='#22c55e'" onmouseout="this.style.borderColor='transparent'">
+                    <div style="font-weight: bold; font-size: 1.1em; margin-bottom: 5px;">
+                      ${item.class.name}
+                      ${item.class.streamStatus === 'live' ? ' 🔴 LIVE' : ''}
+                      ${item.class.streamStatus === 'paused' ? ' ⏸️ PAUSED' : ''}
+                    </div>
+                    <div style="font-size: 0.9em; opacity: 0.8;">
+                      ${item.class.description || 'No description'}
+                    </div>
+                    <div style="font-size: 0.8em; opacity: 0.6; margin-top: 5px;">
+                      ${item.class.streamKey ? '🔑 Stream Ready' : '⚠️ No Stream Key'} • 
+                      Score: ${item.score.toFixed(0)}
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+            <div class="welcome-actions">
+              <button class="welcome-close" onclick="cancelClassSelection()">Cancel</button>
+            </div>
+          </div>
+        `;
+        
+        document.body.appendChild(selectionOverlay);
+        
+        // Add click handlers to class options
+        selectionOverlay.querySelectorAll('.class-option').forEach(option => {
+          option.addEventListener('click', function() {
+            const selectedClassId = this.getAttribute('data-class-id');
+            const selectedClass = scoredClasses.find(item => item.class._id === selectedClassId);
+            
+            if (selectedClass) {
+              console.log(`✅ User selected class: ${selectedClass.class.name}`);
+              localStorage.setItem('currentClassId', selectedClassId);
+              localStorage.setItem('currentClassName', selectedClass.class.name);
+              
+              // Remove dialog
+              selectionOverlay.remove();
+              
+              // Resolve with selected class ID
+              resolve(selectedClassId);
+            }
+          });
+        });
+        
+        // Global function for cancel button
+        window.cancelClassSelection = function() {
+          selectionOverlay.remove();
+          resolve(null);
+        };
+      });
+    }
+    
     const video = document.getElementById('video');
     const webrtcVideo = document.getElementById('webrtcVideo');
     const streamTypeIndicator = document.getElementById('streamTypeIndicator');
@@ -958,9 +1172,16 @@
         classId = urlParams.get('classId') || localStorage.getItem('currentClassId');
         
         if (!classId) {
-          console.error('❌ No class ID provided');
-          showErrorMessage('No Class ID Found', 'Please provide a class ID in the URL (?classId=xxx) or ensure you are logged in with a valid class assignment.');
-          return;
+          console.log('🔍 No class ID provided, attempting to fetch user classes...');
+          const fetchedClassId = await fetchUserClasses();
+          if (fetchedClassId) {
+            classId = fetchedClassId;
+            console.log('✅ Using fetched class ID:', classId);
+          } else {
+            console.error('❌ No class ID available');
+            showErrorMessage('No Class ID Found', 'You are not currently enrolled in any classes with active streams. Please contact your instructor or check your class assignments.');
+            return;
+          }
         }
         
         const authToken = localStorage.getItem('token');
@@ -1174,7 +1395,7 @@
     console.log('🔐 Auth Token:', authToken ? 'Present' : 'Missing');
     
     if (!urlClassId && !storedClassId) {
-      console.warn('⚠️ No class ID found - this will likely cause issues');
+      console.log('🔍 No class ID found - will attempt to fetch user classes automatically');
     }
     
     if (!authToken) {
