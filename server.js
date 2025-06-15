@@ -327,6 +327,129 @@ io.on('connection', socket => {
   // Track connected viewers
   const activeStreamRooms = new Set();
   
+  // ===== WEBRTC HANDLERS =====
+  // Track WebRTC connections
+  const webrtcRooms = new Map(); // classId -> { instructor: socketId, students: Set<socketId> }
+  
+  // Instructor joins class for WebRTC streaming
+  socket.on('instructor-join-class', (data) => {
+    const { classId } = data;
+    console.log(`🎓 Instructor joined WebRTC class: ${classId}`);
+    
+    if (!webrtcRooms.has(classId)) {
+      webrtcRooms.set(classId, { instructor: null, students: new Set() });
+    }
+    
+    const room = webrtcRooms.get(classId);
+    room.instructor = socket.id;
+    
+    socket.join(`webrtc:${classId}`);
+    socket.classId = classId;
+    socket.role = 'instructor';
+  });
+  
+  // Student joins class for WebRTC streaming
+  socket.on('student-join-class', (data) => {
+    const { classId } = data;
+    console.log(`👤 Student joined WebRTC class: ${classId}`);
+    
+    if (!webrtcRooms.has(classId)) {
+      webrtcRooms.set(classId, { instructor: null, students: new Set() });
+    }
+    
+    const room = webrtcRooms.get(classId);
+    room.students.add(socket.id);
+    
+    socket.join(`webrtc:${classId}`);
+    socket.classId = classId;
+    socket.role = 'student';
+    
+    // Notify instructor that a student joined
+    if (room.instructor) {
+      io.to(room.instructor).emit('student-joined', { 
+        studentId: socket.id,
+        classId: classId 
+      });
+    }
+  });
+  
+  // Instructor starts WebRTC streaming
+  socket.on('instructor-start-webrtc', (data) => {
+    const { classId, mediaType } = data;
+    console.log(`🔴 Instructor started WebRTC stream for class ${classId}: ${mediaType}`);
+    
+    // Notify all students in the class
+    socket.to(`webrtc:${classId}`).emit('instructor-started-webrtc', {
+      classId: classId,
+      mediaType: mediaType
+    });
+  });
+  
+  // Instructor stops WebRTC streaming
+  socket.on('instructor-stop-webrtc', (data) => {
+    const { classId } = data;
+    console.log(`⏹️ Instructor stopped WebRTC stream for class ${classId}`);
+    
+    // Notify all students in the class
+    socket.to(`webrtc:${classId}`).emit('instructor-stopped-webrtc', {
+      classId: classId
+    });
+  });
+  
+  // WebRTC Signaling - Offer from instructor to student
+  socket.on('webrtc-offer', (data) => {
+    const { to, offer } = data;
+    console.log(`📡 Forwarding WebRTC offer from ${socket.id} to ${to}`);
+    
+    io.to(to).emit('webrtc-offer', {
+      from: socket.id,
+      offer: offer
+    });
+  });
+  
+  // WebRTC Signaling - Answer from student to instructor
+  socket.on('webrtc-answer', (data) => {
+    const { to, answer } = data;
+    console.log(`📡 Forwarding WebRTC answer from ${socket.id} to instructor`);
+    
+    // Find instructor in the same class
+    const classId = socket.classId;
+    if (classId && webrtcRooms.has(classId)) {
+      const room = webrtcRooms.get(classId);
+      if (room.instructor) {
+        io.to(room.instructor).emit('webrtc-answer', {
+          from: socket.id,
+          answer: answer
+        });
+      }
+    }
+  });
+  
+  // WebRTC Signaling - ICE Candidates
+  socket.on('webrtc-ice-candidate', (data) => {
+    const { to, candidate } = data;
+    
+    if (to === 'instructor') {
+      // Student sending to instructor
+      const classId = socket.classId;
+      if (classId && webrtcRooms.has(classId)) {
+        const room = webrtcRooms.get(classId);
+        if (room.instructor) {
+          io.to(room.instructor).emit('webrtc-ice-candidate', {
+            from: socket.id,
+            candidate: candidate
+          });
+        }
+      }
+    } else {
+      // Instructor sending to specific student
+      io.to(to).emit('webrtc-ice-candidate', {
+        from: socket.id,
+        candidate: candidate
+      });
+    }
+  });
+  
   // Join stream room
   socket.on('join-stream', async (streamKey) => {
     console.log('🔌 Student attempting to join stream with key:', streamKey);
@@ -558,6 +681,42 @@ io.on('connection', socket => {
   
   socket.on('disconnect', () => {
     console.log('🔌 Socket disconnected');
+    
+    // Handle WebRTC disconnection
+    if (socket.classId && socket.role) {
+      const classId = socket.classId;
+      const room = webrtcRooms.get(classId);
+      
+      if (room) {
+        if (socket.role === 'instructor' && room.instructor === socket.id) {
+          // Instructor disconnected - notify all students
+          console.log(`🎓 Instructor disconnected from WebRTC class: ${classId}`);
+          room.instructor = null;
+          
+          socket.to(`webrtc:${classId}`).emit('instructor-stopped-webrtc', {
+            classId: classId,
+            reason: 'Instructor disconnected'
+          });
+        } else if (socket.role === 'student' && room.students.has(socket.id)) {
+          // Student disconnected - notify instructor
+          console.log(`👤 Student disconnected from WebRTC class: ${classId}`);
+          room.students.delete(socket.id);
+          
+          if (room.instructor) {
+            io.to(room.instructor).emit('student-left', {
+              studentId: socket.id,
+              classId: classId
+            });
+          }
+        }
+        
+        // Clean up empty rooms
+        if (!room.instructor && room.students.size === 0) {
+          webrtcRooms.delete(classId);
+          console.log(`🧹 Cleaned up empty WebRTC room: ${classId}`);
+        }
+      }
+    }
     
     // If we have user data, update their status to offline
     if (socket.userData) {

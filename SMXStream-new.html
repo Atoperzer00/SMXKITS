@@ -471,6 +471,33 @@
     .welcome-close:active {
       transform: translateY(0);
     }
+    
+    /* Stream Type Indicator */
+    .stream-type-indicator {
+      position: absolute;
+      top: 1.5rem;
+      left: 1.5rem;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(10px);
+      color: rgba(255, 255, 255, 0.9);
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      z-index: 10;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    /* WebRTC Video Styling */
+    #webrtcVideo {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 25px 25px 0 0;
+      object-fit: cover;
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script src="/socket.io/socket.io.js"></script>
@@ -497,7 +524,9 @@
         <div class="video-container">
           <div class="live-badge">LIVE</div>
           <video id="video" autoplay muted></video>
+          <video id="webrtcVideo" autoplay playsinline style="display:none;"></video>
           <div class="loading-spinner" id="loading"></div>
+          <div class="stream-type-indicator" id="streamTypeIndicator">File Stream</div>
         </div>
         
         <div class="video-info">
@@ -613,9 +642,17 @@
     window.addEventListener('load', showWelcomeModal);
     
     const video = document.getElementById('video');
+    const webrtcVideo = document.getElementById('webrtcVideo');
+    const streamTypeIndicator = document.getElementById('streamTypeIndicator');
     const playBtn = document.getElementById('playBtn');
     const timeline = document.getElementById('timeline');
     const progress = document.getElementById('progress');
+    
+    // WebRTC Variables
+    let peerConnection = null;
+    let webrtcSocket = null;
+    let isWebRTCMode = false;
+    let classId = null;
     const playhead = document.getElementById('playhead');
     const fullscreenBtn = document.getElementById('fullscreenBtn');
     const loading = document.getElementById('loading');
@@ -685,12 +722,147 @@
       return closest;
     }
     
+    // WebRTC Functions
+    function initializeWebRTCSocket() {
+      if (webrtcSocket) return;
+      
+      webrtcSocket = io();
+      
+      webrtcSocket.on('connect', () => {
+        console.log('🔌 WebRTC Socket connected');
+        if (classId) {
+          webrtcSocket.emit('student-join-class', { classId: classId });
+        }
+      });
+      
+      webrtcSocket.on('disconnect', () => {
+        console.log('❌ WebRTC Socket disconnected');
+      });
+      
+      webrtcSocket.on('instructor-started-webrtc', (data) => {
+        console.log('🔴 Instructor started WebRTC stream:', data.mediaType);
+        switchToWebRTCMode();
+        streamTypeIndicator.textContent = `Live ${data.mediaType}`;
+      });
+      
+      webrtcSocket.on('instructor-stopped-webrtc', (data) => {
+        console.log('⏹️ Instructor stopped WebRTC stream');
+        switchToFileMode();
+        if (peerConnection) {
+          peerConnection.close();
+          peerConnection = null;
+        }
+      });
+      
+      webrtcSocket.on('webrtc-offer', async (data) => {
+        console.log('📡 Received WebRTC offer from instructor');
+        await handleWebRTCOffer(data.offer);
+      });
+      
+      webrtcSocket.on('webrtc-ice-candidate', async (data) => {
+        console.log('🧊 Received ICE candidate from instructor');
+        if (peerConnection) {
+          await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+        }
+      });
+    }
+    
+    async function handleWebRTCOffer(offer) {
+      try {
+        console.log('🔗 Creating WebRTC peer connection...');
+        
+        peerConnection = new RTCPeerConnection({
+          iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' }
+          ]
+        });
+        
+        // Handle incoming stream
+        peerConnection.ontrack = (event) => {
+          console.log('📺 Received WebRTC stream');
+          webrtcVideo.srcObject = event.streams[0];
+          loading.style.display = 'none';
+        };
+        
+        // Handle ICE candidates
+        peerConnection.onicecandidate = (event) => {
+          if (event.candidate) {
+            webrtcSocket.emit('webrtc-ice-candidate', {
+              to: 'instructor',
+              candidate: event.candidate
+            });
+          }
+        };
+        
+        // Handle connection state changes
+        peerConnection.onconnectionstatechange = () => {
+          const state = peerConnection.connectionState;
+          console.log('🔗 WebRTC connection state:', state);
+          
+          if (state === 'connected') {
+            console.log('✅ WebRTC connection established');
+          } else if (state === 'disconnected' || state === 'failed') {
+            console.log('❌ WebRTC connection lost');
+            switchToFileMode();
+          }
+        };
+        
+        // Set remote description and create answer
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+        
+        // Send answer back to instructor
+        webrtcSocket.emit('webrtc-answer', {
+          to: 'instructor',
+          answer: answer
+        });
+        
+        console.log('📤 Sent WebRTC answer to instructor');
+      } catch (error) {
+        console.error('❌ Error handling WebRTC offer:', error);
+        switchToFileMode();
+      }
+    }
+    
+    function switchToWebRTCMode() {
+      console.log('🔄 Switching to WebRTC mode');
+      isWebRTCMode = true;
+      
+      video.style.display = 'none';
+      webrtcVideo.style.display = 'block';
+      
+      // Hide file-based controls
+      document.getElementById('controls').style.display = 'none';
+      
+      streamTypeIndicator.textContent = 'Live WebRTC Stream';
+      loading.style.display = 'block';
+    }
+    
+    function switchToFileMode() {
+      console.log('🔄 Switching to file mode');
+      isWebRTCMode = false;
+      
+      webrtcVideo.style.display = 'none';
+      video.style.display = 'block';
+      
+      // Show file-based controls
+      document.getElementById('controls').style.display = 'flex';
+      
+      streamTypeIndicator.textContent = 'File Stream';
+      
+      if (webrtcVideo.srcObject) {
+        webrtcVideo.srcObject = null;
+      }
+    }
+
     // Fetch class information from the backend
     async function fetchClassInfo() {
       try {
         // Get classId from URL parameters or localStorage
         const urlParams = new URLSearchParams(window.location.search);
-        const classId = urlParams.get('classId') || localStorage.getItem('currentClassId');
+        classId = urlParams.get('classId') || localStorage.getItem('currentClassId');
         
         if (!classId) {
           throw new Error('No class ID provided');
@@ -796,6 +968,9 @@
         video.addEventListener('playing', function() {
           loading.style.display = 'none';
         });
+        
+        // Initialize WebRTC socket for live streaming
+        initializeWebRTCSocket();
         
         // Connect to Socket.IO for real-time updates
         if (streamKey && typeof io !== 'undefined') {
