@@ -641,6 +641,99 @@
     // Show welcome modal when page loads
     window.addEventListener('load', showWelcomeModal);
     
+    // Error message display function
+    function showErrorMessage(title, message) {
+      // Hide loading spinner
+      loading.style.display = 'none';
+      
+      // Create error overlay
+      const errorOverlay = document.createElement('div');
+      errorOverlay.className = 'welcome-modal show';
+      errorOverlay.innerHTML = `
+        <div class="welcome-content">
+          <h2 class="welcome-title" style="color: #ef4444;">⚠️ ${title}</h2>
+          <div class="welcome-text">
+            <p>${message}</p>
+            <div style="margin-top: 20px; padding: 15px; background: rgba(239, 68, 68, 0.1); border-radius: 10px; border-left: 4px solid #ef4444;">
+              <strong>Quick Fixes:</strong>
+              <ul style="margin: 10px 0; text-align: left;">
+                <li>Make sure you're logged in to the system</li>
+                <li>Access the stream through the dashboard or class page</li>
+                <li>Check that the class ID in the URL is correct</li>
+                <li>Contact your instructor if the problem persists</li>
+              </ul>
+            </div>
+          </div>
+          <div class="welcome-actions">
+            <button class="welcome-close" onclick="goToDashboard()">Go to Dashboard</button>
+            <button class="welcome-close" onclick="retryConnection()" style="background: #22c55e;">Retry</button>
+            <button class="welcome-close" onclick="openDebugTool()" style="background: #ff9800;">Debug Tool</button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(errorOverlay);
+    }
+    
+    function goToDashboard() {
+      window.location.href = '/dashboard.html';
+    }
+    
+    function retryConnection() {
+      // Remove error overlay
+      const errorOverlay = document.querySelector('.welcome-modal');
+      if (errorOverlay) {
+        errorOverlay.remove();
+      }
+      
+      // Show loading and retry
+      loading.style.display = 'block';
+      fetchClassInfo();
+    }
+    
+    function openDebugTool() {
+      window.open('/debug-stream.html', '_blank');
+    }
+    
+    function showWaitingMessage() {
+      // Update the stream type indicator
+      streamTypeIndicator.textContent = 'Waiting for Stream...';
+      
+      // Create a waiting overlay
+      const waitingOverlay = document.createElement('div');
+      waitingOverlay.className = 'welcome-modal show';
+      waitingOverlay.id = 'waitingOverlay';
+      waitingOverlay.innerHTML = `
+        <div class="welcome-content">
+          <h2 class="welcome-title" style="color: #ff9800;">⏳ Waiting for Stream</h2>
+          <div class="welcome-text">
+            <p>The instructor hasn't started streaming yet. The page will automatically update when the stream becomes available.</p>
+            <div style="margin: 20px 0; padding: 15px; background: rgba(255, 152, 0, 0.1); border-radius: 10px; border-left: 4px solid #ff9800;">
+              <strong>What's happening:</strong>
+              <ul style="margin: 10px 0; text-align: left;">
+                <li>✅ Connected to class successfully</li>
+                <li>⏳ Waiting for instructor to start streaming</li>
+                <li>🔄 Automatically checking for updates every 3 seconds</li>
+              </ul>
+            </div>
+          </div>
+          <div class="welcome-actions">
+            <button class="welcome-close" onclick="closeWaitingMessage()">Continue Waiting</button>
+            <button class="welcome-close" onclick="goToDashboard()" style="background: #6b7280;">Back to Dashboard</button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(waitingOverlay);
+    }
+    
+    function closeWaitingMessage() {
+      const waitingOverlay = document.getElementById('waitingOverlay');
+      if (waitingOverlay) {
+        waitingOverlay.remove();
+      }
+    }
+    
     const video = document.getElementById('video');
     const webrtcVideo = document.getElementById('webrtcVideo');
     const streamTypeIndicator = document.getElementById('streamTypeIndicator');
@@ -865,7 +958,9 @@
         classId = urlParams.get('classId') || localStorage.getItem('currentClassId');
         
         if (!classId) {
-          throw new Error('No class ID provided');
+          console.error('❌ No class ID provided');
+          showErrorMessage('No Class ID Found', 'Please provide a class ID in the URL (?classId=xxx) or ensure you are logged in with a valid class assignment.');
+          return;
         }
         
         const authToken = localStorage.getItem('token');
@@ -876,7 +971,20 @@
         });
         
         if (!response.ok) {
-          throw new Error('Failed to fetch class information');
+          if (response.status === 401) {
+            console.error('❌ Authentication failed');
+            showErrorMessage('Authentication Required', 'You need to log in to access this stream. Please log in and try again.');
+            return;
+          } else if (response.status === 403) {
+            console.error('❌ Access denied');
+            showErrorMessage('Access Denied', 'You do not have permission to access this class stream. Please contact your instructor.');
+            return;
+          } else if (response.status === 404) {
+            console.error('❌ Class not found');
+            showErrorMessage('Class Not Found', 'The requested class could not be found. Please check the class ID and try again.');
+            return;
+          }
+          throw new Error(`Server returned ${response.status}: ${response.statusText}`);
         }
         
         const data = await response.json();
@@ -894,6 +1002,14 @@
         if (streamStatus !== 'live') {
           console.log('⏸️ Stream is not live, waiting for instructor...');
           loading.style.display = 'block';
+          
+          // Show waiting message after 10 seconds
+          setTimeout(() => {
+            if (loading.style.display === 'block') {
+              showWaitingMessage();
+            }
+          }, 10000);
+          
           // Retry after 3 seconds
           setTimeout(() => fetchClassInfo(), 3000);
           return;
@@ -1042,6 +1158,27 @@
         // Retry after 5 seconds
         setTimeout(() => fetchClassInfo(), 5000);
       }
+    }
+    
+    // Debug information on page load
+    console.log('🚀 SMX Stream page loaded');
+    console.log('🔍 Checking for class ID and authentication...');
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlClassId = urlParams.get('classId');
+    const storedClassId = localStorage.getItem('currentClassId');
+    const authToken = localStorage.getItem('token');
+    
+    console.log('📋 URL Class ID:', urlClassId);
+    console.log('💾 Stored Class ID:', storedClassId);
+    console.log('🔐 Auth Token:', authToken ? 'Present' : 'Missing');
+    
+    if (!urlClassId && !storedClassId) {
+      console.warn('⚠️ No class ID found - this will likely cause issues');
+    }
+    
+    if (!authToken) {
+      console.warn('⚠️ No authentication token found - this will likely cause issues');
     }
     
     // Call the function to fetch class info and load the stream
