@@ -44,6 +44,10 @@
         <a href="#" onclick="goToPEDTraining();" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>🧑‍💻</span>Screener Training</a>
         <a href="#" onclick="goToISRTraining();" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>📡</span>IA Training</a>
         <a href="#" onclick="goToOpsLog();" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>📝</span>Grading</a>
+        <!-- Admin-only edit link -->
+        <div id="admin-controls" style="display: none;">
+          <a href="edit-typing-tests.html" target="_blank" class="flex items-center gap-3 px-4 py-2 rounded-xl bg-yellow-600/40 text-yellow-200 hover:bg-yellow-600/60 transition"><span>✏️</span>Edit Typing Tests</a>
+        </div>
       </nav>
       <a href="#" onclick="logout();" class="mt-auto flex items-center gap-3 px-4 py-2 rounded-xl bg-zinc-900/80 text-red-400 hover:bg-red-900/50 transition">Logout</a>
     </aside>
@@ -125,8 +129,22 @@
       document.getElementById('studentName').textContent = studentName;
       
       // Load typing progress
-      loadTypingData();
-      updateDashboardProgress();
+      if (typeof loadTypingData === 'function') {
+        loadTypingData();
+      }
+      if (typeof updateDashboardProgress === 'function') {
+        updateDashboardProgress();
+      }
+      
+      // Load and render the module list immediately
+      renderModuleList();
+      updateTypingProgress();
+      
+      // Show admin controls if user is admin
+      const userRole = localStorage.getItem('role');
+      if (userRole === 'admin') {
+        document.getElementById('admin-controls').style.display = 'block';
+      }
     });
     
     // Logout function
@@ -141,47 +159,18 @@
       window.location.replace('/login.html');
     }
     
-    // Load the modules from SMXKITS directly
-    document.addEventListener('DOMContentLoaded', function() {
-      // We'll load the dynamic content from SMXKITS.html
-      fetch('/SMXKITS.html')
-        .then(response => response.text())
-        .then(html => {
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(html, 'text/html');
-          
-          // Add the typing screens to our dynamic content
-          const typingScreens = [
-            doc.getElementById('screen-dashboard'),
-            doc.getElementById('screen-practice'),
-            doc.getElementById('screen-typing'),
-            doc.getElementById('screen-results')
-          ];
-          
-          const dynamicContent = document.getElementById('dynamic-content');
-          typingScreens.forEach(screen => {
-            if (screen) {
-              dynamicContent.appendChild(document.importNode(screen, true));
-            }
-          });
-          
-          // Now load the script.js to initialize everything
-          const scriptEl = document.createElement('script');
-          scriptEl.src = 'script.js';
-          document.body.appendChild(scriptEl);
-          
-          // Once script is loaded, show module list
-          scriptEl.onload = function() {
-            if (typeof loadModules === 'function') {
-              loadModules();
-              console.log('Modules loaded successfully');
-            }
-          };
-        })
-        .catch(error => {
-          console.error('Error loading SMXKITS content:', error);
-        });
-    });
+    // Navigation functions for sidebar
+    function goToPEDTraining() {
+      window.location.href = '/Screener Training.html';
+    }
+    
+    function goToISRTraining() {
+      window.location.href = '/IA Training.html';
+    }
+    
+    function goToOpsLog() {
+      window.location.href = '/OpsLog.html';
+    }
     
     // Function to go back to dashboard
     function goToDashboard() {
@@ -232,85 +221,309 @@
   <script>
     // --- MODULES/RESULTS RENDERING ---
     function renderModuleList() {
-      const typingTests = JSON.parse(localStorage.getItem('smx_typing_tests') || '[]');
+      // Load typing tests from localStorage (same as edit-typing-tests.html)
+      let typingTests = JSON.parse(localStorage.getItem('smx_typing_tests') || '[]');
+      
+      // If no custom tests exist, create default structure with sample content
+      if (typingTests.length === 0) {
+        const NUM_MODULES = 5, PRACTICES_PER_MODULE = 20;
+        typingTests = Array.from({length: NUM_MODULES}, (_, m) => {
+          const moduleTexts = [];
+          for (let p = 0; p < PRACTICES_PER_MODULE; p++) {
+            // Add some sample content for the first few practices of each module
+            if (p < 3) {
+              switch (m) {
+                case 0: // Basic Typing
+                  moduleTexts[p] = p === 0 ? 'The quick brown fox jumps over the lazy dog. This sentence contains every letter of the alphabet.' :
+                                  p === 1 ? 'Practice makes perfect. Keep typing to improve your speed and accuracy.' :
+                                  'Touch typing is a skill that will serve you well throughout your career.';
+                  break;
+                case 1: // Numbers and Symbols
+                  moduleTexts[p] = p === 0 ? '1234567890 !@#$%^&*() The numbers and symbols are important for data entry.' :
+                                  p === 1 ? 'Email addresses like user@example.com require symbol typing skills.' :
+                                  'Special characters: ~`!@#$%^&*()_+-={}[]|\\:";\'<>?,./';
+                  break;
+                case 2: // Military Terminology
+                  moduleTexts[p] = p === 0 ? 'Military ranks: Private, Corporal, Sergeant, Lieutenant, Captain, Major, Colonel, General.' :
+                                  p === 1 ? 'Military time: 0600 hours, 1200 hours, 1800 hours, 2400 hours.' :
+                                  'NATO phonetic alphabet: Alpha, Bravo, Charlie, Delta, Echo, Foxtrot, Golf, Hotel.';
+                  break;
+                case 3: // POL Basic Descriptors
+                  moduleTexts[p] = p === 0 ? 'One adult male in dark traditional wear. Two adult females in light clothing.' :
+                                  p === 1 ? 'Personnel count: Three adult males, one adult female, two children observed.' :
+                                  'Description: Individual wearing dark jacket, light pants, carrying backpack.';
+                  break;
+                case 4: // POL SITREP Format
+                  moduleTexts[p] = p === 0 ? 'SITREP: At 0630Z, one adult male departed E gate on red motorcycle, rode S out of FOV 0635Z. SLANT 1/0/0' :
+                                  p === 1 ? 'SITREP: At 0745Z, white sedan entered compound through W gate, parked E side. SLANT 1/0/0' :
+                                  'SITREP: At 0900Z, two adult males on foot entered compound, proceeded to building A. SLANT 2/0/0';
+                  break;
+                default:
+                  moduleTexts[p] = `Module ${m+1} Practice ${p+1}: Sample typing text for practice.`;
+              }
+            } else {
+              moduleTexts[p] = `Module ${m+1} Practice ${p+1}: Enter typing text here.`;
+            }
+          }
+          return moduleTexts;
+        });
+        localStorage.setItem('smx_typing_tests', JSON.stringify(typingTests));
+      }
+      
       const userName = localStorage.getItem('userName') || 'student';
       const results = JSON.parse(localStorage.getItem('smx_typing_results_' + userName) || '{}');
       const moduleList = document.getElementById('module-list');
       moduleList.innerHTML = '';
+      
+      const moduleNames = [
+        'Module 1: Basic Typing',
+        'Module 2: Numbers and Symbols',
+        'Module 3: Military Terminology', 
+        'Module 4: POL Basic Descriptors',
+        'Module 5: POL SITREP Format'
+      ];
+      
       typingTests.forEach((module, mIdx) => {
+        // Module header
+        const moduleHeader = document.createElement('div');
+        moduleHeader.className = 'bg-zinc-800/50 rounded-xl px-4 py-3 mb-2';
+        moduleHeader.innerHTML = `<h3 class="text-lg font-bold text-white">${moduleNames[mIdx] || `Module ${mIdx + 1}`}</h3>`;
+        moduleList.appendChild(moduleHeader);
+        
+        // Module practices container
         const modDiv = document.createElement('div');
         modDiv.className = 'flex flex-col gap-2 w-full mb-6';
+        
         module.forEach((practice, pIdx) => {
+          // Skip empty practices
+          if (!practice || practice.trim() === '' || practice.includes('Enter typing text here')) {
+            return;
+          }
+          
           const row = document.createElement('div');
-          row.className = 'flex justify-between items-center bg-zinc-800/70 rounded-xl px-4 py-3';
-          // Left: Practice title
+          row.className = 'flex justify-between items-center bg-zinc-800/70 rounded-xl px-4 py-3 hover:bg-zinc-700/70 transition-colors';
+          
+          // Left: Practice title and preview
           const left = document.createElement('button');
-          left.className = 'text-left w-full font-semibold text-white';
-          left.textContent = `Practice ${pIdx + 1}: ${practice.substring(0, 32)}...`;
+          left.className = 'text-left w-full font-semibold text-white hover:text-blue-300 transition-colors';
+          const previewText = practice.length > 50 ? practice.substring(0, 50) + '...' : practice;
+          left.innerHTML = `
+            <div class="font-semibold">Practice ${pIdx + 1}</div>
+            <div class="text-sm text-zinc-400 font-normal">${previewText}</div>
+          `;
           left.onclick = () => startTypingTest(mIdx, pIdx);
+          
           // Right: Results summary
           const right = document.createElement('div');
           right.className = 'text-right min-w-[120px]';
           const res = results?.[mIdx]?.[pIdx];
           if (res) {
-            right.innerHTML = `<div class="text-green-400 font-bold">WPM: ${res.wpm}</div>
-              <div class="text-blue-400">Acc: ${res.accuracy}%</div>
-              <div class="text-zinc-400 text-xs">${res.time}s</div>`;
+            const wpmColor = res.wpm >= 40 ? 'text-green-400' : res.wpm >= 25 ? 'text-yellow-400' : 'text-blue-400';
+            const accColor = res.accuracy >= 95 ? 'text-green-400' : res.accuracy >= 85 ? 'text-yellow-400' : 'text-red-400';
+            right.innerHTML = `
+              <div class="${wpmColor} font-bold">WPM: ${res.wpm}</div>
+              <div class="${accColor}">Acc: ${res.accuracy}%</div>
+              <div class="text-zinc-400 text-xs">${res.time}s</div>
+            `;
           } else {
             right.innerHTML = `<div class="text-zinc-500 text-xs">Not completed</div>`;
           }
+          
           row.appendChild(left);
           row.appendChild(right);
           modDiv.appendChild(row);
         });
+        
         moduleList.appendChild(modDiv);
       });
     }
     // --- TYPING OVERLAY LOGIC ---
+    let typingStartTime = null;
+    let typingErrors = 0;
+    let currentTypingModule = 0;
+    let currentTypingPractice = 0;
+    
     function startTypingTest(moduleIdx, practiceIdx) {
       const typingTests = JSON.parse(localStorage.getItem('smx_typing_tests') || '[]');
+      if (!typingTests[moduleIdx] || !typingTests[moduleIdx][practiceIdx]) {
+        console.error('Typing test not found:', moduleIdx, practiceIdx);
+        return;
+      }
+      
       const reference = typingTests[moduleIdx][practiceIdx];
+      currentTypingModule = moduleIdx;
+      currentTypingPractice = practiceIdx;
+      
       let userInput = '';
+      typingStartTime = null;
+      typingErrors = 0;
+      
       document.getElementById('typingOverlay').classList.remove('hidden');
-      document.getElementById('typingOverlayTitle').textContent = `Practice ${practiceIdx + 1}`;
+      document.getElementById('typingOverlayTitle').textContent = `Module ${moduleIdx + 1} - Practice ${practiceIdx + 1}`;
       renderTypingText(reference, userInput);
+      
       const input = document.getElementById('typingInput');
       input.value = '';
       input.focus();
+      
       input.oninput = function() {
+        if (!typingStartTime) {
+          typingStartTime = Date.now();
+        }
+        
         userInput = input.value;
         renderTypingText(reference, userInput);
+        
         if (userInput === reference) {
-          // Save result, close overlay, update UI
-          saveTypingResult(moduleIdx, practiceIdx, { wpm: 50, accuracy: 100, time: 30 }); // Replace with real values
+          // Calculate final stats
+          const endTime = Date.now();
+          const totalTime = Math.round((endTime - typingStartTime) / 1000);
+          const accuracy = Math.round(((reference.length - typingErrors) / reference.length) * 100);
+          const wordsTyped = reference.split(' ').length;
+          const wpm = totalTime > 0 ? Math.round((wordsTyped / totalTime) * 60) : 0;
+          
+          // Save result and close overlay
+          saveTypingResult(moduleIdx, practiceIdx, { wpm, accuracy, time: totalTime });
           closeTypingOverlay();
+          
+          // Show results modal
+          showTypingResults(moduleIdx, practiceIdx, totalTime, accuracy, wpm);
           renderModuleList();
+        }
+      };
+      
+      // Handle escape key to close overlay
+      input.onkeydown = function(e) {
+        if (e.key === 'Escape') {
+          closeTypingOverlay();
         }
       };
     }
     function renderTypingText(reference, userInput) {
       let html = '';
+      let errorCount = 0;
+      
       for (let i = 0; i < reference.length; i++) {
         if (userInput[i] === undefined) {
-          html += `<span>${reference[i]}</span>`;
+          // Not typed yet - show in gray
+          html += `<span class="text-gray-400">${reference[i]}</span>`;
         } else if (userInput[i] === reference[i]) {
+          // Correct character - show in green
           html += `<span class="text-green-400">${reference[i]}</span>`;
         } else {
-          html += `<span class="text-red-400">${reference[i]}</span>`;
+          // Incorrect character - show in red and count error
+          html += `<span class="text-red-400 bg-red-900/30">${reference[i]}</span>`;
+          errorCount++;
         }
       }
+      
+      // Update global error count
+      typingErrors = errorCount;
+      
       document.getElementById('typingTextDisplay').innerHTML = html;
     }
+    
     function closeTypingOverlay() {
       document.getElementById('typingOverlay').classList.add('hidden');
+      document.getElementById('typingInput').value = '';
     }
+    
     function saveTypingResult(moduleIdx, practiceIdx, result) {
       const userName = localStorage.getItem('userName') || 'student';
-      let results = JSON.parse(localStorage.getItem('smx_typing_results_' + userName) || '{}');
+      const results = JSON.parse(localStorage.getItem('smx_typing_results_' + userName) || '{}');
+      
       if (!results[moduleIdx]) results[moduleIdx] = {};
       results[moduleIdx][practiceIdx] = result;
+      
       localStorage.setItem('smx_typing_results_' + userName, JSON.stringify(results));
+      
+      // Also update typing progress
+      updateTypingProgress();
     }
+    
+    function showTypingResults(moduleIdx, practiceIdx, time, accuracy, wpm) {
+      const moduleNames = [
+        'Module 1: Basic Typing',
+        'Module 2: Numbers and Symbols', 
+        'Module 3: Military Terminology',
+        'Module 4: POL Basic Descriptors',
+        'Module 5: POL SITREP Format'
+      ];
+      
+      document.getElementById('resultsModuleTitle').textContent = moduleNames[moduleIdx] || `Module ${moduleIdx + 1}`;
+      document.getElementById('resultsPracticeTitle').textContent = `Practice ${practiceIdx + 1}`;
+      document.getElementById('resultsCompletionTime').textContent = `Completion Time: ${time}s`;
+      document.getElementById('resultsAccuracy').textContent = `Accuracy: ${accuracy}%`;
+      document.getElementById('resultsWPM').textContent = `Words Per Minute: ${wpm}`;
+      
+      // Show star if good performance (>90% accuracy and >30 WPM)
+      if (accuracy >= 90 && wpm >= 30) {
+        document.getElementById('resultsStar').style.display = 'block';
+      } else {
+        document.getElementById('resultsStar').style.display = 'none';
+      }
+      
+      document.getElementById('resultsModal').classList.remove('hidden');
+    }
+    
+    function retryTyping() {
+      document.getElementById('resultsModal').classList.add('hidden');
+      startTypingTest(currentTypingModule, currentTypingPractice);
+    }
+    
+    function updateTypingProgress() {
+      const userName = localStorage.getItem('userName') || 'student';
+      const results = JSON.parse(localStorage.getItem('smx_typing_results_' + userName) || '{}');
+      
+      let totalCompleted = 0;
+      let totalTests = 0;
+      let totalWPM = 0;
+      let testCount = 0;
+      let lastWPM = 0;
+      
+      // Count completed tests and calculate averages
+      for (let moduleIdx = 0; moduleIdx < 5; moduleIdx++) {
+        for (let practiceIdx = 0; practiceIdx < 20; practiceIdx++) {
+          totalTests++;
+          if (results[moduleIdx] && results[moduleIdx][practiceIdx]) {
+            totalCompleted++;
+            const result = results[moduleIdx][practiceIdx];
+            totalWPM += result.wpm || 0;
+            testCount++;
+            lastWPM = result.wpm || 0;
+          }
+        }
+      }
+      
+      // Update progress bar
+      const progressPercent = Math.round((totalCompleted / totalTests) * 100);
+      document.getElementById('typing-progress-bar').style.width = progressPercent + '%';
+      document.getElementById('typing-progress-text').textContent = `${totalCompleted} of ${totalTests} typing tests completed`;
+      
+      // Update WPM stats
+      const avgWPM = testCount > 0 ? Math.round(totalWPM / testCount) : 0;
+      document.getElementById('last-wpm').textContent = lastWPM;
+      document.getElementById('avg-wpm').textContent = avgWPM;
+    }
+    // Refresh module list (useful when returning from edit page)
+    function refreshModuleList() {
+      renderModuleList();
+      updateTypingProgress();
+    }
+    
+    // Listen for storage changes (when edit-typing-tests.html saves changes)
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'smx_typing_tests') {
+        console.log('Typing tests updated, refreshing module list');
+        refreshModuleList();
+      }
+    });
+    
+    // Also refresh when window gains focus (returning from edit page)
+    window.addEventListener('focus', function() {
+      refreshModuleList();
+    });
+    
     // Render modules on load
     document.addEventListener('DOMContentLoaded', renderModuleList);
   </script>
