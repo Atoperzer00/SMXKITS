@@ -524,9 +524,12 @@
         <div class="video-container">
           <div class="live-badge">LIVE</div>
           <video id="video" autoplay muted></video>
-          <video id="webrtcVideo" autoplay playsinline style="display:none;"></video>
+          <video id="webrtcVideo" autoplay playsinline muted style="display:none; width:100%; height:100%; background:#000;"></video>
           <div class="loading-spinner" id="loading"></div>
           <div class="stream-type-indicator" id="streamTypeIndicator">File Stream</div>
+          <div class="webrtc-status" id="webrtcStatus" style="display:none; position:absolute; top:60px; right:20px; background:rgba(139, 92, 246, 0.9); color:white; padding:8px 12px; border-radius:6px; font-size:12px; font-weight:600;">
+            🔴 LIVE WebRTC
+          </div>
         </div>
         
         <div class="video-info">
@@ -668,6 +671,7 @@
             <button class="welcome-close" onclick="goToDashboard()">Go to Dashboard</button>
             <button class="welcome-close" onclick="retryConnection()" style="background: #22c55e;">Retry</button>
             <button class="welcome-close" onclick="openDebugTool()" style="background: #ff9800;">Debug Tool</button>
+            <button class="welcome-close" onclick="testWebRTCConnection()" style="background: #8b5cf6;">Test WebRTC</button>
           </div>
         </div>
       `;
@@ -693,6 +697,29 @@
     
     function openDebugTool() {
       window.open('/debug-stream.html', '_blank');
+    }
+    
+    // Test WebRTC connection manually
+    function testWebRTCConnection() {
+      console.log('🧪 Testing WebRTC connection...');
+      console.log('📊 Current state:');
+      console.log('  - Class ID:', classId);
+      console.log('  - WebRTC Socket:', webrtcSocket ? 'Connected' : 'Not connected');
+      console.log('  - Peer Connection:', peerConnection ? 'Exists' : 'None');
+      console.log('  - WebRTC Video Element:', webrtcVideo);
+      console.log('  - Is WebRTC Mode:', isWebRTCMode);
+      
+      // Force switch to WebRTC mode for testing
+      switchToWebRTCMode();
+      
+      // Test video element
+      if (webrtcVideo) {
+        console.log('📺 WebRTC Video Element Properties:');
+        console.log('  - Display:', webrtcVideo.style.display);
+        console.log('  - Source Object:', webrtcVideo.srcObject);
+        console.log('  - Autoplay:', webrtcVideo.autoplay);
+        console.log('  - Muted:', webrtcVideo.muted);
+      }
     }
     
     // Test streaming connection end-to-end
@@ -1296,8 +1323,15 @@
       
       webrtcSocket.on('instructor-started-webrtc', (data) => {
         console.log('🔴 Instructor started WebRTC stream:', data.mediaType);
+        console.log('🔄 Current WebRTC video element:', webrtcVideo);
+        console.log('🔄 Current peer connection:', peerConnection);
+        
         switchToWebRTCMode();
         updateStreamTypeIndicator(`Live ${data.mediaType}`);
+        
+        // Show loading while waiting for WebRTC connection
+        loading.style.display = 'block';
+        loading.textContent = 'Connecting to live stream...';
       });
       
       webrtcSocket.on('instructor-stopped-webrtc', (data) => {
@@ -1335,9 +1369,29 @@
         
         // Handle incoming stream
         peerConnection.ontrack = (event) => {
-          console.log('📺 Received WebRTC stream');
+          console.log('📺 Received WebRTC stream:', event.streams[0]);
+          console.log('📺 Stream tracks:', event.streams[0].getTracks());
+          
           webrtcVideo.srcObject = event.streams[0];
-          loading.style.display = 'none';
+          
+          // Ensure we're in WebRTC mode
+          switchToWebRTCMode();
+          
+          // Try to play the video
+          webrtcVideo.play().then(() => {
+            console.log('✅ WebRTC video playing');
+            loading.style.display = 'none';
+          }).catch(error => {
+            console.error('❌ WebRTC video play failed:', error);
+            // Try to play with user interaction
+            webrtcVideo.muted = true;
+            webrtcVideo.play().then(() => {
+              console.log('✅ WebRTC video playing (muted)');
+              loading.style.display = 'none';
+            }).catch(e => {
+              console.error('❌ WebRTC video play failed even muted:', e);
+            });
+          });
         };
         
         // Handle ICE candidates
@@ -1385,14 +1439,27 @@
       console.log('🔄 Switching to WebRTC mode');
       isWebRTCMode = true;
       
+      // Hide regular video and show WebRTC video
       video.style.display = 'none';
       webrtcVideo.style.display = 'block';
+      
+      // Configure WebRTC video element
+      webrtcVideo.autoplay = true;
+      webrtcVideo.playsInline = true;
+      webrtcVideo.controls = true; // Add controls for debugging
       
       // Hide file-based controls
       document.getElementById('controls').style.display = 'none';
       
       updateStreamTypeIndicator('Live WebRTC Stream');
-      loading.style.display = 'block';
+      
+      // Show WebRTC status indicator
+      const webrtcStatus = document.getElementById('webrtcStatus');
+      if (webrtcStatus) {
+        webrtcStatus.style.display = 'block';
+      }
+      
+      console.log('✅ Switched to WebRTC mode - video element visible:', webrtcVideo.style.display);
     }
     
     function switchToFileMode() {
@@ -1406,6 +1473,12 @@
       document.getElementById('controls').style.display = 'flex';
       
       updateStreamTypeIndicator('File Stream');
+      
+      // Hide WebRTC status indicator
+      const webrtcStatus = document.getElementById('webrtcStatus');
+      if (webrtcStatus) {
+        webrtcStatus.style.display = 'none';
+      }
       
       if (webrtcVideo.srcObject) {
         webrtcVideo.srcObject = null;
