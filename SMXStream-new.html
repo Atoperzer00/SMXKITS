@@ -27,6 +27,7 @@
     .navbar {
       background: var(--track);
       padding: 1rem 0;
+      flex-shrink: 0;
     }
     
     .container {
@@ -114,7 +115,8 @@
     
     .main-content {
       flex: 1;
-      padding: 0;
+      display: flex;
+      flex-direction: column;
     }
     
     .player-wrapper {
@@ -134,12 +136,25 @@
     }
     
     .video-container {
-      width: 100%;
       position: relative;
       flex: 1;
-      background: linear-gradient(135deg, rgba(0, 0, 0, 0.9), rgba(20, 20, 20, 0.8));
-      border-radius: 0;
-      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    #timeline {
+      flex-shrink: 0;
+      width: 100%;
+      height: 120px;
+      background: rgba(0, 0, 0, 0.4);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     /* Video Overlay Controls */
@@ -149,7 +164,6 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, 0.3);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -157,7 +171,6 @@
       opacity: 0;
       transition: opacity 0.3s ease;
       pointer-events: none;
-      backdrop-filter: blur(5px);
     }
 
     .video-container:hover .video-controls-overlay {
@@ -178,7 +191,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      backdrop-filter: blur(10px);
     }
 
     .video-control-btn:hover {
@@ -247,17 +259,6 @@
 
     .video-container video {
       outline: none;
-    }
-    
-    video {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      border-radius: 0;
-      box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.3);
-      object-fit: cover;
     }
     
     .video-info {
@@ -1876,6 +1877,7 @@
               // New stream started
               loading.style.display = 'none';
               
+
               if (data.source === 'upload' && data.streamUrl) {
                 // Switch to uploaded video
                 if (hlsInstance) {
@@ -2462,6 +2464,45 @@
         });
       }
     }, 1000);
+
+    const videoElement = document.getElementById('video');
+    const currentTimeDisplay = document.getElementById('currentTime');
+    const totalTimeDisplay = document.getElementById('totalTime');
+
+    // Play/Pause functionality
+    function togglePlayPause() {
+      if (videoElement.paused) {
+        videoElement.play();
+      } else {
+        videoElement.pause();
+      }
+    }
+
+    // Update time display
+    videoElement.addEventListener('timeupdate', () => {
+      const currentMinutes = Math.floor(videoElement.currentTime / 60);
+      const currentSeconds = Math.floor(videoElement.currentTime % 60);
+      const totalMinutes = Math.floor(videoElement.duration / 60);
+      const totalSeconds = Math.floor(videoElement.duration % 60);
+
+      currentTimeDisplay.textContent = `${currentMinutes}:${currentSeconds.toString().padStart(2, '0')}`;
+      totalTimeDisplay.textContent = `${totalMinutes}:${totalSeconds.toString().padStart(2, '0')}`;
+    });
+
+    // Rewind functionality
+    function rewindVideo() {
+      videoElement.currentTime -= 10;
+    }
+
+    // Fast forward functionality
+    function forwardVideo() {
+      videoElement.currentTime += 10;
+    }
+
+    // Jump to live functionality
+    function jumpToLive() {
+      videoElement.currentTime = videoElement.duration;
+    }
   </script>
 </body>
 </html>

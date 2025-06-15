@@ -59,6 +59,9 @@
     <main class="flex-1 p-8 pr-8">
       <h1 class="text-3xl font-extrabold mb-6 text-white tracking-tight">Edit Typing Tests</h1>
       <p class="text-blue-300 mb-6">Customize typing test content for all trainees. Changes will be immediately available in the typing trainer.</p>
+      <div class="mb-6">
+        <button onclick="addModule()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold transition">Add New Module</button>
+      </div>
       <div id="modules-accordion" class="space-y-5"></div>
     </main>
   </div>
@@ -80,6 +83,11 @@
     }
     function saveTypingTests(tests) {
       localStorage.setItem('smx_typing_tests', JSON.stringify(tests));
+      // Trigger storage event for other tabs/windows
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'smx_typing_tests',
+        newValue: JSON.stringify(tests)
+      }));
     }
     // Render accordion
     function renderEditor() {
@@ -101,15 +109,31 @@
         if (mIdx === 3) moduleTitle = "Module 4: POL Basic Descriptors";
         if (mIdx === 4) moduleTitle = "Module 5: POL SITREP Format";
         
-        head.innerHTML = `<span>${moduleTitle}</span><svg class="w-6 h-6 ml-3 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>`;
+        head.innerHTML = `
+          <span>${moduleTitle}</span>
+          <div class="flex items-center gap-2">
+            <button onclick="deleteModule(${mIdx})" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm font-medium transition">Delete Module</button>
+            <svg class="w-6 h-6 ml-3 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+        `;
         // Practices container
         const pCont = document.createElement('div');
         pCont.className = "pl-8 pr-3 pb-6 pt-2 space-y-6 hidden";
+        
+        // Add practice button
+        const addPracticeBtn = document.createElement('button');
+        addPracticeBtn.className = "bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition mb-4";
+        addPracticeBtn.textContent = "Add New Practice";
+        addPracticeBtn.onclick = () => addPractice(mIdx);
+        pCont.appendChild(addPracticeBtn);
         practices.forEach((txt, pIdx) => {
           const prWrap = document.createElement('div');
           prWrap.className = "mb-2";
           prWrap.innerHTML = `
-            <div class="text-lg font-semibold text-blue-300 mb-1">Practice ${pIdx+1}</div>
+            <div class="flex justify-between items-center mb-1">
+              <div class="text-lg font-semibold text-blue-300">Practice ${pIdx+1}</div>
+              <button onclick="deletePractice(${mIdx}, ${pIdx})" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-sm transition">Delete</button>
+            </div>
             <textarea class="practice-box w-full rounded-xl p-4 text-base text-zinc-200 bg-zinc-800/70 border-2 border-zinc-700 focus:border-blue-500 transition outline-none resize-vertical"
               data-module="${mIdx}" data-practice="${pIdx}" rows="3">${txt || ""}</textarea>
           `;
