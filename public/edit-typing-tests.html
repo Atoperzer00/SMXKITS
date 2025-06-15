@@ -76,10 +76,48 @@
     function getTypingTests() {
       let d = localStorage.getItem('smx_typing_tests');
       if (d) return JSON.parse(d);
-      // Default dummy text
-      return Array.from({length:NUM_MODULES}, (_,m) =>
-        Array.from({length:PRACTICES_PER_MODULE}, (_,p) => `Module ${m+1} Practice ${p+1}: Enter typing text here.`)
-      );
+      
+      // Create default structure with sample content (same as keyboard-training.html)
+      return Array.from({length: NUM_MODULES}, (_, m) => {
+        const moduleTexts = [];
+        for (let p = 0; p < PRACTICES_PER_MODULE; p++) {
+          // Add some sample content for the first few practices of each module
+          if (p < 3) {
+            switch (m) {
+              case 0: // Basic Typing
+                moduleTexts[p] = p === 0 ? 'The quick brown fox jumps over the lazy dog. This sentence contains every letter of the alphabet.' :
+                                p === 1 ? 'Practice makes perfect. Keep typing to improve your speed and accuracy.' :
+                                'Touch typing is a skill that will serve you well throughout your career.';
+                break;
+              case 1: // Numbers and Symbols
+                moduleTexts[p] = p === 0 ? '1234567890 !@#$%^&*() The numbers and symbols are important for data entry.' :
+                                p === 1 ? 'Email addresses like user@example.com require symbol typing skills.' :
+                                'Special characters: ~`!@#$%^&*()_+-={}[]|\\:";\'<>?,./';
+                break;
+              case 2: // Military Terminology
+                moduleTexts[p] = p === 0 ? 'Military ranks: Private, Corporal, Sergeant, Lieutenant, Captain, Major, Colonel, General.' :
+                                p === 1 ? 'Military time: 0600 hours, 1200 hours, 1800 hours, 2400 hours.' :
+                                'NATO phonetic alphabet: Alpha, Bravo, Charlie, Delta, Echo, Foxtrot, Golf, Hotel.';
+                break;
+              case 3: // POL Basic Descriptors
+                moduleTexts[p] = p === 0 ? 'One adult male in dark traditional wear. Two adult females in light clothing.' :
+                                p === 1 ? 'Personnel count: Three adult males, one adult female, two children observed.' :
+                                'Description: Individual wearing dark jacket, light pants, carrying backpack.';
+                break;
+              case 4: // POL SITREP Format
+                moduleTexts[p] = p === 0 ? 'SITREP: At 0630Z, one adult male departed E gate on red motorcycle, rode S out of FOV 0635Z. SLANT 1/0/0' :
+                                p === 1 ? 'SITREP: At 0745Z, white sedan entered compound through W gate, parked E side. SLANT 1/0/0' :
+                                'SITREP: At 0900Z, two adult males on foot entered compound, proceeded to building A. SLANT 2/0/0';
+                break;
+              default:
+                moduleTexts[p] = `Module ${m+1} Practice ${p+1}: Sample typing text for practice.`;
+            }
+          } else {
+            moduleTexts[p] = `Module ${m+1} Practice ${p+1}: Enter typing text here.`;
+          }
+        }
+        return moduleTexts;
+      });
     }
     function saveTypingTests(tests) {
       localStorage.setItem('smx_typing_tests', JSON.stringify(tests));
@@ -101,13 +139,15 @@
         const head = document.createElement('button');
         head.className = "w-full text-left flex items-center justify-between p-5 text-xl font-bold rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 hover:bg-blue-900/30 transition";
         
-        // Module titles based on index
-        let moduleTitle = "Module " + (mIdx+1);
-        if (mIdx === 0) moduleTitle = "Module 1: Basic Typing";
-        if (mIdx === 1) moduleTitle = "Module 2: Numbers and Symbols";
-        if (mIdx === 2) moduleTitle = "Module 3: Military Terminology";
-        if (mIdx === 3) moduleTitle = "Module 4: POL Basic Descriptors";
-        if (mIdx === 4) moduleTitle = "Module 5: POL SITREP Format";
+        // Module titles based on index - keep consistent with keyboard-training.html
+        const moduleNames = [
+          'Module 1: Basic Typing',
+          'Module 2: Numbers and Symbols',
+          'Module 3: Military Terminology', 
+          'Module 4: POL Basic Descriptors',
+          'Module 5: POL SITREP Format'
+        ];
+        let moduleTitle = moduleNames[mIdx] || `Module ${mIdx + 1}`;
         
         head.innerHTML = `
           <span>${moduleTitle}</span>
@@ -199,6 +239,48 @@
       // Hide bubble after save
       setTimeout(()=>document.getElementById('saveBubble').classList.add('hidden'), 600);
     });
+    
+    // Add new module
+    function addModule() {
+      let tests = getTypingTests();
+      const newModule = Array.from({length: PRACTICES_PER_MODULE}, (_, p) => `Module ${tests.length + 1} Practice ${p + 1}: Enter typing text here.`);
+      tests.push(newModule);
+      saveTypingTests(tests);
+      renderEditor();
+    }
+    
+    // Delete module
+    function deleteModule(moduleIdx) {
+      if (confirm('Are you sure you want to delete this entire module? This action cannot be undone.')) {
+        let tests = getTypingTests();
+        tests.splice(moduleIdx, 1);
+        saveTypingTests(tests);
+        renderEditor();
+      }
+    }
+    
+    // Add new practice to a module
+    function addPractice(moduleIdx) {
+      let tests = getTypingTests();
+      if (tests[moduleIdx]) {
+        const practiceNum = tests[moduleIdx].length + 1;
+        tests[moduleIdx].push(`Module ${moduleIdx + 1} Practice ${practiceNum}: Enter typing text here.`);
+        saveTypingTests(tests);
+        renderEditor();
+      }
+    }
+    
+    // Delete practice from a module
+    function deletePractice(moduleIdx, practiceIdx) {
+      if (confirm('Are you sure you want to delete this practice? This action cannot be undone.')) {
+        let tests = getTypingTests();
+        if (tests[moduleIdx] && tests[moduleIdx][practiceIdx] !== undefined) {
+          tests[moduleIdx].splice(practiceIdx, 1);
+          saveTypingTests(tests);
+          renderEditor();
+        }
+      }
+    }
     
     // Initial render
     renderEditor();

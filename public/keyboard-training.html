@@ -223,6 +223,7 @@
     function renderModuleList() {
       // Load typing tests from localStorage (same as edit-typing-tests.html)
       let typingTests = JSON.parse(localStorage.getItem('smx_typing_tests') || '[]');
+      console.log('Rendering module list with', typingTests.length, 'modules');
       
       // If no custom tests exist, create default structure with sample content
       if (typingTests.length === 0) {
@@ -295,42 +296,62 @@
         modDiv.className = 'flex flex-col gap-2 w-full mb-6';
         
         module.forEach((practice, pIdx) => {
-          // Skip empty practices
-          if (!practice || practice.trim() === '' || practice.includes('Enter typing text here')) {
-            return;
-          }
-          
           const row = document.createElement('div');
-          row.className = 'flex justify-between items-center bg-zinc-800/70 rounded-xl px-4 py-3 hover:bg-zinc-700/70 transition-colors';
           
-          // Left: Practice title and preview
-          const left = document.createElement('button');
-          left.className = 'text-left w-full font-semibold text-white hover:text-blue-300 transition-colors';
-          const previewText = practice.length > 50 ? practice.substring(0, 50) + '...' : practice;
-          left.innerHTML = `
-            <div class="font-semibold">Practice ${pIdx + 1}</div>
-            <div class="text-sm text-zinc-400 font-normal">${previewText}</div>
-          `;
-          left.onclick = () => startTypingTest(mIdx, pIdx);
+          // Check if practice is empty or placeholder
+          const isEmpty = !practice || practice.trim() === '' || practice.includes('Enter typing text here');
           
-          // Right: Results summary
-          const right = document.createElement('div');
-          right.className = 'text-right min-w-[120px]';
-          const res = results?.[mIdx]?.[pIdx];
-          if (res) {
-            const wpmColor = res.wpm >= 40 ? 'text-green-400' : res.wpm >= 25 ? 'text-yellow-400' : 'text-blue-400';
-            const accColor = res.accuracy >= 95 ? 'text-green-400' : res.accuracy >= 85 ? 'text-yellow-400' : 'text-red-400';
-            right.innerHTML = `
-              <div class="${wpmColor} font-bold">WPM: ${res.wpm}</div>
-              <div class="${accColor}">Acc: ${res.accuracy}%</div>
-              <div class="text-zinc-400 text-xs">${res.time}s</div>
+          if (isEmpty) {
+            // Show disabled/placeholder practice
+            row.className = 'flex justify-between items-center bg-zinc-800/30 rounded-xl px-4 py-3 opacity-60';
+            
+            const left = document.createElement('div');
+            left.className = 'text-left w-full text-zinc-500';
+            left.innerHTML = `
+              <div class="font-semibold">Practice ${pIdx + 1}</div>
+              <div class="text-sm text-zinc-600 font-normal italic">No content - edit in admin panel</div>
             `;
+            
+            const right = document.createElement('div');
+            right.className = 'text-right min-w-[120px]';
+            right.innerHTML = `<div class="text-zinc-600 text-xs">Not available</div>`;
+            
+            row.appendChild(left);
+            row.appendChild(right);
           } else {
-            right.innerHTML = `<div class="text-zinc-500 text-xs">Not completed</div>`;
+            // Show active practice
+            row.className = 'flex justify-between items-center bg-zinc-800/70 rounded-xl px-4 py-3 hover:bg-zinc-700/70 transition-colors';
+            
+            // Left: Practice title and preview
+            const left = document.createElement('button');
+            left.className = 'text-left w-full font-semibold text-white hover:text-blue-300 transition-colors';
+            const previewText = practice.length > 50 ? practice.substring(0, 50) + '...' : practice;
+            left.innerHTML = `
+              <div class="font-semibold">Practice ${pIdx + 1}</div>
+              <div class="text-sm text-zinc-400 font-normal">${previewText}</div>
+            `;
+            left.onclick = () => startTypingTest(mIdx, pIdx);
+            
+            // Right: Results summary
+            const right = document.createElement('div');
+            right.className = 'text-right min-w-[120px]';
+            const res = results?.[mIdx]?.[pIdx];
+            if (res) {
+              const wpmColor = res.wpm >= 40 ? 'text-green-400' : res.wpm >= 25 ? 'text-yellow-400' : 'text-blue-400';
+              const accColor = res.accuracy >= 95 ? 'text-green-400' : res.accuracy >= 85 ? 'text-yellow-400' : 'text-red-400';
+              right.innerHTML = `
+                <div class="${wpmColor} font-bold">WPM: ${res.wpm}</div>
+                <div class="${accColor}">Acc: ${res.accuracy}%</div>
+                <div class="text-zinc-400 text-xs">${res.time}s</div>
+              `;
+            } else {
+              right.innerHTML = `<div class="text-zinc-500 text-xs">Not completed</div>`;
+            }
+            
+            row.appendChild(left);
+            row.appendChild(right);
           }
           
-          row.appendChild(left);
-          row.appendChild(right);
           modDiv.appendChild(row);
         });
         
@@ -351,6 +372,12 @@
       }
       
       const reference = typingTests[moduleIdx][practiceIdx];
+      
+      // Check if practice is empty or placeholder
+      if (!reference || reference.trim() === '' || reference.includes('Enter typing text here')) {
+        alert('This practice has no content yet. Please ask an administrator to add content in the Edit Typing Tests page.');
+        return;
+      }
       currentTypingModule = moduleIdx;
       currentTypingPractice = practiceIdx;
       
@@ -474,6 +501,7 @@
     function updateTypingProgress() {
       const userName = localStorage.getItem('userName') || 'student';
       const results = JSON.parse(localStorage.getItem('smx_typing_results_' + userName) || '{}');
+      const typingTests = JSON.parse(localStorage.getItem('smx_typing_tests') || '[]');
       
       let totalCompleted = 0;
       let totalTests = 0;
@@ -481,19 +509,22 @@
       let testCount = 0;
       let lastWPM = 0;
       
-      // Count completed tests and calculate averages
-      for (let moduleIdx = 0; moduleIdx < 5; moduleIdx++) {
-        for (let practiceIdx = 0; practiceIdx < 20; practiceIdx++) {
-          totalTests++;
-          if (results[moduleIdx] && results[moduleIdx][practiceIdx]) {
-            totalCompleted++;
-            const result = results[moduleIdx][practiceIdx];
-            totalWPM += result.wpm || 0;
-            testCount++;
-            lastWPM = result.wpm || 0;
+      // Count only practices with actual content
+      typingTests.forEach((module, moduleIdx) => {
+        module.forEach((practice, practiceIdx) => {
+          // Only count practices that have actual content
+          if (practice && practice.trim() !== '' && !practice.includes('Enter typing text here')) {
+            totalTests++;
+            if (results[moduleIdx] && results[moduleIdx][practiceIdx]) {
+              totalCompleted++;
+              const result = results[moduleIdx][practiceIdx];
+              totalWPM += result.wpm || 0;
+              testCount++;
+              lastWPM = result.wpm || 0;
+            }
           }
-        }
-      }
+        });
+      });
       
       // Update progress bar
       const progressPercent = Math.round((totalCompleted / totalTests) * 100);
@@ -515,6 +546,7 @@
     window.addEventListener('storage', function(e) {
       if (e.key === 'smx_typing_tests') {
         console.log('Typing tests updated, refreshing module list');
+        console.log('New data:', e.newValue);
         refreshModuleList();
       }
     });
@@ -528,29 +560,6 @@
     document.addEventListener('DOMContentLoaded', renderModuleList);
   </script>
 
-  <script type="module">
-    import TypingEngine from "../typing-engine.js";
 
-    document.addEventListener("DOMContentLoaded", () => {
-      const typingEngine = new TypingEngine(1, 1); // Example module and practice
-
-      document.getElementById("launch-button").addEventListener("click", async () => {
-        await typingEngine.loadText();
-        typingEngine.startTest();
-
-        const inputField = document.getElementById("typing-input");
-        inputField.addEventListener("input", (event) => {
-          typingEngine.updateInput(event.target.value);
-          document.getElementById("wpm-display").textContent = typingEngine.wpm;
-          document.getElementById("accuracy-display").textContent = typingEngine.accuracy;
-        });
-
-        document.getElementById("submit-button").addEventListener("click", async () => {
-          await typingEngine.submitProgress();
-          alert("Progress submitted!");
-        });
-      });
-    });
-  </script>
 </body>
 </html>

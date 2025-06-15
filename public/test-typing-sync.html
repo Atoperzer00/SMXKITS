@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Typing Sync</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white p-8">
+  <h1 class="text-2xl font-bold mb-4">Typing Tests Synchronization Test</h1>
+  
+  <div class="mb-6">
+    <button onclick="clearData()" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded mr-2">Clear All Data</button>
+    <button onclick="loadTestData()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded mr-2">Load Test Data</button>
+    <button onclick="showData()" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded">Show Current Data</button>
+  </div>
+  
+  <div class="mb-6">
+    <h2 class="text-xl font-bold mb-2">Quick Links:</h2>
+    <a href="edit-typing-tests.html" target="_blank" class="bg-yellow-600 hover:bg-yellow-700 px-4 py-2 rounded mr-2 inline-block">Edit Typing Tests</a>
+    <a href="keyboard-training.html" target="_blank" class="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded inline-block">Keyboard Training</a>
+  </div>
+  
+  <div id="output" class="bg-gray-800 p-4 rounded font-mono text-sm whitespace-pre-wrap"></div>
+
+  <script>
+    // Set up fake authentication for testing
+    localStorage.setItem('token', 'test-token');
+    localStorage.setItem('role', 'admin');
+    localStorage.setItem('userName', 'testuser');
+    
+    function clearData() {
+      localStorage.removeItem('smx_typing_tests');
+      localStorage.removeItem('smx_typing_results_testuser');
+      document.getElementById('output').textContent = 'All typing data cleared.';
+    }
+    
+    function loadTestData() {
+      const testData = [
+        [
+          'The quick brown fox jumps over the lazy dog.',
+          'Practice makes perfect with consistent effort.',
+          'Touch typing improves productivity significantly.',
+          'Module 1 Practice 4: Enter typing text here.',
+          'Module 1 Practice 5: Enter typing text here.'
+        ],
+        [
+          '1234567890 !@#$%^&*() Numbers and symbols practice.',
+          'Email: user@example.com Phone: (555) 123-4567',
+          'Module 2 Practice 3: Enter typing text here.',
+          'Module 2 Practice 4: Enter typing text here.',
+          'Module 2 Practice 5: Enter typing text here.'
+        ]
+      ];
+      
+      // Extend to 5 modules with 20 practices each
+      while (testData.length < 5) {
+        const moduleNum = testData.length + 1;
+        const module = [];
+        for (let i = 0; i < 20; i++) {
+          if (i < 2) {
+            module.push(`Module ${moduleNum} Practice ${i + 1}: Sample content for testing.`);
+          } else {
+            module.push(`Module ${moduleNum} Practice ${i + 1}: Enter typing text here.`);
+          }
+        }
+        testData.push(module);
+      }
+      
+      // Ensure each module has exactly 20 practices
+      testData.forEach((module, idx) => {
+        while (module.length < 20) {
+          module.push(`Module ${idx + 1} Practice ${module.length + 1}: Enter typing text here.`);
+        }
+      });
+      
+      localStorage.setItem('smx_typing_tests', JSON.stringify(testData));
+      document.getElementById('output').textContent = 'Test data loaded successfully!\n\nData structure:\n' + JSON.stringify(testData, null, 2);
+    }
+    
+    function showData() {
+      const data = localStorage.getItem('smx_typing_tests');
+      const results = localStorage.getItem('smx_typing_results_testuser');
+      
+      let output = 'Current localStorage data:\n\n';
+      output += '=== TYPING TESTS ===\n';
+      if (data) {
+        const parsed = JSON.parse(data);
+        output += `Found ${parsed.length} modules\n`;
+        parsed.forEach((module, idx) => {
+          const nonEmptyPractices = module.filter(p => p && p.trim() !== '' && !p.includes('Enter typing text here')).length;
+          output += `Module ${idx + 1}: ${module.length} total practices, ${nonEmptyPractices} with content\n`;
+        });
+        output += '\nFull data:\n' + JSON.stringify(parsed, null, 2);
+      } else {
+        output += 'No typing tests data found.';
+      }
+      
+      output += '\n\n=== TYPING RESULTS ===\n';
+      if (results) {
+        output += JSON.stringify(JSON.parse(results), null, 2);
+      } else {
+        output += 'No results data found.';
+      }
+      
+      document.getElementById('output').textContent = output;
+    }
+    
+    // Show data on load
+    showData();
+  </script>
+</body>
+</html>

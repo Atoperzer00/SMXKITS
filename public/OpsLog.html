@@ -1762,7 +1762,7 @@ if (followForm && followForm.style.display !== 'none') {
         button.textContent = text;
         button.addEventListener('click', action);
         return button;
-      }
+           }
       
       // Check user role and callout status for restrictions
       let userRole = localStorage.getItem('role') || 'student';
@@ -2770,10 +2770,9 @@ createFollowBubble.addEventListener('drop', (e) => {
       // Handle Enter key and blur to save
       function saveFollowId() {
         const newId = followIdEdit.value.trim().toUpperCase();
-        if (newId && newId.length <= 10) { // Validate length
+        if (newId && newId.length <= 10) // Validate length
           followIdHidden.value = newId;
           followIdDisplay.textContent = newId;
-        }
         
         // Hide input, show display
         followIdEdit.style.display = 'none';
@@ -2994,6 +2993,38 @@ createFollowBubble.addEventListener('drop', (e) => {
       }
     } catch (error) {
       console.error("Error handling drop:", error);
+    }
+  }
+
+  async function updateQC(calloutId, qcClass, skipMenuClose = false) {
+    try {
+      console.log(`Updating QC status for callout ${calloutId} to ${qcClass}`);
+
+      // Simulate backend update
+      const response = await fetch(`/api/callouts/${calloutId}/qc`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ qc: qcClass })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update QC status');
+      }
+
+      // Update UI
+      const bubble = document.querySelector(`[data-id='${calloutId}']`);
+      if (bubble) {
+        bubble.classList.remove('qc-orange', 'qc-yellow', 'qc-green', 'qc-red');
+        bubble.classList.add(qcClass);
+      }
+
+      if (!skipMenuClose) {
+        closeCalloutMenu();
+      }
+
+      console.log('QC status updated successfully');
+    } catch (error) {
+      console.error('Error updating QC status:', error);
     }
   }
 </script>

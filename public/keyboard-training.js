@@ -1,4 +1,4 @@
-I wa// Keyboard Training page JavaScript
+// Keyboard Training page JavaScript
 
 // This script helps integrate the original SMXKITS typing functionality
 // with the new standalone keyboard-training.html page

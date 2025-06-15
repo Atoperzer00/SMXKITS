@@ -4,10 +4,282 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>SMX KITS - Dashboard</title>
-  <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="keyboard-training.css" />
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      --dark-gradient: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 100%);
+      --card-gradient: linear-gradient(145deg, #16213e 0%, #0f1419 100%);
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --text-primary: #ffffff;
+      --text-secondary: #b8c5d6;
+      --text-accent: #64b5f6;
+      --shadow-primary: 0 20px 40px rgba(0, 0, 0, 0.3);
+      --shadow-hover: 0 30px 60px rgba(0, 0, 0, 0.4);
+      --border-radius: 20px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--dark-gradient);
+      color: var(--text-primary);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* Animated background particles */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.1) 0%, transparent 50%);
+      z-index: -1;
+      animation: float 20s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      33% { transform: translateY(-20px) rotate(1deg); }
+      66% { transform: translateY(10px) rotate(-1deg); }
+    }
+
+    .admin-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar Redesign */
+    .admin-sidebar {
+      width: 280px;
+      background: rgba(15, 20, 25, 0.95);
+      backdrop-filter: blur(20px);
+      border-right: 1px solid var(--glass-border);
+      display: flex;
+      flex-direction: column;
+      padding: 2rem 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .admin-sidebar::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, rgba(102, 126, 234, 0.1) 0%, transparent 100%);
+      z-index: -1;
+    }
+
+    .admin-logo {
+      width: 200px;
+      margin: 0 auto 3rem;
+      filter: drop-shadow(0 10px 30px rgba(102, 126, 234, 0.3));
+      transition: var(--transition);
+    }
+
+    .admin-logo:hover {
+      transform: scale(1.05);
+      filter: drop-shadow(0 15px 40px rgba(102, 126, 234, 0.5));
+    }
+
+    .admin-nav {
+      list-style: none;
+      padding: 0 1rem;
+    }
+
+    .admin-nav li {
+      margin-bottom: 0.5rem;
+      padding: 1rem 1.5rem;
+      border-radius: 15px;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .admin-nav li::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: var(--primary-gradient);
+      transition: var(--transition);
+      z-index: -1;
+    }
+
+    .admin-nav li:hover::before,
+    .admin-nav li.active::before {
+      left: 0;
+    }
+
+    .admin-nav li:hover,
+    .admin-nav li.active {
+      color: white;
+      transform: translateX(5px);
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    }
+
+    /* Main Content Area */
+    .admin-content {
+      flex: 1;
+      padding: 2rem;
+      background: transparent;
+      overflow-y: auto;
+    }
+
+    /* Header Section */
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 3rem;
+      padding: 2rem;
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border-radius: var(--border-radius);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+    }
+
+    .dashboard-title {
+      font-size: 3rem;
+      font-weight: 800;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin: 0;
+      letter-spacing: -0.02em;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.5rem;
+      background: var(--glass-bg);
+      border-radius: 50px;
+      border: 1px solid var(--glass-border);
+    }
+
+    .user-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: var(--accent-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+
+    .section-title {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      color: var(--text-accent);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .section-title::before {
+      content: '';
+      width: 4px;
+      height: 40px;
+      background: var(--accent-gradient);
+      border-radius: 2px;
+    }
+
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .tool-card {
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tool-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--primary-gradient);
+      opacity: 0;
+      transition: var(--transition);
+    }
+
+    .tool-card:hover::before {
+      opacity: 0.1;
+    }
+
+    .tool-card:hover {
+      transform: translateY(-10px) scale(1.02);
+      box-shadow: var(--shadow-hover);
+      border-color: rgba(102, 126, 234, 0.5);
+    }
+
+    .tool-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .tool-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+
+    .tool-description {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
     /* Instructor Bubbles CSS */
     #instructor-list {
       display: flex;
@@ -127,636 +399,223 @@
     body {
       overflow-y: auto;
     }
+    .fade-in {
+      animation: fadeInUp 0.6s ease forwards;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .stagger-1 { animation-delay: 0.1s; }
+    .stagger-2 { animation-delay: 0.2s; }
+    .stagger-3 { animation-delay: 0.3s; }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--accent-gradient);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--primary-gradient);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .admin-layout {
+        flex-direction: column;
+      }
+      
+      .admin-sidebar {
+        width: 100%;
+        height: auto;
+      }
+      
+      .admin-content {
+        padding: 1rem;
+      }
+      
+      .dashboard-title {
+        font-size: 2rem;
+      }
+      
+      .dashboard-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+      }
+      
+      .tools-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
-<body class="bg-[#0f172a] text-white">
-  <!-- Authentication Check - This runs BEFORE any content loads -->
+<body>
+  <!-- Authentication Check -->
   <script>
-    // Immediate authentication check
+    // Check if user is authenticated
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
     
     if (!token || !role) {
-      // No authentication found, redirect immediately
+      // No authentication found, redirect to login
       window.location.replace('/login.html');
-      // Stop execution to prevent content from loading
-      throw new Error('Authentication required');
     }
     
     // We are authenticated, continue loading dashboard
     console.log('✅ Authentication verified - loading student dashboard');
   </script>
 
-  <!-- Scrollable FMV overlay (hidden by default) -->
-  <div id="fmvOverlay" class="fmv-overlay">
-    <button id="closeFmvOverlay" class="close-overlay-btn">×</button>
-    <div class="fmv-window">
-      <div class="image-window">
-        <div class="scroll-container" id="scrollArea">
-          <img src="FMV_SAMPLE.jpg" alt="FMV Sample" class="scroll-image" />
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <img src="SMXKITS.png" alt="SMXKITS Logo" class="admin-logo" />
+      <ul class="admin-nav">
+        <li class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</li>
+        <li onclick="window.location.href='mission-links.html'"><i class="fas fa-rocket"></i> Live PED Exercise</li>
+        <li onclick="window.location.href='keyboard-training.html'"><i class="fas fa-keyboard"></i> Keyboard Training</li>
+        <li onclick="window.location.href='Screener Training.html'"><i class="fas fa-user-shield"></i> Screener Training</li>
+        <li onclick="window.location.href='IA Training.html'"><i class="fas fa-satellite-dish"></i> IA Training</li>
+        <li onclick="goToOpsLog()"><i class="fas fa-clipboard-list"></i> Grading</li>
+        <li><i class="fas fa-calendar-alt"></i> Schedule</li>
+        <li><i class="fas fa-comments"></i> Feedback</li>
+        <li onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</li>
+      </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-content">
+      <!-- Header Section -->
+      <header class="dashboard-header fade-in">
+        <div>
+          <h1 class="dashboard-title">Student Dashboard</h1>
+          <p style="color: var(--text-secondary); font-size: 1.1rem; margin-top: 0.5rem;">
+            Welcome back! Access live training, modules, progress, and instructor info here.
+          </p>
         </div>
-      </div>
-      <div class="hud-overlay">
-        <div class="hud-top">
-          <div class="hud-item">
-            <span class="hud-label">MISSION:</span>
-            <span class="hud-value" id="mission">OVERWATCH</span>
+        <div class="user-info">
+          <div class="user-avatar">
+            <i class="fas fa-user"></i>
           </div>
-          <div class="hud-item">
-            <span class="hud-label">GRID:</span>
-            <span class="hud-value" id="grid">38S MD 12345 67890</span>
-          </div>
-          <div class="hud-item">
-            <span class="hud-label">ELEV:</span>
-            <span class="hud-value" id="elevation">1,234 FT MSL</span>
-          </div>
-        </div>
-        <div class="hud-bottom">
-          <div class="hud-item">
-            <span class="hud-label">TIME:</span>
-            <span class="hud-value" id="clock-time">12:34:56</span>
-          </div>
-          <div class="hud-item">
-            <span class="hud-label">SENSOR:</span>
-            <span class="hud-value" id="sensor">EO/IR</span>
-          </div>
-          <div class="hud-item">
-            <span class="hud-label">MODE:</span>
-            <span class="hud-value" id="mode">WIDE</span>
+          <div>
+            <div style="font-weight: 600;" id="studentName">Student</div>
+            <div style="font-size: 0.9rem; color: var(--text-secondary);" id="studentDay">Day 3/7</div>
           </div>
         </div>
-      </div>
-    </div>
+      </header>
+
+      <!-- Training Modules Section -->
+      <section class="fade-in stagger-1">
+        <h2 class="section-title">
+          <i class="fas fa-graduation-cap"></i>
+          Training Modules
+        </h2>
+        <div class="tools-grid">
+          <div class="tool-card" onclick="window.location.href='mission-links.html'">
+            <div class="tool-icon"><i class="fas fa-rocket"></i></div>
+            <h3 class="tool-title">Live PED Exercise</h3>
+            <p class="tool-description">Access real-time pattern of life exercises and mission scenarios.</p>
+          </div>
+          
+          <div class="tool-card" onclick="window.location.href='keyboard-training.html'">
+            <div class="tool-icon"><i class="fas fa-keyboard"></i></div>
+            <h3 class="tool-title">Keyboard Training</h3>
+            <p class="tool-description">Improve typing speed and accuracy with specialized military terminology.</p>
+          </div>
+          
+          <div class="tool-card" onclick="window.location.href='Screener Training.html'">
+            <div class="tool-icon"><i class="fas fa-user-shield"></i></div>
+            <h3 class="tool-title">Screener Training</h3>
+            <p class="tool-description">Learn advanced screening techniques and threat identification protocols.</p>
+          </div>
+          
+          <div class="tool-card" onclick="window.location.href='IA Training.html'">
+            <div class="tool-icon"><i class="fas fa-satellite-dish"></i></div>
+            <h3 class="tool-title">IA Training</h3>
+            <p class="tool-description">Intelligence analysis training with real-world scenarios and case studies.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Progress & Tools Section -->
+      <section class="fade-in stagger-2">
+        <h2 class="section-title">
+          <i class="fas fa-chart-line"></i>
+          Progress & Tools
+        </h2>
+        <div class="tools-grid">
+          <div class="tool-card" onclick="goToOpsLog()">
+            <div class="tool-icon"><i class="fas fa-clipboard-list"></i></div>
+            <h3 class="tool-title">Grading & Assessment</h3>
+            <p class="tool-description">View your grades, performance metrics, and instructor feedback.</p>
+          </div>
+          
+          <div class="tool-card">
+            <div class="tool-icon"><i class="fas fa-calendar-alt"></i></div>
+            <h3 class="tool-title">Training Schedule</h3>
+            <p class="tool-description">View upcoming training sessions, deadlines, and important dates.</p>
+          </div>
+          
+          <div class="tool-card">
+            <div class="tool-icon"><i class="fas fa-comments"></i></div>
+            <h3 class="tool-title">Feedback & Support</h3>
+            <p class="tool-description">Submit feedback, ask questions, and get help from instructors.</p>
+          </div>
+          
+          <div class="tool-card" onclick="showInstructorInfo()">
+            <div class="tool-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+            <h3 class="tool-title">Instructor Information</h3>
+            <p class="tool-description">View instructor profiles, contact information, and office hours.</p>
+          </div>
+        </div>
+      </section>
+    </main>
   </div>
 
-  <!-- Main Dashboard Content -->
-  <section id="screen-home" class="screen active">
-    <div class="flex font-sans">
-      <!-- Sidebar -->
-      <aside class="flex flex-col w-60 bg-black/60 rounded-3xl m-6 p-4 shadow-2xl">
-        <div class="flex flex-col items-center mb-8">
-          <div class="w-16 h-16 rounded-full bg-gradient-to-br from-zinc-900 via-zinc-700 to-zinc-900 flex items-center justify-center shadow-lg mb-2">
-            <img src="SE66806_logo_orig.png" alt="SMXKITS Logo" class="w-12 h-12" />
-          </div>
-        </div>
-        <nav class="flex-1 space-y-3 text-zinc-200 font-medium">
-          <a href="#" onclick="event.preventDefault(); window.location.reload();" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>🏠</span>Dashboard</a>
-          <a href="mission-links.html" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>🛫</span>Live PED Exercise</a>
-          <a href="keyboard-training.html" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>⌨️</span>Keyboard Input Training</a>
-          <a href="Screener Training.html" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>🧑‍💻</span>Screener Training</a>
-          <a href="IA Training.html" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>📡</span>IA Training</a>
-          <a href="#" onclick="goToOpsLog();" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>📝</span>Grading</a>
-          <a href="#" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>📅</span>Schedule</a>
-          <a href="#" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>💬</span>Feedback</a>
-        </nav>
-        <a href="#" onclick="logout();" class="mt-auto flex items-center gap-3 px-4 py-2 rounded-xl bg-zinc-900/80 text-red-400 hover:bg-red-900/50 transition">Logout</a>
-      </aside>
+  <script>
+    // Load student data
+    document.addEventListener('DOMContentLoaded', function() {
+      const studentName = localStorage.getItem('userName') || 'Student';
+      const studentDay = localStorage.getItem('studentDay') || 'Day 3/7';
       
-      <!-- Main Content -->
-      <main class="flex-1 p-8 pr-16">
-        <!-- Top bar -->
-        <div class="flex justify-between items-center mb-8">
-          <div>
-            <div class="text-2xl font-bold text-white mb-1">Welcome back, <span id="studentName">Student</span>!</div>
-            <div class="text-base text-zinc-400">Access live training, modules, progress, and instructor info here.</div>
-          </div>
-          <div class="flex items-center gap-6">
-            <!-- Notification bell -->
-            <div class="relative">
-              <button id="notifBtn" class="w-11 h-11 bg-zinc-900/80 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-blue-700/70 transition text-xl">
-                🔔
-              </button>
-              <!-- Notification popup (hidden by default) -->
-              <div id="notifPopup" class="hidden absolute right-0 mt-3 w-80 bg-zinc-900/95 rounded-xl shadow-2xl p-4">
-                <div class="font-semibold text-white mb-2">Notifications</div>
-                <div class="text-zinc-400 text-sm">No new notifications.</div>
-              </div>
-            </div>
-            
-            <!-- Daily Notice Pop-out Button -->
-            <button id="dailyNoticeBtn" class="w-11 h-11 bg-zinc-900/80 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-blue-700/70 transition text-xl ml-2" title="Show Daily Notice">
-              🗒️
-            </button>
-            <!-- User info / day -->
-            <div class="flex flex-col items-end">
-              <span class="font-semibold text-white" id="studentDay">Day 3/7</span>
-              <span class="text-sm text-zinc-400 mt-1">Your progress is on track</span>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Main bubble card -->
-        <div class="w-full bg-zinc-900/90 rounded-3xl p-8 shadow-2xl flex items-center gap-8 mb-8">
-          <img src="SE66806_logo_orig.png" class="w-28 h-28 rounded-3xl shadow-xl border-4 border-zinc-800" alt="Student Avatar" />
-          <div>
-            <div class="text-2xl font-bold text-white mb-2">Welcome to SMX KITS!</div>
-            <div class="text-zinc-400 text-lg">Your student portal for real-time ISR training. Dive into live PED, practice with KITS, and monitor your course progress all in one place.</div>
-          </div>
-        </div>
-        
-        <!-- Instructor Bubbles Section -->
-        <div class="bg-zinc-800/60 rounded-3xl p-5 shadow-xl mb-8">
-          <h2 class="text-xl font-semibold text-center mb-3 text-blue-300">Course Instructors</h2>
-          <div id="instructor-list">
-            <!-- Instructor bubbles will be loaded here -->
-            <div class="text-center text-zinc-400">Loading instructors...</div>
-          </div>
-        </div>
-        
-        <!-- Instructor Bio Modal -->
-        <div id="instructorModal" class="instructor-modal">
-          <div class="instructor-modal-content">
-            <button id="closeInstructorModal" class="instructor-modal-close">×</button>
-            <div id="instructorBioContent">
-              <!-- Instructor bio will be loaded here -->
-            </div>
-          </div>
-        </div>
-        
-        <!-- Training Links (bubble cards) -->
-        <!-- First row of training cards -->
-        <div class="grid grid-cols-3 gap-8 mb-10">
-          <div onclick="window.location.href='keyboard-training.html';" class="bg-zinc-800/80 rounded-3xl p-7 flex flex-col items-center shadow-xl cursor-pointer hover:scale-105 transition group">
-            <img src="KIT CLICK LOGO.png" class="w-16 h-16 mb-2" alt="KITS" />
-            <div class="font-semibold text-xl text-white mb-1">Resume Keyboard Input Training</div>
-            <div class="text-zinc-400 text-sm group-hover:text-white">Pick up where you left off</div>
-          </div>
-          <div onclick="window.location.href='course-content.html';" class="bg-zinc-800/80 rounded-3xl p-7 flex flex-col items-center shadow-xl cursor-pointer hover:scale-105 transition group">
-            <img src="COURSE REFERENCES LOGO.png" class="w-16 h-16 mb-2" alt="Course Content" />
-            <div class="font-semibold text-xl text-white mb-1">Course Content</div>
-            <div class="text-zinc-400 text-sm group-hover:text-white">View all training modules</div>
-          </div>
-          <div onclick="window.location.href='mission-links.html';" class="bg-zinc-800/80 rounded-3xl p-7 flex flex-col items-center shadow-xl cursor-pointer hover:scale-105 transition group">
-            <img src="ISR CLICK LOGO.png" class="w-16 h-16 mb-2" alt="Live ISR" />
-            <div class="font-semibold text-xl text-white mb-1">Live ISR Training</div>
-            <div class="text-zinc-400 text-sm group-hover:text-white">Access live operations & exercises</div>
-          </div>
-        </div>
-        
-        <!-- Second row of training cards -->
-        <div class="grid grid-cols-3 gap-8 mb-10">
-          <div onclick="goToScreenerTraining();" class="bg-zinc-800/80 rounded-3xl p-7 flex flex-col items-center shadow-xl cursor-pointer hover:scale-105 transition group">
-            <img src="SCREENER LOGO.png" class="w-16 h-16 mb-2" alt="Screener Training" />
-            <div class="font-semibold text-xl text-white mb-1">Screener Training</div>
-            <div class="text-zinc-400 text-sm group-hover:text-white">Master real-time video analysis</div>
-          </div>
-          <div onclick="goToIATraining();" class="bg-zinc-800/80 rounded-3xl p-7 flex flex-col items-center shadow-xl cursor-pointer hover:scale-105 transition group">
-            <img src="IA LOGO.png" class="w-16 h-16 mb-2" alt="IA Training" />
-            <div class="font-semibold text-xl text-white mb-1">IA Training</div>
-            <div class="text-zinc-400 text-sm group-hover:text-white">Enhance imagery analysis skills</div>
-          </div>
-          <div class="bg-zinc-800/80 rounded-3xl p-7 flex flex-col items-center shadow-xl group">
-            <img src="INSTRUCTORS LOGO.png" class="w-16 h-16 mb-2" alt="Instructors" />
-            <div class="font-semibold text-xl text-white mb-1">Instructors</div>
-            <div class="flex items-center gap-2 mt-3">
-              <img src="instructor1.jpg" onclick="showInstructorBio('Instructor 1')" title="Instructor 1" class="w-10 h-10 rounded-full border-2 border-white cursor-pointer hover:ring-4 hover:ring-blue-500 transition" />
-              <img src="instructor2.jpg" onclick="showInstructorBio('Instructor 2')" title="Instructor 2" class="w-10 h-10 rounded-full border-2 border-white cursor-pointer hover:ring-4 hover:ring-blue-500 transition" />
-            </div>
-            <div class="text-zinc-400 text-xs mt-2">Click an instructor for bio</div>
-          </div>
-        </div>
-        
-        <!-- Course Progression -->
-        <div class="bg-zinc-900/90 rounded-3xl p-8 shadow-2xl grid grid-cols-3 gap-8">
-          <!-- Keyboard Training Link -->
-          <div>
-            <div class="font-semibold text-white mb-2">Keyboard Input Training</div>
-            <div class="w-full bg-zinc-700 rounded-full h-4 mb-2 overflow-hidden">
-              <div class="bg-blue-500 h-4" style="width: 65%;"></div>
-            </div>
-            <div class="text-xs text-zinc-400">3 of 5 modules complete</div>
-            <div class="mt-4 grid grid-cols-1 gap-4">
-              <div class="bg-zinc-800/80 hover:bg-zinc-700/80 transition-all duration-200 rounded-xl p-4 flex flex-col items-center">
-                <div class="text-base text-blue-200">
-                  <a href="keyboard-training.html" class="text-blue-400 hover:text-blue-300 underline">
-                    Go to Keyboard Training
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div>
-            <div class="font-semibold text-white mb-2">Screener Training</div>
-            <div class="w-full bg-zinc-700 rounded-full h-4 mb-2 overflow-hidden">
-              <div class="bg-blue-500 h-4" style="width: 40%;"></div>
-            </div>
-            <div class="text-xs text-zinc-400">2 of 5 modules complete</div>
-          </div>
-          
-          <div>
-            <div class="font-semibold text-white mb-2">POL Typing Tests</div>
-            <div class="w-full bg-zinc-700 rounded-full h-4 mb-2 overflow-hidden">
-              <div class="bg-green-400 h-4" style="width: 20%;"></div>
-            </div>
-            <div class="text-xs text-zinc-400">1 of 5 modules complete</div>
-          </div>
-        </div>
-        
-        <!-- Daily Notice Popup (hidden by default) -->
-        <div id="dailyNoticePopup" class="hidden fixed right-16 top-32 w-96 bg-zinc-900/95 rounded-2xl p-6 shadow-2xl z-50">
-          <div class="flex justify-between items-center mb-2">
-            <div class="font-semibold text-white">Daily Notice</div>
-            <div>
-              <button id="pinNotice" class="text-blue-400 mr-2" title="Pin Notice">📌</button>
-              <button id="closeNotice" class="text-zinc-400 hover:text-white text-lg" title="Close">×</button>
-            </div>
-          </div>
-          <div class="text-zinc-400 text-sm">
-            <b>Assignment due:</b> Upload all mission briefs by 1800Z.<br>
-            <b>Schedule:</b> Live PED at 1300Z, IA review at 1530Z.
-          </div>
-        </div>
-      </main>
-    </div>
-  </section>
-
-<!-- Instructor bio popup logic -->
-<script>
-function showInstructorBio(name) {
-  // Create overlay
-  if(document.getElementById('bioOverlay')) return;
-  const overlay = document.createElement('div');
-  overlay.id = 'bioOverlay';
-  overlay.style = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:#10151faa;z-index:2000;display:flex;align-items:center;justify-content:center;';
-  overlay.onclick = function(e) { if(e.target===this) this.remove(); };
-  // Centered bubble
-  const bubble = document.createElement('div');
-  bubble.style = 'background:#222831eb;border-radius:2rem;box-shadow:0 8px 44px #000c;padding:2.5rem 2.3rem;width:400px;max-width:95vw;color:#fff;text-align:center;display:flex;flex-direction:column;align-items:center;';
-  bubble.innerHTML = `<img src="instructor1.jpg" style="width:88px;height:88px;border-radius:50%;border:3px solid #38bdf8;margin-bottom:1rem;"><div style="font-size:1.25rem;font-weight:bold;margin-bottom:0.4rem;">${name}</div><div style="font-size:1rem;color:#b8bdc7;margin-bottom:1.5rem;">[Instructor bio goes here]</div><button onclick="document.getElementById('bioOverlay').remove();" style="margin-top:0.6rem;background:#38bdf8;color:#112244;font-weight:bold;padding:0.55rem 1.4rem;border-radius:1rem;cursor:pointer;">Contact</button>`;
-  overlay.appendChild(bubble);
-  document.body.appendChild(overlay);
-}
-
-// Notification popup logic
-document.getElementById('notifBtn')?.addEventListener('click', function() {
-  const popup = document.getElementById('notifPopup');
-  if(!popup) return;
-  popup.style.display = popup.style.display === 'none' ? 'block' : 'none';
-});
-
-// Daily Notice Pop-up Logic
-const dailyNoticeBtn = document.getElementById('dailyNoticeBtn');
-const dailyNoticePopup = document.getElementById('dailyNoticePopup');
-const closeNotice = document.getElementById('closeNotice');
-const pinNotice = document.getElementById('pinNotice');
-
-dailyNoticeBtn?.addEventListener('click', () => {
-  dailyNoticePopup.classList.toggle('hidden');
-});
-
-closeNotice?.addEventListener('click', () => {
-  dailyNoticePopup.classList.add('hidden');
-});
-
-pinNotice?.addEventListener('click', () => {
-  if (dailyNoticePopup.classList.contains('fixed')) {
-    dailyNoticePopup.classList.remove('fixed');
-    dailyNoticePopup.classList.add('absolute');
-    pinNotice.textContent = "📌";
-  } else {
-    dailyNoticePopup.classList.remove('absolute');
-    dailyNoticePopup.classList.add('fixed');
-    pinNotice.textContent = "📍";
-  }
-});
-
-// Advanced Training Navigation functions
-function goToScreenerTraining() {
-  localStorage.setItem('activeSection', 'screen-ped-training');
-  window.location.href = "/SMXKITS.html#screen-ped-training";
-}
-
-function goToIATraining() {
-  localStorage.setItem('activeSection', 'screen-isr-training');
-  window.location.href = "/SMXKITS.html#screen-isr-training";
-}
-</script>
-    </div>
-    <!-- Bottom bar for home screen -->
-    <div class="bottom-bar">
-      <div class="bottom-bar-left"></div>
-      <a id="contactLink" class="inside-kit-link right-link" href="#">Contact&nbsp;SMXKITS</a>
-    </div>
-  </section>
-
-  <!-- Import SMXKITS content sections -->
-  <script>
-    // Load SMXKITS.html content dynamically
-    document.addEventListener('DOMContentLoaded', function() {
-      fetch('/SMXKITS.html')
-        .then(response => response.text())
-        .then(html => {
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(html, 'text/html');
-          
-          // Get all sections from SMXKITS.html except screen-home and screen-login
-          const sections = doc.querySelectorAll('section:not(#screen-home):not(#screen-login)');
-          
-          // Append them to this document
-          sections.forEach(section => {
-            document.body.appendChild(document.importNode(section, true));
-          });
-          
-          // Now load any scripts that might be needed
-          if (typeof initializeAllSections === 'function') {
-            initializeAllSections();
-          }
-          
-          // Force reload modules after dynamic content is loaded
-          console.log('SMXKITS content loaded, forcing module reload');
-          if (typeof loadModules === 'function') {
-            setTimeout(loadModules, 1000);
-          } else {
-            console.error('loadModules function not available');
-          }
-        })
-        .catch(error => {
-          console.error('Error loading SMXKITS content:', error);
-        });
-    });
-  </script>
-
-  <script>
-    // Display user information
-    document.addEventListener('DOMContentLoaded', function() {
-      const userName = localStorage.getItem('userName') || 'User';
-      const role = localStorage.getItem('role') || 'Student';
-      const userInfo = document.getElementById('user-info');
-      if (userInfo) {
-        userInfo.textContent = `${userName} (${role})`;
-      }
+      document.getElementById('studentName').textContent = studentName;
+      document.getElementById('studentDay').textContent = studentDay;
     });
 
-    // Logout function
+    function goToOpsLog() {
+      window.location.href = 'OpsLog.html';
+    }
+
+    function showInstructorInfo() {
+      alert('Instructor information feature coming soon!');
+    }
+
     function logout() {
-      // Clear all authentication data
       localStorage.removeItem('token');
       localStorage.removeItem('role');
       localStorage.removeItem('userName');
       localStorage.removeItem('classId');
-      
-      // Redirect to login page
+      localStorage.removeItem('studentDay');
       window.location.replace('/login.html');
-    }
-
-    // Navigation functions to ensure proper loading
-    
-    function goToCourseContent() {
-      // Redirect directly to course-content.html without tracking progress
-      window.location.href = "course-content.html";
-    }
-    
-    function goToPEDTraining() {
-      localStorage.setItem('activeSection', 'screen-ped-training');
-      window.location.href = "/SMXKITS.html#screen-ped-training";
-    }
-    
-    function goToOpsLog() {
-      window.open('/OpsLog.html', '_blank');
-    }
-  </script>
-  
-  <!-- Include the main script file -->
-  <script src="script.js"></script>
-  
-  <!-- Dashboard Specific Scripts -->
-  <script>
-    // Notification Bell Toggle
-    document.getElementById('notifBtn')?.addEventListener('click', function() {
-      const popup = document.getElementById('notifPopup');
-      popup.classList.toggle('hidden');
-    });
-    
-    // Close notification when clicking outside
-    document.addEventListener('click', function(event) {
-      const popup = document.getElementById('notifPopup');
-      const btn = document.getElementById('notifBtn');
-      
-      if (!popup?.classList.contains('hidden') && 
-          !popup?.contains(event.target) && 
-          event.target !== btn) {
-        popup?.classList.add('hidden');
-      }
-    });
-    
-    // Instructor Bio Popup
-    function showInstructorBio(name) {
-      // Create overlay
-      if(document.getElementById('bioOverlay')) return;
-      const overlay = document.createElement('div');
-      overlay.id = 'bioOverlay';
-      overlay.className = 'fixed inset-0 bg-black/80 z-50 flex items-center justify-center';
-      
-      // Create bio card
-      const card = document.createElement('div');
-      card.className = 'bg-zinc-900 rounded-2xl shadow-2xl p-8 max-w-md';
-      
-      // Placeholder content - replace with actual instructor data
-      card.innerHTML = `
-        <div class="flex items-start justify-between mb-4">
-          <h2 class="text-xl font-bold text-white">${name}</h2>
-          <button class="text-zinc-400 hover:text-white text-xl" id="closeBioBtn">×</button>
-        </div>
-        <div class="flex gap-4 mb-4">
-          <img src="${name === 'Instructor 1' ? 'instructor1.jpg' : 'instructor2.jpg'}" 
-               class="w-24 h-24 rounded-xl border-2 border-zinc-700" />
-          <div>
-            <div class="text-white font-semibold">Senior ISR Instructor</div>
-            <div class="text-zinc-400 text-sm">10+ years experience</div>
-          </div>
-        </div>
-        <p class="text-zinc-300 mb-4">
-          Specialized in teaching advanced intelligence gathering techniques and real-time 
-          surveillance operations. Former military intelligence officer with field experience.
-        </p>
-        <div class="text-blue-400 text-sm">Contact: instructor@smxkits.mil</div>
-      `;
-      
-      overlay.appendChild(card);
-      document.body.appendChild(overlay);
-      
-      // Add close functionality
-      document.getElementById('closeBioBtn').addEventListener('click', () => {
-        document.body.removeChild(overlay);
-      });
-      
-      // Close on outside click
-      overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) {
-          document.body.removeChild(overlay);
-        }
-      });
-    }
-    
-    // Set student name from localStorage if available
-    document.addEventListener('DOMContentLoaded', function() {
-      const studentNameEl = document.getElementById('studentName');
-      const userName = localStorage.getItem('userName');
-      if (studentNameEl && userName) {
-        studentNameEl.textContent = userName;
-      }
-      
-      // Get the current class ID from localStorage
-      const classId = localStorage.getItem('classId');
-      if (classId) {
-        // Load instructors for this class
-        loadInstructors(classId);
-      } else {
-        // Fallback if no class ID is available
-        document.getElementById('instructor-list').innerHTML = 
-          '<div class="text-center text-zinc-400">No class assigned or class information unavailable.</div>';
-      }
-      
-      // Set up instructor modal close button
-      const closeBtn = document.getElementById('closeInstructorModal');
-      if (closeBtn) {
-        closeBtn.addEventListener('click', function() {
-          document.getElementById('instructorModal').classList.remove('active');
-        });
-      }
-      
-      // Close modal when clicking outside content
-      const modal = document.getElementById('instructorModal');
-      if (modal) {
-        modal.addEventListener('click', function(e) {
-          if (e.target === this) {
-            this.classList.remove('active');
-          }
-        });
-      }
-    });
-    
-    /**
-     * Load instructors for the specified course
-     * @param {string} courseId - The ID of the course
-     */
-    async function loadInstructors(courseId) {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          console.error('Authentication token missing');
-          return;
-        }
-        
-        document.getElementById('instructor-list').innerHTML = 
-          '<div class="text-center text-zinc-400">Loading instructors...</div>';
-        
-        // For demonstration, we'll use mock data instead of API calls
-        // In a real application, you would use:
-        // const response = await fetch(`/api/classes/${courseId}/instructors`, {
-        //   headers: { 'Authorization': `Bearer ${token}` }
-        // });
-        // const instructors = await response.json();
-        
-        // Mock data for demonstration
-        const instructors = [
-          {
-            _id: "instructor1",
-            name: "Captain Sarah Johnson",
-            avatar: "instructor1.jpg",
-            title: "Senior ISR Instructor",
-            bio: "Captain Sarah Johnson is an experienced intelligence, surveillance, and reconnaissance (ISR) instructor with 10+ years of expertise in Processing, Exploitation, and Dissemination (PED) operations. With a background in military intelligence, Sarah specializes in training analysts to effectively interpret and utilize intelligence data from various collection platforms."
-          },
-          {
-            _id: "instructor2",
-            name: "Major David Wilson",
-            avatar: "instructor2.jpg",
-            title: "Lead FMV Analyst",
-            bio: "Major David Wilson brings over 15 years of experience in Full Motion Video (FMV) analysis and operational intelligence. A recognized expert in pattern-of-life development and threat detection, David has served in multiple combat deployments before joining the training cadre."
-          }
-        ];
-        
-        if (!instructors || instructors.length === 0) {
-          document.getElementById('instructor-list').innerHTML = 
-            '<div class="text-center text-zinc-400">No instructors assigned to this course.</div>';
-          return;
-        }
-        
-        // Display instructor bubbles
-        const container = document.getElementById('instructor-list');
-        container.innerHTML = instructors.map(inst => `
-          <div class="instructor-bubble" onclick="showInstructorBio('${inst._id}')">
-            <img src="${inst.avatar || 'default-instructor.png'}" alt="${inst.name}" />
-            <div>${inst.name.split(' ').slice(-1)[0]}</div>
-          </div>
-        `).join('');
-        
-      } catch (error) {
-        console.error('Error loading instructors:', error);
-        document.getElementById('instructor-list').innerHTML = 
-          `<div class="text-center text-zinc-400">Error loading instructors: ${error.message}</div>`;
-      }
-    }
-    
-    /**
-     * Show detailed bio for an instructor
-     * @param {string} instructorId - The ID of the instructor
-     */
-    function showInstructorBio(instructorId) {
-      try {
-        // For demonstration, we'll use mock data instead of API calls
-        // In a real application, you would use:
-        // const response = await fetch(`/api/instructors/${instructorId}/bio`, {
-        //   headers: { 'Authorization': `Bearer ${token}` }
-        // });
-        // const instructor = await response.json();
-        
-        // Mock data for demonstration
-        const instructors = {
-          "instructor1": {
-            _id: "instructor1",
-            name: "Captain Sarah Johnson",
-            avatar: "instructor1.jpg",
-            title: "Senior ISR Instructor",
-            experience: "10+ years",
-            contact: "s.johnson@smxkits.mil",
-            bio: "Captain Sarah Johnson is an experienced intelligence, surveillance, and reconnaissance (ISR) instructor with expertise in Processing, Exploitation, and Dissemination (PED) operations. With a background in military intelligence, Sarah specializes in training analysts to effectively interpret and utilize intelligence data from various collection platforms.<br><br>Her expertise includes Full Motion Video (FMV) analysis, pattern-of-life development, and tactical decision-making processes. Captain Johnson has received multiple commendations for her contributions to intelligence training programs."
-          },
-          "instructor2": {
-            _id: "instructor2",
-            name: "Major David Wilson",
-            avatar: "instructor2.jpg",
-            title: "Lead FMV Analyst",
-            experience: "15+ years",
-            contact: "d.wilson@smxkits.mil",
-            bio: "Major David Wilson brings over 15 years of experience in Full Motion Video (FMV) analysis and operational intelligence. A recognized expert in pattern-of-life development and threat detection, David has served in multiple combat deployments before joining the training cadre.<br><br>He specializes in advanced ISR techniques, multi-INT fusion, and intelligence report writing. Major Wilson has developed several of the training modules used in the current curriculum and continues to enhance the program with real-world operational insights."
-          }
-        };
-        
-        const instructor = instructors[instructorId];
-        
-        if (!instructor) {
-          throw new Error("Instructor not found");
-        }
-        
-        // Show modal with instructor bio
-        const bioContent = document.getElementById('instructorBioContent');
-        bioContent.innerHTML = `
-          <div class="instructor-bio-header">
-            <img src="${instructor.avatar || 'default-instructor.png'}" alt="${instructor.name}" class="instructor-bio-avatar" />
-            <div>
-              <div class="instructor-bio-name">${instructor.name}</div>
-              <div class="instructor-bio-title">${instructor.title || 'Instructor'}</div>
-              <div class="text-zinc-400 text-sm">${instructor.experience || ''}</div>
-            </div>
-          </div>
-          <div class="instructor-bio-content">
-            ${instructor.bio || 'No bio information available for this instructor.'}
-            ${instructor.contact ? `<p class="mt-4 text-blue-300">Contact: ${instructor.contact}</p>` : ''}
-          </div>
-        `;
-        
-        document.getElementById('instructorModal').classList.add('active');
-        
-      } catch (error) {
-        console.error('Error loading instructor bio:', error);
-        const bioContent = document.getElementById('instructorBioContent');
-        bioContent.innerHTML = 
-          `<div class="text-center py-4 text-red-400">Error loading instructor information: ${error.message}</div>`;
-        document.getElementById('instructorModal').classList.add('active');
-      }
     }
   </script>
 </body>
-in </html>
+</html>

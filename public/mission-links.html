@@ -4,339 +4,487 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>SMX KITS - Mission Links</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    /* Dark Theme for Mission Links */
-    .dark-link-tree-container {
+    :root {
+      --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      --dark-gradient: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 100%);
+      --card-gradient: linear-gradient(145deg, #16213e 0%, #0f1419 100%);
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --text-primary: #ffffff;
+      --text-secondary: #b8c5d6;
+      --text-accent: #64b5f6;
+      --shadow-primary: 0 20px 40px rgba(0, 0, 0, 0.3);
+      --shadow-hover: 0 30px 60px rgba(0, 0, 0, 0.4);
+      --border-radius: 20px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--dark-gradient);
+      color: var(--text-primary);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* Animated background particles */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.1) 0%, transparent 50%);
+      z-index: -1;
+      animation: float 20s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      33% { transform: translateY(-20px) rotate(1deg); }
+      66% { transform: translateY(10px) rotate(-1deg); }
+    }
+
+    .admin-layout {
+      display: flex;
       min-height: 100vh;
-      background-color: #111827;
-      color: white;
-      padding: 1rem;
     }
-    
-    .dark-top-bar {
-      display: flex;
-      align-items: center;
-      padding: 1rem;
-      background-color: rgba(0, 0, 0, 0.4);
-      border-radius: 0.5rem;
-      margin-bottom: 1.5rem;
-    }
-    
-    .dark-back-link {
-      color: #94a3b8;
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-      font-weight: 500;
-      transition: color 0.2s;
-    }
-    
-    .dark-back-link:hover {
-      color: #e2e8f0;
-    }
-    
-    .dark-reference-section {
-      background-color: rgba(30, 41, 59, 0.7);
-      border-radius: 0.75rem;
-      padding: 1.5rem;
-      margin-bottom: 2rem;
-    }
-    
-    .dark-section-title {
-      font-size: 1.25rem;
-      font-weight: 600;
-      margin-bottom: 0.75rem;
-      color: #e2e8f0;
-    }
-    
-    .dark-reference-description {
-      color: #94a3b8;
-      margin-bottom: 1rem;
-      font-size: 0.95rem;
-    }
-    
-    .dark-reference-controls {
-      display: flex;
-      gap: 1rem;
-      align-items: center;
-    }
-    
-    .dark-dropdown {
-      background-color: #1e293b;
-      color: white;
-      border: 1px solid #475569;
-      border-radius: 0.5rem;
-      padding: 0.75rem 1rem;
-      flex-grow: 1;
-      outline: none;
-    }
-    
-    .dark-output-link {
-      background-color: #2563eb;
-      color: white;
-      padding: 0.75rem 1.25rem;
-      border-radius: 0.5rem;
-      text-decoration: none;
-      font-weight: 500;
-      transition: background-color 0.2s;
-    }
-    
-    .dark-output-link:hover {
-      background-color: #1d4ed8;
-    }
-    
-    .dark-main-content {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2rem;
-    }
-    
-    .dark-mission-links {
-      background-color: rgba(30, 41, 59, 0.7);
-      border-radius: 0.75rem;
-      padding: 2rem;
-    }
-    
-    .dark-hub-title {
-      font-size: 1.5rem;
-      font-weight: 700;
-      margin-bottom: 1.5rem;
-      color: white;
-      text-align: center;
-    }
-    
-    .dark-links-container {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1.5rem;
-    }
-    
-    .dark-link-box {
-      background-color: rgba(15, 23, 42, 0.8);
-      border-radius: 0.75rem;
-      padding: 1.25rem;
+
+    /* Sidebar Redesign */
+    .admin-sidebar {
+      width: 280px;
+      background: rgba(15, 20, 25, 0.95);
+      backdrop-filter: blur(20px);
+      border-right: 1px solid var(--glass-border);
       display: flex;
       flex-direction: column;
-      align-items: center;
-      cursor: pointer;
-      transition: transform 0.2s, background-color 0.2s;
-    }
-    
-    .dark-link-box:hover {
-      transform: translateY(-5px);
-      background-color: rgba(15, 23, 42, 1);
-    }
-    
-    .dark-hub-logo {
-      width: 48px;
-      height: 48px;
-      margin-bottom: 1rem;
-    }
-    
-    .dark-upload-vaults {
-      background-color: rgba(30, 41, 59, 0.7);
-      border-radius: 0.75rem;
-      padding: 2rem;
-    }
-    
-    .dark-vaults-column {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 1.5rem;
-    }
-    
-    .dark-vault {
-      background-color: rgba(15, 23, 42, 0.8);
-      border-radius: 0.75rem;
-      padding: 1.5rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
+      padding: 2rem 0;
       position: relative;
-      border: 2px dashed #475569;
-      cursor: pointer;
-      transition: border-color 0.2s, background-color 0.2s;
+      overflow: hidden;
     }
-    
-    .dark-vault:hover {
-      border-color: #64748b;
-      background-color: rgba(15, 23, 42, 1);
-    }
-    
-    .dark-vault input[type="file"] {
+
+    .admin-sidebar::before {
+      content: '';
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      opacity: 0;
-      cursor: pointer;
+      background: linear-gradient(180deg, rgba(102, 126, 234, 0.1) 0%, transparent 100%);
+      z-index: -1;
     }
-    
-    .dark-vault h2 {
-      font-size: 1.25rem;
+
+    .admin-logo {
+      width: 200px;
+      margin: 0 auto 3rem;
+      filter: drop-shadow(0 10px 30px rgba(102, 126, 234, 0.3));
+      transition: var(--transition);
+    }
+
+    .admin-logo:hover {
+      transform: scale(1.05);
+      filter: drop-shadow(0 15px 40px rgba(102, 126, 234, 0.5));
+    }
+
+    .admin-nav {
+      list-style: none;
+      padding: 0 1rem;
+    }
+
+    .admin-nav li {
+      margin-bottom: 0.5rem;
+      padding: 1rem 1.5rem;
+      border-radius: 15px;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .admin-nav li::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: var(--primary-gradient);
+      transition: var(--transition);
+      z-index: -1;
+    }
+
+    .admin-nav li:hover::before,
+    .admin-nav li.active::before {
+      left: 0;
+    }
+
+    .admin-nav li:hover,
+    .admin-nav li.active {
+      color: white;
+      transform: translateX(5px);
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    }
+
+    /* Main Content Area */
+    .admin-content {
+      flex: 1;
+      padding: 2rem;
+      background: transparent;
+      overflow-y: auto;
+    }
+
+    /* Header Section */
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 3rem;
+      padding: 2rem;
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border-radius: var(--border-radius);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+    }
+
+    .dashboard-title {
+      font-size: 3rem;
+      font-weight: 800;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin: 0;
+      letter-spacing: -0.02em;
+    }
+
+    .section-title {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      color: var(--text-accent);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .section-title::before {
+      content: '';
+      width: 4px;
+      height: 40px;
+      background: var(--accent-gradient);
+      border-radius: 2px;
+    }
+
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .tool-card {
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tool-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--primary-gradient);
+      opacity: 0;
+      transition: var(--transition);
+    }
+
+    .tool-card:hover::before {
+      opacity: 0.1;
+    }
+
+    .tool-card:hover {
+      transform: translateY(-10px) scale(1.02);
+      box-shadow: var(--shadow-hover);
+      border-color: rgba(102, 126, 234, 0.5);
+    }
+
+    .tool-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .tool-title {
+      font-size: 1.5rem;
       font-weight: 600;
       margin-bottom: 0.5rem;
-      color: #e2e8f0;
+      color: var(--text-primary);
     }
-    
-    .dark-vault p {
-      color: #94a3b8;
-      font-size: 0.9rem;
+
+    .tool-description {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
       line-height: 1.5;
     }
-    
+
+    .fade-in {
+      animation: fadeInUp 0.6s ease forwards;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .stagger-1 { animation-delay: 0.1s; }
+    .stagger-2 { animation-delay: 0.2s; }
+    .stagger-3 { animation-delay: 0.3s; }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--accent-gradient);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--primary-gradient);
+    }
+
+    /* Responsive Design */
     @media (max-width: 768px) {
-      .dark-main-content {
-        grid-template-columns: 1fr;
+      .admin-layout {
+        flex-direction: column;
       }
       
-      .dark-links-container {
+      .admin-sidebar {
+        width: 100%;
+        height: auto;
+      }
+      
+      .admin-content {
+        padding: 1rem;
+      }
+      
+      .dashboard-title {
+        font-size: 2rem;
+      }
+      
+      .dashboard-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+      }
+      
+      .tools-grid {
         grid-template-columns: 1fr;
       }
     }
   </style>
 </head>
-<body class="bg-[#0f172a] text-white">
+<body>
   <!-- Authentication Check -->
   <script>
-    // Immediate authentication check
+    // Check if user is authenticated
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
     
     if (!token || !role) {
-      // No authentication found, redirect immediately
+      // No authentication found, redirect to login
       window.location.replace('/login.html');
-      // Stop execution to prevent content from loading
-      throw new Error('Authentication required');
     }
-    
-    // We are authenticated, continue loading
-    console.log('✅ Authentication verified - loading mission links');
   </script>
 
-  <!-- Mission Links Page -->
-  <div class="dark-link-tree-container">
-    <div class="dark-top-bar">
-      <a href="dashboard.html" class="dark-back-link">&larr; Return to Dashboard</a>
-    </div>
-    
-    <!-- Mission Reference at top -->
-    <div class="dark-reference-section">
-      <h3 class="dark-section-title">Mission Reference</h3>
-      <p class="dark-reference-description">Select the exercise from the dropdown. Click it to open the document in a new tab for side-by-side viewing.</p>
-      <div class="dark-reference-controls">
-        <select id="mission-ref-dropdown" class="dark-dropdown">
-          <option value="">Choose Mission Reference Sheet</option>
-          <option value="mission1.pdf">Mission 1 Reference</option>
-          <option value="mission2.pdf">Mission 2 Reference</option>
-          <option value="mission3.pdf">Mission 3 Reference</option>
-        </select>
-        <a id="output-file-link" class="dark-output-link" href="#" target="_blank">Output File</a>
-      </div>
-    </div>
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <img src="SMXKITS.png" alt="SMXKITS Logo" class="admin-logo" />
+      <ul class="admin-nav">
+        <li onclick="window.location.href='dashboard.html'"><i class="fas fa-tachometer-alt"></i> Dashboard</li>
+        <li class="active"><i class="fas fa-link"></i> Mission Links</li>
+        <li onclick="window.location.href='keyboard-training.html'"><i class="fas fa-keyboard"></i> Keyboard Training</li>
+        <li onclick="window.location.href='course-content.html'"><i class="fas fa-book"></i> Course Content</li>
+        <li onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</li>
+      </ul>
+    </aside>
 
-    <div class="dark-main-content">
-      <!-- Mission Links Section -->
-      <div class="dark-mission-links">
-        <h1 class="dark-hub-title">Access Mission Links</h1>
-        <div class="dark-links-container">
-          <div class="dark-link-box" onclick="window.open('../SMXStream-new.html', '_blank')">
-            <img src="images/Play Button Logo.png" alt="SMX Stream Logo" class="dark-hub-logo" />
-            <h3>SMX Stream</h3>
+    <!-- Main Content -->
+    <main class="admin-content">
+      <!-- Header Section -->
+      <header class="dashboard-header fade-in">
+        <div>
+          <h1 class="dashboard-title">Mission Links</h1>
+          <p style="color: var(--text-secondary); font-size: 1.1rem; margin-top: 0.5rem;">
+            Access essential mission resources and external links for training operations.
+          </p>
+        </div>
+      </header>
+
+      <!-- Reference Section -->
+      <section class="fade-in stagger-1">
+        <h2 class="section-title">
+          <i class="fas fa-book-open"></i>
+          Quick Reference Generator
+        </h2>
+        <div class="tool-card" style="margin-bottom: 2rem;">
+          <div class="tool-description" style="margin-bottom: 1.5rem;">
+            Generate quick reference links for specific training scenarios and operational contexts.
           </div>
-          <div class="dark-link-box" onclick="window.open('OpsLog.html', '_blank')">
-            <img src="images/Ops Log Logo.png" alt="Ops Log Logo" class="dark-hub-logo" />
-            <h3>Ops Log</h3>
-          </div>
-          <div class="dark-link-box" onclick="window.open('KitComm.html', '_blank')">
-            <img src="images/KitComm Logo.png" alt="KitComm Logo" class="dark-hub-logo" />
-            <h3>KitComm</h3>
-          </div>
-          <div class="dark-link-box">
-            <img src="images/Templates Logo.png" alt="Templates Logo" class="dark-hub-logo" />
-            <h3>Templates</h3>
+          <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+            <select id="referenceDropdown" style="background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 10px; padding: 0.75rem 1rem; color: var(--text-primary); flex: 1; min-width: 200px;">
+              <option value="">Select a reference type...</option>
+              <option value="basic-training">Basic Training Resources</option>
+              <option value="advanced-ops">Advanced Operations</option>
+              <option value="emergency-procedures">Emergency Procedures</option>
+              <option value="communication-protocols">Communication Protocols</option>
+            </select>
+            <button onclick="generateReference()" style="background: var(--accent-gradient); border: none; color: white; padding: 0.75rem 1.5rem; border-radius: 10px; font-weight: 600; cursor: pointer; transition: var(--transition);" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+              <i class="fas fa-external-link-alt"></i> Generate Link
+            </button>
           </div>
         </div>
-      </div>
+      </section>
 
-      <!-- Upload Vaults Section on the right -->
-      <div class="dark-upload-vaults">
-        <h3 class="dark-section-title">Upload Briefs & Data</h3>
-        <div class="dark-vaults-column">
-          <div class="dark-vault" id="slideVault">
-            <input type="file" accept=".ppt,.pptx,.pdf" multiple>
-            <h2>SlideVault</h2>
-            <p>Drop PowerPoint / PDF<br>or click to browse</p>
+      <!-- Mission Links Grid -->
+      <section class="fade-in stagger-2">
+        <h2 class="section-title">
+          <i class="fas fa-globe"></i>
+          Essential Mission Resources
+        </h2>
+        <div class="tools-grid">
+          <div class="tool-card" onclick="window.open('https://example.com/intel-hub', '_blank')">
+            <div class="tool-icon"><i class="fas fa-search"></i></div>
+            <h3 class="tool-title">Intelligence Hub</h3>
+            <p class="tool-description">Access real-time intelligence reports, threat assessments, and operational briefings.</p>
           </div>
-          <div class="dark-vault" id="sheetVault">
-            <input type="file" accept=".xlsx,.xls,.csv" multiple>
-            <h2>SheetVault</h2>
-            <p>Drop Excel files<br>or click to browse</p>
+          
+          <div class="tool-card" onclick="window.open('https://example.com/comms-center', '_blank')">
+            <div class="tool-icon"><i class="fas fa-satellite-dish"></i></div>
+            <h3 class="tool-title">Communications Center</h3>
+            <p class="tool-description">Secure communication channels, frequency allocations, and protocol documentation.</p>
           </div>
-          <div class="dark-vault" id="imageVault">
-            <input type="file" accept=".jpg,.jpeg,.png,.gif" multiple>
-            <h2>ImageVault</h2>
-            <p>Drop image files<br>or click to browse</p>
+          
+          <div class="tool-card" onclick="window.open('https://example.com/logistics', '_blank')">
+            <div class="tool-icon"><i class="fas fa-truck"></i></div>
+            <h3 class="tool-title">Logistics Portal</h3>
+            <p class="tool-description">Supply chain management, equipment tracking, and resource allocation systems.</p>
+          </div>
+          
+          <div class="tool-card" onclick="window.open('https://example.com/weather', '_blank')">
+            <div class="tool-icon"><i class="fas fa-cloud-sun"></i></div>
+            <h3 class="tool-title">Weather Intelligence</h3>
+            <p class="tool-description">Meteorological data, forecasting models, and environmental impact assessments.</p>
+          </div>
+          
+          <div class="tool-card" onclick="window.open('https://example.com/medical', '_blank')">
+            <div class="tool-icon"><i class="fas fa-medkit"></i></div>
+            <h3 class="tool-title">Medical Support</h3>
+            <p class="tool-description">Medical protocols, emergency procedures, and health monitoring systems.</p>
+          </div>
+          
+          <div class="tool-card" onclick="window.open('https://example.com/training', '_blank')">
+            <div class="tool-icon"><i class="fas fa-graduation-cap"></i></div>
+            <h3 class="tool-title">Training Resources</h3>
+            <p class="tool-description">Comprehensive training materials, simulation environments, and skill assessments.</p>
           </div>
         </div>
-      </div>
-    </div>
+      </section>
+
+      <!-- Upload Vaults Section -->
+      <section class="fade-in stagger-3">
+        <h2 class="section-title">
+          <i class="fas fa-cloud-upload-alt"></i>
+          Resource Upload Vaults
+        </h2>
+        <div class="tools-grid">
+          <div class="tool-card" style="border: 2px dashed var(--glass-border); text-align: center;">
+            <div class="tool-icon"><i class="fas fa-file-upload"></i></div>
+            <h3 class="tool-title">Document Vault</h3>
+            <p class="tool-description">Upload mission documents, reports, and reference materials for team access.</p>
+            <input type="file" multiple accept=".pdf,.doc,.docx,.txt" style="margin-top: 1rem; padding: 0.5rem; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text-primary); width: 100%;">
+          </div>
+          
+          <div class="tool-card" style="border: 2px dashed var(--glass-border); text-align: center;">
+            <div class="tool-icon"><i class="fas fa-images"></i></div>
+            <h3 class="tool-title">Media Vault</h3>
+            <p class="tool-description">Upload images, videos, and multimedia resources for training and operations.</p>
+            <input type="file" multiple accept=".jpg,.jpeg,.png,.gif,.mp4,.mov,.avi" style="margin-top: 1rem; padding: 0.5rem; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text-primary); width: 100%;">
+          </div>
+        </div>
+      </section>
+    </main>
   </div>
 
-  <!-- JavaScript for Mission Reference -->
   <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const missionRefDropdown = document.getElementById('mission-ref-dropdown');
-      const outputFileLink = document.getElementById('output-file-link');
+    function generateReference() {
+      const dropdown = document.getElementById('referenceDropdown');
+      const selectedValue = dropdown.value;
       
-      // Update output file link when dropdown changes
-      missionRefDropdown.addEventListener('change', function() {
-        const selectedValue = this.value;
-        if (selectedValue) {
-          outputFileLink.href = selectedValue;
-          outputFileLink.textContent = 'Open ' + selectedValue;
-          outputFileLink.style.opacity = '1';
-        } else {
-          outputFileLink.href = '#';
-          outputFileLink.textContent = 'Output File';
-          outputFileLink.style.opacity = '0.5';
-        }
-      });
+      if (!selectedValue) {
+        alert('Please select a reference type first.');
+        return;
+      }
       
-      // Vault drag and drop functionality
-      const vaults = document.querySelectorAll('.dark-vault');
+      // Generate a reference link based on selection
+      const baseUrl = 'https://smxkits-references.com/';
+      const referenceUrl = baseUrl + selectedValue;
       
-      vaults.forEach(vault => {
-        vault.addEventListener('dragover', e => {
-          e.preventDefault();
-          vault.style.borderColor = '#3b82f6';
-          vault.style.backgroundColor = 'rgba(30, 58, 138, 0.3)';
-        });
-        
-        vault.addEventListener('dragleave', e => {
-          e.preventDefault();
-          vault.style.borderColor = '#475569';
-          vault.style.backgroundColor = 'rgba(15, 23, 42, 0.8)';
-        });
-        
-        vault.addEventListener('drop', e => {
-          e.preventDefault();
-          vault.style.borderColor = '#475569';
-          vault.style.backgroundColor = 'rgba(15, 23, 42, 0.8)';
-          
-          // Here you would typically handle file uploads
-          // For demo purposes, we'll just show an alert
-          const files = e.dataTransfer.files;
-          if (files.length > 0) {
-            alert(`${files.length} file(s) selected for upload to ${vault.id}`);
-          }
-        });
-      });
-    });
+      // Open in new tab
+      window.open(referenceUrl, '_blank');
+    }
+    
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      localStorage.removeItem('userName');
+      localStorage.removeItem('classId');
+      window.location.replace('/login.html');
+    }
   </script>
 </body>
 </html>
