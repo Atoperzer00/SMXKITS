@@ -450,6 +450,26 @@ io.on('connection', socket => {
     }
   });
   
+  // WebRTC Stream Control - Instructor started streaming
+  socket.on('instructor-started-webrtc', (data) => {
+    const { classId, mediaType } = data;
+    console.log(`🔴 Instructor started WebRTC streaming in class ${classId}: ${mediaType}`);
+    
+    // Notify all students in the class
+    io.to(`webrtc:${classId}`).emit('instructor-started-webrtc', {
+      mediaType: mediaType
+    });
+  });
+  
+  // WebRTC Stream Control - Instructor stopped streaming
+  socket.on('instructor-stopped-webrtc', (data) => {
+    const { classId } = data;
+    console.log(`⏹️ Instructor stopped WebRTC streaming in class ${classId}`);
+    
+    // Notify all students in the class
+    io.to(`webrtc:${classId}`).emit('instructor-stopped-webrtc', {});
+  });
+  
   // Join stream room
   socket.on('join-stream', async (streamKey) => {
     console.log('🔌 Student attempting to join stream with key:', streamKey);
