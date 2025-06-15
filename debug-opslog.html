@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpsLog Debug</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #1e1e1e;
+            color: white;
+        }
+        .debug-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #333;
+            border-radius: 8px;
+        }
+        .success { border-color: #22c55e; }
+        .error { border-color: #ef4444; }
+        .warning { border-color: #ff9800; }
+        button {
+            background: #22c55e;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #28dd6c;
+        }
+        #console-output {
+            background: #000;
+            color: #0f0;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #333;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>OpsLog Debug Tool</h1>
+    
+    <div class="debug-section">
+        <h2>1. Console Output Monitor</h2>
+        <p>This will capture console messages from the OpsLog page:</p>
+        <div id="console-output">Waiting for console messages...</div>
+        <button onclick="clearConsole()">Clear Console</button>
+    </div>
+    
+    <div class="debug-section">
+        <h2>2. OpsLog Page Test</h2>
+        <p>The OpsLog page will be loaded below. Check the console output above for any errors:</p>
+        <button onclick="reloadOpsLog()">Reload OpsLog</button>
+        <button onclick="testButtons()">Test Button Clicks</button>
+        <iframe id="opslog-frame" src="/OpsLog.html"></iframe>
+    </div>
+    
+    <script>
+        const consoleOutput = document.getElementById('console-output');
+        const opslogFrame = document.getElementById('opslog-frame');
+        
+        // Override console methods to capture output
+        const originalConsole = {
+            log: console.log,
+            error: console.error,
+            warn: console.warn,
+            info: console.info
+        };
+        
+        function logToOutput(type, ...args) {
+            const timestamp = new Date().toLocaleTimeString();
+            const message = args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+            ).join(' ');
+            
+            const color = {
+                'log': '#0f0',
+                'error': '#f00',
+                'warn': '#ff0',
+                'info': '#0ff'
+            }[type] || '#0f0';
+            
+            consoleOutput.innerHTML += `<span style="color: ${color}">[${timestamp}] ${type.toUpperCase()}: ${message}</span>\n`;
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+            
+            // Also call original console method
+            originalConsole[type](...args);
+        }
+        
+        console.log = (...args) => logToOutput('log', ...args);
+        console.error = (...args) => logToOutput('error', ...args);
+        console.warn = (...args) => logToOutput('warn', ...args);
+        console.info = (...args) => logToOutput('info', ...args);
+        
+        function clearConsole() {
+            consoleOutput.innerHTML = 'Console cleared...\n';
+        }
+        
+        function reloadOpsLog() {
+            console.log('Reloading OpsLog iframe...');
+            opslogFrame.src = opslogFrame.src;
+        }
+        
+        function testButtons() {
+            console.log('Testing button functionality in OpsLog...');
+            
+            try {
+                const frameDoc = opslogFrame.contentDocument || opslogFrame.contentWindow.document;
+                
+                // Test if we can access the frame content
+                if (!frameDoc) {
+                    console.error('Cannot access iframe content - may be cross-origin restriction');
+                    return;
+                }
+                
+                // Look for buttons in the frame
+                const buttons = frameDoc.querySelectorAll('button');
+                console.log(`Found ${buttons.length} buttons in OpsLog`);
+                
+                buttons.forEach((btn, index) => {
+                    const id = btn.id || `button-${index}`;
+                    const text = btn.textContent.trim().substring(0, 20);
+                    const disabled = btn.disabled;
+                    console.log(`Button ${index + 1}: ID="${id}", Text="${text}", Disabled=${disabled}`);
+                });
+                
+                // Try to find specific buttons
+                const testButtons = ['dashboardBtn', 'joinRoomBtn', 'logoutBtn', 'editCalloutBtn', 'viewHistoryBtn'];
+                testButtons.forEach(btnId => {
+                    const btn = frameDoc.getElementById(btnId);
+                    if (btn) {
+                        console.log(`✓ Found ${btnId}: enabled=${!btn.disabled}, visible=${btn.offsetParent !== null}`);
+                    } else {
+                        console.warn(`⚠ Missing ${btnId}`);
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Error testing buttons:', error.message);
+            }
+        }
+        
+        // Monitor iframe load events
+        opslogFrame.addEventListener('load', function() {
+            console.log('OpsLog iframe loaded successfully');
+            
+            // Try to monitor console messages from the iframe
+            try {
+                const frameWindow = opslogFrame.contentWindow;
+                if (frameWindow && frameWindow.console) {
+                    // Override iframe console methods
+                    const frameConsole = frameWindow.console;
+                    
+                    ['log', 'error', 'warn', 'info'].forEach(method => {
+                        const original = frameConsole[method];
+                        frameConsole[method] = function(...args) {
+                            logToOutput(method, '[IFRAME]', ...args);
+                            return original.apply(this, args);
+                        };
+                    });
+                    
+                    console.log('Successfully hooked into iframe console');
+                } else {
+                    console.warn('Cannot access iframe console - cross-origin restriction');
+                }
+            } catch (error) {
+                console.warn('Cannot hook iframe console:', error.message);
+            }
+        });
+        
+        opslogFrame.addEventListener('error', function() {
+            console.error('Error loading OpsLog iframe');
+        });
+        
+        // Initial load message
+        console.log('Debug tool initialized');
+        console.log('Loading OpsLog in iframe...');
+    </script>
+</body>
+</html>

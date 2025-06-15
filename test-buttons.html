@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Button Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #1e1e1e;
+            color: white;
+        }
+        .test-button {
+            background: #22c55e;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+            font-size: 16px;
+        }
+        .test-button:hover {
+            background: #28dd6c;
+        }
+        .test-button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        #results {
+            margin-top: 20px;
+            padding: 10px;
+            background: #2a2a2a;
+            border-radius: 5px;
+            min-height: 200px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Button Click Test</h1>
+    <p>Testing various button click scenarios:</p>
+    
+    <button class="test-button" onclick="testBasicClick()">Basic Click Test</button>
+    <button class="test-button" onclick="testEventListener()">Event Listener Test</button>
+    <button class="test-button" onclick="testDynamicButton()">Dynamic Button Test</button>
+    <button class="test-button" onclick="testAsyncFunction()">Async Function Test</button>
+    <button class="test-button" onclick="testFormSubmit()">Form Submit Test</button>
+    <button class="test-button" onclick="openOpsLog()">Open OpsLog</button>
+    
+    <div id="results"></div>
+    
+    <script>
+        const results = document.getElementById('results');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'success' ? '#22c55e' : type === 'error' ? '#ef4444' : '#ffffff';
+            results.innerHTML += `<div style="color: ${color}; margin: 5px 0;">[${timestamp}] ${message}</div>`;
+            results.scrollTop = results.scrollHeight;
+        }
+        
+        function testBasicClick() {
+            log('✓ Basic click test - onclick attribute working', 'success');
+        }
+        
+        function testEventListener() {
+            log('Testing event listener...', 'info');
+            const btn = document.createElement('button');
+            btn.textContent = 'Dynamic Test Button';
+            btn.className = 'test-button';
+            btn.addEventListener('click', function() {
+                log('✓ Event listener test - addEventListener working', 'success');
+                btn.remove();
+            });
+            document.body.appendChild(btn);
+            log('Dynamic button created - click it to test event listener', 'info');
+        }
+        
+        function testDynamicButton() {
+            log('Testing dynamic button creation...', 'info');
+            const btn = document.createElement('button');
+            btn.textContent = 'Click Me (Dynamic)';
+            btn.className = 'test-button';
+            btn.onclick = function() {
+                log('✓ Dynamic button test - onclick property working', 'success');
+                btn.remove();
+            };
+            document.body.appendChild(btn);
+            log('Dynamic button with onclick property created', 'info');
+        }
+        
+        async function testAsyncFunction() {
+            log('Testing async function...', 'info');
+            try {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                log('✓ Async function test - async/await working', 'success');
+            } catch (error) {
+                log('✗ Async function test failed: ' + error.message, 'error');
+            }
+        }
+        
+        function testFormSubmit() {
+            log('Testing form submission...', 'info');
+            const form = document.createElement('form');
+            form.innerHTML = `
+                <input type="text" name="test" value="test value" style="margin: 5px;">
+                <button type="submit" class="test-button">Submit Test</button>
+            `;
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                log('✓ Form submit test - form submission working', 'success');
+                form.remove();
+            });
+            document.body.appendChild(form);
+            log('Test form created - submit it to test form handling', 'info');
+        }
+        
+        function openOpsLog() {
+            log('Opening OpsLog.html in new window...', 'info');
+            try {
+                const newWindow = window.open('/OpsLog.html', '_blank');
+                if (newWindow) {
+                    log('✓ OpsLog opened successfully', 'success');
+                } else {
+                    log('⚠ OpsLog window may have been blocked by popup blocker', 'error');
+                }
+            } catch (error) {
+                log('✗ Error opening OpsLog: ' + error.message, 'error');
+            }
+        }
+        
+        // Test DOM ready state
+        document.addEventListener('DOMContentLoaded', function() {
+            log('DOM Content Loaded event fired', 'success');
+        });
+        
+        // Test if page is already loaded
+        if (document.readyState === 'complete') {
+            log('Document ready state: complete', 'success');
+        } else if (document.readyState === 'interactive') {
+            log('Document ready state: interactive', 'info');
+        } else {
+            log('Document ready state: loading', 'info');
+        }
+        
+        // Auto-run some tests
+        window.addEventListener('load', function() {
+            log('Window load event fired', 'success');
+            log('All tests ready - click buttons above to test functionality', 'info');
+        });
+    </script>
+</body>
+</html>

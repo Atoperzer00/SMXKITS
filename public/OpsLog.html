@@ -886,6 +886,13 @@
     <aside class="sidebar">
       <div class="resize-handle" id="sidebar-resize-handle"></div>
       <div class="logo">SMXKITS</div>
+      
+      <!-- Navigation buttons -->
+      <div class="nav">
+        <button id="editCalloutBtn" class="nav-btn" disabled>Edit Recent Callout</button>
+        <button id="viewHistoryBtn" class="nav-btn" disabled>View History</button>
+      </div>
+      
       <div class="divider"></div>
 
       <!-- Callout Form moved to sidebar -->
@@ -2233,20 +2240,49 @@ createFollowBubble.addEventListener('drop', (e) => {
   document.addEventListener('DOMContentLoaded', function() {
     console.log("DOM loaded - initializing event handlers");
     
+    // Debug: Check if all required elements exist
+    const requiredElements = [
+      'dashboardBtn', 'joinRoomBtn', 'logoutBtn', 'editCalloutBtn', 'viewHistoryBtn',
+      'closeRoomModalBtn', 'joinRoomForm', 'joinRoomButton', 'logForm', 'activityTextarea'
+    ];
+    
+    requiredElements.forEach(id => {
+      const element = document.getElementById(id);
+      if (element) {
+        console.log(`✓ Found element: ${id}`);
+      } else {
+        console.warn(`⚠ Missing element: ${id}`);
+      }
+    });
+    
     // Initialize sidebar resize functionality
     initSidebarResize();
     
     // Dashboard button (top bar)
     const dashboardBtn = document.getElementById('dashboardBtn');
     if (dashboardBtn) {
-      dashboardBtn.addEventListener('click', goDashboard);
+      dashboardBtn.addEventListener('click', function(e) {
+        console.log('Dashboard button clicked');
+        try {
+          goDashboard();
+        } catch (error) {
+          console.error('Error in dashboard button handler:', error);
+        }
+      });
       console.log("Dashboard button handler attached");
     }
     
     // Join Room button (top bar)
     const joinRoomBtn = document.getElementById('joinRoomBtn');
     if (joinRoomBtn) {
-      joinRoomBtn.addEventListener('click', openRoomModal);
+      joinRoomBtn.addEventListener('click', function(e) {
+        console.log('Join Room button clicked');
+        try {
+          openRoomModal();
+        } catch (error) {
+          console.error('Error in join room button handler:', error);
+        }
+      });
       console.log("Join Room button handler attached");
     }
     
@@ -2734,9 +2770,10 @@ createFollowBubble.addEventListener('drop', (e) => {
       // Handle Enter key and blur to save
       function saveFollowId() {
         const newId = followIdEdit.value.trim().toUpperCase();
-        if (newId && newId.length <= 10) // Validate length
+        if (newId && newId.length <= 10) { // Validate length
           followIdHidden.value = newId;
           followIdDisplay.textContent = newId;
+        }
         
         // Hide input, show display
         followIdEdit.style.display = 'none';
@@ -2844,10 +2881,7 @@ createFollowBubble.addEventListener('drop', (e) => {
     console.log("Sidebar resize functionality initialized");
   }
   
-  // Initialize sidebar resize functionality when the page loads
-  document.addEventListener('DOMContentLoaded', function() {
-    initSidebarResize();
-  });
+  // Note: initSidebarResize() is already called in the main DOMContentLoaded handler above
   
   // Handle dropping a callout onto the form
   function handleFormDrop(event) {

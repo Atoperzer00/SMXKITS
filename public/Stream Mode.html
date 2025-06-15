@@ -399,6 +399,61 @@
       align-items: center;
     }
 
+    /* Stream Source Tabs */
+    .stream-source-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+    .source-tab {
+      background: var(--control-bg);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.5em 1.2em;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex: 1;
+    }
+    .source-tab:hover {
+      background: var(--panel-bg);
+      color: var(--text-main);
+    }
+    .source-tab.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    
+    /* Live Controls */
+    .live-controls {
+      position: absolute;
+      bottom: 15px;
+      left: 15px;
+      right: 15px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      background: rgba(16, 24, 36, 0.9);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 12px;
+    }
+    .live-controls .control-btn {
+      font-size: 0.9rem;
+      padding: 0.5em 1.2em;
+    }
+    
+    /* Live video styling */
+    #liveVideo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: var(--rounded);
+    }
+
     @media (max-width: 1000px) {
       .main-panel { flex-direction: column; gap: 18px;}
       .right-panel { max-width: 100%;}
@@ -406,6 +461,8 @@
     @media (max-width: 700px) {
       .left-panel, .right-panel { min-width: unset; padding: 14px 5vw;}
       .container { padding: 18px 0 28px 0;}
+      .stream-source-tabs { flex-direction: column; }
+      .live-controls { flex-direction: column; }
     }
   </style>
 </head>
@@ -428,14 +485,27 @@
           </select>
         </div>
         <div class="panel-section">
+          <div class="section-title">Stream Source</div>
+          <div class="stream-source-tabs">
+            <button class="source-tab active" id="fileTab" onclick="switchToFileMode()">📁 File Upload</button>
+            <button class="source-tab" id="liveTab" onclick="switchToLiveMode()">🔴 Live Camera/Screen</button>
+          </div>
+        </div>
+        <div class="panel-section">
           <div class="section-title">Stream Preview</div>
           <div class="video-preview" id="videoPreview">
             <div class="placeholder"></div>
             <video id="previewVideo" style="display:none;" controls></video>
+            <video id="liveVideo" style="display:none;" autoplay muted playsinline></video>
             <div class="video-overlay" id="videoOverlay" style="display:none;">
               <div class="play-button" id="playButton">▶</div>
             </div>
             <div class="video-ready" id="videoReady" style="display:none;">Ready to Stream</div>
+            <div class="live-controls" id="liveControls" style="display:none;">
+              <button class="control-btn" id="startCameraBtn">📹 Start Camera</button>
+              <button class="control-btn" id="startScreenBtn">🖥️ Share Screen</button>
+              <button class="control-btn stop" id="stopMediaBtn" style="display:none;">⏹️ Stop Media</button>
+            </div>
           </div>
         </div>
         <div class="controls-row">
@@ -482,11 +552,20 @@
       </div>
     </div>
   </div>
+  <script src="/socket.io/socket.io.js"></script>
   <script>
     // --- Configuration ---
     const apiBaseUrl = '/api';
     let currentClassId = null;
     let authToken = localStorage.getItem('token');
+    
+    // --- WebRTC Variables ---
+    let localStream = null;
+    let socket = null;
+    let peerConnections = new Map();
+    let isLiveMode = false;
+    let isStreaming = false;
+    let streamingMode = 'file'; // 'file' or 'webrtc'
     
     // --- Load classes on page load ---
     async function loadClasses() {
@@ -530,6 +609,12 @@
     classSelect.addEventListener('change', () => {
       currentClassId = classSelect.value;
       classLabel.textContent = classSelect.options[classSelect.selectedIndex].text;
+      
+      // If WebRTC socket is connected and we're in live mode, join the new class room
+      if (socket && isLiveMode && currentClassId) {
+        socket.emit('instructor-join-class', { classId: currentClassId });
+        console.log('🏫 Joined WebRTC class room:', currentClassId);
+      }
     });
 
     // --- Video Preview controls (stub/demo for now) ---
@@ -997,6 +1082,307 @@
         console.error('Error fetching viewer count:', error);
       }
     }, 1800);
+
+    // --- WebRTC Functions ---
+    function switchToFileMode() {
+      isLiveMode = false;
+      streamingMode = 'file';
+      
+      document.getElementById('fileTab').classList.add('active');
+      document.getElementById('liveTab').classList.remove('active');
+      
+      document.getElementById('liveVideo').style.display = 'none';
+      document.getElementById('liveControls').style.display = 'none';
+      
+      // Show file preview if a file is loaded, otherwise show placeholder
+      const previewVideo = document.getElementById('previewVideo');
+      const placeholder = document.querySelector('.video-preview .placeholder');
+      
+      if (window.currentLocalVideo && window.currentLocalVideo.url) {
+        previewVideo.style.display = 'block';
+        placeholder.style.display = 'none';
+      } else {
+        previewVideo.style.display = 'none';
+        placeholder.style.display = 'flex';
+      }
+      
+      // Stop any live stream
+      if (localStream) {
+        stopLiveMedia();
+      }
+      
+      console.log('🔄 Switched to file upload mode');
+    }
+    
+    function switchToLiveMode() {
+      isLiveMode = true;
+      streamingMode = 'webrtc';
+      
+      document.getElementById('liveTab').classList.add('active');
+      document.getElementById('fileTab').classList.remove('active');
+      
+      document.getElementById('previewVideo').style.display = 'none';
+      document.getElementById('liveVideo').style.display = 'block';
+      document.getElementById('liveControls').style.display = 'flex';
+      
+      // Initialize Socket.IO for WebRTC
+      if (!socket) {
+        initializeWebRTCSocket();
+      }
+      
+      console.log('🔄 Switched to live streaming mode');
+    }
+    
+    function initializeWebRTCSocket() {
+      socket = io();
+      
+      socket.on('connect', () => {
+        console.log('🔌 WebRTC Socket connected');
+        if (currentClassId) {
+          socket.emit('instructor-join-class', { classId: currentClassId });
+        }
+      });
+      
+      socket.on('disconnect', () => {
+        console.log('❌ WebRTC Socket disconnected');
+      });
+      
+      socket.on('student-joined', (data) => {
+        console.log('👤 Student joined:', data.studentId);
+        if (isStreaming && localStream) {
+          createPeerConnection(data.studentId);
+        }
+      });
+      
+      socket.on('student-left', (data) => {
+        console.log('👋 Student left:', data.studentId);
+        if (peerConnections.has(data.studentId)) {
+          peerConnections.get(data.studentId).close();
+          peerConnections.delete(data.studentId);
+        }
+      });
+      
+      socket.on('webrtc-answer', async (data) => {
+        console.log('📡 Received answer from student:', data.from);
+        const pc = peerConnections.get(data.from);
+        if (pc) {
+          await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+        }
+      });
+      
+      socket.on('webrtc-ice-candidate', async (data) => {
+        console.log('🧊 Received ICE candidate from student:', data.from);
+        const pc = peerConnections.get(data.from);
+        if (pc) {
+          await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+        }
+      });
+    }
+    
+    async function startCamera() {
+      try {
+        console.log('📹 Starting camera...');
+        localStream = await navigator.mediaDevices.getUserMedia({
+          video: { width: 1280, height: 720 },
+          audio: true
+        });
+        
+        document.getElementById('liveVideo').srcObject = localStream;
+        document.getElementById('startCameraBtn').style.display = 'none';
+        document.getElementById('startScreenBtn').style.display = 'none';
+        document.getElementById('stopMediaBtn').style.display = 'inline-block';
+        
+        console.log('✅ Camera started successfully');
+      } catch (error) {
+        console.error('❌ Camera error:', error);
+        alert('Failed to access camera. Please check permissions.');
+      }
+    }
+    
+    async function startScreen() {
+      try {
+        console.log('🖥️ Starting screen share...');
+        localStream = await navigator.mediaDevices.getDisplayMedia({
+          video: { width: 1920, height: 1080 },
+          audio: true
+        });
+        
+        document.getElementById('liveVideo').srcObject = localStream;
+        document.getElementById('startCameraBtn').style.display = 'none';
+        document.getElementById('startScreenBtn').style.display = 'none';
+        document.getElementById('stopMediaBtn').style.display = 'inline-block';
+        
+        // Handle screen share end
+        localStream.getVideoTracks()[0].addEventListener('ended', () => {
+          console.log('🖥️ Screen share ended by user');
+          stopLiveMedia();
+        });
+        
+        console.log('✅ Screen share started successfully');
+      } catch (error) {
+        console.error('❌ Screen share error:', error);
+        alert('Failed to start screen share. Please check permissions.');
+      }
+    }
+    
+    function stopLiveMedia() {
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+        document.getElementById('liveVideo').srcObject = null;
+        
+        document.getElementById('startCameraBtn').style.display = 'inline-block';
+        document.getElementById('startScreenBtn').style.display = 'inline-block';
+        document.getElementById('stopMediaBtn').style.display = 'none';
+        
+        if (isStreaming) {
+          stopLiveStream();
+        }
+        
+        console.log('⏹️ Live media stopped');
+      }
+    }
+    
+    async function startLiveStream() {
+      if (!currentClassId) {
+        alert('Please select a class first');
+        return;
+      }
+      
+      if (!localStream) {
+        alert('Please start camera or screen share first');
+        return;
+      }
+      
+      try {
+        console.log('🔴 Starting WebRTC live stream...');
+        isStreaming = true;
+        
+        // Update UI
+        document.getElementById('streamStatus').textContent = 'LIVE';
+        document.getElementById('streamStatus').className = 'status-badge status-live';
+        document.getElementById('streamStatusInfo').textContent = 'Live (WebRTC)';
+        
+        // Notify server and students
+        socket.emit('instructor-start-webrtc', { 
+          classId: currentClassId,
+          mediaType: localStream.getVideoTracks()[0].label.includes('screen') ? 'Screen Share' : 'Camera'
+        });
+        
+        console.log('✅ WebRTC live stream started');
+      } catch (error) {
+        console.error('❌ WebRTC stream start error:', error);
+        isStreaming = false;
+        document.getElementById('streamStatus').textContent = 'ERROR';
+        document.getElementById('streamStatus').className = 'status-badge status-offline';
+      }
+    }
+    
+    function stopLiveStream() {
+      console.log('⏹️ Stopping WebRTC live stream...');
+      isStreaming = false;
+      
+      // Update UI
+      document.getElementById('streamStatus').textContent = 'OFFLINE';
+      document.getElementById('streamStatus').className = 'status-badge status-offline';
+      document.getElementById('streamStatusInfo').textContent = 'Offline';
+      
+      // Close all peer connections
+      peerConnections.forEach((pc, studentId) => {
+        pc.close();
+      });
+      peerConnections.clear();
+      
+      // Notify server and students
+      if (currentClassId && socket) {
+        socket.emit('instructor-stop-webrtc', { classId: currentClassId });
+      }
+      
+      console.log('✅ WebRTC live stream stopped');
+    }
+    
+    async function createPeerConnection(studentId) {
+      console.log('🔗 Creating peer connection for student:', studentId);
+      
+      const pc = new RTCPeerConnection({
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' }
+        ]
+      });
+      
+      // Add local stream to peer connection
+      if (localStream) {
+        localStream.getTracks().forEach(track => {
+          pc.addTrack(track, localStream);
+        });
+      }
+      
+      // Handle ICE candidates
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          socket.emit('webrtc-ice-candidate', {
+            to: studentId,
+            candidate: event.candidate
+          });
+        }
+      };
+      
+      // Handle connection state changes
+      pc.onconnectionstatechange = () => {
+        console.log(`🔗 Connection state with ${studentId}: ${pc.connectionState}`);
+      };
+      
+      peerConnections.set(studentId, pc);
+      
+      // Create and send offer
+      try {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        
+        socket.emit('webrtc-offer', {
+          to: studentId,
+          offer: offer
+        });
+        
+        console.log(`📤 Sent offer to student: ${studentId}`);
+      } catch (error) {
+        console.error(`❌ Error creating offer for ${studentId}:`, error);
+      }
+    }
+    
+    // --- Event Listeners for WebRTC ---
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('startCameraBtn').addEventListener('click', startCamera);
+      document.getElementById('startScreenBtn').addEventListener('click', startScreen);
+      document.getElementById('stopMediaBtn').addEventListener('click', stopLiveMedia);
+      
+      // Modify existing Go Live button to handle both modes
+      const goLiveBtn = document.getElementById('goLiveBtn');
+      const originalGoLive = goLiveBtn.onclick;
+      
+      goLiveBtn.onclick = function() {
+        if (streamingMode === 'webrtc') {
+          startLiveStream();
+        } else {
+          // Call original file-based streaming function
+          if (originalGoLive) originalGoLive();
+        }
+      };
+      
+      // Modify existing Stop button to handle both modes
+      const stopBtn = document.getElementById('stopBtn');
+      const originalStop = stopBtn.onclick;
+      
+      stopBtn.onclick = function() {
+        if (streamingMode === 'webrtc') {
+          stopLiveStream();
+        } else {
+          // Call original file-based stop function
+          if (originalStop) originalStop();
+        }
+      };
+    });
 
     // --- Initialize page ---
     document.addEventListener('DOMContentLoaded', () => {
