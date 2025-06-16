@@ -1115,6 +1115,9 @@
 
           // Add visual feedback
           moduleDiv.style.background = isHidden ? 'var(--glass-bg)' : 'var(--card-gradient)';
+
+          // Debugging log
+          console.log(`Toggled module: ${moduleHeader.textContent}, Hidden: ${isHidden}`);
         };
         
         moduleDiv.appendChild(moduleHeader);

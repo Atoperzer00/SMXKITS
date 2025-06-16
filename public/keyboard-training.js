@@ -174,3 +174,36 @@ function retryTyping() {
   hideResultsOverlay();
   if (typeof reloadCurrentTypingTest === 'function') reloadCurrentTypingTest();
 }
+
+// Load practices from localStorage and render dropdown
+function loadPracticesDropdown() {
+  const modules = JSON.parse(localStorage.getItem('smx_typing_tests') || '[]');
+  const dropdown = document.getElementById('moduleDropdown');
+
+  if (!dropdown) {
+    console.error('Dropdown element not found');
+    return;
+  }
+
+  dropdown.innerHTML = ''; // Clear existing options
+
+  modules.forEach((practices, moduleIdx) => {
+    const moduleOption = document.createElement('optgroup');
+    moduleOption.label = `Module ${moduleIdx + 1}`;
+
+    practices.forEach((practice, practiceIdx) => {
+      const practiceOption = document.createElement('option');
+      practiceOption.value = `${moduleIdx}-${practiceIdx}`;
+      practiceOption.textContent = `Practice ${practiceIdx + 1}: ${practice.substring(0, 30)}...`;
+      moduleOption.appendChild(practiceOption);
+    });
+
+    dropdown.appendChild(moduleOption);
+  });
+
+  // Debugging log
+  console.log('Dropdown populated with practices:', modules);
+}
+
+// Call loadPracticesDropdown on page load
+window.addEventListener('DOMContentLoaded', loadPracticesDropdown);
