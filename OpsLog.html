@@ -692,6 +692,29 @@
               Save Entry
             </button>
           </form>
+
+          <!-- Follow Container -->
+          <div class="follow-container" style="display: none; margin-top: 1rem;">
+            <div class="follow-form">
+              <input type="text" id="followTargetName" placeholder="Enter operator name to follow" class="form-input">
+              <select id="followType" class="form-select">
+                <option value="">Select follow type</option>
+                <option value="shadow">Shadow Follow - Copy all actions</option>
+                <option value="mirror">Mirror Follow - Sync log entries</option>
+                <option value="observe">Observe Follow - View only</option>
+              </select>
+              <button class="control-btn primary" onclick="createFollow()">
+                <i class="fas fa-plus"></i>
+                Create Follow
+              </button>
+            </div>
+            <div id="activeFollows" class="active-follows">
+              <h4>Active Follows</h4>
+              <div class="follow-list">
+                <!-- Active follows will be populated here -->
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Log Entries Display -->
@@ -859,8 +882,8 @@
                 <option value="mirror">Mirror Follow - Sync log entries</option>
                 <option value="observe">Observe Follow - View only</option>
               </select>
-              <button class="room-btn room-btn-follow" onclick="createFollow()">
-                <i class="fas fa-eye"></i> Create Follow
+              <button class="room-btn room-btn-primary" onclick="createFollow()">
+                <i class="fas fa-plus"></i> Create Follow
               </button>
             </div>
             <div id="activeFollows" class="active-follows">
@@ -1706,6 +1729,7 @@
 
       alert(`Successfully joined room "${roomName}"!`);
       console.log('Joined room:', room);
+      showRoomModal();
     }
 
     function quickJoinRoom(roomName, hasPassword = false) {
