@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ops Log - SMX Operations Logging</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --fg: #f0f0f0;
+      --accent: #70b8ff;
+      --track: #1e293b;
+      --hover: rgba(255, 255, 255, 0.1);
+      --glass-bg: rgba(30, 41, 59, 0.8);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --text-primary: #f0f0f0;
+      --text-secondary: rgba(240, 240, 240, 0.7);
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* Navbar Styles */
+    .navbar {
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 24px;
+      margin: 24px;
+      padding: 1rem 0;
+      flex-shrink: 0;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+    }
+    
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+    
+    .navbar-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+      color: var(--fg);
+      font-size: 1.5rem;
+      font-weight: bold;
+      text-decoration: none;
+    }
+    
+    .logo span {
+      margin-right: 10px;
+    }
+    
+    .nav-buttons {
+      display: flex;
+      gap: 1rem;
+    }
+    
+    .btn {
+      font-size: 1rem;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      color: var(--fg);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 0.75rem 1.5rem;
+      border-radius: 12px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    
+    .btn:hover {
+      background: rgba(112, 184, 255, 0.2);
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(112, 184, 255, 0.3);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #3b82f6);
+      border-color: var(--accent);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #3b82f6, var(--accent));
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(112, 184, 255, 0.6);
+    }
+    
+    /* Main Content Styles */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 0 24px 24px 24px;
+    }
+    
+    .content-wrapper {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--glass-border);
+    }
+    
+    /* Page Header */
+    .page-header {
+      padding: 2rem;
+      background: rgba(0, 0, 0, 0.3);
+      border-bottom: 1px solid var(--glass-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    
+    .header-left {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .page-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), #3b82f6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .page-subtitle {
+      font-size: 1rem;
+      color: var(--text-secondary);
+    }
+    
+    .header-controls {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    
+    .control-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 0.75rem 1rem;
+      color: var(--fg);
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .control-btn:hover {
+      background: rgba(112, 184, 255, 0.2);
+      border-color: var(--accent);
+    }
+    
+    .control-btn.primary {
+      background: linear-gradient(135deg, var(--accent), #3b82f6);
+      border-color: var(--accent);
+      color: white;
+    }
+    
+    .control-btn.primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(112, 184, 255, 0.4);
+    }
+    
+    /* Operations Log Content */
+    .ops-content {
+      flex: 1;
+      display: flex;
+      gap: 1rem;
+      padding: 2rem;
+      min-height: 60vh;
+    }
+    
+    /* Log Entry Form */
+    .log-form-section {
+      width: 400px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 16px;
+      padding: 1.5rem;
+      border: 1px solid var(--glass-border);
+      height: fit-content;
+    }
+    
+    .form-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    
+    .form-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    
+    .form-input,
+    .form-select,
+    .form-textarea {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 0.75rem;
+      color: var(--fg);
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+    
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(112, 184, 255, 0.1);
+    }
+    
+    .form-textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+    
+    .form-input::placeholder,
+    .form-textarea::placeholder {
+      color: var(--text-secondary);
+    }
+    
+    /* Log Entries Display */
+    .log-display-section {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 16px;
+      padding: 1.5rem;
+      border: 1px solid var(--glass-border);
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .log-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--glass-border);
+    }
+    
+    .log-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .log-filters {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    
+    .filter-select {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--glass-border);
+      border-radius: 6px;
+      padding: 0.5rem;
+      color: var(--fg);
+      font-size: 0.8rem;
+    }
+    
+    .log-entries {
+      flex: 1;
+      overflow-y: auto;
+      max-height: 500px;
+    }
+    
+    .log-entry {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      transition: all 0.3s ease;
+    }
+    
+    .log-entry:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: var(--glass-border);
+    }
+    
+    .entry-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+    
+    .entry-meta {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+    
+    .entry-timestamp {
+      font-weight: 600;
+      color: var(--accent);
+    }
+    
+    .entry-operator {
+      background: rgba(112, 184, 255, 0.2);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+    }
+    
+    .entry-priority {
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    
+    .priority-high {
+      background: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+    }
+    
+    .priority-medium {
+      background: rgba(245, 158, 11, 0.2);
+      color: #fcd34d;
+    }
+    
+    .priority-low {
+      background: rgba(34, 197, 94, 0.2);
+      color: #86efac;
+    }
+    
+    .entry-content {
+      color: var(--fg);
+      line-height: 1.5;
+      margin-top: 0.5rem;
+    }
+    
+    /* Mission Links Section */
+    .mission-links-section {
+      padding: 3rem 2rem;
+      background: transparent;
+    }
+
+    .section-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 2rem;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      text-align: center;
+      justify-content: center;
+    }
+
+    .section-title::before {
+      content: '';
+      width: 4px;
+      height: 50px;
+      background: linear-gradient(135deg, var(--accent), #3b82f6);
+      border-radius: 2px;
+    }
+
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .tool-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 24px;
+      padding: 2.5rem;
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+    }
+
+    .tool-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, var(--accent), #3b82f6);
+      opacity: 0;
+      transition: all 0.3s ease;
+    }
+
+    .tool-card:hover::before {
+      opacity: 0.1;
+    }
+
+    .tool-card:hover {
+      transform: translateY(-15px) scale(1.03);
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+      border-color: rgba(112, 184, 255, 0.6);
+    }
+
+    .tool-icon {
+      font-size: 3.5rem;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(135deg, var(--accent), #3b82f6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      position: relative;
+      z-index: 1;
+      display: block;
+    }
+
+    .tool-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: var(--fg);
+      position: relative;
+      z-index: 1;
+    }
+
+    .tool-description {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.6;
+      position: relative;
+      z-index: 1;
+    }
+    
+    /* Custom scrollbar */
+    .log-entries::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .log-entries::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+    }
+
+    .log-entries::-webkit-scrollbar-thumb {
+      background: linear-gradient(90deg, var(--accent), #3b82f6);
+      border-radius: 4px;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .navbar {
+        margin: 12px;
+        padding: 0.75rem 0;
+      }
+      
+      .container {
+        padding: 0 1rem;
+      }
+      
+      .navbar-content {
+        flex-direction: column;
+        gap: 1rem;
+      }
+      
+      .nav-buttons {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      
+      .main-content {
+        padding: 0 12px 12px 12px;
+      }
+      
+      .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+      }
+      
+      .page-title {
+        font-size: 2rem;
+      }
+      
+      .ops-content {
+        flex-direction: column;
+        padding: 1rem;
+      }
+      
+      .log-form-section {
+        width: 100%;
+      }
+      
+      .header-controls {
+        width: 100%;
+        justify-content: flex-start;
+      }
+      
+      .mission-links-section {
+        padding: 2rem 1rem;
+      }
+      
+      .section-title {
+        font-size: 2rem;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      
+      .section-title::before {
+        width: 60px;
+        height: 4px;
+      }
+      
+      .tools-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+      
+      .tool-card {
+        padding: 2rem;
+      }
+      
+      .tool-icon {
+        font-size: 3rem;
+      }
+      
+      .tool-title {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="container">
+      <div class="navbar-content">
+        <a href="#" class="logo">
+          <span>📋</span>
+          Ops Log
+        </a>
+        <div class="nav-buttons">
+          <a href="smxstream-new.html" class="btn">SMX Stream</a>
+          <a href="kitcomm.html" class="btn">KitComm</a>
+          <a href="#" class="btn btn-primary">Ops Log</a>
+          <a href="track-point.html" class="btn">Track Point</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="content-wrapper">
+      <!-- Page Header -->
+      <div class="page-header">
+        <div class="header-left">
+          <h1 class="page-title">Operations Log</h1>
+          <p class="page-subtitle">Mission operations logging, activity tracking, and incident reporting</p>
+        </div>
+        <div class="header-controls">
+          <button class="control-btn" onclick="exportLog()">
+            <i class="fas fa-download"></i>
+            Export
+          </button>
+          <button class="control-btn" onclick="clearLog()">
+            <i class="fas fa-trash"></i>
+            Clear
+          </button>
+          <button class="control-btn primary" onclick="addLogEntry()">
+            <i class="fas fa-plus"></i>
+            New Entry
+          </button>
+        </div>
+      </div>
+
+      <!-- Operations Content -->
+      <div class="ops-content">
+        <!-- Log Entry Form -->
+        <div class="log-form-section">
+          <h3 class="form-title">
+            <i class="fas fa-edit"></i>
+            New Log Entry
+          </h3>
+          <form id="logEntryForm">
+            <div class="form-group">
+              <label class="form-label">Timestamp</label>
+              <input type="datetime-local" id="timestamp" class="form-input" required>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Operator</label>
+              <input type="text" id="operator" class="form-input" placeholder="Enter operator name" required>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Priority</label>
+              <select id="priority" class="form-select" required>
+                <option value="">Select priority</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Category</label>
+              <select id="category" class="form-select" required>
+                <option value="">Select category</option>
+                <option value="mission">Mission</option>
+                <option value="security">Security</option>
+                <option value="communication">Communication</option>
+                <option value="equipment">Equipment</option>
+                <option value="personnel">Personnel</option>
+                <option value="incident">Incident</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Description</label>
+              <textarea id="description" class="form-textarea" placeholder="Enter detailed description..." required></textarea>
+            </div>
+            
+            <button type="submit" class="control-btn primary" style="width: 100%;">
+              <i class="fas fa-save"></i>
+              Save Entry
+            </button>
+          </form>
+        </div>
+
+        <!-- Log Entries Display -->
+        <div class="log-display-section">
+          <div class="log-header">
+            <h3 class="log-title">
+              <i class="fas fa-list"></i>
+              Recent Entries
+            </h3>
+            <div class="log-filters">
+              <select class="filter-select" id="filterPriority" onchange="filterEntries()">
+                <option value="">All Priorities</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
+              <select class="filter-select" id="filterCategory" onchange="filterEntries()">
+                <option value="">All Categories</option>
+                <option value="mission">Mission</option>
+                <option value="security">Security</option>
+                <option value="communication">Communication</option>
+                <option value="equipment">Equipment</option>
+                <option value="personnel">Personnel</option>
+                <option value="incident">Incident</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="log-entries" id="logEntries">
+            <!-- Sample entries -->
+            <div class="log-entry">
+              <div class="entry-header">
+                <div class="entry-meta">
+                  <span class="entry-timestamp">2024-01-15 14:30:00</span>
+                  <span class="entry-operator">Operator Alpha</span>
+                  <span class="entry-priority priority-high">HIGH</span>
+                </div>
+              </div>
+              <div class="entry-content">
+                <strong>Security Alert:</strong> Unauthorized access attempt detected on secure network. Implementing countermeasures and notifying security team.
+              </div>
+            </div>
+            
+            <div class="log-entry">
+              <div class="entry-header">
+                <div class="entry-meta">
+                  <span class="entry-timestamp">2024-01-15 14:15:00</span>
+                  <span class="entry-operator">Operator Bravo</span>
+                  <span class="entry-priority priority-medium">MEDIUM</span>
+                </div>
+              </div>
+              <div class="entry-content">
+                <strong>Equipment Status:</strong> Communication array operating at 85% capacity. Scheduled maintenance required within 48 hours.
+              </div>
+            </div>
+            
+            <div class="log-entry">
+              <div class="entry-header">
+                <div class="entry-meta">
+                  <span class="entry-timestamp">2024-01-15 14:00:00</span>
+                  <span class="entry-operator">Operator Charlie</span>
+                  <span class="entry-priority priority-low">LOW</span>
+                </div>
+              </div>
+              <div class="entry-content">
+                <strong>Mission Update:</strong> Training exercise Alpha-7 completed successfully. All personnel accounted for and equipment secured.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mission Links Section -->
+  <div class="mission-links-section">
+    <div class="container">
+      <section>
+        <h2 class="section-title">
+          <i class="fas fa-globe"></i>
+          Mission Links
+        </h2>
+        <div class="tools-grid">
+          <div class="tool-card" onclick="window.open('kitcomm.html', '_blank')">
+            <div class="tool-icon"><i class="fas fa-comments"></i></div>
+            <h3 class="tool-title">KitComm</h3>
+            <p class="tool-description">Secure team communications, messaging, and coordination platform.</p>
+          </div>
+          
+          <div class="tool-card" onclick="window.open('smxstream-new.html', '_blank')">
+            <div class="tool-icon"><i class="fas fa-video"></i></div>
+            <h3 class="tool-title">SMX Stream</h3>
+            <p class="tool-description">Live training streams, recorded sessions, and real-time mission broadcasts.</p>
+          </div>
+          
+          <div class="tool-card" onclick="window.open('OpsLog.html', '_blank')">
+            <div class="tool-icon"><i class="fas fa-clipboard-list"></i></div>
+            <h3 class="tool-title">Drift</h3>
+            <p class="tool-description">Mission operations logging, activity tracking, and incident reporting.</p>
+          </div>
+          
+          <div class="tool-card" onclick="window.open('track-point.html', '_blank')">
+            <div class="tool-icon"><i class="fas fa-map-marked-alt"></i></div>
+            <h3 class="tool-title">Track Point</h3>
+            <p class="tool-description">Interactive mapping platform for tactical positioning and route planning.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    // Operations Log JavaScript
+    let logEntries = [];
+    
+    // Initialize with current timestamp
+    document.addEventListener('DOMContentLoaded', function() {
+      const now = new Date();
+      const timestamp = now.toISOString().slice(0, 16);
+      document.getElementById('timestamp').value = timestamp;
+      
+      // Set default operator from localStorage if available
+      const userName = localStorage.getItem('userName') || '';
+      if (userName) {
+        document.getElementById('operator').value = userName;
+      }
+      
+      console.log('Ops Log initialized');
+    });
+    
+    // Form submission
+    document.getElementById('logEntryForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const timestamp = document.getElementById('timestamp').value;
+      const operator = document.getElementById('operator').value;
+      const priority = document.getElementById('priority').value;
+      const category = document.getElementById('category').value;
+      const description = document.getElementById('description').value;
+      
+      if (!timestamp || !operator || !priority || !category || !description) {
+        alert('Please fill in all fields');
+        return;
+      }
+      
+      const entry = {
+        id: Date.now(),
+        timestamp: new Date(timestamp).toLocaleString(),
+        operator,
+        priority,
+        category,
+        description,
+        created: new Date()
+      };
+      
+      logEntries.unshift(entry); // Add to beginning of array
+      renderLogEntries();
+      
+      // Clear form
+      document.getElementById('description').value = '';
+      
+      // Update timestamp to current time
+      const now = new Date();
+      document.getElementById('timestamp').value = now.toISOString().slice(0, 16);
+      
+      console.log('New log entry added:', entry);
+    });
+    
+    // Render log entries
+    function renderLogEntries() {
+      const container = document.getElementById('logEntries');
+      const priorityFilter = document.getElementById('filterPriority').value;
+      const categoryFilter = document.getElementById('filterCategory').value;
+      
+      // Filter entries
+      let filteredEntries = logEntries;
+      if (priorityFilter) {
+        filteredEntries = filteredEntries.filter(entry => entry.priority === priorityFilter);
+      }
+      if (categoryFilter) {
+        filteredEntries = filteredEntries.filter(entry => entry.category === categoryFilter);
+      }
+      
+      // Clear existing sample entries on first real entry
+      if (logEntries.length > 0 && container.children.length > logEntries.length) {
+        container.innerHTML = '';
+      }
+      
+      // Render filtered entries
+      const entriesHTML = filteredEntries.map(entry => `
+        <div class="log-entry">
+          <div class="entry-header">
+            <div class="entry-meta">
+              <span class="entry-timestamp">${entry.timestamp}</span>
+              <span class="entry-operator">${entry.operator}</span>
+              <span class="entry-priority priority-${entry.priority}">${entry.priority.toUpperCase()}</span>
+            </div>
+          </div>
+          <div class="entry-content">
+            <strong>${entry.category.charAt(0).toUpperCase() + entry.category.slice(1)}:</strong> ${entry.description}
+          </div>
+        </div>
+      `).join('');
+      
+      if (logEntries.length > 0) {
+        container.innerHTML = entriesHTML;
+      }
+    }
+    
+    // Filter entries
+    function filterEntries() {
+      renderLogEntries();
+    }
+    
+    // Header control functions
+    function addLogEntry() {
+      document.getElementById('description').focus();
+    }
+    
+    function exportLog() {
+      if (logEntries.length === 0) {
+        alert('No entries to export');
+        return;
+      }
+      
+      const csvContent = "data:text/csv;charset=utf-8," 
+        + "Timestamp,Operator,Priority,Category,Description\n"
+        + logEntries.map(entry => 
+          `"${entry.timestamp}","${entry.operator}","${entry.priority}","${entry.category}","${entry.description}"`
+        ).join("\n");
+      
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `ops-log-${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      console.log('Log exported');
+    }
+    
+    function clearLog() {
+      if (logEntries.length === 0) {
+        alert('No entries to clear');
+        return;
+      }
+      
+      if (confirm('Are you sure you want to clear all log entries? This action cannot be undone.')) {
+        logEntries = [];
+        renderLogEntries();
+        
+        // Restore sample entries
+        location.reload();
+        
+        console.log('Log cleared');
+      }
+    }
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+      if (e.ctrlKey && e.key === 'n') {
+        e.preventDefault();
+        addLogEntry();
+      } else if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        document.getElementById('logEntryForm').dispatchEvent(new Event('submit'));
+      } else if (e.ctrlKey && e.key === 'e') {
+        e.preventDefault();
+        exportLog();
+      }
+    });
+  </script>
+</body>
+</html>

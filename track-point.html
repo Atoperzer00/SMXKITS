@@ -6,6 +6,8 @@
   <title>Track Point - SMX Mapping Platform</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css">
+  <link rel="stylesheet" href="public/TrackPoint/mapUtils.css">
   <style>
     :root {
       --bg: #0f172a;
@@ -165,21 +167,54 @@
       overflow: hidden;
     }
     
-    .map-placeholder {
+    .leaflet-map {
       width: 100%;
       height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
+      border-radius: 16px;
+      overflow: hidden;
       background: linear-gradient(135deg, #1e293b, #0f172a);
-      color: var(--text-secondary);
     }
     
-    .map-placeholder i {
-      font-size: 4rem;
-      margin-bottom: 1rem;
+    /* Leaflet Control Styling */
+    .leaflet-control-container .leaflet-control {
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      color: var(--text-primary);
+    }
+    
+    .leaflet-control-zoom a {
+      background: var(--glass-bg);
+      color: var(--text-primary);
+      border: none;
+    }
+    
+    .leaflet-control-zoom a:hover {
+      background: rgba(112, 184, 255, 0.2);
       color: var(--accent);
+    }
+    
+    .leaflet-popup-content-wrapper {
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      color: var(--text-primary);
+    }
+    
+    .leaflet-popup-tip {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+    }
+    
+    .leaflet-container .leaflet-grid-mouseposition {
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-family: 'Segoe UI', sans-serif;
     }
     
     /* Map Controls */
@@ -505,12 +540,8 @@
           </button>
         </div>
 
-        <!-- Map Placeholder -->
-        <div class="map-placeholder" id="mapContainer">
-          <i class="fas fa-map-marked-alt"></i>
-          <h3>Interactive Map Loading...</h3>
-          <p>Tactical mapping interface will appear here</p>
-        </div>
+        <!-- Interactive Map -->
+        <div id="map" class="leaflet-map"></div>
       </div>
 
       <!-- Toolbar -->
@@ -569,21 +600,21 @@
           Mission Links
         </h2>
         <div class="tools-grid">
-          <div class="tool-card" onclick="window.open('smxstream-new.html', '_blank')">
-            <div class="tool-icon"><i class="fas fa-video"></i></div>
-            <h3 class="tool-title">SMX Stream</h3>
-            <p class="tool-description">Live training streams, recorded sessions, and real-time mission broadcasts.</p>
-          </div>
-          
           <div class="tool-card" onclick="window.open('kitcomm.html', '_blank')">
             <div class="tool-icon"><i class="fas fa-comments"></i></div>
             <h3 class="tool-title">KitComm</h3>
             <p class="tool-description">Secure team communications, messaging, and coordination platform.</p>
           </div>
           
-          <div class="tool-card" onclick="window.open('ops-log.html', '_blank')">
+          <div class="tool-card" onclick="window.open('smxstream-new.html', '_blank')">
+            <div class="tool-icon"><i class="fas fa-video"></i></div>
+            <h3 class="tool-title">SMX Stream</h3>
+            <p class="tool-description">Live training streams, recorded sessions, and real-time mission broadcasts.</p>
+          </div>
+          
+          <div class="tool-card" onclick="window.open('OpsLog.html', '_blank')">
             <div class="tool-icon"><i class="fas fa-clipboard-list"></i></div>
-            <h3 class="tool-title">Ops Log</h3>
+            <h3 class="tool-title">Drift</h3>
             <p class="tool-description">Mission operations logging, activity tracking, and incident reporting.</p>
           </div>
           
@@ -597,10 +628,130 @@
     </div>
   </div>
 
+  <!-- Leaflet and TrackPoint Scripts -->
+  <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="public/TrackPoint/mapUtils.js"></script>
+  <script src="public/TrackPoint/defaultMap.js"></script>
+  
   <script>
     // Track Point JavaScript
     let currentTool = 'select';
     let mapZoom = 1;
+    let map;
+    let markers = [];
+    let lines = [];
+    let polygons = [];
+    
+    // Map Configuration
+    const mapConfig = {
+      minZoom: 0,
+      maxZoom: 6,
+      center: [0, 0],
+      defaultZoom: 2,
+      tileSize: 256,
+      attribution: 'SMX Track Point',
+      CRS: L.CRS.Simple,
+      tilePattern: '/altis/{z}/{x}/{y}.png'
+    };
+    
+    // Initialize Map
+    function initializeMap() {
+      try {
+        map = L.map('map', {
+          minZoom: mapConfig.minZoom,
+          maxZoom: mapConfig.maxZoom,
+          crs: mapConfig.CRS,
+          zoomControl: true,
+          attributionControl: false
+        });
+
+        // Add a simple tile layer (can be replaced with actual map tiles)
+        L.tileLayer('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDEwIDAgTCAwIDAgMCAxMCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMzMzIiBzdHJva2Utd2lkdGg9IjAuNSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iIzFhMWExYSIvPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=', {
+          attribution: mapConfig.attribution,
+          tileSize: mapConfig.tileSize
+        }).addTo(map);
+
+        map.setView(mapConfig.center, mapConfig.defaultZoom);
+
+        // Add grid coordinates
+        if (typeof L.latlngGraticule === 'function') {
+          L.latlngGraticule({
+            showLabel: true,
+            color: '#444',
+            weight: 0.8,
+            opacity: 0.6,
+            font: '12px Segoe UI'
+          }).addTo(map);
+        }
+
+        // Add scale control
+        L.control.scale({ 
+          maxWidth: 200, 
+          imperial: false,
+          position: 'bottomright'
+        }).addTo(map);
+
+        // Add mouse position control if available
+        if (typeof L.control.gridMousePosition === 'function') {
+          L.control.gridMousePosition().addTo(map);
+        }
+
+        // Map click handler for tools
+        map.on('click', function(e) {
+          handleMapClick(e);
+        });
+
+        console.log('Track Point map initialized successfully');
+      } catch (error) {
+        console.error('Error initializing map:', error);
+        // Fallback: show a message in the map container
+        document.getElementById('map').innerHTML = `
+          <div style="display: flex; align-items: center; justify-content: center; height: 100%; flex-direction: column; color: #70b8ff;">
+            <i class="fas fa-map-marked-alt" style="font-size: 4rem; margin-bottom: 1rem;"></i>
+            <h3>Map Loading...</h3>
+            <p>Initializing tactical mapping interface</p>
+          </div>
+        `;
+      }
+    }
+    
+    // Handle map clicks based on current tool
+    function handleMapClick(e) {
+      const latlng = e.latlng;
+      
+      switch(currentTool) {
+        case 'marker':
+          addMarker(latlng);
+          break;
+        case 'line':
+          // For simplicity, we'll add a marker for line points
+          // In a full implementation, this would handle line drawing
+          addMarker(latlng, 'Line Point');
+          break;
+        case 'polygon':
+          // For simplicity, we'll add a marker for polygon points
+          // In a full implementation, this would handle polygon drawing
+          addMarker(latlng, 'Polygon Point');
+          break;
+        case 'measure':
+          addMarker(latlng, 'Measure Point');
+          break;
+      }
+    }
+    
+    // Add marker to map
+    function addMarker(latlng, title = 'Marker') {
+      const marker = L.marker(latlng).addTo(map);
+      marker.bindPopup(`<strong>${title}</strong><br>Coordinates: ${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)}`);
+      markers.push(marker);
+      console.log(`Added ${title} at:`, latlng);
+    }
+    
+    // Initialize map when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(initializeMap, 100); // Small delay to ensure DOM is ready
+    });
     
     // Tool Selection
     function selectTool(tool) {

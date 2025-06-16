@@ -138,6 +138,8 @@
       display: flex; /* Flexbox for centering content */
       justify-content: center; /* Center horizontally */
       align-items: center; /* Center vertically */
+      height: calc(100% - 50px); /* Adjust height to account for bottom bar */
+      width: 100%; /* Match viewport width */
     }
     
     body {
@@ -146,6 +148,29 @@
       margin: 0;
       padding: 0;
       font-family: Arial, sans-serif;
+      height: calc(100vh - 50px); /* Adjust height to account for bottom bar */
+      overflow: hidden; /* Prevent scrolling */
+    }
+
+    .login-card {
+      background: rgba(0, 0, 0, 0.6); /* Semi-transparent background */
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Bottom bar styling */
+    footer {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      height: 50px;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 14px;
     }
   </style>
 
