@@ -1391,13 +1391,9 @@
       const navButtons = document.querySelectorAll('.nav-buttons .btn');
       navButtons.forEach(button => {
         button.addEventListener('click', function(e) {
-          console.log('Navigation button clicked');
           const href = this.getAttribute('href');
           if (href && href !== '#') {
-            console.log('Navigating to:', href);
             window.location.href = href;
-          } else {
-            console.log('No valid href found:', href);
           }
         });
       });
@@ -1406,48 +1402,50 @@
       const toolCards = document.querySelectorAll('.tool-card');
       toolCards.forEach(card => {
         card.addEventListener('click', function() {
-          console.log('Tool card clicked');
           const url = this.getAttribute('data-url');
-          const onclick = this.getAttribute('onclick');
-          
           if (url) {
-            console.log('Opening URL:', url);
             window.open(url, '_blank');
-          } else if (onclick) {
-            try {
-              eval(onclick);
-            } catch (error) {
-              console.error('Error executing onclick:', error);
-            }
-          } else {
-            console.log('No URL or onclick found for this card');
           }
         });
       });
       
-      // Header control buttons
-      const controlButtons = document.querySelectorAll('.control-btn');
-      controlButtons.forEach(button => {
-        button.addEventListener('click', function(e) {
-          e.preventDefault();
-          const onclick = this.getAttribute('onclick');
-          if (onclick) {
-            try {
-              eval(onclick);
-            } catch (error) {
-              console.error('Error executing onclick:', error);
-            }
-          }
-        });
-      });
-      
+      // Control buttons
+      document.getElementById('btnShowRoomModal').addEventListener('click', showRoomModal);
+      document.getElementById('btnExportLog').addEventListener('click', exportLog);
+      document.getElementById('btnClearLog').addEventListener('click', clearLog);
+      document.getElementById('btnAddLogEntry').addEventListener('click', addLogEntry);
+
       // Filter selects
       const filterSelects = document.querySelectorAll('.filter-select');
       filterSelects.forEach(select => {
-        select.addEventListener('change', function() {
-          filterEntries();
-        });
+        select.addEventListener('change', filterEntries);
       });
+
+      // Form submission
+      const logForm = document.getElementById('logEntryForm');
+      if (logForm) {
+        logForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+          addLogEntry();
+        });
+      }
+    }
+    
+    // Define button actions
+    function exportLog() {
+      console.log('Exporting log...');
+      // Add export logic here
+    }
+
+    function clearLog() {
+      console.log('Clearing log...');
+      logEntries = [];
+      renderLogEntries();
+    }
+
+    function addLogEntry() {
+      console.log('Adding new log entry...');
+      // Add logic for adding a new log entry
     }
     
     // Form submission
