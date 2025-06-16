@@ -8,7 +8,7 @@ function InitMap(mapInfos) {
             crs: mapInfos.CRS
         });
 
-        L.tileLayer('.'+mapInfos.tilePattern, {
+        L.tileLayer(mapInfos.tilePattern, {
             attribution: mapInfos.attribution,
             tileSize: mapInfos.tileSize
         }).addTo(map);
