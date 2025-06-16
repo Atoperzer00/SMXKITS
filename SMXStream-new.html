@@ -488,6 +488,37 @@
       animation: pulse 2s infinite;
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
+
+    .jump-to-live-indicator {
+      position: absolute;
+      bottom: 140px;
+      right: 20px;
+      background: linear-gradient(135deg, #ff4757, #ff3742);
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 25px;
+      font-weight: bold;
+      font-size: 0.9rem;
+      z-index: 100;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 6px 20px rgba(255, 71, 87, 0.4);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: none;
+      animation: pulse 2s infinite;
+    }
+
+    .jump-to-live-indicator:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(255, 71, 87, 0.6);
+    }
+
+    .jump-to-live-indicator::before {
+      content: '🔴 ';
+      margin-right: 0.5rem;
+    }
     
     @keyframes pulse {
       0%, 100% { 
@@ -515,6 +546,141 @@
       background: rgba(28, 28, 28, 0.95);
       color: white;
       padding: 8px;
+    }
+
+    /* Mission Links Section Styles */
+    .mission-links-section {
+      padding: 3rem 2rem;
+      background: transparent;
+    }
+
+    .section-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 2rem;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      text-align: center;
+      justify-content: center;
+    }
+
+    .section-title::before {
+      content: '';
+      width: 4px;
+      height: 50px;
+      background: linear-gradient(135deg, var(--accent), #3b82f6);
+      border-radius: 2px;
+    }
+
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .tool-card {
+      background: rgba(30, 41, 59, 0.8);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 24px;
+      padding: 2.5rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+    }
+
+    .tool-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, var(--accent), #3b82f6);
+      opacity: 0;
+      transition: all 0.3s ease;
+    }
+
+    .tool-card:hover::before {
+      opacity: 0.1;
+    }
+
+    .tool-card:hover {
+      transform: translateY(-15px) scale(1.03);
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+      border-color: rgba(112, 184, 255, 0.6);
+    }
+
+    .tool-icon {
+      font-size: 3.5rem;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(135deg, var(--accent), #3b82f6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      position: relative;
+      z-index: 1;
+      display: block;
+    }
+
+    .tool-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: var(--fg);
+      position: relative;
+      z-index: 1;
+    }
+
+    .tool-description {
+      color: rgba(240, 240, 240, 0.8);
+      font-size: 1rem;
+      line-height: 1.6;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Responsive Design for Mission Links */
+    @media (max-width: 768px) {
+      .mission-links-section {
+        padding: 2rem 1rem;
+      }
+      
+      .section-title {
+        font-size: 2rem;
+        flex-direction: column;
+        gap: 1rem;
+      }
+      
+      .section-title::before {
+        width: 60px;
+        height: 4px;
+      }
+      
+      .tools-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+      
+      .tool-card {
+        padding: 2rem;
+      }
+      
+      .tool-icon {
+        font-size: 3rem;
+      }
+      
+      .tool-title {
+        font-size: 1.5rem;
+      }
     }
     
     /* Welcome Modal Styles */
@@ -735,27 +901,16 @@
           </div>
         </div>
         
-        <div class="video-info">
-          <h2 class="video-title">SMX Live Training Session</h2>
-          <p class="video-description">Security Mission Exercise - Live Training</p>
+        <!-- Jump to Live Indicator -->
+        <div class="jump-to-live-indicator" id="jumpToLiveIndicator" onclick="jumpToLive()">
+          JUMP TO LIVE
         </div>
+
         
         <div class="controls">
-          <button id="rewind30" class="btn">⏪ 30s</button>
-          <button id="rewind10" class="btn">⏪ 10s</button>
-          <button id="playBtn" class="btn">Play</button>
-          <button id="forward10" class="btn">10s ⏩</button>
-          <button id="forward30" class="btn">30s ⏩</button>
-          <button id="rateBtn" class="btn">1x</button>
-          <button id="liveBtn" class="btn">LIVE</button>
           <div id="timeline">
             <div id="scrubber"></div>
           </div>
-          <button id="fullscreenBtn" class="btn">Fullscreen</button>
-          <select id="streamMode" class="btn select-enhanced">
-            <option value="live">Live Stream</option>
-            <option value="local">Local File</option>
-          </select>
         </div>
         
         <!-- Thumbnail preview -->
@@ -767,13 +922,62 @@
         <input type="file" id="fileInput" accept="video/mp4" style="display:none;">
       </div>
   </div>
+
+  <!-- Mission Links Section -->
+  <div class="mission-links-section">
+    <div class="container">
+      <!-- Essential Mission Resources -->
+      <section class="fade-in stagger-2">
+        <h2 class="section-title">
+          <i class="fas fa-globe"></i>
+          Mission Links
+        </h2>
+        <div class="tools-grid">
+          <div class="tool-card" onclick="window.open('smxstream-new.html', '_blank')">
+            <div class="tool-icon"><i class="fas fa-video"></i></div>
+            <h3 class="tool-title">SMX Stream</h3>
+            <p class="tool-description">Live training streams, recorded sessions, and real-time mission broadcasts.</p>
+          </div>
+          
+          <div class="tool-card" onclick="window.open('kitcomm.html', '_blank')">
+            <div class="tool-icon"><i class="fas fa-comments"></i></div>
+            <h3 class="tool-title">KitComm</h3>
+            <p class="tool-description">Secure team communications, messaging, and coordination platform.</p>
+          </div>
+          
+          <div class="tool-card" onclick="window.open('ops-log.html', '_blank')">
+            <div class="tool-icon"><i class="fas fa-clipboard-list"></i></div>
+            <h3 class="tool-title">Ops Log</h3>
+            <p class="tool-description">Mission operations logging, activity tracking, and incident reporting.</p>
+          </div>
+          
+          <div class="tool-card" onclick="window.open('track-point.html', '_blank')">
+            <div class="tool-icon"><i class="fas fa-map-marked-alt"></i></div>
+            <h3 class="tool-title">Track Point</h3>
+            <p class="tool-description">Interactive mapping platform for tactical positioning and route planning.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
   
   <!-- Welcome Modal -->
   <div class="welcome-modal" id="welcomeModal">
     <div class="welcome-content">
       <h2 class="welcome-title">WELCOME TO SMX STREAM</h2>
       <div class="welcome-text">
-        <p>SMX Stream is your live training platform for Security Mission Exercises. Watch live training sessions, access recorded content, and interact with instructors in real-time. Use the controls below to navigate through streams, adjust playback settings, and switch between live and local content.</p>
+        <p>SMX Stream is your live training platform for Security Mission Exercises. Watch live training sessions, access recorded content, and interact with instructors in real-time.</p>
+        <br>
+        <p><strong>Keyboard Shortcuts:</strong></p>
+        <ul style="text-align: left; margin: 10px 0; padding-left: 20px;">
+          <li><strong>Space/K</strong> - Play/Pause</li>
+          <li><strong>J/L</strong> - Skip backward/forward 10s</li>
+          <li><strong>Shift+L</strong> - Jump to LIVE</li>
+          <li><strong>M</strong> - Mute/Unmute</li>
+          <li><strong>F</strong> - Fullscreen</li>
+          <li><strong>Arrow Keys</strong> - Skip 5s</li>
+        </ul>
+        <p><strong>Timeline:</strong> Double-click any time marker to jump to LIVE edge</p>
       </div>
       <div class="welcome-actions">
         <div class="welcome-checkbox">
@@ -1417,7 +1621,7 @@
     const video = document.getElementById('video');
     const webrtcVideo = document.getElementById('webrtcVideo');
     const streamTypeIndicator = document.getElementById('streamTypeIndicator');
-    const playBtn = document.getElementById('playBtn');
+    // const playBtn = document.getElementById('playBtn'); // Removed
     const timeline = document.getElementById('timeline');
     const progress = document.getElementById('progress');
     
@@ -1427,21 +1631,21 @@
     let isWebRTCMode = false;
     let classId = null;
     const playhead = document.getElementById('playhead');
-    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    // const fullscreenBtn = document.getElementById('fullscreenBtn'); // Removed
     const loading = document.getElementById('loading');
-    const rateBtn = document.getElementById('rateBtn');
-    const liveBtn = document.getElementById('liveBtn');
-    const streamMode = document.getElementById('streamMode');
+    // const rateBtn = document.getElementById('rateBtn'); // Removed
+    // const liveBtn = document.getElementById('liveBtn'); // Removed
+    // const streamMode = document.getElementById('streamMode'); // Removed
     const fileInput = document.getElementById('fileInput');
     const thumbnailPreview = document.getElementById('thumbnailPreview');
     const thumbnailImg = document.getElementById('thumbnailImg');
     const thumbnailTime = document.getElementById('thumbnailTime');
     
-    // Skip buttons
-    document.getElementById('rewind10').onclick = () => video.currentTime -= 10;
-    document.getElementById('rewind30').onclick = () => video.currentTime -= 30;
-    document.getElementById('forward10').onclick = () => video.currentTime += 10;
-    document.getElementById('forward30').onclick = () => video.currentTime += 30;
+    // Skip buttons - Commented out as buttons were removed
+    // document.getElementById('rewind10').onclick = () => video.currentTime -= 10;
+    // document.getElementById('rewind30').onclick = () => video.currentTime -= 30;
+    // document.getElementById('forward10').onclick = () => video.currentTime += 10;
+    // document.getElementById('forward30').onclick = () => video.currentTime += 30;
     
     let hlsInstance = null;
     
@@ -1931,19 +2135,19 @@
     // Call the function to fetch class info and load the stream
     fetchClassInfo();
     
-    // Play/pause toggle
-    playBtn.addEventListener('click', function() {
-      if (video.paused) {
-        video.play();
-      } else {
-        video.pause();
-      }
-      updatePlayButton();
-    });
+    // Play/pause toggle - Commented out as button was removed
+    // playBtn.addEventListener('click', function() {
+    //   if (video.paused) {
+    //     video.play();
+    //   } else {
+    //     video.pause();
+    //   }
+    //   updatePlayButton();
+    // });
     
-    function updatePlayButton() {
-      playBtn.textContent = video.paused ? 'Play' : 'Pause';
-    }
+    // function updatePlayButton() {
+    //   playBtn.textContent = video.paused ? 'Play' : 'Pause';
+    // }
     
     // Timeline functionality
     video.addEventListener('timeupdate', function() {
@@ -2000,35 +2204,35 @@
       }
     });
     
-    // ⏩ Playback rate toggle
-    rateBtn.addEventListener('click', function() {
-      video.playbackRate = video.playbackRate === 1 ? 2 : video.playbackRate === 2 ? 0.5 : 1;
-      rateBtn.textContent = video.playbackRate + 'x';
-    });
+    // ⏩ Playback rate toggle - Commented out as button was removed
+    // rateBtn.addEventListener('click', function() {
+    //   video.playbackRate = video.playbackRate === 1 ? 2 : video.playbackRate === 2 ? 0.5 : 1;
+    //   rateBtn.textContent = video.playbackRate + 'x';
+    // });
     
-    // 🔄 LIVE button
-    liveBtn.addEventListener('click', function() {
-      if (video.duration) {
-        video.currentTime = video.duration - 0.05;
-      }
-    });
+    // 🔄 LIVE button - Commented out as button was removed
+    // liveBtn.addEventListener('click', function() {
+    //   if (video.duration) {
+    //     video.currentTime = video.duration - 0.05;
+    //   }
+    // });
     
-    // Update live status
-    setInterval(() => {
-      if (video.duration) {
-        const live = Math.abs(video.duration - video.currentTime) < 2;
-        liveBtn.style.display = live ? 'none' : 'inline-block';
-      }
-    }, 500);
+    // Update live status - Commented out as button was removed
+    // setInterval(() => {
+    //   if (video.duration) {
+    //     const live = Math.abs(video.duration - video.currentTime) < 2;
+    //     liveBtn.style.display = live ? 'none' : 'inline-block';
+    //   }
+    // }, 500);
     
-    // 📦 Stream mode selector
-    streamMode.addEventListener('change', function() {
-      if (streamMode.value === 'local') {
-        fileInput.click();
-      } else {
-        fetchClassInfo();
-      }
-    });
+    // 📦 Stream mode selector - Commented out as selector was removed
+    // streamMode.addEventListener('change', function() {
+    //   if (streamMode.value === 'local') {
+    //     fileInput.click();
+    //   } else {
+    //     fetchClassInfo();
+    //   }
+    // });
     
     fileInput.addEventListener('change', function() {
       const file = fileInput.files[0];
@@ -2052,11 +2256,31 @@
     window.addEventListener('keydown', function(e) {
       if (e.key === 'k' || e.key === ' ') {
         e.preventDefault();
-        playBtn.click();
+        // playBtn.click(); // Commented out as button was removed
+        // Toggle play/pause directly
+        if (video.paused) {
+          video.play();
+        } else {
+          video.pause();
+        }
       }
       else if (e.key === 'j') video.currentTime -= 10;
       else if (e.key === 'l') video.currentTime += 10;
-      else if (e.key === 'f') fullscreenBtn.click();
+      else if (e.key === 'L') { // Capital L to jump to live
+        e.preventDefault();
+        jumpToLive();
+      }
+      else if (e.key === 'f') {
+        // fullscreenBtn.click(); // Commented out as button was removed
+        // Request fullscreen directly
+        if (video.requestFullscreen) {
+          video.requestFullscreen();
+        } else if (video.webkitRequestFullscreen) {
+          video.webkitRequestFullscreen();
+        } else if (video.msRequestFullscreen) {
+          video.msRequestFullscreen();
+        }
+      }
       else if (e.key === 'm') video.muted = !video.muted;
       else if (e.key === 'ArrowLeft') video.currentTime -= 5;
       else if (e.key === 'ArrowRight') video.currentTime += 5;
@@ -2065,19 +2289,25 @@
     // Enhanced video event listeners
     video.addEventListener('playing', function() {
       loading.style.display = 'none';
-      playBtn.textContent = 'Pause';
+      // playBtn.textContent = 'Pause'; // Commented out as button was removed
     });
     
     video.addEventListener('pause', function() {
-      playBtn.textContent = 'Play';
+      // playBtn.textContent = 'Play'; // Commented out as button was removed
     });
 
     // Advanced Video Timeline Component
     class VideoTimeline {
       constructor(videoId, timelineId) {
+        console.log('VideoTimeline constructor called with:', videoId, timelineId);
         this.video = document.getElementById(videoId);
         this.timeline = document.getElementById(timelineId);
         this.scrubber = document.getElementById('scrubber');
+        console.log('Elements found:', {
+          video: this.video,
+          timeline: this.timeline,
+          scrubber: this.scrubber
+        });
         this.thumbnails = [];
         this.zoomLevel = 1;
         this.visibleDuration = 60; // seconds visible at zoom level 1
@@ -2090,57 +2320,129 @@
       }
 
       init() {
-        if (!this.video || !this.timeline) return;
+        console.log('VideoTimeline init called');
+        if (!this.video || !this.timeline) {
+          console.log('Missing video or timeline element');
+          return;
+        }
+        
+        // Create basic timeline structure immediately
+        this.createBasicTimeline();
         
         // Wait for video metadata to load
         this.video.addEventListener('loadedmetadata', () => {
+          console.log('Video metadata loaded, generating thumbnails');
           this.generateThumbnails();
           this.setupEventListeners();
         });
 
         // If metadata is already loaded
         if (this.video.readyState >= 1) {
+          console.log('Video metadata already loaded');
           this.generateThumbnails();
           this.setupEventListeners();
         }
       }
 
-      async generateThumbnails() {
-        const duration = this.video.duration;
-        if (!duration) return;
+      createBasicTimeline() {
+        console.log('Creating basic timeline structure');
+        // Create a basic timeline with time markers even without video duration
+        const container = document.createElement('div');
+        container.className = 'timeline-container';
+        container.id = 'timeline-container';
+        this.timeline.appendChild(container);
+        
+        // Add some basic time markers (0, 30s, 1min, etc.)
+        for (let time = 0; time <= 300; time += 30) { // 5 minutes worth
+          const frame = this.createTimeMarker(time);
+          container.appendChild(frame);
+        }
+      }
 
-        // Create container for thumbnails
+      createTimeMarker(time) {
+        const frame = document.createElement('div');
+        frame.className = 'thumbnail-frame';
+        frame.style.width = '80px';
+        frame.style.minWidth = '80px';
+        
+        // Create a simple placeholder
+        const placeholder = document.createElement('div');
+        placeholder.style.width = '100%';
+        placeholder.style.height = 'calc(100% - 20px)';
+        placeholder.style.background = 'linear-gradient(135deg, #1e293b, #0f172a)';
+        placeholder.style.borderRadius = '4px 4px 0 0';
+        placeholder.style.display = 'flex';
+        placeholder.style.alignItems = 'center';
+        placeholder.style.justifyContent = 'center';
+        placeholder.style.color = '#70b8ff';
+        placeholder.style.fontSize = '10px';
+        placeholder.textContent = this.formatTime(time);
+        
+        const tick = document.createElement('div');
+        tick.className = 'time-tick';
+        tick.textContent = this.formatTime(time);
+        
+        frame.appendChild(placeholder);
+        frame.appendChild(tick);
+        
+        return frame;
+      }
+
+      async generateThumbnails() {
+        console.log('generateThumbnails called');
+        const duration = this.video.duration;
+        console.log('Video duration:', duration);
+        if (!duration) {
+          console.log('No duration available, skipping thumbnail generation');
+          return;
+        }
+
+        // Clear existing container and create new one for thumbnails
+        const existingContainer = this.timeline.querySelector('.timeline-container');
+        if (existingContainer) {
+          existingContainer.remove();
+        }
+        
         const container = document.createElement('div');
         container.className = 'timeline-container';
         this.timeline.appendChild(container);
+        console.log('Timeline container created and added');
 
         // Generate thumbnails every 2 seconds
         for (let time = 0; time < duration; time += this.thumbnailInterval) {
+          console.log('Generating thumbnail for time:', time);
           const thumbnail = await this.captureThumbnail(time);
           const frame = this.createThumbnailFrame(thumbnail, time);
           container.appendChild(frame);
           this.thumbnails.push({ element: frame, time: time });
         }
 
+        console.log('Generated', this.thumbnails.length, 'thumbnails');
         this.updateTimelineWidth();
       }
 
       async captureThumbnail(time) {
         return new Promise((resolve) => {
+          // For now, create a placeholder thumbnail
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
+          canvas.width = 160;
+          canvas.height = 90;
           
-          // Create a temporary video element for capture
-          const tempVideo = this.video.cloneNode();
-          tempVideo.muted = true;
-          tempVideo.currentTime = time;
+          // Create a simple gradient placeholder
+          const gradient = ctx.createLinearGradient(0, 0, 160, 90);
+          gradient.addColorStop(0, '#1e293b');
+          gradient.addColorStop(1, '#0f172a');
+          ctx.fillStyle = gradient;
+          ctx.fillRect(0, 0, 160, 90);
           
-          tempVideo.addEventListener('seeked', () => {
-            canvas.width = 160;
-            canvas.height = 90;
-            ctx.drawImage(tempVideo, 0, 0, canvas.width, canvas.height);
-            resolve(canvas.toDataURL());
-          }, { once: true });
+          // Add time text
+          ctx.fillStyle = '#70b8ff';
+          ctx.font = '12px monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText(this.formatTime(time), 80, 50);
+          
+          resolve(canvas.toDataURL());
         });
       }
 
@@ -2162,6 +2464,11 @@
         // Click to seek
         frame.addEventListener('click', () => {
           this.video.currentTime = time;
+        });
+        
+        // Double-click to jump to live
+        frame.addEventListener('dblclick', () => {
+          jumpToLive();
         });
         
         return frame;
@@ -2404,7 +2711,30 @@
       // For recorded videos, jump to end
       // For live streams, this would jump to the live edge
       video.currentTime = video.duration;
+      
+      // Hide the jump to live indicator
+      const indicator = document.getElementById('jumpToLiveIndicator');
+      if (indicator) {
+        indicator.style.display = 'none';
+      }
     }
+
+    // Monitor live status and show/hide jump to live indicator
+    function updateLiveStatus() {
+      const video = document.getElementById('video');
+      const indicator = document.getElementById('jumpToLiveIndicator');
+      
+      if (!video || !indicator || !video.duration) return;
+      
+      // Check if user is within 3 seconds of live edge
+      const isAtLive = Math.abs(video.duration - video.currentTime) < 3;
+      
+      // Show indicator if not at live edge, hide if at live edge
+      indicator.style.display = isAtLive ? 'none' : 'block';
+    }
+
+    // Update live status every 500ms
+    setInterval(updateLiveStatus, 500);
 
     function zoomTimeline(factor) {
       if (window.videoTimeline) {
@@ -2433,7 +2763,9 @@
 
     // Initialize advanced timeline
     setTimeout(() => {
+      console.log('Initializing VideoTimeline...');
       window.videoTimeline = new VideoTimeline('video', 'timeline');
+      console.log('VideoTimeline initialized:', window.videoTimeline);
       
       // Set up video event listeners for time display
       const video = document.getElementById('video');

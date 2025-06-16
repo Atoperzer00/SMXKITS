@@ -2998,7 +2998,8 @@ createFollowBubble.addEventListener('drop', (e) => {
 
   async function updateQC(calloutId, qcClass, skipMenuClose = false) {
     try {
-      console.log(`Updating QC status for callout ${calloutId} to ${qcClass}`);
+      c
+      onsole.log(`Updating QC status for callout ${calloutId} to ${qcClass}`);
 
       // Simulate backend update
       const response = await fetch(`/api/callouts/${calloutId}/qc`, {
