@@ -692,29 +692,6 @@
               Save Entry
             </button>
           </form>
-
-          <!-- Follow Container -->
-          <div class="follow-container" style="display: none; margin-top: 1rem;">
-            <div class="follow-form">
-              <input type="text" id="followTargetName" placeholder="Enter operator name to follow" class="form-input">
-              <select id="followType" class="form-select">
-                <option value="">Select follow type</option>
-                <option value="shadow">Shadow Follow - Copy all actions</option>
-                <option value="mirror">Mirror Follow - Sync log entries</option>
-                <option value="observe">Observe Follow - View only</option>
-              </select>
-              <button class="control-btn primary" id="btnCreateFollow">
-                <i class="fas fa-plus"></i>
-                Create Follow
-              </button>
-            </div>
-            <div id="activeFollows" class="active-follows">
-              <h4>Active Follows</h4>
-              <div class="follow-list">
-                <!-- Active follows will be populated here -->
-              </div>
-            </div>
-          </div>
         </div>
 
         <!-- Log Entries Display -->
@@ -725,13 +702,13 @@
               Recent Entries
             </h3>
             <div class="log-filters">
-              <select class="filter-select" id="filterPriority" onchange="filterEntries()">
+              <select class="filter-select" id="filterPriority">
                 <option value="">All Priorities</option>
                 <option value="high">High</option>
                 <option value="medium">Medium</option>
                 <option value="low">Low</option>
               </select>
-              <select class="filter-select" id="filterCategory" onchange="filterEntries()">
+              <select class="filter-select" id="filterCategory">
                 <option value="">All Categories</option>
                 <option value="mission">Mission</option>
                 <option value="security">Security</option>
@@ -742,87 +719,11 @@
               </select>
             </div>
           </div>
-          
           <div class="log-entries" id="logEntries">
-            <!-- Sample entries -->
-            <div class="log-entry">
-              <div class="entry-header">
-                <div class="entry-meta">
-                  <span class="entry-timestamp">2024-01-15 14:30:00</span>
-                  <span class="entry-operator">Operator Alpha</span>
-                  <span class="entry-priority priority-high">HIGH</span>
-                </div>
-              </div>
-              <div class="entry-content">
-                <strong>Security Alert:</strong> Unauthorized access attempt detected on secure network. Implementing countermeasures and notifying security team.
-              </div>
-            </div>
-            
-            <div class="log-entry">
-              <div class="entry-header">
-                <div class="entry-meta">
-                  <span class="entry-timestamp">2024-01-15 14:15:00</span>
-                  <span class="entry-operator">Operator Bravo</span>
-                  <span class="entry-priority priority-medium">MEDIUM</span>
-                </div>
-              </div>
-              <div class="entry-content">
-                <strong>Equipment Status:</strong> Communication array operating at 85% capacity. Scheduled maintenance required within 48 hours.
-              </div>
-            </div>
-            
-            <div class="log-entry">
-              <div class="entry-header">
-                <div class="entry-meta">
-                  <span class="entry-timestamp">2024-01-15 14:00:00</span>
-                  <span class="entry-operator">Operator Charlie</span>
-                  <span class="entry-priority priority-low">LOW</span>
-                </div>
-              </div>
-              <div class="entry-content">
-                <strong>Mission Update:</strong> Training exercise Alpha-7 completed successfully. All personnel accounted for and equipment secured.
-              </div>
-            </div>
+            <!-- Entries will be dynamically rendered here -->
           </div>
         </div>
       </div>
-    </div>
-  </div>
-
-  <!-- Mission Links Section -->
-  <div class="mission-links-section">
-    <div class="container">
-      <section>
-        <h2 class="section-title">
-          <i class="fas fa-globe"></i>
-          Mission Links
-        </h2>
-        <div class="tools-grid">
-          <div class="tool-card" data-url="kitcomm.html">
-            <div class="tool-icon"><i class="fas fa-comments"></i></div>
-            <h3 class="tool-title">KitComm</h3>
-            <p class="tool-description">Secure team communications, messaging, and coordination platform.</p>
-          </div>
-          
-          <div class="tool-card" data-url="smxstream-new.html">
-            <div class="tool-icon"><i class="fas fa-video"></i></div>
-            <h3 class="tool-title">SMX Stream</h3>
-            <p class="tool-description">Live training streams, recorded sessions, and real-time mission broadcasts.</p>
-          </div>
-          
-          <div class="tool-card" data-url="OpsLog.html">
-            <div class="tool-icon"><i class="fas fa-clipboard-list"></i></div>
-            <h3 class="tool-title">Drift</h3>
-            <p class="tool-description">Mission operations logging, activity tracking, and incident reporting.</p>
-          </div>
-          
-          <div class="tool-card" data-url="track-point.html">
-            <div class="tool-icon"><i class="fas fa-map-marked-alt"></i></div>
-            <h3 class="tool-title">Track Point</h3>
-            <p class="tool-description">Interactive mapping platform for tactical positioning and route planning.</p>
-          </div>
-        </div>
-      </section>
     </div>
   </div>
 
@@ -833,8 +734,8 @@
         <h2><i class="fas fa-users"></i> Operations Rooms</h2>
         <button class="room-close-btn" id="btnCloseRoomModal">&times;</button>
       </div>
-      
       <div class="room-modal-body">
+        <!-- Room management content -->
         <!-- Current Room Status -->
         <div class="current-room-section">
           <h3>Current Room</h3>
