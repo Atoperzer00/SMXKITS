@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Keyboard Training</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #1a1a2e;
+      color: white;
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 20px;
+      border: 1px solid #333;
+      border-radius: 10px;
+      background: #2d1810;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      background: #ff6b35;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #f7931e;
+    }
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background: #2d1810;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 500px;
+      width: 90%;
+      position: relative;
+    }
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      background: #dc2626;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Keyboard Training Test Page</h1>
+  
+  <div class="test-section">
+    <h2>Test 1: Basic Modal Functionality</h2>
+    <p>This tests if modals open and close correctly with the X button.</p>
+    <button onclick="openTestModal()">Open Test Modal</button>
+  </div>
+
+  <div class="test-section">
+    <h2>Test 2: Module Dropdown</h2>
+    <p>This tests if modules can be clicked to show/hide practices.</p>
+    <div id="test-module" style="border: 1px solid #555; padding: 15px; margin: 10px 0; cursor: pointer; border-radius: 5px;">
+      <div onclick="togglePractices()">
+        <strong>Module 1: Basic Typing</strong> <span id="arrow">▼</span>
+        <div>Practice typing with fundamental content</div>
+        <div>3 of 5 practices completed - 60%</div>
+      </div>
+      <div id="practices" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid #555;">
+        <div style="padding: 10px; margin: 5px 0; background: rgba(255,255,255,0.05); border-radius: 5px; cursor: pointer;" onclick="startTest(1, 1)">
+          <strong>Practice 1</strong><br>
+          <small>The quick brown fox jumps over the lazy dog...</small>
+        </div>
+        <div style="padding: 10px; margin: 5px 0; background: rgba(255,255,255,0.05); border-radius: 5px; cursor: pointer;" onclick="startTest(1, 2)">
+          <strong>Practice 2</strong><br>
+          <small>Practice makes perfect. Keep typing to improve...</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h2>Test 3: Typing Test</h2>
+    <p>This tests the typing interface and results display.</p>
+    <button onclick="startTypingTest()">Start Typing Test</button>
+  </div>
+
+  <!-- Test Modal -->
+  <div id="testModal" class="modal">
+    <div class="modal-content">
+      <button class="close-btn" onclick="closeTestModal()">×</button>
+      <h3>Test Modal</h3>
+      <p>This is a test modal with a close button in the top right corner.</p>
+      <p>You can close this modal by:</p>
+      <ul>
+        <li>Clicking the X button in the top right</li>
+        <li>Clicking the Close button below</li>
+      </ul>
+      <button onclick="closeTestModal()">Close</button>
+    </div>
+  </div>
+
+  <!-- Typing Modal -->
+  <div id="typingModal" class="modal">
+    <div class="modal-content">
+      <button class="close-btn" onclick="closeTypingModal()">×</button>
+      <h3>Typing Test</h3>
+      <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 5px; margin: 10px 0; font-family: monospace;">
+        <div id="typingText">The quick brown fox jumps over the lazy dog.</div>
+      </div>
+      <input type="text" id="typingInput" style="width: 100%; padding: 10px; margin: 10px 0; background: rgba(255,255,255,0.1); border: 1px solid #555; border-radius: 5px; color: white;" placeholder="Start typing here...">
+      <div style="margin-top: 10px;">
+        <button onclick="closeTypingModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results Modal -->
+  <div id="resultsModal" class="modal">
+    <div class="modal-content">
+      <button class="close-btn" onclick="closeResultsModal()">×</button>
+      <h3>Typing Results</h3>
+      <div style="text-align: center;">
+        <div style="font-size: 2em; color: #22c55e; margin: 10px 0;">★</div>
+        <h4>Module 1: Basic Typing</h4>
+        <p><strong>Practice 1</strong></p>
+        <div style="margin: 20px 0;">
+          <div>Completion Time: <span id="resultTime">15s</span></div>
+          <div>Accuracy: <span id="resultAccuracy">95%</span></div>
+          <div>Words Per Minute: <span id="resultWPM">45</span></div>
+        </div>
+        <div>
+          <button onclick="closeResultsModal()">Continue</button>
+          <button onclick="retryTest()">Retry</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Test Modal Functions
+    function openTestModal() {
+      document.getElementById('testModal').style.display = 'flex';
+    }
+
+    function closeTestModal() {
+      document.getElementById('testModal').style.display = 'none';
+    }
+
+    // Module Dropdown Functions
+    function togglePractices() {
+      const practices = document.getElementById('practices');
+      const arrow = document.getElementById('arrow');
+      
+      if (practices.style.display === 'none') {
+        practices.style.display = 'block';
+        arrow.style.transform = 'rotate(180deg)';
+        arrow.style.transition = 'transform 0.3s ease';
+      } else {
+        practices.style.display = 'none';
+        arrow.style.transform = 'rotate(0deg)';
+      }
+    }
+
+    function startTest(module, practice) {
+      alert(`Starting Module ${module}, Practice ${practice}`);
+      startTypingTest();
+    }
+
+    // Typing Test Functions
+    function startTypingTest() {
+      document.getElementById('typingModal').style.display = 'flex';
+      document.getElementById('typingInput').focus();
+      
+      // Simple typing test logic
+      const input = document.getElementById('typingInput');
+      const targetText = "The quick brown fox jumps over the lazy dog.";
+      
+      input.oninput = function() {
+        if (input.value === targetText) {
+          closeTypingModal();
+          showResults();
+        }
+      };
+    }
+
+    function closeTypingModal() {
+      document.getElementById('typingModal').style.display = 'none';
+      document.getElementById('typingInput').value = '';
+    }
+
+    function showResults() {
+      document.getElementById('resultsModal').style.display = 'flex';
+    }
+
+    function closeResultsModal() {
+      document.getElementById('resultsModal').style.display = 'none';
+    }
+
+    function retryTest() {
+      closeResultsModal();
+      startTypingTest();
+    }
+
+    // Close modals when clicking outside
+    window.onclick = function(event) {
+      const modals = document.querySelectorAll('.modal');
+      modals.forEach(modal => {
+        if (event.target === modal) {
+          modal.style.display = 'none';
+        }
+      });
+    }
+  </script>
+</body>
+</html>

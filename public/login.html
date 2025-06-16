@@ -147,24 +147,26 @@
       width: 100%; /* Match viewport width */
     }
     
-    body {
-      background: url('planet-earth-with-sunrise-on-space-background-elements-of-this-image-furnished-by-nasa-photo.jpg') no-repeat center center fixed;
-      background-size: cover;
+    html, body {
+      height: 100%;
+      width: 100%;
       margin: 0;
       padding: 0;
+      background: url('planet-earth-with-sunrise-on-space-background-elements-of-this-image-furnished-by-nasa-photo.jpg') no-repeat center center fixed;
+      background-size: cover;
+      background-color: black; /* fallback */
+      overflow: hidden;
       font-family: Arial, sans-serif;
-      height: calc(100vh - 50px); /* Adjust height to account for bottom bar */
-      overflow: hidden; /* Prevent scrolling */
     }
 
     .login-card {
-      /* Orange gradient background matching dashboard style */
-      background: linear-gradient(145deg, #ff6b35 0%, #f7931e 50%, #ff8c42 100%);
+      /* Dark grey background */
+      background: #2a2a2a;
       padding: 3rem 3.5rem;
       border-radius: 20px;
       box-shadow: 
         inset 0 0 0 1px rgba(255, 255, 255, 0.25),
-        0 20px 40px rgba(255, 107, 53, 0.3);
+        0 20px 40px rgba(0, 0, 0, 0.3);
       backdrop-filter: blur(14px) saturate(160%);
       -webkit-backdrop-filter: blur(14px) saturate(160%);
       width: 450px;
