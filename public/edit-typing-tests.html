@@ -4,27 +4,375 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Edit Typing Tests - Admin Controls</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    .fade-in { animation: fade-in .2s cubic-bezier(.4,0,.2,1); }
-    @keyframes fade-in { from { opacity: 0; transform: translateY(12px);} to {opacity:1; transform:translateY(0);} }
-    .save-bubble {
-      box-shadow: 0 4px 24px #0ff5, 0 2px 8px #000a;
-      background: rgba(34, 197, 94, 0.95); /* green glassy */
+    :root {
+      --primary-gradient: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+      --secondary-gradient: linear-gradient(135deg, #ff8c42 0%, #ff6b35 100%);
+      --accent-gradient: linear-gradient(135deg, #ffa726 0%, #ff9800 100%);
+      --dark-gradient: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 100%);
+      --card-gradient: linear-gradient(145deg, #2d1810 0%, #1a0f08 100%);
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --text-primary: #ffffff;
+      --text-secondary: #b8c5d6;
+      --text-accent: #ffa726;
+      --shadow-primary: 0 20px 40px rgba(0, 0, 0, 0.3);
+      --shadow-hover: 0 30px 60px rgba(0, 0, 0, 0.4);
+      --border-radius: 20px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--dark-gradient);
+      color: var(--text-primary);
+      overflow-x: hidden;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* Animated background particles */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(255, 107, 53, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(247, 147, 30, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(255, 140, 66, 0.1) 0%, transparent 50%);
+      z-index: -1;
+      animation: float 20s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      33% { transform: translateY(-20px) rotate(1deg); }
+      66% { transform: translateY(10px) rotate(-1deg); }
+    }
+
+    .admin-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar Redesign */
+    .admin-sidebar {
+      width: 280px;
+      background: rgba(15, 20, 25, 0.95);
+      backdrop-filter: blur(20px);
+      border-right: 1px solid var(--glass-border);
+      display: flex;
+      flex-direction: column;
+      padding: 2rem 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .admin-sidebar::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, rgba(255, 107, 53, 0.1) 0%, transparent 100%);
+      z-index: -1;
+    }
+
+    .admin-logo {
+      width: 200px;
+      margin: 0 auto 3rem;
+      filter: drop-shadow(0 10px 30px rgba(255, 107, 53, 0.3));
+      transition: var(--transition);
+    }
+
+    .admin-logo:hover {
+      transform: scale(1.05);
+      filter: drop-shadow(0 15px 40px rgba(255, 107, 53, 0.5));
+    }
+
+    .admin-nav {
+      list-style: none;
+      padding: 0 1rem;
+    }
+
+    .admin-nav li {
+      margin-bottom: 0.5rem;
+      padding: 1rem 1.5rem;
+      border-radius: 15px;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .admin-nav li::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: var(--primary-gradient);
+      transition: var(--transition);
+      z-index: -1;
+    }
+
+    .admin-nav li:hover::before,
+    .admin-nav li.active::before {
+      left: 0;
+    }
+
+    .admin-nav li:hover,
+    .admin-nav li.active {
+      color: white;
+      transform: translateX(5px);
+      box-shadow: 0 10px 25px rgba(255, 107, 53, 0.3);
+    }
+
+    /* Main Content Area */
+    .admin-content {
+      flex: 1;
+      padding: 2rem;
+      background: transparent;
+      overflow-y: auto;
+    }
+
+    /* Header Section */
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 3rem;
+      padding: 2rem;
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border-radius: var(--border-radius);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+    }
+
+    .dashboard-title {
+      font-size: 3rem;
+      font-weight: 800;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin: 0;
+      letter-spacing: -0.02em;
+    }
+
+    .section-title {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      color: var(--text-accent);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .section-title::before {
+      content: '';
+      width: 4px;
+      height: 40px;
+      background: var(--accent-gradient);
+      border-radius: 2px;
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 10px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+    }
+
+    .btn-primary {
+      background: var(--primary-gradient);
       color: white;
     }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(255, 107, 53, 0.3);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+      color: white;
+    }
+
+    .btn-success:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(34, 197, 94, 0.3);
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+    }
+
+    .module-accordion {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border-radius: var(--border-radius);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+      margin-bottom: 1.5rem;
+      overflow: hidden;
+    }
+
+    .module-header {
+      padding: 1.5rem 2rem;
+      background: var(--card-gradient);
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .module-header:hover {
+      background: rgba(255, 107, 53, 0.1);
+    }
+
+    .module-content {
+      padding: 2rem;
+      display: none;
+    }
+
+    .module-content.show {
+      display: block;
+    }
+
+    .practice-item {
+      margin-bottom: 2rem;
+      padding: 1.5rem;
+      background: var(--card-gradient);
+      border-radius: 15px;
+      border: 1px solid var(--glass-border);
+    }
+
+    .practice-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .practice-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--text-accent);
+    }
+
+    .practice-textarea {
+      width: 100%;
+      min-height: 120px;
+      padding: 1rem;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid var(--glass-border);
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+      line-height: 1.5;
+      resize: vertical;
+      transition: var(--transition);
+    }
+
+    .practice-textarea:focus {
+      outline: none;
+      border-color: var(--text-accent);
+      box-shadow: 0 0 0 3px rgba(255, 167, 38, 0.1);
+    }
+
+    .logout-btn {
+      margin-top: auto;
+      padding: 1rem 1.5rem;
+      background: rgba(220, 38, 38, 0.2);
+      color: #fca5a5;
+      border-radius: 15px;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 500;
+      margin-left: 1rem;
+      margin-right: 1rem;
+    }
+
+    .logout-btn:hover {
+      background: rgba(220, 38, 38, 0.3);
+      transform: translateX(5px);
+    }
+
+    .fade-in { 
+      animation: fade-in .2s cubic-bezier(.4,0,.2,1); 
+    }
+    
+    @keyframes fade-in { 
+      from { opacity: 0; transform: translateY(12px);} 
+      to {opacity:1; transform:translateY(0);} 
+    }
+    
+    .save-bubble {
+      box-shadow: 0 4px 24px rgba(34, 197, 94, 0.3), 0 2px 8px rgba(0, 0, 0, 0.4);
+      background: rgba(34, 197, 94, 0.95);
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 10px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    
+    .save-bubble:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 30px rgba(34, 197, 94, 0.4), 0 4px 12px rgba(0, 0, 0, 0.5);
+    }
+    
     .saved-msg {
       background: #22c55e;
       color: #fff;
       border-radius: 0.75rem;
       font-weight: bold;
-      padding: 0.35rem 1.2rem;
-      box-shadow: 0 2px 16px #22c55e44;
+      padding: 0.5rem 1.2rem;
+      box-shadow: 0 4px 20px rgba(34, 197, 94, 0.3);
       margin-left: 0.5rem;
     }
   </style>
 </head>
-<body class="bg-[#0f172a] text-white min-h-screen font-sans">
+<body>
   <!-- Authentication Check -->
   <script>
     // Check if user is authenticated and has admin role
@@ -41,28 +389,48 @@
     }
   </script>
 
-  <div class="flex min-h-screen">
+  <div class="admin-layout">
     <!-- Sidebar -->
-    <aside class="flex flex-col w-64 bg-[#002d62] rounded-3xl m-6 p-4 shadow-2xl">
-      <div class="flex flex-col items-center mb-10">
-        <img src="SMXKITS.png" alt="SMXKITS Logo" class="w-24 h-24 rounded-full shadow-lg mb-2" />
-        <div class="font-bold text-xl text-white">Admin Controls</div>
+    <aside class="admin-sidebar">
+      <img src="SMXKITS.png" alt="SMXKITS Logo" class="admin-logo" />
+      <ul class="admin-nav">
+        <li onclick="window.location.href='admin-dashboard.html'">
+          <i class="fas fa-home"></i>
+          Admin Dashboard
+        </li>
+        <li class="active">
+          <i class="fas fa-edit"></i>
+          Edit Typing Tests
+        </li>
+        <li onclick="window.location.href='users-roles.html'">
+          <i class="fas fa-users"></i>
+          Users & Roles
+        </li>
+      </ul>
+      <div class="logout-btn" onclick="logout();">
+        <i class="fas fa-sign-out-alt"></i>
+        Logout
       </div>
-      <nav class="flex-1 space-y-4 text-zinc-200 font-medium">
-        <a href="admin-dashboard.html" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-[#003c8c42] transition"><span>🏠</span>Admin Dashboard</a>
-        <a href="edit-typing-tests.html" class="flex items-center gap-3 px-4 py-2 rounded-xl bg-blue-600/40 text-white border-l-4 border-[#1da1f2]"><span>✏️</span>Edit Typing Tests</a>
-        <a href="users-roles.html" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-[#003c8c42] transition"><span>👥</span>Users & Roles</a>
-      </nav>
-      <a href="#" onclick="logout();" class="mt-auto flex items-center gap-3 px-4 py-2 rounded-xl bg-zinc-900/80 text-red-400 hover:bg-red-900/50 transition">Logout</a>
     </aside>
+    
     <!-- Main Content -->
-    <main class="flex-1 p-8 pr-8">
-      <h1 class="text-3xl font-extrabold mb-6 text-white tracking-tight">Edit Typing Tests</h1>
-      <p class="text-blue-300 mb-6">Customize typing test content for all trainees. Changes will be immediately available in the typing trainer.</p>
-      <div class="mb-6">
-        <button onclick="addModule()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold transition">Add New Module</button>
+    <main class="admin-content">
+      <!-- Header Section -->
+      <div class="dashboard-header">
+        <div>
+          <h1 class="dashboard-title">Edit Typing Tests</h1>
+          <p style="color: var(--text-secondary); font-size: 1.1rem; margin-top: 0.5rem;">Customize typing test content for all trainees. Changes will be immediately available in the typing trainer.</p>
+        </div>
       </div>
-      <div id="modules-accordion" class="space-y-5"></div>
+      
+      <div style="margin-bottom: 2rem;">
+        <button onclick="addModule()" class="btn btn-primary">
+          <i class="fas fa-plus" style="margin-right: 0.5rem;"></i>
+          Add New Module
+        </button>
+      </div>
+      
+      <div id="modules-accordion"></div>
     </main>
   </div>
   <!-- Save Bubble (hidden by default, appears next to edited textarea) -->
@@ -133,11 +501,13 @@
       const cont = document.getElementById('modules-accordion');
       cont.innerHTML = '';
       modules.forEach((practices, mIdx) => {
-        // Module header
+        // Module wrapper
         const modWrap = document.createElement('div');
-        modWrap.className = "rounded-2xl shadow-lg bg-zinc-900/85";
-        const head = document.createElement('button');
-        head.className = "w-full text-left flex items-center justify-between p-5 text-xl font-bold rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 hover:bg-blue-900/30 transition";
+        modWrap.className = "module-accordion";
+        
+        // Module header
+        const head = document.createElement('div');
+        head.className = "module-header";
         
         // Module titles based on index - keep consistent with keyboard-training.html
         const moduleNames = [
@@ -150,40 +520,70 @@
         let moduleTitle = moduleNames[mIdx] || `Module ${mIdx + 1}`;
         
         head.innerHTML = `
-          <span>${moduleTitle}</span>
-          <div class="flex items-center gap-2">
-            <button onclick="deleteModule(${mIdx})" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm font-medium transition">Delete Module</button>
-            <svg class="w-6 h-6 ml-3 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+          <div style="display: flex; align-items: center; gap: 1rem;">
+            <i class="fas fa-keyboard" style="color: var(--text-accent);"></i>
+            <span style="font-size: 1.3rem; font-weight: 600;">${moduleTitle}</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 1rem;">
+            <button onclick="deleteModule(${mIdx})" class="btn btn-danger" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+              <i class="fas fa-trash" style="margin-right: 0.5rem;"></i>Delete Module
+            </button>
+            <i class="fas fa-chevron-down" style="transition: var(--transition); font-size: 1.2rem;"></i>
           </div>
         `;
+        
         // Practices container
         const pCont = document.createElement('div');
-        pCont.className = "pl-8 pr-3 pb-6 pt-2 space-y-6 hidden";
+        pCont.className = "module-content";
         
         // Add practice button
         const addPracticeBtn = document.createElement('button');
-        addPracticeBtn.className = "bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition mb-4";
-        addPracticeBtn.textContent = "Add New Practice";
+        addPracticeBtn.className = "btn btn-success";
+        addPracticeBtn.innerHTML = '<i class="fas fa-plus" style="margin-right: 0.5rem;"></i>Add New Practice';
         addPracticeBtn.onclick = () => addPractice(mIdx);
+        addPracticeBtn.style.marginBottom = '2rem';
         pCont.appendChild(addPracticeBtn);
+        
         practices.forEach((txt, pIdx) => {
           const prWrap = document.createElement('div');
-          prWrap.className = "mb-2";
-          prWrap.innerHTML = `
-            <div class="flex justify-between items-center mb-1">
-              <div class="text-lg font-semibold text-blue-300">Practice ${pIdx+1}</div>
-              <button onclick="deletePractice(${mIdx}, ${pIdx})" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-sm transition">Delete</button>
+          prWrap.className = "practice-item";
+          
+          const practiceHeader = document.createElement('div');
+          practiceHeader.className = "practice-header";
+          practiceHeader.innerHTML = `
+            <div class="practice-title">
+              <i class="fas fa-edit" style="margin-right: 0.5rem;"></i>Practice ${pIdx+1}
             </div>
-            <textarea class="practice-box w-full rounded-xl p-4 text-base text-zinc-200 bg-zinc-800/70 border-2 border-zinc-700 focus:border-blue-500 transition outline-none resize-vertical"
-              data-module="${mIdx}" data-practice="${pIdx}" rows="3">${txt || ""}</textarea>
+            <button onclick="deletePractice(${mIdx}, ${pIdx})" class="btn btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">
+              <i class="fas fa-trash" style="margin-right: 0.3rem;"></i>Delete
+            </button>
           `;
+          
+          const textarea = document.createElement('textarea');
+          textarea.className = "practice-textarea";
+          textarea.setAttribute('data-module', mIdx);
+          textarea.setAttribute('data-practice', pIdx);
+          textarea.rows = 4;
+          textarea.value = txt || "";
+          textarea.placeholder = "Enter typing practice text here...";
+          
+          prWrap.appendChild(practiceHeader);
+          prWrap.appendChild(textarea);
           pCont.appendChild(prWrap);
         });
+        
         // Accordion expand/collapse
         head.addEventListener('click', () => {
-          pCont.classList.toggle('hidden');
-          head.querySelector('svg').classList.toggle('rotate-180');
+          const isOpen = pCont.classList.contains('show');
+          pCont.classList.toggle('show');
+          const chevron = head.querySelector('.fa-chevron-down');
+          if (isOpen) {
+            chevron.style.transform = 'rotate(0deg)';
+          } else {
+            chevron.style.transform = 'rotate(180deg)';
+          }
         });
+        
         modWrap.appendChild(head);
         modWrap.appendChild(pCont);
         cont.appendChild(modWrap);
@@ -192,7 +592,7 @@
     // Show/hide save bubble, track edits
     let currentEditing = null;
     document.addEventListener('focusin', function(e) {
-      if (e.target.matches('.practice-box')) {
+      if (e.target.matches('.practice-textarea')) {
         const box = e.target;
         currentEditing = box;
         const rect = box.getBoundingClientRect();
@@ -206,13 +606,13 @@
       }
     });
     document.addEventListener('input', function(e) {
-      if (e.target.matches('.practice-box')) {
+      if (e.target.matches('.practice-textarea')) {
         document.getElementById('saveBubble').disabled = false;
         document.getElementById('saveBubble').style.opacity = 1;
       }
     });
     document.addEventListener('focusout', function(e) {
-      if (e.target.matches('.practice-box')) {
+      if (e.target.matches('.practice-textarea')) {
         setTimeout(() => {
           if (document.activeElement !== document.getElementById('saveBubble')) {
             document.getElementById('saveBubble').classList.add('hidden');

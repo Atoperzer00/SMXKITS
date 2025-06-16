@@ -8,16 +8,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-      --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      --primary-gradient: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+      --secondary-gradient: linear-gradient(135deg, #ff8c42 0%, #ff6b35 100%);
+      --accent-gradient: linear-gradient(135deg, #ffa726 0%, #ff9800 100%);
       --dark-gradient: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 100%);
-      --card-gradient: linear-gradient(145deg, #16213e 0%, #0f1419 100%);
+      --card-gradient: linear-gradient(145deg, #2d1810 0%, #1a0f08 100%);
       --glass-bg: rgba(255, 255, 255, 0.05);
       --glass-border: rgba(255, 255, 255, 0.1);
       --text-primary: #ffffff;
       --text-secondary: #b8c5d6;
-      --text-accent: #64b5f6;
+      --text-accent: #ffa726;
       --shadow-primary: 0 20px 40px rgba(0, 0, 0, 0.3);
       --shadow-hover: 0 30px 60px rgba(0, 0, 0, 0.4);
       --border-radius: 20px;
@@ -47,9 +47,9 @@
       width: 100%;
       height: 100%;
       background: 
-        radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.15) 0%, transparent 50%),
-        radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.1) 0%, transparent 50%);
+        radial-gradient(circle at 20% 80%, rgba(255, 107, 53, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(247, 147, 30, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(255, 140, 66, 0.1) 0%, transparent 50%);
       z-index: -1;
       animation: float 20s ease-in-out infinite;
     }
@@ -85,20 +85,20 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: linear-gradient(180deg, rgba(102, 126, 234, 0.1) 0%, transparent 100%);
+      background: linear-gradient(180deg, rgba(255, 107, 53, 0.1) 0%, transparent 100%);
       z-index: -1;
     }
 
     .admin-logo {
       width: 200px;
       margin: 0 auto 3rem;
-      filter: drop-shadow(0 10px 30px rgba(102, 126, 234, 0.3));
+      filter: drop-shadow(0 10px 30px rgba(255, 107, 53, 0.3));
       transition: var(--transition);
     }
 
     .admin-logo:hover {
       transform: scale(1.05);
-      filter: drop-shadow(0 15px 40px rgba(102, 126, 234, 0.5));
+      filter: drop-shadow(0 15px 40px rgba(255, 107, 53, 0.5));
     }
 
     .admin-nav {
@@ -141,7 +141,7 @@
     .admin-nav li.active {
       color: white;
       transform: translateX(5px);
-      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+      box-shadow: 0 10px 25px rgba(255, 107, 53, 0.3);
     }
 
     /* Main Content Area */
@@ -208,10 +208,11 @@
       padding: 2rem;
       border: 1px solid var(--glass-border);
       box-shadow: var(--shadow-primary);
-      cursor: pointer;
+      cursor: pointer !important;
       transition: var(--transition);
       position: relative;
       overflow: hidden;
+      user-select: none;
     }
 
     .tool-card::before {
@@ -224,6 +225,7 @@
       background: var(--primary-gradient);
       opacity: 0;
       transition: var(--transition);
+      pointer-events: none;
     }
 
     .tool-card:hover::before {
@@ -233,7 +235,7 @@
     .tool-card:hover {
       transform: translateY(-10px) scale(1.02);
       box-shadow: var(--shadow-hover);
-      border-color: rgba(102, 126, 234, 0.5);
+      border-color: rgba(255, 107, 53, 0.5);
     }
 
     .tool-icon {
@@ -241,7 +243,7 @@
       margin-bottom: 1rem;
       background: var(--accent-gradient);
       -webkit-background-clip: text;
-      -webkit-text-/ill-color: transparent;
+      -webkit-text-fill-color: transparent;
       background-clip: text;
     }
 
@@ -362,6 +364,10 @@
           <p style="color: var(--text-secondary); font-size: 1.1rem; margin-top: 0.5rem;">
             Access essential mission resources and external links for training operations.
           </p>
+          <!-- Debug test button -->
+          <button onclick="alert('JavaScript is working!')" style="background: var(--accent-gradient); border: none; color: white; padding: 0.5rem 1rem; border-radius: 5px; margin-top: 1rem; cursor: pointer;">
+            Test JavaScript
+          </button>
         </div>
       </header>
 
@@ -397,25 +403,25 @@
           Essential Mission Resources
         </h2>
         <div class="tools-grid">
-          <div class="tool-card" onclick="window.open('../kitcomm.html', '_blank')">
+          <div class="tool-card" onclick="openLink('../KitComm.html', 'KitComm')" style="cursor: pointer; z-index: 10;">
             <div class="tool-icon"><i class="fas fa-comments"></i></div>
             <h3 class="tool-title">KitComm</h3>
             <p class="tool-description">Secure team communications, messaging, and coordination platform.</p>
           </div>
           
-          <div class="tool-card" onclick="window.open('../smxstream-new.html', '_blank')">
+          <div class="tool-card" onclick="openLink('../SMXStream-new.html', 'SMX Stream')" style="cursor: pointer; z-index: 10;">
             <div class="tool-icon"><i class="fas fa-video"></i></div>
             <h3 class="tool-title">SMX Stream</h3>
             <p class="tool-description">Live training streams, recorded sessions, and real-time mission broadcasts.</p>
           </div>
           
-          <div class="tool-card" onclick="window.open('../OpsLog.html', '_blank')">
+          <div class="tool-card" onclick="openLink('../OpsLog.html', 'Drift')" style="cursor: pointer; z-index: 10;">
             <div class="tool-icon"><i class="fas fa-clipboard-list"></i></div>
             <h3 class="tool-title">Drift</h3>
             <p class="tool-description">Mission operations logging, activity tracking, and incident reporting.</p>
           </div>
           
-          <div class="tool-card" onclick="window.open('../track-point.html', '_blank')">
+          <div class="tool-card" onclick="openLink('../track-point.html', 'Track Point')" style="cursor: pointer; z-index: 10;">
             <div class="tool-icon"><i class="fas fa-map-marked-alt"></i></div>
             <h3 class="tool-title">Track Point</h3>
             <p class="tool-description">Interactive mapping platform for tactical positioning and route planning.</p>
@@ -449,6 +455,22 @@
   </div>
 
   <script>
+    function openLink(url, name) {
+      console.log('Opening link:', name, 'URL:', url);
+      try {
+        const newWindow = window.open(url, '_blank');
+        if (!newWindow) {
+          console.error('Popup blocked or failed to open:', url);
+          alert('Unable to open ' + name + '. Please check if popups are blocked.');
+        } else {
+          console.log('Successfully opened:', name);
+        }
+      } catch (error) {
+        console.error('Error opening link:', error);
+        alert('Error opening ' + name + ': ' + error.message);
+      }
+    }
+    
     function generateReference() {
       const dropdown = document.getElementById('referenceDropdown');
       const selectedValue = dropdown.value;
@@ -473,6 +495,22 @@
       localStorage.removeItem('classId');
       window.location.replace('/login.html');
     }
+    
+    // Debug: Test if JavaScript is working
+    console.log('Mission Links JavaScript loaded successfully');
+    
+    // Add click event listeners as backup
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('DOM loaded, setting up event listeners');
+      const toolCards = document.querySelectorAll('.tool-card');
+      console.log('Found', toolCards.length, 'tool cards');
+      
+      toolCards.forEach((card, index) => {
+        card.addEventListener('click', function(e) {
+          console.log('Card clicked:', index, e.target);
+        });
+      });
+    });
   </script>
 </body>
 </html>

@@ -87,6 +87,9 @@
       transition: all 0.3s ease;
       font-weight: 500;
       white-space: nowrap;
+      position: relative;
+      z-index: 10;
+      display: inline-block;
     }
     
     .btn:hover {
@@ -180,6 +183,8 @@
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      position: relative;
+      z-index: 10;
     }
     
     .control-btn:hover {
@@ -766,25 +771,25 @@
           Mission Links
         </h2>
         <div class="tools-grid">
-          <div class="tool-card" onclick="window.open('kitcomm.html', '_blank')">
+          <div class="tool-card" data-url="kitcomm.html">
             <div class="tool-icon"><i class="fas fa-comments"></i></div>
             <h3 class="tool-title">KitComm</h3>
             <p class="tool-description">Secure team communications, messaging, and coordination platform.</p>
           </div>
           
-          <div class="tool-card" onclick="window.open('smxstream-new.html', '_blank')">
+          <div class="tool-card" data-url="smxstream-new.html">
             <div class="tool-icon"><i class="fas fa-video"></i></div>
             <h3 class="tool-title">SMX Stream</h3>
             <p class="tool-description">Live training streams, recorded sessions, and real-time mission broadcasts.</p>
           </div>
           
-          <div class="tool-card" onclick="window.open('OpsLog.html', '_blank')">
+          <div class="tool-card" data-url="OpsLog.html">
             <div class="tool-icon"><i class="fas fa-clipboard-list"></i></div>
             <h3 class="tool-title">Drift</h3>
             <p class="tool-description">Mission operations logging, activity tracking, and incident reporting.</p>
           </div>
           
-          <div class="tool-card" onclick="window.open('track-point.html', '_blank')">
+          <div class="tool-card" data-url="track-point.html">
             <div class="tool-icon"><i class="fas fa-map-marked-alt"></i></div>
             <h3 class="tool-title">Track Point</h3>
             <p class="tool-description">Interactive mapping platform for tactical positioning and route planning.</p>
@@ -802,54 +807,139 @@
     document.addEventListener('DOMContentLoaded', function() {
       const now = new Date();
       const timestamp = now.toISOString().slice(0, 16);
-      document.getElementById('timestamp').value = timestamp;
+      const timestampInput = document.getElementById('timestamp');
+      if (timestampInput) {
+        timestampInput.value = timestamp;
+      }
       
       // Set default operator from localStorage if available
       const userName = localStorage.getItem('userName') || '';
-      if (userName) {
-        document.getElementById('operator').value = userName;
+      const operatorInput = document.getElementById('operator');
+      if (userName && operatorInput) {
+        operatorInput.value = userName;
       }
       
+      // Add click event listeners to all buttons to ensure they work
+      setupEventListeners();
+      
+      // Test button functionality
       console.log('Ops Log initialized');
+      console.log('Found buttons:', document.querySelectorAll('.btn').length);
+      console.log('Found control buttons:', document.querySelectorAll('.control-btn').length);
+      console.log('Found tool cards:', document.querySelectorAll('.tool-card').length);
     });
     
+    // Setup all event listeners
+    function setupEventListeners() {
+      // Navigation buttons
+      const navButtons = document.querySelectorAll('.nav-buttons .btn');
+      navButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+          console.log('Navigation button clicked');
+          const href = this.getAttribute('href');
+          if (href && href !== '#') {
+            console.log('Navigating to:', href);
+            window.location.href = href;
+          } else {
+            console.log('No valid href found:', href);
+          }
+        });
+      });
+      
+      // Tool cards
+      const toolCards = document.querySelectorAll('.tool-card');
+      toolCards.forEach(card => {
+        card.addEventListener('click', function() {
+          console.log('Tool card clicked');
+          const url = this.getAttribute('data-url');
+          const onclick = this.getAttribute('onclick');
+          
+          if (url) {
+            console.log('Opening URL:', url);
+            window.open(url, '_blank');
+          } else if (onclick) {
+            try {
+              eval(onclick);
+            } catch (error) {
+              console.error('Error executing onclick:', error);
+            }
+          } else {
+            console.log('No URL or onclick found for this card');
+          }
+        });
+      });
+      
+      // Header control buttons
+      const controlButtons = document.querySelectorAll('.control-btn');
+      controlButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+          e.preventDefault();
+          const onclick = this.getAttribute('onclick');
+          if (onclick) {
+            try {
+              eval(onclick);
+            } catch (error) {
+              console.error('Error executing onclick:', error);
+            }
+          }
+        });
+      });
+      
+      // Filter selects
+      const filterSelects = document.querySelectorAll('.filter-select');
+      filterSelects.forEach(select => {
+        select.addEventListener('change', function() {
+          filterEntries();
+        });
+      });
+    }
+    
     // Form submission
-    document.getElementById('logEntryForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      
-      const timestamp = document.getElementById('timestamp').value;
-      const operator = document.getElementById('operator').value;
-      const priority = document.getElementById('priority').value;
-      const category = document.getElementById('category').value;
-      const description = document.getElementById('description').value;
-      
-      if (!timestamp || !operator || !priority || !category || !description) {
-        alert('Please fill in all fields');
-        return;
-      }
-      
-      const entry = {
-        id: Date.now(),
-        timestamp: new Date(timestamp).toLocaleString(),
-        operator,
-        priority,
-        category,
-        description,
-        created: new Date()
-      };
-      
-      logEntries.unshift(entry); // Add to beginning of array
-      renderLogEntries();
-      
-      // Clear form
-      document.getElementById('description').value = '';
-      
-      // Update timestamp to current time
-      const now = new Date();
-      document.getElementById('timestamp').value = now.toISOString().slice(0, 16);
-      
-      console.log('New log entry added:', entry);
-    });
+    const logForm = document.getElementById('logEntryForm');
+    if (logForm) {
+      logForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const timestamp = document.getElementById('timestamp').value;
+        const operator = document.getElementById('operator').value;
+        const priority = document.getElementById('priority').value;
+        const category = document.getElementById('category').value;
+        const description = document.getElementById('description').value;
+        
+        if (!timestamp || !operator || !priority || !category || !description) {
+          alert('Please fill in all fields');
+          return;
+        }
+        
+        const entry = {
+          id: Date.now(),
+          timestamp: new Date(timestamp).toLocaleString(),
+          operator,
+          priority,
+          category,
+          description,
+          created: new Date()
+        };
+        
+        logEntries.unshift(entry); // Add to beginning of array
+        renderLogEntries();
+        
+        // Clear form
+        const descriptionField = document.getElementById('description');
+        if (descriptionField) {
+          descriptionField.value = '';
+        }
+        
+        // Update timestamp to current time
+        const now = new Date();
+        const timestampField = document.getElementById('timestamp');
+        if (timestampField) {
+          timestampField.value = now.toISOString().slice(0, 16);
+        }
+        
+        console.log('New log entry added:', entry);
+      });
+    }
     
     // Render log entries
     function renderLogEntries() {
@@ -899,33 +989,47 @@
     
     // Header control functions
     function addLogEntry() {
-      document.getElementById('description').focus();
+      console.log('addLogEntry called');
+      const descriptionField = document.getElementById('description');
+      if (descriptionField) {
+        descriptionField.focus();
+        descriptionField.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        console.error('Description field not found');
+      }
     }
     
     function exportLog() {
+      console.log('exportLog called');
       if (logEntries.length === 0) {
         alert('No entries to export');
         return;
       }
       
-      const csvContent = "data:text/csv;charset=utf-8," 
-        + "Timestamp,Operator,Priority,Category,Description\n"
-        + logEntries.map(entry => 
-          `"${entry.timestamp}","${entry.operator}","${entry.priority}","${entry.category}","${entry.description}"`
-        ).join("\n");
-      
-      const encodedUri = encodeURI(csvContent);
-      const link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", `ops-log-${new Date().toISOString().slice(0, 10)}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      console.log('Log exported');
+      try {
+        const csvContent = "data:text/csv;charset=utf-8," 
+          + "Timestamp,Operator,Priority,Category,Description\n"
+          + logEntries.map(entry => 
+            `"${entry.timestamp}","${entry.operator}","${entry.priority}","${entry.category}","${entry.description}"`
+          ).join("\n");
+        
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `ops-log-${new Date().toISOString().slice(0, 10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        console.log('Log exported successfully');
+      } catch (error) {
+        console.error('Error exporting log:', error);
+        alert('Error exporting log. Please try again.');
+      }
     }
     
     function clearLog() {
+      console.log('clearLog called');
       if (logEntries.length === 0) {
         alert('No entries to clear');
         return;
@@ -938,9 +1042,15 @@
         // Restore sample entries
         location.reload();
         
-        console.log('Log cleared');
+        console.log('Log cleared successfully');
       }
     }
+    
+    // Make functions globally available
+    window.addLogEntry = addLogEntry;
+    window.exportLog = exportLog;
+    window.clearLog = clearLog;
+    window.filterEntries = filterEntries;
     
     // Keyboard shortcuts
     document.addEventListener('keydown', function(e) {

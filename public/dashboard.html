@@ -8,16 +8,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-      --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      --primary-gradient: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+      --secondary-gradient: linear-gradient(135deg, #ff8c42 0%, #ff6b35 100%);
+      --accent-gradient: linear-gradient(135deg, #ffa726 0%, #ff9800 100%);
       --dark-gradient: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 100%);
-      --card-gradient: linear-gradient(145deg, #16213e 0%, #0f1419 100%);
+      --card-gradient: linear-gradient(145deg, #2d1810 0%, #1a0f08 100%);
       --glass-bg: rgba(255, 255, 255, 0.05);
       --glass-border: rgba(255, 255, 255, 0.1);
       --text-primary: #ffffff;
       --text-secondary: #b8c5d6;
-      --text-accent: #64b5f6;
+      --text-accent: #ffa726;
       --shadow-primary: 0 20px 40px rgba(0, 0, 0, 0.3);
       --shadow-hover: 0 30px 60px rgba(0, 0, 0, 0.4);
       --border-radius: 20px;
@@ -47,9 +47,9 @@
       width: 100%;
       height: 100%;
       background: 
-        radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.15) 0%, transparent 50%),
-        radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.1) 0%, transparent 50%);
+        radial-gradient(circle at 20% 80%, rgba(255, 107, 53, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(247, 147, 30, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(255, 140, 66, 0.1) 0%, transparent 50%);
       z-index: -1;
       animation: float 20s ease-in-out infinite;
     }
@@ -85,20 +85,20 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: linear-gradient(180deg, rgba(102, 126, 234, 0.1) 0%, transparent 100%);
+      background: linear-gradient(180deg, rgba(255, 107, 53, 0.1) 0%, transparent 100%);
       z-index: -1;
     }
 
     .admin-logo {
       width: 200px;
       margin: 0 auto 3rem;
-      filter: drop-shadow(0 10px 30px rgba(102, 126, 234, 0.3));
+      filter: drop-shadow(0 10px 30px rgba(255, 107, 53, 0.3));
       transition: var(--transition);
     }
 
     .admin-logo:hover {
       transform: scale(1.05);
-      filter: drop-shadow(0 15px 40px rgba(102, 126, 234, 0.5));
+      filter: drop-shadow(0 15px 40px rgba(255, 107, 53, 0.5));
     }
 
     .admin-nav {
@@ -141,7 +141,7 @@
     .admin-nav li.active {
       color: white;
       transform: translateX(5px);
-      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+      box-shadow: 0 10px 25px rgba(255, 107, 53, 0.3);
     }
 
     /* Main Content Area */
