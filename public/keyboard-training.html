@@ -1106,19 +1106,15 @@
         moduleHeader.onclick = () => {
           const isHidden = practicesContainer.style.display === 'none';
           practicesContainer.style.display = isHidden ? 'block' : 'none';
-          
+
           // Rotate arrow
           const arrow = moduleHeader.querySelector('.module-arrow');
           if (arrow) {
             arrow.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
           }
-          
+
           // Add visual feedback
-          if (isHidden) {
-            moduleDiv.style.background = 'var(--glass-bg)';
-          } else {
-            moduleDiv.style.background = 'var(--card-gradient)';
-          }
+          moduleDiv.style.background = isHidden ? 'var(--glass-bg)' : 'var(--card-gradient)';
         };
         
         moduleDiv.appendChild(moduleHeader);

@@ -464,6 +464,38 @@
       .stream-source-tabs { flex-direction: column; }
       .live-controls { flex-direction: column; }
     }
+
+    /* Server Uploads Section */
+    .server-uploads {
+      margin-top: 12px;
+      padding: 12px;
+      background: var(--control-bg);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .upload-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .upload-item:last-child {
+      border-bottom: none;
+    }
+    .upload-item button {
+      background: var(--error);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 0.4em 0.8em;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .upload-item button:hover {
+      background: #e03e3e;
+    }
   </style>
 </head>
 <body>
@@ -548,6 +580,13 @@
           <div class="settings-row">Class: <span id="classLabel">Not selected</span></div>
           <div class="settings-row">Status: <span id="streamStatusInfo">Offline</span></div>
           <div class="settings-row">Viewers: <span id="viewerCountInfo">0</span></div>
+        </div>
+        <!-- Add a section to display server uploads -->
+        <div class="panel-section">
+          <div class="section-title">Server Uploads</div>
+          <div id="serverUploads" class="server-uploads">
+            <!-- Uploads will be dynamically populated here -->
+          </div>
         </div>
       </div>
     </div>
@@ -1421,6 +1460,40 @@
     } else {
       loadClasses();
     }
+
+    // --- Server Uploads ---
+    async function fetchServerUploads() {
+      try {
+        const response = await fetch('/api/stream/uploads');
+        if (!response.ok) throw new Error('Failed to fetch uploads');
+
+        const uploads = await response.json();
+        const container = document.getElementById('serverUploads');
+        container.innerHTML = uploads.map(upload => `
+          <div class="upload-item">
+            <span>${upload.filename}</span>
+            <button onclick="deleteUpload('${upload.filename}')">Delete</button>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error('Error fetching uploads:', error);
+      }
+    }
+
+    async function deleteUpload(filename) {
+      try {
+        const response = await fetch(`/api/stream/uploads/${filename}`, { method: 'DELETE' });
+        if (!response.ok) throw new Error('Failed to delete upload');
+
+        alert('Upload deleted successfully');
+        fetchServerUploads();
+      } catch (error) {
+        console.error('Error deleting upload:', error);
+      }
+    }
+
+    // Fetch uploads on page load
+    fetchServerUploads();
   </script>
 </body>
 </html>

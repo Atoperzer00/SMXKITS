@@ -198,6 +198,8 @@ app.use('/api/chat', require('./routes/chat'));
 app.use('/api/kitcomm', require('./routes/kitcomm'));
 app.use('/api/streams', require('./routes/streams'));
 app.use('/api/stream', require('./routes/stream-upload.route'));
+const feedbackRoutes = require('./routes/feedback.route');
+app.use('/api/feedback', feedbackRoutes);
 
 // ===== OpsLog API Routes =====
 // Get all callouts for a room

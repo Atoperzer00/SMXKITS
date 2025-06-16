@@ -381,4 +381,34 @@ router.get('/video/:filename', (req, res) => {
   }
 });
 
+// Endpoint to fetch all uploads
+router.get('/uploads', auth(['admin', 'instructor']), async (req, res) => {
+  try {
+    const tempDir = path.join(__dirname, '..', 'temp');
+    if (!fs.existsSync(tempDir)) return res.json([]);
+
+    const files = fs.readdirSync(tempDir).map(file => ({ filename: file }));
+    res.json(files);
+  } catch (error) {
+    console.error('Error fetching uploads:', error);
+    res.status(500).json({ error: 'Server error fetching uploads' });
+  }
+});
+
+// Endpoint to delete an upload
+router.delete('/uploads/:filename', auth(['admin', 'instructor']), async (req, res) => {
+  try {
+    const tempDir = path.join(__dirname, '..', 'temp');
+    const filePath = path.join(tempDir, req.params.filename);
+
+    if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'File not found' });
+
+    fs.unlinkSync(filePath);
+    res.json({ message: 'File deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting upload:', error);
+    res.status(500).json({ error: 'Server error deleting upload' });
+  }
+});
+
 module.exports = router;
