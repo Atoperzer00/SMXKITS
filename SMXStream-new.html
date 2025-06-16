@@ -7,9 +7,24 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root {
+      --primary-gradient: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+      --secondary-gradient: linear-gradient(135deg, #333333 0%, #000000 100%);
+      --accent-gradient: linear-gradient(135deg, #2a2a2a 0%, #000000 100%);
+      --dark-gradient: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 100%);
+      --card-gradient: linear-gradient(145deg, #1a1a1a 0%, #0a0a0a 100%);
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --text-primary: #ffffff;
+      --text-secondary: #b8c5d6;
+      --text-accent: #000000;
+      --shadow-primary: 0 20px 40px rgba(0, 0, 0, 0.3);
+      --shadow-hover: 0 30px 60px rgba(0, 0, 0, 0.4);
+      --border-radius: 20px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      
       --bg: #0f172a;
       --fg: #f0f0f0;
-      --accent: #70b8ff;
+      --accent: #000000;
       --track: #1e293b;
       --hover: rgba(255, 255, 255, 0.1);
     }
@@ -17,23 +32,48 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: var(--bg);
-      color: var(--fg);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--dark-gradient);
+      color: var(--text-primary);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* Animated background particles */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(0, 0, 0, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(26, 26, 26, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(51, 51, 51, 0.1) 0%, transparent 50%);
+      z-index: -1;
+      animation: float 20s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      33% { transform: translateY(-20px) rotate(1deg); }
+      66% { transform: translateY(10px) rotate(-1deg); }
     }
     
     .navbar {
-      background: rgba(0, 0, 0, 0.6);
+      background: var(--glass-bg);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      border-radius: 24px;
+      border-radius: var(--border-radius);
       margin: 24px;
       padding: 1rem 0;
       flex-shrink: 0;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+      box-shadow: var(--shadow-primary);
+      border: 1px solid var(--glass-border);
     }
     
     .container {
@@ -69,37 +109,55 @@
     
     .btn {
       font-size: 1rem;
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      color: var(--fg);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      color: var(--text-primary);
+      border: 1px solid var(--glass-border);
       padding: 0.75rem 1.5rem;
-      border-radius: 12px;
+      border-radius: 15px;
       cursor: pointer;
       text-decoration: none;
-      transition: all 0.3s ease;
+      transition: var(--transition);
       font-weight: 500;
       white-space: nowrap;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: var(--primary-gradient);
+      transition: var(--transition);
+      z-index: -1;
+    }
+
+    .btn:hover::before {
+      left: 0;
     }
     
     .btn:hover {
-      background: rgba(112, 184, 255, 0.2);
-      border-color: var(--accent);
+      color: white;
       transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(112, 184, 255, 0.3);
+      box-shadow: var(--shadow-hover);
+      border-color: rgba(0, 0, 0, 0.5);
     }
     
     .btn-primary {
-      background: linear-gradient(135deg, var(--accent), #3b82f6);
+      background: var(--primary-gradient);
       border-color: var(--accent);
       color: white;
     }
     
     .btn-primary:hover {
-      background: linear-gradient(135deg, #3b82f6, var(--accent));
+      background: var(--secondary-gradient);
       transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(112, 184, 255, 0.6);
+      box-shadow: var(--shadow-hover);
     }
     
     .main-content {
@@ -110,12 +168,13 @@
     }
     
     .player-wrapper {
-      background: rgba(30, 41, 59, 0.8);
+      background: var(--card-gradient);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      border-radius: 24px;
+      border-radius: var(--border-radius);
       overflow: hidden;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+      box-shadow: var(--shadow-primary);
+      border: 1px solid var(--glass-border);
       height: 100%;
       display: flex;
       flex-direction: column;
@@ -174,25 +233,45 @@
     }
 
     .video-control-btn {
-      background: rgba(0, 0, 0, 0.7);
-      border: 2px solid rgba(233, 30, 99, 0.3);
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 2px solid var(--glass-border);
       border-radius: 50%;
       width: 60px;
       height: 60px;
       color: white;
       font-size: 1.2rem;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: var(--transition);
       display: flex;
       align-items: center;
       justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .video-control-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--primary-gradient);
+      opacity: 0;
+      transition: var(--transition);
+      z-index: -1;
+    }
+
+    .video-control-btn:hover::before {
+      opacity: 1;
     }
 
     .video-control-btn:hover {
-      background: rgba(233, 30, 99, 0.8);
-      border-color: rgba(233, 30, 99, 0.8);
+      border-color: var(--accent);
       transform: scale(1.1);
-      box-shadow: 0 5px 15px rgba(233, 30, 99, 0.4);
+      box-shadow: var(--shadow-hover);
     }
 
     .play-pause-btn {
@@ -233,14 +312,14 @@
       position: absolute;
       bottom: 20px;
       left: 20px;
-      background: rgba(0, 0, 0, 0.8);
+      background: var(--glass-bg);
       padding: 0.5rem 1rem;
       border-radius: 20px;
       font-family: monospace;
       font-size: 0.9rem;
       color: white;
       backdrop-filter: blur(10px);
-      border: 1px solid rgba(233, 30, 99, 0.2);
+      border: 1px solid var(--glass-border);
     }
 
     /* Hide default video controls */
@@ -314,8 +393,12 @@
     }
 
     #timeline::-webkit-scrollbar-thumb {
-      background: linear-gradient(90deg, var(--accent), #3b82f6);
+      background: var(--accent-gradient);
       border-radius: 4px;
+    }
+
+    #timeline::-webkit-scrollbar-thumb:hover {
+      background: var(--primary-gradient);
     }
 
     .timeline-container {
@@ -371,10 +454,10 @@
       left: 0;
       width: 3px;
       height: 100%;
-      background: linear-gradient(180deg, var(--accent), #3b82f6);
+      background: var(--primary-gradient);
       z-index: 100;
       cursor: grab;
-      box-shadow: 0 0 10px rgba(112, 184, 255, 0.8);
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
       transition: left 0.1s ease;
     }
 
@@ -395,7 +478,7 @@
       height: 15px;
       background: var(--accent);
       border-radius: 50%;
-      box-shadow: 0 2px 8px rgba(112, 184, 255, 0.6);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
     }
 
     #scrubber::after {
@@ -407,7 +490,7 @@
       height: 15px;
       background: var(--accent);
       border-radius: 50%;
-      box-shadow: 0 2px 8px rgba(112, 184, 255, 0.6);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
     }
     
     .thumbnail-preview {
@@ -415,16 +498,16 @@
       bottom: 140px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.85);
+      background: var(--card-gradient);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      border: 2px solid rgba(112, 184, 255, 0.8);
-      border-radius: 20px;
+      border: 2px solid var(--glass-border);
+      border-radius: var(--border-radius);
       padding: 12px;
       display: none;
       z-index: 1000;
       pointer-events: none;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      box-shadow: var(--shadow-primary);
     }
     
     .thumbnail-preview img {
@@ -441,11 +524,12 @@
       margin-top: 8px;
       font-family: monospace;
       font-weight: 600;
-      background: rgba(112, 184, 255, 0.2);
+      background: var(--glass-bg);
       padding: 4px 8px;
       border-radius: 10px;
       backdrop-filter: blur(5px);
       -webkit-backdrop-filter: blur(5px);
+      border: 1px solid var(--glass-border);
     }
     
     .loading-spinner {
@@ -457,12 +541,12 @@
       height: 60px;
       border: 4px solid rgba(255, 255, 255, 0.1);
       border-top: 4px solid var(--accent);
-      border-right: 4px solid rgba(112, 184, 255, 0.6);
+      border-right: 4px solid rgba(0, 0, 0, 0.6);
       border-radius: 50%;
       animation: spin 1s infinite linear;
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+      box-shadow: var(--shadow-primary);
     }
     
     @keyframes spin {
@@ -548,140 +632,7 @@
       padding: 8px;
     }
 
-    /* Mission Links Section Styles */
-    .mission-links-section {
-      padding: 3rem 2rem;
-      background: transparent;
-    }
 
-    .section-title {
-      font-size: 2.5rem;
-      font-weight: 700;
-      margin-bottom: 2rem;
-      color: var(--accent);
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      text-align: center;
-      justify-content: center;
-    }
-
-    .section-title::before {
-      content: '';
-      width: 4px;
-      height: 50px;
-      background: linear-gradient(135deg, var(--accent), #3b82f6);
-      border-radius: 2px;
-    }
-
-    .tools-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 2rem;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .tool-card {
-      background: rgba(30, 41, 59, 0.8);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-radius: 24px;
-      padding: 2.5rem;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
-      cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
-      overflow: hidden;
-      text-align: center;
-    }
-
-    .tool-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(135deg, var(--accent), #3b82f6);
-      opacity: 0;
-      transition: all 0.3s ease;
-    }
-
-    .tool-card:hover::before {
-      opacity: 0.1;
-    }
-
-    .tool-card:hover {
-      transform: translateY(-15px) scale(1.03);
-      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
-      border-color: rgba(112, 184, 255, 0.6);
-    }
-
-    .tool-icon {
-      font-size: 3.5rem;
-      margin-bottom: 1.5rem;
-      background: linear-gradient(135deg, var(--accent), #3b82f6);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      position: relative;
-      z-index: 1;
-      display: block;
-    }
-
-    .tool-title {
-      font-size: 1.75rem;
-      font-weight: 700;
-      margin-bottom: 1rem;
-      color: var(--fg);
-      position: relative;
-      z-index: 1;
-    }
-
-    .tool-description {
-      color: rgba(240, 240, 240, 0.8);
-      font-size: 1rem;
-      line-height: 1.6;
-      position: relative;
-      z-index: 1;
-    }
-
-    /* Responsive Design for Mission Links */
-    @media (max-width: 768px) {
-      .mission-links-section {
-        padding: 2rem 1rem;
-      }
-      
-      .section-title {
-        font-size: 2rem;
-        flex-direction: column;
-        gap: 1rem;
-      }
-      
-      .section-title::before {
-        width: 60px;
-        height: 4px;
-      }
-      
-      .tools-grid {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
-      }
-      
-      .tool-card {
-        padding: 2rem;
-      }
-      
-      .tool-icon {
-        font-size: 3rem;
-      }
-      
-      .tool-title {
-        font-size: 1.5rem;
-      }
-    }
     
     /* Welcome Modal Styles */
     .welcome-modal {
@@ -708,18 +659,16 @@
     }
     
     .welcome-content {
-      background: linear-gradient(135deg, rgba(28, 28, 28, 0.95), rgba(40, 40, 40, 0.95));
+      background: var(--card-gradient);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
-      border: 2px solid rgba(233, 30, 99, 0.3);
-      border-radius: 25px;
+      border: 2px solid var(--glass-border);
+      border-radius: var(--border-radius);
       padding: 2.5rem;
       max-width: 500px;
       width: 90%;
       text-align: center;
-      box-shadow: 
-        0 20px 60px rgba(0, 0, 0, 0.5),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      box-shadow: var(--shadow-primary);
       position: relative;
       animation: modalSlideIn 0.4s ease-out;
     }
@@ -738,10 +687,10 @@
     .welcome-title {
       font-size: 2rem;
       font-weight: bold;
-      color: var(--accent);
+      color: var(--text-primary);
       margin-bottom: 1.5rem;
       text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-      background: linear-gradient(135deg, var(--accent), #ff1744);
+      background: var(--primary-gradient);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -778,7 +727,7 @@
     }
     
     .welcome-close {
-      background: linear-gradient(135deg, var(--accent), #ff1744);
+      background: var(--primary-gradient);
       color: white;
       border: none;
       padding: 0.75rem 2rem;
@@ -786,17 +735,14 @@
       font-size: 1rem;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 
-        0 4px 15px rgba(233, 30, 99, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      transition: var(--transition);
+      box-shadow: var(--shadow-primary);
     }
     
     .welcome-close:hover {
       transform: translateY(-2px);
-      box-shadow: 
-        0 8px 25px rgba(233, 30, 99, 0.6),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      box-shadow: var(--shadow-hover);
+      background: var(--secondary-gradient);
     }
     
     .welcome-close:active {
@@ -923,43 +869,7 @@
       </div>
   </div>
 
-  <!-- Mission Links Section -->
-  <div class="mission-links-section">
-    <div class="container">
-      <!-- Essential Mission Resources -->
-      <section class="fade-in stagger-2">
-        <h2 class="section-title">
-          <i class="fas fa-globe"></i>
-          Mission Links
-        </h2>
-        <div class="tools-grid">
-          <div class="tool-card" onclick="window.open('smxstream-new.html', '_blank')">
-            <div class="tool-icon"><i class="fas fa-video"></i></div>
-            <h3 class="tool-title">SMX Stream</h3>
-            <p class="tool-description">Live training streams, recorded sessions, and real-time mission broadcasts.</p>
-          </div>
-          
-          <div class="tool-card" onclick="window.open('kitcomm.html', '_blank')">
-            <div class="tool-icon"><i class="fas fa-comments"></i></div>
-            <h3 class="tool-title">KitComm</h3>
-            <p class="tool-description">Secure team communications, messaging, and coordination platform.</p>
-          </div>
-          
-          <div class="tool-card" onclick="window.open('ops-log.html', '_blank')">
-            <div class="tool-icon"><i class="fas fa-clipboard-list"></i></div>
-            <h3 class="tool-title">Ops Log</h3>
-            <p class="tool-description">Mission operations logging, activity tracking, and incident reporting.</p>
-          </div>
-          
-          <div class="tool-card" onclick="window.open('track-point.html', '_blank')">
-            <div class="tool-icon"><i class="fas fa-map-marked-alt"></i></div>
-            <h3 class="tool-title">Track Point</h3>
-            <p class="tool-description">Interactive mapping platform for tactical positioning and route planning.</p>
-          </div>
-        </div>
-      </section>
-    </div>
-  </div>
+
   
   <!-- Welcome Modal -->
   <div class="welcome-modal" id="welcomeModal">
