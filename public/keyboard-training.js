@@ -20,8 +20,13 @@ document.addEventListener('DOMContentLoaded', function() {
     updateDashboardProgress();
   }
   
-  // Initialize for typing test functionality
-  // This will be handled by script.js after it's loaded from SMXKITS.html
+  // Load modules from script.js
+  if (typeof loadModules === 'function') {
+    console.log('Loading modules for keyboard training...');
+    loadModules();
+  } else {
+    console.error('loadModules function not available');
+  }
   
   // Update visual feedback for completed practices
   setTimeout(() => {
