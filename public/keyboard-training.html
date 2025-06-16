@@ -7,7 +7,6 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="typing-progress.js"></script>
-  <script src="script.js"></script>
   <script src="keyboard-training.js"></script>
   <style>
     :root {
@@ -658,6 +657,11 @@
           <i class="fas fa-edit"></i>
           Edit Typing Tests
         </li>
+        <!-- Debug controls -->
+        <li id="debug-controls" style="display: none;" onclick="debugResetData()">
+          <i class="fas fa-refresh"></i>
+          Reset Test Data
+        </li>
       </ul>
       <div class="logout-btn" onclick="logout();">
         <i class="fas fa-sign-out-alt"></i>
@@ -765,6 +769,7 @@
       const userRole = localStorage.getItem('role');
       if (userRole === 'admin') {
         document.getElementById('admin-controls').style.display = 'block';
+        document.getElementById('debug-controls').style.display = 'block';
       }
     });
 
@@ -774,36 +779,51 @@
       if (!existingTests || existingTests === '[]') {
         console.log('Initializing default typing tests...');
         
-        const defaultTests = [
-          [
-            'The quick brown fox jumps over the lazy dog. This sentence contains every letter of the alphabet.',
-            'Practice makes perfect. Keep typing to improve your speed and accuracy.',
-            'Touch typing is a skill that will serve you well throughout your career.'
-          ],
-          [
-            '1234567890 !@#$%^&*() The numbers and symbols are important for data entry.',
-            'Email addresses like user@example.com require symbol typing skills.',
-            'Special characters: ~`!@#$%^&*()_+-={}[]|\\:";\'<>?,./'
-          ],
-          [
-            'Military ranks: Private, Corporal, Sergeant, Lieutenant, Captain, Major, Colonel, General.',
-            'Military time: 0600 hours, 1200 hours, 1800 hours, 2400 hours.',
-            'NATO phonetic alphabet: Alpha, Bravo, Charlie, Delta, Echo, Foxtrot, Golf, Hotel.'
-          ],
-          [
-            'One adult male in dark traditional wear. Two adult females in light clothing.',
-            'Personnel count: Three adult males, one adult female, two children observed.',
-            'Description: Individual wearing dark jacket, light pants, carrying backpack.'
-          ],
-          [
-            'SITREP: At 0630Z, one adult male departed E gate on red motorcycle, rode S out of FOV 0635Z. SLANT 1/0/0',
-            'SITREP: At 0745Z, white sedan entered compound through W gate, parked E side. SLANT 1/0/0',
-            'SITREP: At 0900Z, two adult males on foot entered compound, proceeded to building A. SLANT 2/0/0'
-          ]
-        ];
+        // Create structure that matches edit-typing-tests.html (5 modules, 20 practices each)
+        const NUM_MODULES = 5, PRACTICES_PER_MODULE = 20;
+        const defaultTests = Array.from({length: NUM_MODULES}, (_, m) => {
+          const moduleTexts = [];
+          for (let p = 0; p < PRACTICES_PER_MODULE; p++) {
+            // Add some sample content for the first few practices of each module
+            if (p < 3) {
+              switch (m) {
+                case 0: // Basic Typing
+                  moduleTexts[p] = p === 0 ? 'The quick brown fox jumps over the lazy dog. This sentence contains every letter of the alphabet.' :
+                                  p === 1 ? 'Practice makes perfect. Keep typing to improve your speed and accuracy.' :
+                                  'Touch typing is a skill that will serve you well throughout your career.';
+                  break;
+                case 1: // Numbers and Symbols
+                  moduleTexts[p] = p === 0 ? '1234567890 !@#$%^&*() The numbers and symbols are important for data entry.' :
+                                  p === 1 ? 'Email addresses like user@example.com require symbol typing skills.' :
+                                  'Special characters: ~`!@#$%^&*()_+-={}[]|\\:";\'<>?,./';
+                  break;
+                case 2: // Military Terminology
+                  moduleTexts[p] = p === 0 ? 'Military ranks: Private, Corporal, Sergeant, Lieutenant, Captain, Major, Colonel, General.' :
+                                  p === 1 ? 'Military time: 0600 hours, 1200 hours, 1800 hours, 2400 hours.' :
+                                  'NATO phonetic alphabet: Alpha, Bravo, Charlie, Delta, Echo, Foxtrot, Golf, Hotel.';
+                  break;
+                case 3: // POL Basic Descriptors
+                  moduleTexts[p] = p === 0 ? 'One adult male in dark traditional wear. Two adult females in light clothing.' :
+                                  p === 1 ? 'Personnel count: Three adult males, one adult female, two children observed.' :
+                                  'Description: Individual wearing dark jacket, light pants, carrying backpack.';
+                  break;
+                case 4: // POL SITREP Format
+                  moduleTexts[p] = p === 0 ? 'SITREP: At 0630Z, one adult male departed E gate on red motorcycle, rode S out of FOV 0635Z. SLANT 1/0/0' :
+                                  p === 1 ? 'SITREP: At 0745Z, white sedan entered compound through W gate, parked E side. SLANT 1/0/0' :
+                                  'SITREP: At 0900Z, two adult males on foot entered compound, proceeded to building A. SLANT 2/0/0';
+                  break;
+                default:
+                  moduleTexts[p] = `Module ${m+1} Practice ${p+1}: Sample typing text for practice.`;
+              }
+            } else {
+              moduleTexts[p] = `Module ${m+1} Practice ${p+1}: Enter typing text here.`;
+            }
+          }
+          return moduleTexts;
+        });
         
         localStorage.setItem('smx_typing_tests', JSON.stringify(defaultTests));
-        console.log('Default typing tests initialized');
+        console.log('Default typing tests initialized with structure:', defaultTests);
       }
     }
     
@@ -835,6 +855,17 @@
     // Function to go back to dashboard
     function goToDashboard() {
       window.location.href = '/dashboard.html';
+    }
+
+    // Debug function to reset test data
+    function debugResetData() {
+      if (confirm('This will reset all typing test data. Are you sure?')) {
+        localStorage.removeItem('smx_typing_tests');
+        const userName = localStorage.getItem('userName') || 'student';
+        localStorage.removeItem('smx_typing_results_' + userName);
+        console.log('Test data reset');
+        location.reload();
+      }
     }
   </script>
   
@@ -878,6 +909,7 @@
       // Load typing tests from localStorage (same as edit-typing-tests.html)
       let typingTests = JSON.parse(localStorage.getItem('smx_typing_tests') || '[]');
       console.log('Rendering module list with', typingTests.length, 'modules');
+      console.log('Typing tests data:', typingTests);
       
       // If no custom tests exist, create default structure with sample content
       if (typingTests.length === 0) {
@@ -979,10 +1011,17 @@
         
         // Practices container (initially hidden)
         const practicesContainer = document.createElement('div');
-        practicesContainer.style.display = 'none';
-        practicesContainer.style.marginTop = '1.5rem';
-        practicesContainer.style.paddingTop = '1.5rem';
-        practicesContainer.style.borderTop = '1px solid var(--glass-border)';
+        practicesContainer.style.cssText = `
+          display: none;
+          margin-top: 1.5rem;
+          padding-top: 1.5rem;
+          border-top: 1px solid var(--glass-border);
+          background: rgba(0, 0, 0, 0.2);
+          border-radius: 15px;
+          padding: 1.5rem;
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+        `;
         
         module.forEach((practice, pIdx) => {
           // Check if practice is empty or placeholder
@@ -994,49 +1033,64 @@
               display: flex;
               justify-content: space-between;
               align-items: center;
-              padding: 1rem;
-              margin-bottom: 0.5rem;
-              background: rgba(255, 255, 255, 0.05);
-              border-radius: 10px;
+              padding: 1.2rem;
+              margin-bottom: 0.8rem;
+              background: var(--card-gradient);
+              border-radius: 15px;
               cursor: pointer;
               transition: var(--transition);
-              border: 1px solid transparent;
+              border: 1px solid var(--glass-border);
+              box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+              position: relative;
+              overflow: hidden;
             `;
             
+            // Add gradient overlay effect
+            practiceDiv.innerHTML = '<div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary-gradient); opacity: 0; transition: var(--transition); z-index: 0;"></div>';
+            
+            const overlayDiv = practiceDiv.querySelector('div');
+            
             practiceDiv.onmouseover = () => {
-              practiceDiv.style.background = 'rgba(255, 255, 255, 0.1)';
+              overlayDiv.style.opacity = '0.1';
               practiceDiv.style.borderColor = 'var(--text-accent)';
-              practiceDiv.style.transform = 'translateY(-2px)';
+              practiceDiv.style.transform = 'translateY(-3px)';
+              practiceDiv.style.boxShadow = '0 8px 25px rgba(255, 107, 53, 0.3)';
             };
             
             practiceDiv.onmouseout = () => {
-              practiceDiv.style.background = 'rgba(255, 255, 255, 0.05)';
-              practiceDiv.style.borderColor = 'transparent';
+              overlayDiv.style.opacity = '0';
+              practiceDiv.style.borderColor = 'var(--glass-border)';
               practiceDiv.style.transform = 'translateY(0)';
+              practiceDiv.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.2)';
             };
             
             // Left: Practice info
             const leftDiv = document.createElement('div');
+            leftDiv.style.cssText = 'position: relative; z-index: 1; flex: 1;';
             const previewText = practice.length > 60 ? practice.substring(0, 60) + '...' : practice;
             leftDiv.innerHTML = `
-              <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">Practice ${pIdx + 1}</div>
-              <div style="color: var(--text-secondary); font-size: 0.9rem;">${previewText}</div>
+              <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem; font-size: 1.1rem;">Practice ${pIdx + 1}</div>
+              <div style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.4;">${previewText}</div>
             `;
             
             // Right: Results
             const rightDiv = document.createElement('div');
-            rightDiv.style.textAlign = 'right';
+            rightDiv.style.cssText = 'text-align: right; position: relative; z-index: 1; min-width: 120px;';
             const res = results?.[mIdx]?.[pIdx];
             if (res) {
               const wpmColor = res.wpm >= 40 ? '#22c55e' : res.wpm >= 25 ? '#fbbf24' : '#3b82f6';
               const accColor = res.accuracy >= 95 ? '#22c55e' : res.accuracy >= 85 ? '#fbbf24' : '#ef4444';
               rightDiv.innerHTML = `
-                <div style="color: ${wpmColor}; font-weight: bold; font-size: 1.1rem;">WPM: ${res.wpm}</div>
-                <div style="color: ${accColor}; font-size: 0.9rem;">Acc: ${res.accuracy}%</div>
-                <div style="color: var(--text-secondary); font-size: 0.8rem;">${res.time}s</div>
+                <div style="color: ${wpmColor}; font-weight: bold; font-size: 1.2rem; margin-bottom: 0.2rem;">WPM: ${res.wpm}</div>
+                <div style="color: ${accColor}; font-size: 1rem; margin-bottom: 0.2rem;">Acc: ${res.accuracy}%</div>
+                <div style="color: var(--text-secondary); font-size: 0.85rem;">${res.time}s</div>
               `;
             } else {
-              rightDiv.innerHTML = `<div style="color: var(--text-secondary); font-size: 0.9rem;">Not completed</div>`;
+              rightDiv.innerHTML = `
+                <div style="color: var(--text-secondary); font-size: 1rem; padding: 0.5rem 1rem; background: rgba(255, 255, 255, 0.05); border-radius: 8px; border: 1px dashed var(--glass-border);">
+                  Not completed
+                </div>
+              `;
             }
             
             practiceDiv.appendChild(leftDiv);
