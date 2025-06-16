@@ -621,19 +621,19 @@
           <p class="page-subtitle">Mission operations logging, activity tracking, and incident reporting</p>
         </div>
         <div class="header-controls">
-          <button class="control-btn" onclick="showRoomModal()">
+          <button class="control-btn" id="btnShowRoomModal">
             <i class="fas fa-users"></i>
             Rooms
           </button>
-          <button class="control-btn" onclick="exportLog()">
+          <button class="control-btn" id="btnExportLog">
             <i class="fas fa-download"></i>
             Export
           </button>
-          <button class="control-btn" onclick="clearLog()">
+          <button class="control-btn" id="btnClearLog">
             <i class="fas fa-trash"></i>
             Clear
           </button>
-          <button class="control-btn primary" onclick="addLogEntry()">
+          <button class="control-btn primary" id="btnAddLogEntry">
             <i class="fas fa-plus"></i>
             New Entry
           </button>
@@ -703,7 +703,7 @@
                 <option value="mirror">Mirror Follow - Sync log entries</option>
                 <option value="observe">Observe Follow - View only</option>
               </select>
-              <button class="control-btn primary" onclick="createFollow()">
+              <button class="control-btn primary" id="btnCreateFollow">
                 <i class="fas fa-plus"></i>
                 Create Follow
               </button>
@@ -831,7 +831,7 @@
     <div class="room-modal-content">
       <div class="room-modal-header">
         <h2><i class="fas fa-users"></i> Operations Rooms</h2>
-        <button class="room-close-btn" onclick="hideRoomModal()">&times;</button>
+        <button class="room-close-btn" id="btnCloseRoomModal">&times;</button>
       </div>
       
       <div class="room-modal-body">
@@ -852,7 +852,7 @@
           <div class="room-form">
             <input type="text" id="newRoomName" placeholder="Enter room name" class="room-input">
             <input type="password" id="newRoomPassword" placeholder="Room password (optional)" class="room-input">
-            <button class="room-btn room-btn-primary" onclick="createRoom()">
+            <button class="room-btn room-btn-primary" id="btnCreateRoom">
               <i class="fas fa-plus"></i> Create Room
             </button>
           </div>
@@ -864,7 +864,7 @@
           <div class="room-form">
             <input type="text" id="joinRoomName" placeholder="Enter room name" class="room-input">
             <input type="password" id="joinRoomPassword" placeholder="Room password (if required)" class="room-input">
-            <button class="room-btn room-btn-success" onclick="joinRoom()">
+            <button class="room-btn room-btn-success" id="btnJoinRoom">
               <i class="fas fa-sign-in-alt"></i> Join Room
             </button>
           </div>
@@ -882,7 +882,7 @@
                 <option value="mirror">Mirror Follow - Sync log entries</option>
                 <option value="observe">Observe Follow - View only</option>
               </select>
-              <button class="room-btn room-btn-primary" onclick="createFollow()">
+              <button class="room-btn room-btn-primary" id="btnCreateFollow">
                 <i class="fas fa-plus"></i> Create Follow
               </button>
             </div>
@@ -1915,7 +1915,7 @@
             <span class="follow-target">${follow.target}</span>
             <span class="follow-type">${follow.type}</span>
           </div>
-          <button class="follow-btn-stop" onclick="stopFollow(${follow.id})">Stop</button>
+          <button class="follow-btn-stop" id="btnStopFollow" onclick="stopFollow(${follow.id})">Stop</button>
         </div>
       `).join('');
 
