@@ -274,8 +274,7 @@
     .module-arrow {
       position: absolute;
       right: 1.5rem;
-      top: 50%;
-      transform: translateY(-50%);
+      top: 1.5rem;
       color: var(--text-accent);
       font-size: 1.5rem;
       transition: var(--transition);
@@ -851,7 +850,7 @@
       practicesContainer.className = 'module-practices';
       
       module.forEach((practice, practiceIndex) => {
-        if (practice && practice.trim() !== '' && !practice.includes('Enter typing text here')) {
+        if (practice && practice.trim() !== '') {
           const practiceElement = createPracticeElement(practice, moduleIndex, practiceIndex, results);
           practicesContainer.appendChild(practiceElement);
         }
