@@ -511,6 +511,55 @@
       window.location.replace('/login.html');
     }
     
+    function handleFileDrop(event) {
+      event.preventDefault();
+      const files = event.dataTransfer.files;
+      const fileList = [];
+
+      for (const file of files) {
+        fileList.push(file);
+      }
+
+      // Store files temporarily
+      localStorage.setItem('droppedFiles', JSON.stringify(fileList));
+      alert('Files have been added. Please click submit to proceed.');
+    }
+
+    function handleFileSubmit() {
+      const storedFiles = JSON.parse(localStorage.getItem('droppedFiles')) || [];
+
+      if (storedFiles.length === 0) {
+        alert('No files to submit. Please drop files first.');
+        return;
+      }
+
+      // Process files (e.g., upload to server)
+      console.log('Submitting files:', storedFiles);
+
+      // Clear temporary storage
+      localStorage.removeItem('droppedFiles');
+      alert('Files submitted successfully.');
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const dropZone = document.querySelector('.tools-grid');
+
+      if (dropZone) {
+        dropZone.addEventListener('dragover', function(event) {
+          event.preventDefault();
+        });
+
+        dropZone.addEventListener('drop', handleFileDrop);
+
+        const submitButton = document.createElement('button');
+        submitButton.textContent = 'Submit Files';
+        submitButton.style = 'margin-top: 1rem; padding: 0.5rem 1rem; background: var(--accent-gradient); border: none; color: white; border-radius: 5px; cursor: pointer;';
+        submitButton.addEventListener('click', handleFileSubmit);
+
+        dropZone.appendChild(submitButton);
+      }
+    });
+    
     // Debug: Test if JavaScript is working
     console.log('Mission Links JavaScript loaded successfully');
     

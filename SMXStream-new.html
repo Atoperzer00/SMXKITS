@@ -244,6 +244,43 @@
       transform: scale(1.2);
       box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
     }
+    
+    .video-control-btn svg {
+      transition: all 0.3s ease;
+    }
+    
+    .video-control-btn:hover svg {
+      transform: scale(1.1);
+    }
+    
+    /* Global SVG icon styling */
+    svg {
+      flex-shrink: 0;
+    }
+    
+    .logo svg {
+      transition: all 0.3s ease;
+    }
+    
+    .logo:hover svg {
+      transform: rotate(5deg) scale(1.1);
+    }
+    
+    /* Live button specific styling */
+    .live-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .live-btn svg {
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
 
     .play-pause-btn {
       width: 80px;
@@ -344,32 +381,18 @@
       height: 120px;
       background: rgba(0, 0, 0, 0.4);
       border-radius: 10px;
-      overflow-x: auto;
-      overflow-y: hidden;
+      overflow: hidden;
       border: 1px solid rgba(255, 255, 255, 0.1);
       backdrop-filter: blur(10px);
-      scrollbar-width: thin;
-      scrollbar-color: var(--accent) transparent;
       margin: 1rem 0;
       flex: none;
     }
 
-    #timeline::-webkit-scrollbar {
-      height: 8px;
-    }
-
-    #timeline::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 4px;
-    }
-
-    #timeline::-webkit-scrollbar-thumb {
-      background: var(--accent-gradient);
-      border-radius: 4px;
-    }
-
-    #timeline::-webkit-scrollbar-thumb:hover {
-      background: var(--primary-gradient);
+    .timeline-viewport {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
     }
 
     .timeline-container {
@@ -377,7 +400,76 @@
       height: 100%;
       display: flex;
       align-items: stretch;
-      min-width: 100%;
+      min-width: 200%;
+      transition: transform 0.1s ease-out;
+      will-change: transform;
+    }
+
+    /* Fixed Scrubber in Center */
+    .timeline-scrubber {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(180deg, #ff4757 0%, #ff6b7a 100%);
+      border-radius: 2px;
+      z-index: 20;
+      box-shadow: 0 0 10px rgba(255, 71, 87, 0.6);
+      pointer-events: none;
+    }
+
+    .timeline-scrubber::before {
+      content: '';
+      position: absolute;
+      top: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 12px;
+      height: 12px;
+      background: #ff4757;
+      border-radius: 50%;
+      border: 2px solid white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .timeline-scrubber::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 12px;
+      height: 12px;
+      background: #ff4757;
+      border-radius: 50%;
+      border: 2px solid white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Live Marker */
+    .timeline-live-marker {
+      position: absolute;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 71, 87, 0.9);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 10px;
+      font-weight: 600;
+      z-index: 15;
+      animation: pulse 2s infinite;
+    }
+
+    .timeline-live-marker svg {
+      width: 8px;
+      height: 8px;
     }
 
     .thumbnail-frame {
@@ -572,8 +664,13 @@
     }
 
     .jump-to-live-indicator::before {
-      content: '🔴 ';
+      content: '';
+      width: 12px;
+      height: 12px;
+      background: #ff4757;
+      border-radius: 50%;
       margin-right: 0.5rem;
+      display: inline-block;
     }
     
     @keyframes pulse {
@@ -756,7 +853,12 @@
     <div class="container">
       <div class="navbar-content">
         <a href="/" class="logo">
-          <span>📡</span>SMX Stream
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 10px;">
+            <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+            <path d="M2 17l10 5 10-5"></path>
+            <path d="M2 12l10 5 10-5"></path>
+          </svg>
+          SMX Stream
         </a>
         
         <div class="nav-buttons">
@@ -771,44 +873,66 @@
     <div class="player-wrapper">
         <div class="video-container">
           <div class="live-badge">LIVE</div>
-          <video id="video" autoplay muted></video>
-          <video id="webrtcVideo" autoplay playsinline muted style="display:none; width:100%; height:100%; background:#000;"></video>
+          <video id="video" autoplay muted style="display:none;"></video>
+          <video id="webrtcVideo" autoplay playsinline muted style="display:block; width:100%; height:100%; background:#000;"></video>
           <div class="loading-spinner" id="loading"></div>
-          <div class="stream-type-indicator" id="streamTypeIndicator">File Stream</div>
-          <div class="webrtc-status" id="webrtcStatus" style="display:none; position:absolute; top:60px; right:20px; background:rgba(139, 92, 246, 0.9); color:white; padding:8px 12px; border-radius:6px; font-size:12px; font-weight:600;">
-            🔴 LIVE WebRTC
+          <div class="stream-type-indicator" id="streamTypeIndicator">WebRTC Stream</div>
+          <div class="webrtc-status" id="webrtcStatus" style="display:none; position:absolute; top:60px; right:20px; background:rgba(139, 92, 246, 0.9); color:white; padding:8px 12px; border-radius:6px; font-size:12px; font-weight:600; display:flex; align-items:center; gap:6px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="color: #ff4757;">
+              <circle cx="12" cy="12" r="10"></circle>
+            </svg>
+            LIVE WebRTC
           </div>
           
           <!-- Video Overlay Controls (Hidden by default, show on hover) -->
           <div class="video-controls-overlay">
             <!-- Play/Pause Button -->
             <button class="video-control-btn play-pause-btn" onclick="togglePlayPause()">
-              <i class="fas fa-play">▶</i>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="5,3 19,12 5,21"></polygon>
+              </svg>
             </button>
             
             <!-- Rewind Button -->
             <button class="video-control-btn rewind-btn" onclick="rewindVideo()">
-              <span>⏪</span>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="11,19 2,12 11,5"></polygon>
+                <polygon points="22,19 13,12 22,5"></polygon>
+              </svg>
             </button>
             
             <!-- Fast Forward Button -->
             <button class="video-control-btn forward-btn" onclick="forwardVideo()">
-              <span>⏩</span>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="13,19 22,12 13,5"></polygon>
+                <polygon points="2,19 11,12 2,5"></polygon>
+              </svg>
             </button>
             
             <!-- Jump to Live Button (for live streams) -->
             <button class="video-control-btn live-btn" onclick="jumpToLive()">
-              <span style="color: #ff4757;">●</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color: #ff4757;">
+                <circle cx="12" cy="12" r="10"></circle>
+              </svg>
               <span>LIVE</span>
             </button>
             
             <!-- Zoom Controls -->
             <div class="zoom-controls">
               <button class="video-control-btn zoom-btn" onclick="zoomTimeline(0.5)">
-                <span>🔍-</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <path d="M21 21l-4.35-4.35"></path>
+                  <line x1="8" y1="11" x2="14" y2="11"></line>
+                </svg>
               </button>
               <button class="video-control-btn zoom-btn" onclick="zoomTimeline(2)">
-                <span>🔍+</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <path d="M21 21l-4.35-4.35"></path>
+                  <line x1="11" y1="8" x2="11" y2="14"></line>
+                  <line x1="8" y1="11" x2="14" y2="11"></line>
+                </svg>
               </button>
             </div>
             
@@ -827,7 +951,18 @@
         
         <div class="controls">
           <div id="timeline">
-            <div id="scrubber"></div>
+            <div class="timeline-viewport">
+              <div class="timeline-container" id="timelineContainer">
+                <!-- Timeline frames will be generated here -->
+              </div>
+              <div class="timeline-scrubber"></div>
+              <div class="timeline-live-marker">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="12" cy="12" r="10"></circle>
+                </svg>
+                LIVE
+              </div>
+            </div>
           </div>
         </div>
         
@@ -918,8 +1053,39 @@
       }
     });
     
-    // Show welcome modal when page loads
-    window.addEventListener('load', showWelcomeModal);
+    // Icon utility functions
+    const Icons = {
+      play: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5,3 19,12 5,21"></polygon></svg>`,
+      pause: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>`,
+      rewind: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11,19 2,12 11,5"></polygon><polygon points="22,19 13,12 22,5"></polygon></svg>`,
+      fastForward: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13,19 22,12 13,5"></polygon><polygon points="2,19 11,12 2,5"></polygon></svg>`,
+      live: `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color: #ff4757;"><circle cx="12" cy="12" r="10"></circle></svg>`,
+      zoomIn: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="M21 21l-4.35-4.35"></path><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>`,
+      zoomOut: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="M21 21l-4.35-4.35"></path><line x1="8" y1="11" x2="14" y2="11"></line></svg>`
+    };
+
+    // Initialize WebRTC interface when page loads
+    window.addEventListener('load', function() {
+      showWelcomeModal();
+      
+      // Initialize stream timer for WebRTC
+      if (!streamTimer) {
+        streamTimer = createStreamTimer();
+        console.log('⏱️ Stream timer initialized on page load');
+      }
+      
+      // Start WebRTC timeline updates
+      startWebRTCTimelineUpdates();
+      
+      // Initialize WebRTC timeline
+      initializeWebRTCTimeline();
+      
+      // Show WebRTC status
+      const webrtcStatus = document.getElementById('webrtcStatus');
+      if (webrtcStatus) {
+        webrtcStatus.style.display = 'flex';
+      }
+    });
     
     // Error message display function
     function showErrorMessage(title, message) {
@@ -931,7 +1097,14 @@
       errorOverlay.className = 'welcome-modal show';
       errorOverlay.innerHTML = `
         <div class="welcome-content">
-          <h2 class="welcome-title" style="color: #ef4444;">⚠️ ${title}</h2>
+          <h2 class="welcome-title" style="color: #ef4444; display: flex; align-items: center; gap: 0.5rem;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+            ${title}
+          </h2>
           <div class="welcome-text">
             <p>${message}</p>
             <div style="margin-top: 20px; padding: 15px; background: rgba(239, 68, 68, 0.1); border-radius: 10px; border-left: 4px solid #ef4444;">
@@ -1512,6 +1685,13 @@
     let webrtcSocket = null;
     let isWebRTCMode = false;
     let classId = null;
+    
+    // Stream Timer for WebRTC (since WebRTC doesn't have reliable currentTime)
+    let streamTimer = null;
+    let streamStartTime = null;
+    let streamDuration = 3600; // Default 1 hour, can be updated from server
+    let isStreamPaused = false;
+    let pausedAt = 0;
     const playhead = document.getElementById('playhead');
     // const fullscreenBtn = document.getElementById('fullscreenBtn'); // Removed
     const loading = document.getElementById('loading');
@@ -1531,8 +1711,74 @@
     
     let hlsInstance = null;
     
+    // Stream Timer Utility for WebRTC
+    function createStreamTimer(startTime = Date.now()) {
+      return {
+        startTime: startTime,
+        isPaused: false,
+        pauseAt: 0,
+        
+        get currentTime() {
+          if (this.isPaused) return this.pauseAt;
+          return (Date.now() - this.startTime) / 1000;
+        },
+        
+        pause() {
+          this.isPaused = true;
+          this.pauseAt = (Date.now() - this.startTime) / 1000;
+        },
+        
+        resume() {
+          this.isPaused = false;
+          this.startTime = Date.now() - this.pauseAt * 1000;
+        },
+        
+        reset() {
+          this.startTime = Date.now();
+          this.pauseAt = 0;
+          this.isPaused = false;
+        },
+        
+        setTime(seconds) {
+          if (this.isPaused) {
+            this.pauseAt = seconds;
+          } else {
+            this.startTime = Date.now() - seconds * 1000;
+          }
+        }
+      };
+    }
+    
+    // Get current time for either WebRTC or regular video
+    function getCurrentTime() {
+      if (isWebRTCMode && streamTimer) {
+        return streamTimer.currentTime;
+      }
+      return video.currentTime || 0;
+    }
+    
+    // Get duration for either WebRTC or regular video
+    function getDuration() {
+      if (isWebRTCMode) {
+        return streamDuration;
+      }
+      return video.duration || 0;
+    }
+    
+    // Set current time for either WebRTC or regular video
+    function setCurrentTime(time) {
+      if (isWebRTCMode && streamTimer) {
+        // For WebRTC, we can't actually seek, but we can adjust our timer
+        // This is mainly for UI purposes
+        streamTimer.setTime(time);
+      } else {
+        video.currentTime = time;
+      }
+    }
+
     // Thumbnail generation functionality
     let thumbnailCache = [];
+    let webrtcThumbnailCache = [];
     
     function generateThumbnails() {
       const offscreen = document.createElement('canvas');
@@ -1562,23 +1808,48 @@
       snapNext();
     }
     
-    // Function to get thumbnail for a specific time
-    function getThumbnailForTime(time) {
-      if (thumbnailCache.length === 0) return null;
+    // Function to get thumbnail for a specific time - Updated for both modes
+    function getThumbnailForTime(time, cache = null) {
+      const targetCache = cache || (isWebRTCMode ? webrtcThumbnailCache : thumbnailCache);
+      
+      if (targetCache.length === 0) return null;
       
       // Find the closest thumbnail
-      let closest = thumbnailCache[0];
+      let closest = targetCache[0];
       let minDiff = Math.abs(closest.time - time);
       
-      for (let i = 1; i < thumbnailCache.length; i++) {
-        const diff = Math.abs(thumbnailCache[i].time - time);
+      for (let i = 1; i < targetCache.length; i++) {
+        const diff = Math.abs(targetCache[i].time - time);
         if (diff < minDiff) {
           minDiff = diff;
-          closest = thumbnailCache[i];
+          closest = targetCache[i];
         }
       }
       
       return closest;
+    }
+    
+    // Function to load WebRTC thumbnails from server
+    async function loadWebRTCThumbnails() {
+      if (!classId) return;
+      
+      try {
+        console.log('📸 Loading WebRTC thumbnails...');
+        webrtcThumbnailCache = [];
+        
+        // Generate thumbnails for every second up to stream duration
+        for (let i = 0; i <= streamDuration; i++) {
+          webrtcThumbnailCache.push({
+            time: i,
+            url: `/api/thumbnails/${classId}/${i}.jpg`, // Adjust URL based on your backend
+            img: null // Will be loaded on demand
+          });
+        }
+        
+        console.log(`📸 Generated ${webrtcThumbnailCache.length} WebRTC thumbnail placeholders`);
+      } catch (error) {
+        console.error('❌ Error loading WebRTC thumbnails:', error);
+      }
     }
     
     // WebRTC Functions
@@ -1603,8 +1874,16 @@
         console.log('🔄 Current WebRTC video element:', webrtcVideo);
         console.log('🔄 Current peer connection:', peerConnection);
         
+        // Set stream duration if provided
+        if (data.duration) {
+          streamDuration = data.duration;
+        }
+        
         switchToWebRTCMode();
         updateStreamTypeIndicator(`Live ${data.mediaType}`);
+        
+        // Load WebRTC thumbnails
+        loadWebRTCThumbnails();
         
         // Show loading while waiting for WebRTC connection
         loading.style.display = 'block';
@@ -1716,6 +1995,12 @@
       console.log('🔄 Switching to WebRTC mode');
       isWebRTCMode = true;
       
+      // Initialize stream timer
+      if (!streamTimer) {
+        streamTimer = createStreamTimer();
+        console.log('⏱️ Stream timer initialized');
+      }
+      
       // Hide regular video and show WebRTC video
       video.style.display = 'none';
       webrtcVideo.style.display = 'block';
@@ -1723,10 +2008,10 @@
       // Configure WebRTC video element
       webrtcVideo.autoplay = true;
       webrtcVideo.playsInline = true;
-      webrtcVideo.controls = true; // Add controls for debugging
+      webrtcVideo.controls = false; // Remove controls for custom timeline
       
-      // Hide file-based controls
-      document.getElementById('controls').style.display = 'none';
+      // Show timeline for WebRTC mode
+      document.getElementById('timeline').style.display = 'block';
       
       updateStreamTypeIndicator('Live WebRTC Stream');
       
@@ -1736,6 +2021,12 @@
         webrtcStatus.style.display = 'block';
       }
       
+      // Start updating WebRTC timeline
+      startWebRTCTimelineUpdates();
+      
+      // Initialize timeline for WebRTC
+      initializeWebRTCTimeline();
+      
       console.log('✅ Switched to WebRTC mode - video element visible:', webrtcVideo.style.display);
     }
     
@@ -1743,11 +2034,16 @@
       console.log('🔄 Switching to file mode');
       isWebRTCMode = false;
       
+      // Stop stream timer
+      if (streamTimer) {
+        streamTimer = null;
+      }
+      
       webrtcVideo.style.display = 'none';
       video.style.display = 'block';
       
       // Show file-based controls
-      document.getElementById('controls').style.display = 'flex';
+      document.getElementById('timeline').style.display = 'block';
       
       updateStreamTypeIndicator('File Stream');
       
@@ -1757,9 +2053,171 @@
         webrtcStatus.style.display = 'none';
       }
       
+      // Stop WebRTC timeline updates
+      stopWebRTCTimelineUpdates();
+      
       if (webrtcVideo.srcObject) {
         webrtcVideo.srcObject = null;
       }
+    }
+    
+    // WebRTC Timeline Update Functions
+    let webrtcTimelineInterval = null;
+    let timelineScrollOffset = 0;
+    let isTimelineDragging = false;
+    
+    function startWebRTCTimelineUpdates() {
+      if (webrtcTimelineInterval) {
+        clearInterval(webrtcTimelineInterval);
+      }
+      
+      webrtcTimelineInterval = setInterval(() => {
+        if (streamTimer && !isTimelineDragging) {
+          updateTimelineScrollForWebRTC();
+          updateTimeDisplayForWebRTC();
+          updateJumpToLiveIndicatorForWebRTC();
+        }
+      }, 100); // Update every 100ms for smooth timeline
+    }
+    
+    function stopWebRTCTimelineUpdates() {
+      if (webrtcTimelineInterval) {
+        clearInterval(webrtcTimelineInterval);
+        webrtcTimelineInterval = null;
+      }
+    }
+    
+    function updateTimelineScrollForWebRTC() {
+      const currentTime = streamTimer.currentTime;
+      const duration = streamDuration;
+      const timeline = document.getElementById('timeline');
+      const container = document.getElementById('timelineContainer');
+      
+      if (!timeline || !container || duration <= 0) return;
+      
+      // Calculate scroll position to keep current time centered
+      const timelineWidth = timeline.offsetWidth;
+      const containerWidth = container.offsetWidth;
+      const timeProgress = currentTime / duration;
+      
+      // Calculate the scroll offset to center the current time
+      const centerOffset = timelineWidth / 2;
+      const targetScrollPosition = (timeProgress * containerWidth) - centerOffset;
+      
+      // Clamp scroll position to valid range
+      const maxScroll = containerWidth - timelineWidth;
+      const clampedScroll = Math.max(0, Math.min(maxScroll, targetScrollPosition));
+      
+      // Apply smooth transform
+      container.style.transform = `translateX(-${clampedScroll}px)`;
+      timelineScrollOffset = clampedScroll;
+    }
+    
+    function updateTimeDisplayForWebRTC() {
+      const currentTimeEl = document.getElementById('currentTime');
+      const totalTimeEl = document.getElementById('totalTime');
+      
+      if (currentTimeEl && totalTimeEl && streamTimer) {
+        currentTimeEl.textContent = formatTime(streamTimer.currentTime);
+        totalTimeEl.textContent = formatTime(streamDuration);
+      }
+    }
+    
+    function updateJumpToLiveIndicatorForWebRTC() {
+      const indicator = document.getElementById('jumpToLiveIndicator');
+      
+      if (!indicator || !streamTimer) return;
+      
+      // For WebRTC, we're always "live" unless we've manually adjusted the timer
+      // Show indicator if user has scrolled back in time
+      const currentTime = streamTimer.currentTime;
+      const liveTime = (Date.now() - streamTimer.startTime) / 1000;
+      const isAtLive = Math.abs(liveTime - currentTime) < 3;
+      
+      indicator.style.display = isAtLive ? 'none' : 'block';
+    }
+    
+    function initializeWebRTCTimeline() {
+      console.log('🎬 Initializing WebRTC timeline');
+      
+      // Clear existing timeline content
+      const timelineContainer = timeline.querySelector('.timeline-container');
+      if (timelineContainer) {
+        timelineContainer.innerHTML = '';
+      } else {
+        // Create timeline container if it doesn't exist
+        const container = document.createElement('div');
+        container.className = 'timeline-container';
+        timeline.appendChild(container);
+      }
+      
+      // Generate timeline frames for WebRTC
+      generateWebRTCTimelineFrames();
+    }
+    
+    function generateWebRTCTimelineFrames() {
+      const container = timeline.querySelector('.timeline-container');
+      if (!container) return;
+      
+      const frameWidth = 120; // Width of each thumbnail frame
+      const totalFrames = Math.ceil(streamDuration);
+      const totalWidth = totalFrames * frameWidth;
+      
+      container.style.minWidth = `${totalWidth}px`;
+      
+      // Generate frames
+      for (let i = 0; i < totalFrames; i++) {
+        const frame = document.createElement('div');
+        frame.className = 'thumbnail-frame';
+        frame.style.width = `${frameWidth}px`;
+        
+        // Create placeholder thumbnail with proper SVG
+        const img = document.createElement('div');
+        img.className = 'thumbnail-placeholder';
+        img.style.cssText = `
+          width: 100%;
+          height: calc(100% - 20px);
+          background: #333;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 4px 4px 0 0;
+          color: #fff;
+          font-size: 12px;
+          font-weight: 600;
+        `;
+        img.innerHTML = `
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M12 1v6M12 17v6M4.22 4.22l4.24 4.24M15.54 15.54l4.24 4.24M1 12h6M17 12h6M4.22 19.78l4.24-4.24M15.54 8.46l4.24-4.24"></path>
+          </svg>
+        `;
+        
+        // Create time tick
+        const tick = document.createElement('div');
+        tick.className = 'time-tick';
+        tick.textContent = formatTime(i);
+        
+        frame.appendChild(img);
+        frame.appendChild(tick);
+        
+        // Click to seek (for WebRTC this is just UI feedback)
+        frame.addEventListener('click', () => {
+          if (streamTimer) {
+            streamTimer.setTime(i);
+            console.log(`🎯 WebRTC timeline clicked: ${formatTime(i)}`);
+          }
+        });
+        
+        // Double-click to jump to live
+        frame.addEventListener('dblclick', () => {
+          jumpToLive();
+        });
+        
+        container.appendChild(frame);
+      }
+      
+      console.log(`🎬 Generated ${totalFrames} WebRTC timeline frames`);
     }
 
     // Fetch class information from the backend
@@ -2030,32 +2488,23 @@
     // function updatePlayButton() {
     //   playBtn.textContent = video.paused ? 'Play' : 'Pause';
     // }
-    
-    // Timeline functionality
-    video.addEventListener('timeupdate', function() {
-      const percent = (video.currentTime / video.duration) * 100;
-      progress.style.width = percent + '%';
-      playhead.style.left = percent + '%';
-    });
+    // Timeline click functionality is already implemented above
+    // WebRTC timeline is handled by the WebRTC timeline update functions
     
     
-    timeline.addEventListener('click', function(e) {
-      const rect = timeline.getBoundingClientRect();
-      const pos = (e.clientX - rect.left) / rect.width;
-      video.currentTime = pos * video.duration;
-    });
-    
-    // Timeline hover for thumbnail preview
+    // Timeline hover for thumbnail preview - WebRTC only
     timeline.addEventListener('mousemove', function(e) {
-      if (!video.duration || thumbnailCache.length === 0) return;
+      const duration = getDuration();
+      
+      if (!duration || webrtcThumbnailCache.length === 0) return;
       
       const rect = timeline.getBoundingClientRect();
       const pos = (e.clientX - rect.left) / rect.width;
-      const hoverTime = pos * video.duration;
+      const hoverTime = pos * duration;
       
       const thumbnail = getThumbnailForTime(hoverTime);
       if (thumbnail) {
-        thumbnailImg.src = thumbnail.img.src;
+        thumbnailImg.src = thumbnail.img ? thumbnail.img.src : thumbnail.url;
         thumbnailTime.textContent = formatTime(hoverTime);
         
         // Position the preview
@@ -2147,8 +2596,18 @@
           video.pause();
         }
       }
-      else if (e.key === 'j') video.currentTime -= 10;
-      else if (e.key === 'l') video.currentTime += 10;
+      else if (e.key === 'j') {
+        if (streamTimer) {
+          const newTime = Math.max(0, streamTimer.currentTime - 10);
+          streamTimer.setTime(newTime);
+        }
+      }
+      else if (e.key === 'l') {
+        if (streamTimer) {
+          const newTime = Math.min(streamDuration, streamTimer.currentTime + 10);
+          streamTimer.setTime(newTime);
+        }
+      }
       else if (e.key === 'L') { // Capital L to jump to live
         e.preventDefault();
         jumpToLive();
@@ -2164,9 +2623,21 @@
           video.msRequestFullscreen();
         }
       }
-      else if (e.key === 'm') video.muted = !video.muted;
-      else if (e.key === 'ArrowLeft') video.currentTime -= 5;
-      else if (e.key === 'ArrowRight') video.currentTime += 5;
+      else if (e.key === 'm') {
+        webrtcVideo.muted = !webrtcVideo.muted;
+      }
+      else if (e.key === 'ArrowLeft') {
+        if (streamTimer) {
+          const newTime = Math.max(0, streamTimer.currentTime - 5);
+          streamTimer.setTime(newTime);
+        }
+      }
+      else if (e.key === 'ArrowRight') {
+        if (streamTimer) {
+          const newTime = Math.min(streamDuration, streamTimer.currentTime + 5);
+          streamTimer.setTime(newTime);
+        }
+      }
     });
     
     // Enhanced video event listeners
@@ -2580,20 +3051,40 @@
     }
 
     function rewindVideo() {
-      const video = document.getElementById('video');
-      video.currentTime = Math.max(0, video.currentTime - 10);
+      if (streamTimer) {
+        // For WebRTC, adjust the timer (UI feedback only)
+        const newTime = Math.max(0, streamTimer.currentTime - 10);
+        streamTimer.setTime(newTime);
+        console.log(`⏪ WebRTC rewind to ${formatTime(newTime)}`);
+      }
     }
 
     function forwardVideo() {
-      const video = document.getElementById('video');
-      video.currentTime = Math.min(video.duration, video.currentTime + 10);
+      if (streamTimer) {
+        // For WebRTC, adjust the timer (UI feedback only)
+        const newTime = Math.min(streamDuration, streamTimer.currentTime + 10);
+        streamTimer.setTime(newTime);
+        console.log(`⏩ WebRTC forward to ${formatTime(newTime)}`);
+      }
     }
 
     function jumpToLive() {
-      const video = document.getElementById('video');
-      // For recorded videos, jump to end
-      // For live streams, this would jump to the live edge
-      video.currentTime = video.duration;
+      if (streamTimer) {
+        // For WebRTC, reset timer to current live time
+        streamTimer.reset();
+        
+        // Reset timeline scroll to show live position
+        const container = document.getElementById('timelineContainer');
+        if (container) {
+          container.style.transform = 'translateX(0px)';
+          timelineScrollOffset = 0;
+        }
+        
+        // Resume auto-scrolling
+        isTimelineDragging = false;
+        
+        console.log('🔴 Jumped to live WebRTC stream');
+      }
       
       // Hide the jump to live indicator
       const indicator = document.getElementById('jumpToLiveIndicator');
@@ -2670,25 +3161,26 @@
     const currentTimeDisplay = document.getElementById('currentTime');
     const totalTimeDisplay = document.getElementById('totalTime');
 
-    // Play/Pause functionality
+    // Play/Pause functionality for WebRTC
     function togglePlayPause() {
-      if (videoElement.paused) {
-        videoElement.play();
-      } else {
-        videoElement.pause();
+      const playPauseBtn = document.querySelector('.play-pause-btn');
+      
+      if (streamTimer) {
+        // For WebRTC, we can't actually pause the stream, but we can pause our timer
+        if (!streamTimer.isPaused) {
+          streamTimer.pause();
+          playPauseBtn.innerHTML = Icons.play;
+          console.log('⏸️ WebRTC stream timer paused');
+        } else {
+          streamTimer.resume();
+          playPauseBtn.innerHTML = Icons.pause;
+          console.log('▶️ WebRTC stream timer resumed');
+        }
       }
     }
 
-    // Update time display
-    videoElement.addEventListener('timeupdate', () => {
-      const currentMinutes = Math.floor(videoElement.currentTime / 60);
-      const currentSeconds = Math.floor(videoElement.currentTime % 60);
-      const totalMinutes = Math.floor(videoElement.duration / 60);
-      const totalSeconds = Math.floor(videoElement.duration % 60);
-
-      currentTimeDisplay.textContent = `${currentMinutes}:${currentSeconds.toString().padStart(2, '0')}`;
-      totalTimeDisplay.textContent = `${totalMinutes}:${totalSeconds.toString().padStart(2, '0')}`;
-    });
+    // WebRTC stream uses its own timer-based time display updates
+    // Time display is handled by updateTimeDisplayForWebRTC() function
 
     // Rewind functionality
     function rewindVideo() {
