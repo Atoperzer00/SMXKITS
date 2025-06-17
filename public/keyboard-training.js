@@ -1,151 +1,255 @@
-// Keyboard Training page JavaScript
+/**
+ * KEYBOARD TRAINING SUPPORT FUNCTIONS
+ * Additional utility functions for the keyboard training system
+ * This file provides compatibility and helper functions
+ */
 
-// This script helps integrate the original SMXKITS typing functionality
-// with the new standalone keyboard-training.html page
+/**
+ * Legacy compatibility functions
+ * These functions maintain compatibility with existing code
+ */
 
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('Keyboard training page loaded');
+// Compatibility function for old progress tracking
+function getUserProgress() {
+  const userName = localStorage.getItem('userName') || 'student';
+  const storageKey = 'smx_typing_results_' + userName;
+  const results = JSON.parse(localStorage.getItem(storageKey) || '{}');
   
-  // Load student data
-  const studentName = localStorage.getItem('userName') || 'Student';
-  const studentDay = localStorage.getItem('studentDay') || 'Day 3/7';
+  // Convert to old format if needed
+  const progress = { modules: [] };
   
-  // Update display
-  document.getElementById('studentName').textContent = studentName;
-  document.getElementById('studentDay').textContent = studentDay;
-  
-  // Load typing progress from typing-progress.js
-  if (typeof loadTypingData === 'function') {
-    loadTypingData();
-    updateDashboardProgress();
-  }
-  
-  // Load modules from script.js
-  if (typeof loadModules === 'function') {
-    console.log('Loading modules for keyboard training...');
-    loadModules();
-  } else {
-    console.error('loadModules function not available');
-  }
-  
-  // Update visual feedback for completed practices
-  setTimeout(() => {
-    if (typeof updateLeftBarColors === 'function') {
-      updateLeftBarColors();
+  Object.keys(results).forEach(moduleIndex => {
+    if (!progress.modules[moduleIndex]) {
+      progress.modules[moduleIndex] = { practices: [] };
     }
-  }, 1000); // Delay to ensure modules are loaded
-});
-
-// Update visual feedback for module/practice completion
-function updateLeftBarColors() {
-  // This function is no longer needed as the current HTML structure
-  // handles visual feedback through renderModuleList() and updateModuleProgress()
-  console.log('updateLeftBarColors called - visual updates handled by keyboard-training.html');
-  
-  // Visual updates are now handled exclusively by the main HTML file
-  // to prevent race conditions and duplicate rendering
-}
-
-// Helper function to integrate with SMXKITS.js screens
-function showScreen(screenId) {
-  // First hide all screens in the dynamic content
-  const screens = document.querySelectorAll('#dynamic-content .screen');
-  screens.forEach(screen => {
-    screen.classList.remove('active');
+    
+    Object.keys(results[moduleIndex]).forEach(practiceIndex => {
+      progress.modules[moduleIndex].practices[practiceIndex] = results[moduleIndex][practiceIndex];
+    });
   });
   
-  // Show requested screen
-  const targetScreen = document.getElementById(screenId);
-  if (targetScreen) {
-    targetScreen.classList.add('active');
-    
-    // Move it out of dynamic-content and into main view
-    document.body.appendChild(targetScreen);
-    
-    // Set current screen for script.js to reference
-    window.activeScreen = screenId;
-  }
+  return progress;
 }
 
-// Redirect back to dashboard
-function goToDashboard() {
-  window.location.href = 'dashboard.html';
-}
-
-// Function to go directly to typing mode
-function startTyping(moduleId, practiceId) {
-  if (typeof setupTypingTest === 'function') {
-    setupTypingTest(moduleId, practiceId);
-  } else {
-    console.error('Setup typing test function not available');
-  }
-}
-
-// Save progress to localStorage (swap with API if needed)
+/**
+ * Save practice result in legacy format
+ * Maintains compatibility with existing save functions
+ */
 function savePracticeResult(moduleIdx, practiceIdx, stats) {
-  let userProgress = JSON.parse(localStorage.getItem('smx_user_progress') || '{}');
-  if (!userProgress.modules) userProgress.modules = [];
-  if (!userProgress.modules[moduleIdx]) userProgress.modules[moduleIdx] = { practices: [] };
-  userProgress.modules[moduleIdx].practices[practiceIdx] = stats;
-  localStorage.setItem('smx_user_progress', JSON.stringify(userProgress));
-}
-
-// Load progress on page load
-function getUserProgress() {
-  return JSON.parse(localStorage.getItem('smx_user_progress') || '{}');
-}
-
-// Show the results modal
-function showResultsOverlay(moduleIdx, practiceIdx, moduleName, practiceName, time, accuracy, wpm, completed) {
-  document.getElementById('resultsModuleTitle').innerText = moduleName;
-  document.getElementById('resultsPracticeTitle').innerText = practiceName;
-  document.getElementById('resultsCompletionTime').innerText = 'Completion Time: ' + time + 's';
-  document.getElementById('resultsAccuracy').innerText = 'Accuracy: ' + accuracy + '%';
-  document.getElementById('resultsWPM').innerText = 'Words Per Minute: ' + wpm;
-
-  // Make stats green if complete, else blue/gray
-  const statEls = [
-    document.getElementById('resultsCompletionTime'),
-    document.getElementById('resultsAccuracy'),
-    document.getElementById('resultsWPM')
-  ];
-  statEls.forEach(el => el.classList.remove('text-green-400', 'text-zinc-300', 'text-blue-300'));
+  const userName = localStorage.getItem('userName') || 'student';
+  const storageKey = 'smx_typing_results_' + userName;
   
-  if (completed) {
-    statEls.forEach(el => el.classList.add('text-green-400'));
-    document.getElementById('resultsStar').style.display = '';
-  } else {
-    statEls.forEach(el => el.classList.add('text-blue-300'));
-    document.getElementById('resultsStar').style.display = 'none';
+  let results = JSON.parse(localStorage.getItem(storageKey) || '{}');
+  
+  if (!results[moduleIdx]) {
+    results[moduleIdx] = {};
   }
   
-  document.getElementById('resultsModal').classList.remove('hidden');
+  results[moduleIdx][practiceIdx] = {
+    wpm: stats.wpm || 0,
+    accuracy: stats.accuracy || 0,
+    time: stats.time || 0,
+    completed: true,
+    timestamp: new Date().toISOString()
+  };
   
-  // Save progress
-  savePracticeResult(moduleIdx, practiceIdx, { completed, time, accuracy, wpm });
+  localStorage.setItem(storageKey, JSON.stringify(results));
   
-  // Recolor left bar if needed
-  if (typeof updateLeftBarColors === 'function') updateLeftBarColors();
+  console.log(`Saved result for Module ${moduleIdx + 1}, Practice ${practiceIdx + 1}:`, stats);
 }
 
-// Hide modal
-function hideResultsOverlay() {
-  document.getElementById('resultsModal').classList.add('hidden');
+/**
+ * Integration functions for external scripts
+ * These functions provide hooks for other parts of the system
+ */
+
+// Function called when typing test is completed (for integration with script.js)
+function onTypingTestComplete(moduleIdx, practiceIdx, wpm, accuracy, time) {
+  // Save the result
+  savePracticeResult(moduleIdx, practiceIdx, { wpm, accuracy, time });
+  
+  // Update typing progress if function exists
+  if (typeof updateTypingProgress === 'function') {
+    updateTypingProgress(wpm, accuracy);
+  }
+  
+  // Trigger any external callbacks
+  if (typeof window.recordTypingResult === 'function') {
+    window.recordTypingResult(wpm, accuracy);
+  }
+  
+  console.log(`Typing test completed: Module ${moduleIdx + 1}, Practice ${practiceIdx + 1}`);
 }
 
-// Retry typing
-function retryTyping() {
-  hideResultsOverlay();
-  if (typeof reloadCurrentTypingTest === 'function') reloadCurrentTypingTest();
+/**
+ * Utility functions for data management
+ */
+
+// Get typing tests from localStorage with fallback
+function getTypingTests() {
+  return JSON.parse(localStorage.getItem('smx_typing_tests') || '[]');
 }
 
-// This function is no longer needed as the module list is rendered by the main HTML
-// The renderModuleList() function in keyboard-training.html handles module display
-function loadPracticesDropdown() {
-  console.log('loadPracticesDropdown called - module rendering is handled by keyboard-training.html');
-  // Module rendering is now exclusively handled by keyboard-training.html DOMContentLoaded
-  // No need to call renderModuleList() here as it creates conflicts
+// Get specific practice text
+function getPracticeText(moduleIdx, practiceIdx) {
+  const tests = getTypingTests();
+  if (tests[moduleIdx] && tests[moduleIdx][practiceIdx]) {
+    return tests[moduleIdx][practiceIdx];
+  }
+  return null;
 }
 
-// Removed DOMContentLoaded listener to prevent duplicate calls
-// All module rendering is now handled in keyboard-training.html
+// Check if practice is completed
+function isPracticeCompleted(moduleIdx, practiceIdx) {
+  const userName = localStorage.getItem('userName') || 'student';
+  const storageKey = 'smx_typing_results_' + userName;
+  const results = JSON.parse(localStorage.getItem(storageKey) || '{}');
+  
+  return !!(results[moduleIdx] && results[moduleIdx][practiceIdx] && results[moduleIdx][practiceIdx].completed);
+}
+
+// Get practice result
+function getPracticeResult(moduleIdx, practiceIdx) {
+  const userName = localStorage.getItem('userName') || 'student';
+  const storageKey = 'smx_typing_results_' + userName;
+  const results = JSON.parse(localStorage.getItem(storageKey) || '{}');
+  
+  if (results[moduleIdx] && results[moduleIdx][practiceIdx]) {
+    return results[moduleIdx][practiceIdx];
+  }
+  return null;
+}
+
+/**
+ * Statistics and reporting functions
+ */
+
+// Calculate overall statistics
+function getOverallStats() {
+  const userName = localStorage.getItem('userName') || 'student';
+  const storageKey = 'smx_typing_results_' + userName;
+  const results = JSON.parse(localStorage.getItem(storageKey) || '{}');
+  
+  let totalCompleted = 0;
+  let totalWPM = 0;
+  let wpmCount = 0;
+  let bestWPM = 0;
+  let totalAccuracy = 0;
+  let accuracyCount = 0;
+  
+  Object.keys(results).forEach(moduleIndex => {
+    Object.keys(results[moduleIndex]).forEach(practiceIndex => {
+      const result = results[moduleIndex][practiceIndex];
+      if (result && result.completed) {
+        totalCompleted++;
+        
+        if (result.wpm) {
+          totalWPM += result.wpm;
+          wpmCount++;
+          bestWPM = Math.max(bestWPM, result.wpm);
+        }
+        
+        if (result.accuracy) {
+          totalAccuracy += result.accuracy;
+          accuracyCount++;
+        }
+      }
+    });
+  });
+  
+  return {
+    totalCompleted,
+    averageWPM: wpmCount > 0 ? Math.round(totalWPM / wpmCount) : 0,
+    bestWPM,
+    averageAccuracy: accuracyCount > 0 ? Math.round(totalAccuracy / accuracyCount) : 0
+  };
+}
+
+// Get module completion percentage
+function getModuleCompletion(moduleIdx) {
+  const tests = getTypingTests();
+  if (!tests[moduleIdx]) return 0;
+  
+  const practices = tests[moduleIdx].filter(practice => 
+    practice && practice.trim() !== '' && !practice.includes('Enter typing text here')
+  );
+  
+  if (practices.length === 0) return 0;
+  
+  let completed = 0;
+  practices.forEach((practice, practiceIdx) => {
+    if (isPracticeCompleted(moduleIdx, practiceIdx)) {
+      completed++;
+    }
+  });
+  
+  return Math.round((completed / practices.length) * 100);
+}
+
+/**
+ * Debug and maintenance functions
+ */
+
+// Log current state for debugging
+function debugTypingSystem() {
+  console.log('=== TYPING SYSTEM DEBUG ===');
+  console.log('Typing Tests:', getTypingTests());
+  console.log('User Results:', getUserProgress());
+  console.log('Overall Stats:', getOverallStats());
+  console.log('Module Completions:', [0,1,2,3,4].map(i => getModuleCompletion(i)));
+  console.log('=== END DEBUG ===');
+}
+
+// Validate data integrity
+function validateTypingData() {
+  const tests = getTypingTests();
+  const results = getUserProgress();
+  
+  let issues = [];
+  
+  if (tests.length === 0) {
+    issues.push('No typing tests found');
+  }
+  
+  tests.forEach((module, moduleIdx) => {
+    if (!Array.isArray(module)) {
+      issues.push(`Module ${moduleIdx} is not an array`);
+    }
+  });
+  
+  if (issues.length > 0) {
+    console.warn('Typing data validation issues:', issues);
+    return false;
+  }
+  
+  console.log('Typing data validation passed');
+  return true;
+}
+
+/**
+ * Export functions for external use
+ */
+window.TypingSystem = {
+  getUserProgress,
+  savePracticeResult,
+  onTypingTestComplete,
+  getTypingTests,
+  getPracticeText,
+  isPracticeCompleted,
+  getPracticeResult,
+  getOverallStats,
+  getModuleCompletion,
+  debugTypingSystem,
+  validateTypingData
+};
+
+// Legacy function names for compatibility
+window.updateLeftBarColors = function() {
+  console.log('updateLeftBarColors called - handled by main system');
+};
+
+window.loadPracticesDropdown = function() {
+  console.log('loadPracticesDropdown called - handled by main system');
+};
+
+console.log('Keyboard Training Support Functions loaded');
