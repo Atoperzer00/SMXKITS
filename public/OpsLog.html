@@ -891,6 +891,7 @@
       <div class="nav">
         <button type="button" id="editCalloutBtn" class="nav-btn" disabled>Edit Recent Callout</button>
         <button type="button" id="viewHistoryBtn" class="nav-btn" disabled>View History</button>
+        <button type="button" id="gradingBtn" class="nav-btn" onclick="goToGrading()">Grading System</button>
       </div>
       
       <div class="divider"></div>
@@ -1188,6 +1189,15 @@
     localStorage.removeItem('token');
     localStorage.removeItem('userName');
     window.location.href = '/login.html';
+  }
+  
+  function goToGrading() {
+    const role = localStorage.getItem('role');
+    if (role === 'instructor') {
+      window.location.href = '/instructor-grading.html';
+    } else {
+      window.location.href = '/student-grading.html';
+    }
   }
   
   // ------ Form Handling Functions ------

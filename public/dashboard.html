@@ -562,10 +562,10 @@
           Progress & Tools
         </h2>
         <div class="tools-grid">
-          <div class="tool-card" onclick="goToOpsLog()">
+          <div class="tool-card" onclick="goToGrading()">
             <div class="tool-icon"><i class="fas fa-clipboard-list"></i></div>
             <h3 class="tool-title">Grading & Assessment</h3>
-            <p class="tool-description">View your grades, performance metrics, and instructor feedback.</p>
+            <p class="tool-description" id="gradingDescription">View your grades, performance metrics, and instructor feedback.</p>
           </div>
           
           <div class="tool-card">
@@ -595,10 +595,28 @@
     document.addEventListener('DOMContentLoaded', function() {
       const studentName = localStorage.getItem('userName') || 'Student';
       const studentDay = localStorage.getItem('studentDay') || 'Day 3/7';
+      const role = localStorage.getItem('role');
       
       document.getElementById('studentName').textContent = studentName;
       document.getElementById('studentDay').textContent = studentDay;
+      
+      // Update grading description based on role
+      const gradingDescription = document.getElementById('gradingDescription');
+      if (role === 'instructor') {
+        gradingDescription.textContent = 'Grade student submissions, provide feedback, and manage exercises.';
+      } else {
+        gradingDescription.textContent = 'View your grades, performance metrics, and instructor feedback.';
+      }
     });
+
+    function goToGrading() {
+      const role = localStorage.getItem('role');
+      if (role === 'instructor') {
+        window.location.href = 'instructor-grading.html';
+      } else {
+        window.location.href = 'student-grading.html';
+      }
+    }
 
     function goToOpsLog() {
       window.location.href = 'OpsLog.html';
