@@ -30,9 +30,6 @@
     .message-appear {
       animation: fadeIn 0.3s ease;
     }
-    .self-message {
-      <div class="bg-blue-900/40 border-l-2 border-blue-500">...</div> bg-blue-900/40 border-l-2 border-blue-500;
-    }
   </style>
 </head>
 <body class="h-screen w-screen bg-zinc-900 text-zinc-100 flex">
@@ -170,10 +167,30 @@
       return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
     }
     
+    function getRoleColor(role) {
+      switch(role) {
+        case 'SCR':
+        case 'Screener':
+          return 'bg-blue-900/40 border-l-4 border-blue-500';
+        case 'IA':
+          return 'bg-yellow-900/40 border-l-4 border-yellow-500';
+        case 'ITC':
+          return 'bg-red-900/40 border-l-4 border-red-500';
+        case 'JTAC':
+        case 'Pilot':
+          return 'bg-gray-700/40 border-l-4 border-gray-500';
+        case 'SA':
+          return 'bg-green-900/40 border-l-4 border-green-500';
+        default:
+          return 'bg-zinc-800/70';
+      }
+    }
+    
     function addMessage({ author, role, content, timestamp, attachment }) {
       const time = new Date(timestamp).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit", second: "2-digit"});
       const msg = document.createElement("div");
-      msg.className = "p-3 rounded-md message-appear " + (author === userName ? "self-message" : "bg-zinc-800/70");
+      const roleColorClass = getRoleColor(role);
+      msg.className = "p-3 rounded-md message-appear " + roleColorClass;
       
       // Basic message content
       let messageHTML = `

@@ -181,20 +181,25 @@
       background: var(--panel);
       overflow: hidden;
     }
+    
     .top-bar {
       height: 58px;
-      background: var(--sidebar);
+      background: var(--glass-bg);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
       display: flex;
       align-items: center;
-      justify-content: flex-end;
+      justify-content: space-between;
       padding: 0 30px;
       border-bottom: 2px solid var(--inactive);
       font-size: 1.1em;
       letter-spacing: 1px;
       color: #a9d4c6;
       font-weight: 500;
-      z-index: 2;
+      z-index: 100;
+      position: relative;
     }
+
     .feed-panel {
       flex: 1;
       overflow-y: auto;
@@ -1113,13 +1118,72 @@
     </div>
   </div>
 
+<script src="/auth-check.js"></script>
 <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
 <script>
   // ------ Global State ------
   let currentRoom = { classId: null, team: null, mission: null };
-  // Connect to socket.io server, using same host as current page
-  let socket = io(window.location.hostname === 'localhost' ? 'http://localhost:3001' : '');
+  // Connect to socket.io server with improved error handling
+  let socket;
   let callouts = {}; // id -> callout
+  
+  // Initialize socket connection
+  function initializeSocket() {
+    try {
+      const socketUrl = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
+      socket = io(socketUrl, {
+        transports: ['websocket', 'polling'],
+        timeout: 20000,
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000
+      });
+      
+      socket.on('connect', () => {
+        console.log('✅ Socket.IO connected successfully');
+      });
+      
+      socket.on('disconnect', (reason) => {
+        console.warn('⚠️ Socket.IO disconnected:', reason);
+      });
+      
+      socket.on('connect_error', (error) => {
+        console.error('❌ Socket.IO connection error:', error);
+      });
+      
+      // Set up socket event listeners
+      setupSocketListeners();
+      
+    } catch (error) {
+      console.error('❌ Failed to initialize socket:', error);
+    }
+  }
+  
+  // Setup socket event listeners
+  function setupSocketListeners() {
+    if (!socket) return;
+    
+    socket.on('new_callout', function(log) {
+      console.log("New callout received:", log);
+      callouts[log._id] = log;
+      createBubble(log);
+      updateSidebarButtonStates();
+    });
+    
+    socket.on('update_callout', function(log) {
+      console.log("Update callout received:", log);
+      callouts[log._id] = log;
+      createBubble(log, false);
+    });
+    
+    socket.on('delete_callout', function(id) {
+      console.log("Delete callout received:", id);
+      let old = document.getElementById('callout_'+id);
+      if (old) old.remove();
+      delete callouts[id];
+      updateSidebarButtonStates();
+    });
+  }
   
   // Initialize updateSidebarButtonStates function early
   function updateSidebarButtonStates() {
@@ -2255,28 +2319,6 @@ createFollowBubble.addEventListener('drop', (e) => {
 });
   
   // Follow functionality has been moved to the end of the script
-  
-  // ------ Socket.io Event Listeners ------
-  socket.on('new_callout', function(callout) {
-    console.log("New callout received:", callout);
-    callouts[callout._id] = callout;
-    createBubble(callout, false);
-  });
-  
-  socket.on('update_callout', function(callout) {
-    console.log("Updated callout received:", callout);
-    callouts[callout._id] = callout;
-    let old = document.getElementById('callout_'+callout._id);
-    if (old) old.remove();
-    createBubble(callout, false);
-  });
-  
-  socket.on('delete_callout', function(id) {
-    console.log("Delete callout received:", id);
-    let old = document.getElementById('callout_'+id);
-    if (old) old.remove();
-    delete callouts[id];
-  });
   
   // ------ Initialize All Event Handlers ------
   document.addEventListener('DOMContentLoaded', function() {

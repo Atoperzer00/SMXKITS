@@ -658,7 +658,7 @@ function handleLogin() {
     document.getElementById('login-error').textContent = 'Please enter both Class Code and Student Code';
     return;
   }
-  
+}
   
   
 // Ensure PDF directories exist

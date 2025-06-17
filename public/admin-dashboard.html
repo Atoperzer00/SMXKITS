@@ -575,21 +575,16 @@
       <img src="SMXKITS.png" alt="SMXKITS Logo" class="admin-logo" />
       <ul class="admin-nav">
         <li class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</li>
-        <li><i class="fas fa-graduation-cap"></i> Training Hub <span style="font-size: 0.7rem; color: #f093fb; opacity: 0.8;">(Needs link)</span></li>
+        <li onclick="window.location.href='instructor-inbox.html'"><i class="fas fa-inbox"></i> Inbox</li>
+        <li onclick="window.location.href='dashboard.html'"><i class="fas fa-graduation-cap"></i> Student Training Hub</li>
         <li><i class="fas fa-calendar-alt"></i> Calendar <span style="font-size: 0.7rem; color: #f093fb; opacity: 0.8;">(Needs link)</span></li>
-        <li><i class="fas fa-chalkboard-teacher"></i> Classes <span style="font-size: 0.7rem; color: #f093fb; opacity: 0.8;">(Needs link)</span></li>
-        <li><i class="fas fa-user-graduate"></i> Students <span style="font-size: 0.7rem; color: #f093fb; opacity: 0.8;">(Needs link)</span></li>
-        <li><i class="fas fa-star"></i> Student Grading <span style="font-size: 0.7rem; color: #f093fb; opacity: 0.8;">(Needs link)</span></li>
-        <li><i class="fas fa-lightbulb"></i> Lessons Learned <span style="font-size: 0.7rem; color: #f093fb; opacity: 0.8;">(Needs link)</span></li>
-        <li><i class="fas fa-inbox"></i> Inbox <span style="font-size: 0.7rem; color: #f093fb; opacity: 0.8;">(Needs link)</span></li>
-        <li><i class="fas fa-clipboard-check"></i> Attendance <span style="font-size: 0.7rem; color: #f093fb; opacity: 0.8;">(Needs link)</span></li>
-        <li><i class="fas fa-chart-bar"></i> Analytics <span style="font-size: 0.7rem; color: #f093fb; opacity: 0.8;">(Needs link)</span></li>
-        <li><i class="fas fa-broadcast-tower"></i> Live Controls <span style="font-size: 0.7rem; color: #f093fb; opacity: 0.8;">(Needs link)</span></li>
+        <li onclick="window.location.href='add-class.html'"><i class="fas fa-chalkboard-teacher"></i> Classes</li>
+        <li onclick="window.location.href='add-student.html'"><i class="fas fa-user-graduate"></i> Students</li>
+        <li onclick="window.location.href='instructor-grading.html'"><i class="fas fa-star"></i> Student Grading</li>
+        <li onclick="window.location.href='lessons-learned.html'"><i class="fas fa-lightbulb"></i> Lessons Learned</li>
+        <li onclick="window.location.href='attendance.html'"><i class="fas fa-clipboard-check"></i> Attendance</li>
+        <li onclick="window.location.href='mission-links.html'"><i class="fas fa-broadcast-tower"></i> Live Controls</li>
         <li><a href="instructor-feedback.html"><i class="fas fa-comments"></i> Feedback</a></li>
-        <li><i class="fas fa-folder-open"></i> Resources <span style="font-size: 0.7rem; color: #f093fb; opacity: 0.8;">(Needs link)</span></li>
-        <li><i class="fas fa-certificate"></i> Certificates <span style="font-size: 0.7rem; color: #f093fb; opacity: 0.8;">(Needs link)</span></li>
-        <li><i class="fas fa-upload"></i> Bulk Import <span style="font-size: 0.7rem; color: #f093fb; opacity: 0.8;">(Needs link)</span></li>
-        <li><i class="fas fa-cog"></i> Settings <span style="font-size: 0.7rem; color: #f093fb; opacity: 0.8;">(Needs link)</span></li>
         <li onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</li>
       </ul>
     </aside>
@@ -656,6 +651,12 @@
             <div class="tool-icon"><i class="fas fa-chart-line"></i></div>
             <h3 class="tool-title">Instructor Grading</h3>
             <p class="tool-description">Grade student submissions, provide feedback, and manage exercise assessments with interactive grading tools.</p>
+          </div>
+          
+          <div class="tool-card" onclick="window.location.href='/tools/trackpoint/index.html'">
+            <div class="tool-icon"><i class="fas fa-map"></i></div>
+            <h3 class="tool-title">TrackPoint Map</h3>
+            <p class="tool-description">Interactive tactical mapping system with Altis terrain, coordinate tracking, and mission planning capabilities.</p>
           </div>
         </div>
       </section>
@@ -1027,55 +1028,6 @@
 
 
       </script>
-      
-      <!-- Instructor Chat Box -->
-      <div class="chatbox">
-        <h3>Instructor Chat</h3>
-        <div class="chatbox-messages" id="chatMessages">
-          <div class="chat-loading">Loading messages...</div>
-        </div>
-        <div class="chatbox-inputs">
-          <input type="text" id="chatInput" placeholder="Type your message..." />
-          <form id="fileUploadForm" style="display: flex; align-items: center;">
-            <input type="file" id="chatFile" name="file" />
-            <button type="button" onclick="sendChatMessage()" style="margin-left: 10px;">Send</button>
-          </form>
-        </div>
-        <div id="uploadStatus" style="margin-top: 8px; color: #aaa; font-size: 0.9em;"></div>
-      </div>
-      
-      <!-- Dashboard Widgets -->
-      <section class="dashboard-widgets" style="margin-top: 25px;">
-        <div class="widget-card">
-          <div class="widget-title">Analytics & Progress</div>
-          <!-- Example placeholder; wire in charts, stats, etc. -->
-          <div style="color:#bbb;font-size:1rem;opacity:.88; margin-top:18px;">
-            <div style="background: #1c2837; padding: 15px; border-radius: 8px;">
-              <h4 style="margin-top: 0;">Student Progress</h4>
-              <div style="height: 20px; background: #1a2535; border-radius: 10px; margin: 15px 0;">
-                <div style="width: 65%; height: 100%; background: linear-gradient(90deg, #1da1f2, #0078d4); border-radius: 10px;"></div>
-              </div>
-              <div style="display: flex; justify-content: space-between;">
-                <span>Alpha Class: 65% Complete</span>
-                <span>26/40 Students</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="widget-card">
-          <div class="widget-title">Upcoming Sessions</div>
-          <div style="color:#fff;font-size:0.9rem; margin-top:18px;">
-            <div style="padding: 12px; border-left: 3px solid #1da1f2; margin-bottom: 12px; background: #1c2837;">
-              <div style="font-weight: bold;">Alpha Class - Module 3</div>
-              <div>October 9, 2023 • 09:00 - 12:00</div>
-            </div>
-            <div style="padding: 12px; border-left: 3px solid #1da1f2; margin-bottom: 12px; background: #1c2837;">
-              <div style="font-weight: bold;">Bravo Class - Module 1</div>
-              <div>October 15, 2023 • 13:00 - 16:00</div>
-            </div>
-          </div>
-        </div>
-      </section>
     </main>
   </div>
 
@@ -1109,307 +1061,6 @@
       }, 1000);
       
       console.log('Logged in as:', userName, '(' + role + ')');
-    });
-    
-    // Socket.io chat implementation
-    let socket;
-    let userName = localStorage.getItem('userName') || 'Admin';
-    let userRole = localStorage.getItem('role') || 'admin';
-    const chatChannel = 'instructor'; // Default channel
-    
-    document.addEventListener('DOMContentLoaded', function() {
-      // Initialize Socket.io connection
-      socket = io();
-      
-      // Join the instructor chat channel
-      socket.emit('join', chatChannel);
-      
-      // Listen for chat history
-      socket.on('history', function(messages) {
-        const container = document.getElementById('chatMessages');
-        container.innerHTML = '';
-        if (messages.length === 0) {
-          container.innerHTML = '<div class="chat-empty">No messages yet. Start the conversation!</div>';
-        } else {
-          messages.forEach(displayMessage);
-        }
-        container.scrollTop = container.scrollHeight;
-      });
-      
-      // Listen for new messages
-      socket.on('message', function(message) {
-        displayMessage(message);
-        const container = document.getElementById('chatMessages');
-        container.scrollTop = container.scrollHeight;
-      });
-      
-      // Listen for errors
-      socket.on('error', function(error) {
-        console.error('Socket error:', error);
-        alert('Chat error: ' + error.message);
-      });
-      
-      // Initialize chat history from API
-      fetchChatHistory();
-    });
-    
-    // Fetch chat history from the API
-    async function fetchChatHistory() {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) return;
-        
-        const response = await fetch(`/api/chat/${chatChannel}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (!response.ok) throw new Error('Failed to load chat history');
-        
-        const messages = await response.json();
-        const container = document.getElementById('chatMessages');
-        container.innerHTML = '';
-        
-        if (messages.length === 0) {
-          container.innerHTML = '<div class="chat-empty">No messages yet. Start the conversation!</div>';
-        } else {
-          messages.forEach(displayMessage);
-        }
-        
-        container.scrollTop = container.scrollHeight;
-      } catch (error) {
-        console.error('Error fetching chat history:', error);
-        document.getElementById('chatMessages').innerHTML = 
-          '<div class="chat-error">Failed to load chat history. Please refresh.</div>';
-      }
-    }
-    
-    // Enhanced message display with better styling
-    function displayMessage(message) {
-      const container = document.getElementById('chatMessages');
-      const div = document.createElement('div');
-      div.className = 'chat-message';
-      
-      // Format the timestamp
-      const timestamp = new Date(message.timestamp);
-      const timeStr = timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      
-      // Check if message is from current user
-      const isCurrentUser = message.sender?.id === localStorage.getItem('userId') || 
-                           message.sender?.name === userName;
-      
-      const senderName = isCurrentUser ? 'You' : message.sender?.name || 'Unknown';
-      
-      // Enhanced styling for messages
-      div.style.cssText = `
-        margin-bottom: 1rem;
-        padding: 1rem;
-        border-radius: 15px;
-        background: ${isCurrentUser ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'rgba(255,255,255,0.05)'};
-        border: 1px solid ${isCurrentUser ? 'rgba(102, 126, 234, 0.3)' : 'rgba(255,255,255,0.1)'};
-        animation: messageSlideIn 0.3s ease;
-        position: relative;
-        backdrop-filter: blur(10px);
-      `;
-      
-      // Handle message with or without attachment
-      if (message.attachment) {
-        // Message with attachment
-        let attachmentHtml = '';
-        const filename = message.attachment.filename;
-        const path = message.attachment.path;
-        
-        if (message.attachment.type.startsWith('image/')) {
-          attachmentHtml = `<div style="margin-top: 0.5rem; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 10px;">
-            <a href="${path}" target="_blank">
-              <img src="${path}" alt="${filename}" style="max-width: 200px; max-height: 150px; border-radius: 8px;">
-            </a>
-            <div style="margin-top: 0.5rem; font-size: 0.8rem; color: rgba(255,255,255,0.7);">📎 ${filename}</div>
-          </div>`;
-        } else {
-          attachmentHtml = `<div style="margin-top: 0.5rem; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: 10px;">
-            <a href="${path}" target="_blank" style="color: #4facfe; text-decoration: none; display: flex; align-items: center; gap: 0.5rem;">
-              <i class="fas fa-file"></i>
-              <span>${filename}</span>
-            </a>
-          </div>`;
-        }
-        
-        div.innerHTML = `
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-            <strong style="color: ${isCurrentUser ? '#fff' : '#4facfe'};">${senderName}</strong>
-            <span style="font-size: 0.8rem; color: rgba(255,255,255,0.6);">${timeStr}</span>
-          </div>
-          <div style="color: ${isCurrentUser ? '#fff' : '#e0e6ed'}; line-height: 1.4;">${message.content}</div>
-          ${attachmentHtml}
-        `;
-      } else {
-        // Simple text message
-        div.innerHTML = `
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-            <strong style="color: ${isCurrentUser ? '#fff' : '#4facfe'};">${senderName}</strong>
-            <span style="font-size: 0.8rem; color: rgba(255,255,255,0.6);">${timeStr}</span>
-          </div>
-          <div style="color: ${isCurrentUser ? '#fff' : '#e0e6ed'}; line-height: 1.4;">${message.content}</div>
-        `;
-      }
-      
-      container.appendChild(div);
-      
-      // Add animation styles if not already added
-      if (!document.getElementById('chatAnimations')) {
-        const style = document.createElement('style');
-        style.id = 'chatAnimations';
-        style.textContent = `
-          @keyframes messageSlideIn {
-            from {
-              opacity: 0;
-              transform: translateY(20px) scale(0.95);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0) scale(1);
-            }
-          }
-        `;
-        document.head.appendChild(style);
-      }
-    }
-    
-    // Enhanced chat message sending with better UX
-    async function sendChatMessage() {
-      const input = document.getElementById('chatInput');
-      const file = document.getElementById('chatFile');
-      const sendButton = document.querySelector('.chatbox-inputs button[onclick="sendChatMessage()"]');
-      const msg = input.value.trim();
-      
-      if (!msg && file.files.length === 0) {
-        input.focus();
-        input.style.borderColor = '#f093fb';
-        setTimeout(() => input.style.borderColor = '', 1000);
-        return;
-      }
-      
-      // Disable send button and show loading state
-      const originalButtonText = sendButton.innerHTML;
-      sendButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
-      sendButton.disabled = true;
-      
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          showNotification('❌ Authentication required. Please log in again.', 'error');
-          return;
-        }
-        
-        if (file.files.length > 0) {
-          // File upload with optional message
-          const formData = new FormData();
-          formData.append('file', file.files[0]);
-          if (msg) {
-            formData.append('content', msg);
-          }
-          formData.append('channel', chatChannel);
-          
-          // Show upload progress
-          const statusEl = document.getElementById('uploadStatus');
-          statusEl.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Uploading file...';
-          statusEl.style.color = '#4facfe';
-          
-          const response = await fetch('/api/chat/upload', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`
-            },
-            body: formData
-          });
-          
-          if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Failed to upload file');
-          }
-          
-          statusEl.innerHTML = '<i class="fas fa-check-circle"></i> File uploaded successfully!';
-          statusEl.style.color = '#4facfe';
-          setTimeout(() => {
-            statusEl.textContent = '';
-          }, 3000);
-          
-          file.value = '';
-          showNotification('📎 File shared successfully!', 'success');
-        } else {
-          // Text message only
-          const response = await fetch('/api/chat', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-              content: msg,
-              channel: chatChannel
-            })
-          });
-          
-          if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Failed to send message');
-          }
-          
-          showNotification('💬 Message sent!', 'success');
-        }
-        
-        // Clear input and scroll to bottom
-        input.value = '';
-        const chatContainer = document.getElementById('chatMessages');
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-        
-        // Add a subtle success animation to the input
-        input.style.background = 'rgba(79, 172, 254, 0.1)';
-        setTimeout(() => {
-          input.style.background = '';
-        }, 500);
-        
-      } catch (error) {
-        console.error('Error sending message:', error);
-        showNotification(`❌ Error: ${error.message}`, 'error');
-        
-        // Add error animation to input
-        input.style.borderColor = '#f5576c';
-        input.style.animation = 'shake 0.5s ease-in-out';
-        setTimeout(() => {
-          input.style.borderColor = '';
-          input.style.animation = '';
-        }, 1000);
-      } finally {
-        // Re-enable send button
-        sendButton.innerHTML = originalButtonText;
-        sendButton.disabled = false;
-        input.focus();
-      }
-    }
-    
-    // Add shake animation for error states
-    if (!document.getElementById('shakeAnimation')) {
-      const style = document.createElement('style');
-      style.id = 'shakeAnimation';
-      style.textContent = `
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          25% { transform: translateX(-5px); }
-          75% { transform: translateX(5px); }
-        }
-      `;
-      document.head.appendChild(style);
-    }
-    
-    // Allow sending message with Enter key
-    document.getElementById('chatInput')?.addEventListener('keypress', function(e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        sendChatMessage();
-      }
     });
   </script>
 </body>

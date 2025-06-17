@@ -991,8 +991,8 @@
 
     function checkAuth() {
       const role = localStorage.getItem('role');
-      if (role !== 'instructor') {
-        alert('Access denied. This page is for instructors only.');
+      if (role !== 'instructor' && role !== 'admin') {
+        alert('Access denied. This page is for instructors and admins only.');
         window.location.href = '/dashboard.html';
         return;
       }
