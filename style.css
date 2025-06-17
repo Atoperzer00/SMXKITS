@@ -8,17 +8,7 @@ body {
 }
 
 #screen-login {
-  background: url("Sign in Screen.jpg") no-repeat center center fixed;
-  background-size: cover;
-  background-color: black; /* fallback if image fails */
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  margin: 0;
-  padding: 0;
-  overflow: hidden;
+  background: none;
 }
 
 
