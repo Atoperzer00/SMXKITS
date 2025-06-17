@@ -1091,7 +1091,7 @@
             <option>Mission 28</option><option>Mission 29</option><option>Mission 30</option>
           </select>
         </div>
-        <button type="button" id="joinRoomButton" class="submit-btn" style="margin-top:24px; width:200px;">Join Room</button>
+        <button type="submit" id="joinRoomButton" class="submit-btn" style="margin-top:24px; width:200px;">Join Room</button>
       </form>
     </div>
   </div>
@@ -1240,24 +1240,35 @@
     try {
       console.log("Log form submitted");
       const data = Object.fromEntries(new FormData(form));
-let follow = undefined;
-// Check if follow form is visible
-const followForm = document.getElementById('followForm');
-if (followForm && followForm.style.display !== 'none') {
-  const followNameInput = document.getElementById('followNameInput');
-  const followIdHidden = document.getElementById('followIdHidden');
-  const followStageHidden = document.getElementById('followStageHidden');
-  const stageLabel = document.getElementById('stageLabel');
-  
-  if (followNameInput && followNameInput.value) {
-    follow = {
-      name: followNameInput.value,
-      followId: followIdHidden ? followIdHidden.value : Math.random().toString(36).substr(2, 6).toUpperCase(),
-      stage: followStageHidden ? followStageHidden.value : (stageLabel ? stageLabel.textContent : 'START'),
-      ended: stageLabel && stageLabel.textContent === 'END'
-    };
-  }
-}
+      let follow = undefined;
+      
+      // Check if follow form is visible and has data
+      const followForm = document.getElementById('followForm');
+      if (followForm && followForm.style.display === 'block') {
+        const followNameInput = document.getElementById('followNameInput');
+        const followIdHidden = document.getElementById('followIdHidden');
+        const followStageSelected = document.getElementById('followStageSelected');
+        const followStageLabel = document.getElementById('followStageLabel');
+        
+        console.log('Follow form is visible, checking for data...');
+        console.log('Follow name:', followNameInput ? followNameInput.value : 'not found');
+        console.log('Follow ID:', followIdHidden ? followIdHidden.value : 'not found');
+        console.log('Follow stage:', followStageSelected ? followStageSelected.value : 'not found');
+        
+        if (followNameInput && followNameInput.value.trim()) {
+          follow = {
+            name: followNameInput.value.trim(),
+            followId: followIdHidden ? followIdHidden.value : Math.random().toString(36).substr(2, 6).toUpperCase(),
+            stage: followStageSelected ? followStageSelected.value : (followStageLabel ? followStageLabel.textContent : 'START'),
+            ended: followStageSelected ? followStageSelected.value === 'END' : (followStageLabel ? followStageLabel.textContent === 'END' : false)
+          };
+          console.log('Follow data created:', follow);
+        } else {
+          console.log('No follow name provided, skipping follow creation');
+        }
+      } else {
+        console.log('Follow form is not visible or not found');
+      }
       
       const payload = {
         ...data,
@@ -1284,6 +1295,27 @@ if (followForm && followForm.style.display !== 'none') {
       form.reset();
       const textareas = form.querySelectorAll('textarea');
       textareas.forEach(ta => ta.style.height = 'auto');
+      
+      // Reset follow form if it was used
+      if (follow) {
+        const followForm = document.getElementById('followForm');
+        const createFollowBtn = document.getElementById('createFollowBtn');
+        const followNameInput = document.getElementById('followNameInput');
+        const followIdHidden = document.getElementById('followIdHidden');
+        const followIdDisplay = document.getElementById('followIdDisplay');
+        const followStageSelected = document.getElementById('followStageSelected');
+        const followStageLabel = document.getElementById('followStageLabel');
+        
+        if (followForm) followForm.style.display = 'none';
+        if (createFollowBtn) createFollowBtn.textContent = 'Create Follow';
+        if (followNameInput) followNameInput.value = '';
+        if (followIdHidden) followIdHidden.value = '';
+        if (followIdDisplay) followIdDisplay.textContent = '';
+        if (followStageSelected) followStageSelected.value = 'START';
+        if (followStageLabel) followStageLabel.textContent = 'START';
+        
+        console.log('Follow form reset after successful submission');
+      }
       
       // Flash animation
       const bubble = document.getElementById('callout_' + log._id);
@@ -2243,7 +2275,8 @@ createFollowBubble.addEventListener('drop', (e) => {
     // Debug: Check if all required elements exist
     const requiredElements = [
       'dashboardBtn', 'joinRoomBtn', 'logoutBtn', 'editCalloutBtn', 'viewHistoryBtn',
-      'closeRoomModalBtn', 'joinRoomForm', 'joinRoomButton', 'logForm', 'activityTextarea'
+      'closeRoomModalBtn', 'joinRoomForm', 'joinRoomButton', 'logForm', 'activityTextarea',
+      'createFollowBtn', 'followForm'
     ];
     
     requiredElements.forEach(id => {
@@ -2262,6 +2295,8 @@ createFollowBubble.addEventListener('drop', (e) => {
     const dashboardBtn = document.getElementById('dashboardBtn');
     if (dashboardBtn) {
       dashboardBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
         console.log('Dashboard button clicked');
         try {
           goDashboard();
@@ -2276,6 +2311,8 @@ createFollowBubble.addEventListener('drop', (e) => {
     const joinRoomBtn = document.getElementById('joinRoomBtn');
     if (joinRoomBtn) {
       joinRoomBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
         console.log('Join Room button clicked');
         try {
           openRoomModal();
@@ -2289,17 +2326,27 @@ createFollowBubble.addEventListener('drop', (e) => {
     // Logout button (sidebar)
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
-      logoutBtn.addEventListener('click', logout);
+      logoutBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        logout();
+      });
       console.log("Logout button handler attached");
     }
     
     // Edit Callout button (sidebar)
     const editCalloutBtn = document.getElementById('editCalloutBtn');
     if (editCalloutBtn) {
-      editCalloutBtn.addEventListener('click', function() {
+      editCalloutBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (this.disabled) return;
+        
         // Find the most recent callout and open it for editing
-        const mostRecentCalloutId = Object.keys(callouts)[0]; // Assuming callouts are sorted newest first
-        if (mostRecentCalloutId) {
+        const calloutIds = Object.keys(callouts);
+        if (calloutIds.length > 0) {
+          // Get the most recent callout (first in the list)
+          const mostRecentCalloutId = calloutIds[0];
           editCallout(mostRecentCalloutId);
         } else {
           alert('No callouts available to edit');
@@ -2311,10 +2358,15 @@ createFollowBubble.addEventListener('drop', (e) => {
     // View History button (sidebar)
     const viewHistoryBtn = document.getElementById('viewHistoryBtn');
     if (viewHistoryBtn) {
-      viewHistoryBtn.addEventListener('click', function() {
+      viewHistoryBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (this.disabled) return;
+        
         // Find the most recent callout and view its history
-        const mostRecentCalloutId = Object.keys(callouts)[0]; // Assuming callouts are sorted newest first
-        if (mostRecentCalloutId) {
+        const calloutIds = Object.keys(callouts);
+        if (calloutIds.length > 0) {
+          const mostRecentCalloutId = calloutIds[0];
           calloutHistory(mostRecentCalloutId);
         } else {
           alert('No callout history available');
@@ -2326,7 +2378,11 @@ createFollowBubble.addEventListener('drop', (e) => {
     // Close Room Modal button
     const closeRoomModalBtn = document.getElementById('closeRoomModalBtn');
     if (closeRoomModalBtn) {
-      closeRoomModalBtn.addEventListener('click', closeRoomModal);
+      closeRoomModalBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeRoomModal();
+      });
       console.log("Close Room Modal button handler attached");
     }
     
@@ -2340,14 +2396,8 @@ createFollowBubble.addEventListener('drop', (e) => {
       console.log("Join Room form handler attached");
     }
     
-    // Join Room Button in modal
-    const joinRoomButton = document.getElementById('joinRoomButton');
-    if (joinRoomButton) {
-      joinRoomButton.addEventListener('click', function() {
-        document.getElementById('joinRoomForm').dispatchEvent(new Event('submit'));
-      });
-      console.log("Join Room Button handler attached");
-    }
+    // Join Room Button in modal (now handled by form submission)
+    console.log("Join Room Button will be handled by form submission");
     
     // Log Form submission
     const logForm = document.getElementById('logForm');
@@ -2368,7 +2418,52 @@ createFollowBubble.addEventListener('drop', (e) => {
       console.log("Activity textarea handler attached");
     }
     
-    // Create Follow button handler is now at the end of the script
+    // Create Follow button handler
+    const createFollowBtn = document.getElementById('createFollowBtn');
+    const followForm = document.getElementById('followForm');
+    if (createFollowBtn && followForm) {
+      createFollowBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Create Follow button clicked');
+        
+        const isVisible = followForm.style.display === 'block';
+        console.log('Follow form currently visible:', isVisible);
+        
+        if (isVisible) {
+          // Hide the follow form
+          followForm.style.display = 'none';
+          createFollowBtn.textContent = 'Create Follow';
+          console.log('Follow form hidden');
+        } else {
+          // Show the follow form
+          followForm.style.display = 'block';
+          createFollowBtn.textContent = 'Remove Follow';
+          console.log('Follow form shown');
+          
+          // Initialize follow form if needed
+          const followIdHidden = document.getElementById('followIdHidden');
+          const followIdDisplay = document.getElementById('followIdDisplay');
+          const followNameInput = document.getElementById('followNameInput');
+          const followStageSelected = document.getElementById('followStageSelected');
+          const followStageLabel = document.getElementById('followStageLabel');
+          const followStopNumber = document.getElementById('followStopNumber');
+          
+          if (followIdHidden && !followIdHidden.value) {
+            const newId = Math.random().toString(36).substr(2, 6).toUpperCase();
+            followIdHidden.value = newId;
+            if (followIdDisplay) followIdDisplay.textContent = newId;
+          }
+          
+          if (followNameInput) followNameInput.value = '';
+          if (followStageSelected) followStageSelected.value = 'START';
+          if (followStageLabel) followStageLabel.textContent = 'START';
+          if (followStopNumber) followStopNumber.value = '0';
+        }
+      });
+      console.log("Create Follow button handler attached");
+    }
+    
     // Initialize sidebar button states
     updateSidebarButtonStates();
     
@@ -2386,8 +2481,36 @@ createFollowBubble.addEventListener('drop', (e) => {
       console.error('History overlay not found');
     }
     
+    // Modal click-outside-to-close functionality
+    const roomModal = document.getElementById('roomModal');
+    if (roomModal) {
+      roomModal.addEventListener('click', function(e) {
+        if (e.target === roomModal) {
+          closeRoomModal();
+        }
+      });
+    }
+    
+    const editCalloutOverlay = document.getElementById('editCalloutOverlay');
+    if (editCalloutOverlay) {
+      editCalloutOverlay.addEventListener('click', function(e) {
+        if (e.target === editCalloutOverlay) {
+          closeEditCallout();
+        }
+      });
+    }
+    
+    const calloutMenuModal = document.getElementById('calloutMenuModal');
+    if (calloutMenuModal) {
+      calloutMenuModal.addEventListener('click', function(e) {
+        if (e.target === calloutMenuModal) {
+          closeCalloutMenu();
+        }
+      });
+    }
+    
     console.log("Event handlers attached, page ready.");
-  });
+  }); // End of main DOMContentLoaded event listener
   
   async function calloutHistory(id) {
     try {
@@ -2678,26 +2801,39 @@ createFollowBubble.addEventListener('drop', (e) => {
     alert(`Group update complete.\nSuccessfully updated: ${successCount} callouts\nErrors: ${errorCount}`);
   };
 
-  document.addEventListener('DOMContentLoaded', function () {
     // Initialize group action buttons
     const groupEditBtn = document.getElementById('groupEditBtn');
     const groupQCBtn = document.getElementById('groupQCBtn');
     const groupCancelBtn = document.getElementById('groupCancelBtn');
     
     if (groupEditBtn) {
-      groupEditBtn.addEventListener('click', handleGroupEdit);
+      groupEditBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        handleGroupEdit();
+      });
+      console.log("Group Edit button handler attached");
     }
     
     if (groupQCBtn) {
-      groupQCBtn.addEventListener('click', handleGroupQC);
+      groupQCBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        handleGroupQC();
+      });
+      console.log("Group QC button handler attached");
     }
     
     if (groupCancelBtn) {
-      groupCancelBtn.addEventListener('click', clearBubbleSelection);
+      groupCancelBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        clearBubbleSelection();
+      });
+      console.log("Group Cancel button handler attached");
     }
     
-    const createFollowBtn = document.getElementById('createFollowBtn');
-    const followForm = document.getElementById('followForm');
+    // Initialize follow form functionality
     const followNameInput = document.getElementById('followNameInput');
     const followIdDisplay = document.getElementById('followIdDisplay');
     const followIdHidden = document.getElementById('followIdHidden');
@@ -2708,32 +2844,6 @@ createFollowBubble.addEventListener('drop', (e) => {
     let showCont = false;
     let ended = false;
     let prevStageText = "START";
-    
-    createFollowBtn.onclick = () => {
-      const open = followForm.style.display === 'block';
-      followForm.style.display = open ? 'none' : 'block';
-      createFollowBtn.textContent = open ? "Create Follow" : "Remove Follow";
-      if (!open) {
-        const id = Math.random().toString(36).substr(2, 6).toUpperCase();
-        followIdHidden.value = id;
-        followIdDisplay.textContent = id;
-        followNameInput.value = '';
-        stopNumber = 0;
-        showCont = false;
-        ended = false;
-        prevStageText = "START";
-        followStopNumberInput.value = stopNumber;
-        followStageHidden.value = "START";
-        updateStageLabel();
-        updateStageButtons();
-      } else {
-        followIdHidden.value = '';
-        followIdDisplay.textContent = '';
-        followNameInput.value = '';
-        followStageHidden.value = '';
-        stageLabel.textContent = '';
-      }
-    };
     
     // Hidden feature: Double-click follow ID to edit
     const followIdEdit = document.getElementById('followIdEdit');
@@ -2770,9 +2880,10 @@ createFollowBubble.addEventListener('drop', (e) => {
       // Handle Enter key and blur to save
       function saveFollowId() {
         const newId = followIdEdit.value.trim().toUpperCase();
-        if (newId && newId.length <= 10) // Validate length
+        if (newId && newId.length <= 10) { // Validate length
           followIdHidden.value = newId;
           followIdDisplay.textContent = newId;
+        }
         
         // Hide input, show display
         followIdEdit.style.display = 'none';
@@ -2791,21 +2902,28 @@ createFollowBubble.addEventListener('drop', (e) => {
       });
       
       followIdEdit.addEventListener('blur', saveFollowId);
+      console.log("Follow ID edit functionality attached");
     }
     
+    // Stage button functionality
     document.querySelectorAll('.stage-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
         const stage = btn.dataset.stage;
+        console.log('Stage button clicked:', stage);
+        
         if (stage === "ADV.") {
           if (!ended) {
             stopNumber += 1;
-            followStopNumberInput.value = stopNumber;
+            if (followStopNumberInput) followStopNumberInput.value = stopNumber;
           }
         } else if (stage === "CONT.") {
           showCont = !showCont;
         } else if (stage === "END") {
           if (!ended) {
-            prevStageText = stageLabel.textContent;
+            prevStageText = stageLabel ? stageLabel.textContent : "START";
             ended = true;
           } else {
             ended = false;
@@ -2815,8 +2933,11 @@ createFollowBubble.addEventListener('drop', (e) => {
         updateStageButtons();
       });
     });
+    console.log("Stage button handlers attached");
     
     function updateStageLabel() {
+      if (!stageLabel || !followStageHidden) return;
+      
       if (ended) {
         stageLabel.textContent = "END";
         followStageHidden.value = "END";
@@ -2840,7 +2961,6 @@ createFollowBubble.addEventListener('drop', (e) => {
         btn.style.color = active ? '#181c1c' : '#fafafa';
       });
     }
-  });
   
   // Sidebar resize functionality
   function initSidebarResize() {
@@ -2996,39 +3116,7 @@ createFollowBubble.addEventListener('drop', (e) => {
     }
   }
 
-  async function updateQC(calloutId, qcClass, skipMenuClose = false) {
-    try {
-      console.log(`Updating QC status for callout ${calloutId} to ${qcClass}`);
-
-      // Simulate backend update
-      const response = await fetch(`/api/callouts/${calloutId}/qc`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ qc: qcClass })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update QC status');
-      }
-
-      // Update UI
-      const bubble = document.querySelector(`[data-id='${calloutId}']`);
-      if (bubble) {
-        bubble.classList.remove('qc-orange', 'qc-yellow', 'qc-green', 'qc-red');
-        bubble.classList.add(qcClass);
-      }
-
-      if (!skipMenuClose) {
-        closeCalloutMenu();
-      }
-
-      console.log('QC status updated successfully');
-    } catch (error) {
-      console.error('Error updating QC status:', error);
-    }
-  }
-
-  }); // End of DOMContentLoaded event listener
+  // updateQC function is already defined above as window.originalUpdateQC and window.updateQC
 </script>
 </body>
 </html>

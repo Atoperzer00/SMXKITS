@@ -117,6 +117,7 @@
       align-items: center; /* Center vertically */
       height: calc(100% - 50px); /* Adjust height to account for bottom bar */
       width: 100%; /* Match viewport width */
+      background: none; /* Ensure no background conflicts */
     }
     
     html, body {
@@ -124,7 +125,7 @@
       width: 100%;
       margin: 0;
       padding: 0;
-      background: url('planet-earth-with-sunrise-on-space-background-elements-of-this-image-furnished-by-nasa-photo.jpg') no-repeat center center fixed;
+      background: url('Sign in Screen.jpg') no-repeat center center fixed;
       background-size: cover;
       background-color: black; /* fallback */
       overflow: hidden;
@@ -132,15 +133,12 @@
     }
 
     .login-card {
-      /* Dark grey background */
-      background: #2a2a2a;
+      /* Clean semi-transparent dark gray background */
+      background: rgba(30, 30, 30, 0.85);
       padding: 3rem 3.5rem;
       border-radius: 20px;
-      box-shadow: 
-        inset 0 0 0 1px rgba(255, 255, 255, 0.25),
-        0 20px 40px rgba(0, 0, 0, 0.3);
-      backdrop-filter: blur(14px) saturate(160%);
-      -webkit-backdrop-filter: blur(14px) saturate(160%);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       width: 450px;
       text-align: center;
       animation: fadeIn 0.8s ease-in-out;
