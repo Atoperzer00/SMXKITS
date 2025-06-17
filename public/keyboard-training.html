@@ -719,48 +719,88 @@
       }
     }
 
+    // Global variables for module data
+    let moduleNames = [];
+    
     /**
      * Initialize typing modules with default content if none exist
      * Creates a structured set of 5 modules with 20 practices each
      */
     function initializeTypingModules() {
-      const existingModules = localStorage.getItem('smx_typing_tests');
+      const existingData = localStorage.getItem('smx_typing_tests');
       
-      if (!existingModules || existingModules === '[]') {
+      if (!existingData || existingData === '[]') {
         console.log('Creating default typing modules...');
         
+        const defaultModuleNames = [
+          'Module 1: Basic Typing',
+          'Module 2: Numbers and Symbols',
+          'Module 3: Military Terminology',
+          'Module 4: POL Basic Descriptors',
+          'Module 5: POL SITREP Format'
+        ];
+        
         const defaultModules = [
-          createModule('Basic Typing', [
+          createModule('Module 1: Basic Typing', [
             'The quick brown fox jumps over the lazy dog. This sentence contains every letter of the alphabet.',
             'Practice makes perfect. Keep typing to improve your speed and accuracy with consistent daily training.',
             'Touch typing is a skill that will serve you well throughout your career and personal computing tasks.'
           ]),
-          createModule('Numbers and Symbols', [
+          createModule('Module 2: Numbers and Symbols', [
             '1234567890 !@#$%^&*() The numbers and symbols are important for data entry and programming tasks.',
             'Email addresses like user@example.com require symbol typing skills for professional communication.',
             'Special characters: ~`!@#$%^&*()_+-={}[]|\\:";\'<>?,./ are used in coding and technical writing.'
           ]),
-          createModule('Military Terminology', [
+          createModule('Module 3: Military Terminology', [
             'Military ranks: Private, Corporal, Sergeant, Lieutenant, Captain, Major, Colonel, General.',
             'Military time: 0600 hours, 1200 hours, 1800 hours, 2400 hours for precise time coordination.',
             'NATO phonetic alphabet: Alpha, Bravo, Charlie, Delta, Echo, Foxtrot, Golf, Hotel, India, Juliet.'
           ]),
-          createModule('POL Basic Descriptors', [
+          createModule('Module 4: POL Basic Descriptors', [
             'One adult male in dark traditional wear. Two adult females in light clothing observed at location.',
             'Personnel count: Three adult males, one adult female, two children observed entering the compound.',
             'Description: Individual wearing dark jacket, light pants, carrying backpack, proceeding north.'
           ]),
-          createModule('POL SITREP Format', [
+          createModule('Module 5: POL SITREP Format', [
             'SITREP: At 0630Z, one adult male departed E gate on red motorcycle, rode S out of FOV 0635Z. SLANT 1/0/0',
             'SITREP: At 0745Z, white sedan entered compound through W gate, parked E side. SLANT 1/0/0',
             'SITREP: At 0900Z, two adult males on foot entered compound, proceeded to building A. SLANT 2/0/0'
           ])
         ];
         
-        localStorage.setItem('smx_typing_tests', JSON.stringify(defaultModules));
+        const defaultData = {
+          modules: defaultModules,
+          moduleNames: defaultModuleNames
+        };
+        
+        localStorage.setItem('smx_typing_tests', JSON.stringify(defaultData));
         typingModules = defaultModules;
+        moduleNames = defaultModuleNames;
       } else {
-        typingModules = JSON.parse(existingModules);
+        const data = JSON.parse(existingData);
+        
+        // Check if it's the new format with module names
+        if (data.modules && data.moduleNames) {
+          typingModules = data.modules;
+          moduleNames = data.moduleNames;
+        } else {
+          // Convert old format to new format
+          typingModules = data;
+          moduleNames = [
+            'Module 1: Basic Typing',
+            'Module 2: Numbers and Symbols',
+            'Module 3: Military Terminology',
+            'Module 4: POL Basic Descriptors',
+            'Module 5: POL SITREP Format'
+          ];
+          
+          // Save in new format
+          const newData = {
+            modules: typingModules,
+            moduleNames: moduleNames
+          };
+          localStorage.setItem('smx_typing_tests', JSON.stringify(newData));
+        }
       }
       
       console.log(`Loaded ${typingModules.length} typing modules`);
@@ -793,14 +833,6 @@
       const container = document.getElementById('modules-container');
       container.innerHTML = '';
       
-      const moduleNames = [
-        'Module 1: Basic Typing',
-        'Module 2: Numbers and Symbols',
-        'Module 3: Military Terminology',
-        'Module 4: POL Basic Descriptors',
-        'Module 5: POL SITREP Format'
-      ];
-      
       typingModules.forEach((module, moduleIndex) => {
         const moduleElement = createModuleElement(module, moduleIndex, moduleNames[moduleIndex]);
         container.appendChild(moduleElement);
@@ -817,15 +849,17 @@
       
       // Calculate module progress
       const results = getUserResults();
-      const completedPractices = module.filter((practice, practiceIndex) => {
-        return practice && practice.trim() !== '' && 
-               !practice.includes('Enter typing text here') &&
-               results[moduleIndex] && results[moduleIndex][practiceIndex];
-      }).length;
+      let completedPractices = 0;
+      let totalPractices = 0;
       
-      const totalPractices = module.filter(practice => 
-        practice && practice.trim() !== '' && !practice.includes('Enter typing text here')
-      ).length;
+      module.forEach((practice, practiceIndex) => {
+        if (practice && practice.trim() !== '') {
+          totalPractices++;
+          if (results[moduleIndex] && results[moduleIndex][practiceIndex] && results[moduleIndex][practiceIndex].completed) {
+            completedPractices++;
+          }
+        }
+      });
       
       const progressPercent = totalPractices > 0 ? Math.round((completedPractices / totalPractices) * 100) : 0;
       
@@ -1133,7 +1167,7 @@
       // Count completed practices and calculate averages
       typingModules.forEach((module, moduleIndex) => {
         module.forEach((practice, practiceIndex) => {
-          if (practice && practice.trim() !== '' && !practice.includes('Enter typing text here')) {
+          if (practice && practice.trim() !== '') {
             totalPractices++;
             
             const result = results[moduleIndex] && results[moduleIndex][practiceIndex];
