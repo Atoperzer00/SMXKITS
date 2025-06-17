@@ -38,48 +38,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Update visual feedback for module/practice completion
 function updateLeftBarColors() {
-  const progress = getUserProgress();
+  // This function is no longer needed as the current HTML structure
+  // handles visual feedback through renderModuleList() and updateModuleProgress()
+  console.log('updateLeftBarColors called - visual updates handled by keyboard-training.html');
   
-  document.querySelectorAll('.module-group').forEach((modDiv, i) => {
-    // Check if ALL practices completed
-    let allComplete = true;
-    for (let j = 0; j < 20; j++) {
-      if (!progress.modules?.[i]?.practices?.[j]?.completed) allComplete = false;
-    }
-    
-    // Color module button
-    const modBtn = modDiv.querySelector('button[data-module]');
-    if (allComplete) {
-      modBtn.classList.add('bg-green-500', 'text-white', 'shadow-md');
-      modBtn.classList.remove('bg-zinc-800/70');
-    } else {
-      modBtn.classList.remove('bg-green-500', 'text-white', 'shadow-md');
-      modBtn.classList.add('bg-zinc-800/70');
-    }
-    
-    // Practices
-    modDiv.querySelectorAll('button[data-practice]').forEach((pBtn, j) => {
-      if (progress.modules?.[i]?.practices?.[j]?.completed) {
-        pBtn.classList.add('text-green-400', 'font-bold');
-        pBtn.classList.remove('text-zinc-200');
-        
-        // Add checkmark if not present
-        if (!pBtn.querySelector('.checkmark')) {
-          const check = document.createElement('span');
-          check.className = 'checkmark ml-2';
-          check.innerHTML = '✓';
-          pBtn.appendChild(check);
-        }
-      } else {
-        pBtn.classList.remove('text-green-400', 'font-bold');
-        pBtn.classList.add('text-zinc-200');
-        
-        // Remove checkmark if present
-        const check = pBtn.querySelector('.checkmark');
-        if (check) check.remove();
-      }
-    });
-  });
+  // Visual updates are now handled exclusively by the main HTML file
+  // to prevent race conditions and duplicate rendering
 }
 
 // Helper function to integrate with SMXKITS.js screens
@@ -175,35 +139,13 @@ function retryTyping() {
   if (typeof reloadCurrentTypingTest === 'function') reloadCurrentTypingTest();
 }
 
-// Load practices from localStorage and render dropdown
+// This function is no longer needed as the module list is rendered by the main HTML
+// The renderModuleList() function in keyboard-training.html handles module display
 function loadPracticesDropdown() {
-  const modules = JSON.parse(localStorage.getItem('smx_typing_tests') || '[]');
-  const dropdown = document.getElementById('moduleDropdown');
-
-  if (!dropdown) {
-    console.error('Dropdown element not found');
-    return;
-  }
-
-  dropdown.innerHTML = ''; // Clear existing options
-
-  modules.forEach((practices, moduleIdx) => {
-    const moduleOption = document.createElement('optgroup');
-    moduleOption.label = `Module ${moduleIdx + 1}`;
-
-    practices.forEach((practice, practiceIdx) => {
-      const practiceOption = document.createElement('option');
-      practiceOption.value = `${moduleIdx}-${practiceIdx}`;
-      practiceOption.textContent = `Practice ${practiceIdx + 1}: ${practice.substring(0, 30)}...`;
-      moduleOption.appendChild(practiceOption);
-    });
-
-    dropdown.appendChild(moduleOption);
-  });
-
-  // Debugging log
-  console.log('Dropdown populated with practices:', modules);
+  console.log('loadPracticesDropdown called - module rendering is handled by keyboard-training.html');
+  // Module rendering is now exclusively handled by keyboard-training.html DOMContentLoaded
+  // No need to call renderModuleList() here as it creates conflicts
 }
 
-// Call loadPracticesDropdown on page load
-window.addEventListener('DOMContentLoaded', loadPracticesDropdown);
+// Removed DOMContentLoaded listener to prevent duplicate calls
+// All module rendering is now handled in keyboard-training.html

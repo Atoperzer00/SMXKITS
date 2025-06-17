@@ -763,7 +763,7 @@
       
       // Load and render the module list immediately
       renderModuleList();
-      updateTypingProgress();
+      updateModuleProgress();
       
       // Show admin controls if user is admin
       const userRole = localStorage.getItem('role');
@@ -1232,7 +1232,7 @@
       localStorage.setItem('smx_typing_results_' + userName, JSON.stringify(results));
       
       // Also update typing progress
-      updateTypingProgress();
+      updateModuleProgress();
     }
     
     function showTypingResults(moduleIdx, practiceIdx, time, accuracy, wpm) {
@@ -1269,7 +1269,7 @@
       document.getElementById('resultsModal').classList.add('hidden');
     }
     
-    function updateTypingProgress() {
+    function updateModuleProgress() {
       const userName = localStorage.getItem('userName') || 'student';
       const results = JSON.parse(localStorage.getItem('smx_typing_results_' + userName) || '{}');
       const typingTests = JSON.parse(localStorage.getItem('smx_typing_tests') || '[]');
@@ -1310,7 +1310,7 @@
     // Refresh module list (useful when returning from edit page)
     function refreshModuleList() {
       renderModuleList();
-      updateTypingProgress();
+      updateModuleProgress();
     }
     
     // Listen for storage changes (when edit-typing-tests.html saves changes)

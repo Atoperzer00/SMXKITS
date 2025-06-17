@@ -659,15 +659,8 @@ function handleLogin() {
     return;
   }
   
-  // In a real app, this would validate with a server
-  // For demo purposes, accept any input
-  showScreen('screen-home');
   
-  // Update sidebar info
-  document.getElementById('info-student-sidebar').textContent = studentCode;
-  document.getElementById('info-class-sidebar').textContent = classCode;
-}
-
+  
 // Ensure PDF directories exist
 function ensurePDFDirectoriesExist() {
   // Create PowerPoints directory if it doesn't exist
@@ -694,4 +687,4 @@ document.addEventListener('DOMContentLoaded', function() {
       alert('Inside the Kit: A comprehensive training platform for military intelligence specialists.');
     });
   }
-});
+}); 

@@ -7,18 +7,20 @@ body {
   padding: 0;
 }
 
-/* Special background for login screen */
 #screen-login {
-  background: url("Sign in Screen.jpg") no-repeat center center fixed;
+  background: url('planet-earth-with-sunrise-on-space-background-elements-of-this-image-furnished-by-nasa-photo.jpg') no-repeat center center fixed;
   background-size: cover;
-  position: relative;
-  min-height: 100vh;
-  padding: 0;
-  margin: 0;
+  background-color: black;
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100vw;
   height: 100vh;
+  margin: 0;
+  padding: 0;
   overflow: hidden;
 }
+
 
 .screen {
   display: none;

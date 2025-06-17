@@ -794,7 +794,7 @@
   <!-- Edit Callout Overlay -->
   <div id="editCalloutOverlay" class="modal" style="display: none;">
     <div class="modal-content">
-      <button class="modal-close" onclick="closeEditCallout()">&times;</button>
+      <button type="button" class="modal-close" onclick="closeEditCallout()">&times;</button>
       
       <form id="editCalloutForm" autocomplete="off">
         <input type="hidden" name="calloutId" id="editCalloutId">
@@ -889,8 +889,8 @@
       
       <!-- Navigation buttons -->
       <div class="nav">
-        <button id="editCalloutBtn" class="nav-btn" disabled>Edit Recent Callout</button>
-        <button id="viewHistoryBtn" class="nav-btn" disabled>View History</button>
+        <button type="button" id="editCalloutBtn" class="nav-btn" disabled>Edit Recent Callout</button>
+        <button type="button" id="viewHistoryBtn" class="nav-btn" disabled>View History</button>
       </div>
       
       <div class="divider"></div>
@@ -1017,7 +1017,7 @@
         <button type="submit" class="submit-btn" style="width: 100%;">Submit</button>
       </form>
       
-      <button id="logoutBtn" class="logout-btn" style="margin-top: 20px;">Logout</button>
+      <button type="button" id="logoutBtn" class="logout-btn" style="margin-top: 20px;">Logout</button>
     </aside>
 
     <!-- Main -->
@@ -1056,7 +1056,7 @@
   <!-- Room Modal -->
   <div id="roomModal" class="modal" style="display:none;">
     <div class="modal-content">
-      <button id="closeRoomModalBtn" class="modal-close">&times;</button>
+      <button type="button" id="closeRoomModalBtn" class="modal-close">&times;</button>
       <div style="font-weight:600; color:var(--logo-color); font-size:1.3em; margin-bottom:24px; text-align:center; letter-spacing:1px;">Join a Room</div>
       <form id="joinRoomForm" style="text-align:center;">
         <div class="form-group" style="margin-bottom: 20px;">
@@ -1106,7 +1106,7 @@
   <!-- Change History Overlay -->
   <div id="historyOverlay" class="modal" style="display:none;">
     <div class="modal-content">
-      <button class="modal-close" onclick="closeHistoryOverlay()">&times;</button>
+      <button type="button" class="modal-close" onclick="closeHistoryOverlay()">&times;</button>
       <div style="font-weight:600; color:var(--logo-color); font-size:1.2em; margin-bottom:10px;">Change History</div>
       <div id="historyLogContainer" style="max-height:60vh; overflow:auto; font-size:0.95em;"></div>
     </div>
@@ -3027,6 +3027,8 @@ createFollowBubble.addEventListener('drop', (e) => {
       console.error('Error updating QC status:', error);
     }
   }
+
+  }); // End of DOMContentLoaded event listener
 </script>
 </body>
 </html>
