@@ -395,14 +395,58 @@
       overflow: hidden;
     }
 
+    #timeline-track {
+      position: absolute;
+      top: 24px;
+      left: 0;
+      height: calc(100% - 24px);
+      transition: transform 0.1s ease-out;
+      will-change: transform;
+    }
+
     .timeline-container {
       position: relative;
       height: 100%;
       display: flex;
       align-items: stretch;
       min-width: 200%;
+    }
+
+    /* Time Hash Styles */
+    #time-hashes {
+      position: absolute;
+      top: 0;
+      height: 24px;
+      width: 100%;
+      display: flex;
+      align-items: end;
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.6);
+      font-family: monospace;
+      z-index: 10;
       transition: transform 0.1s ease-out;
       will-change: transform;
+    }
+
+    .time-tick {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: none;
+    }
+
+    .time-tick-line {
+      width: 1px;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.4);
+      margin-bottom: 2px;
+    }
+
+    .time-tick-label {
+      font-size: 9px;
+      color: rgba(255, 255, 255, 0.7);
+      white-space: nowrap;
     }
 
     /* Fixed Scrubber in Center */
@@ -952,10 +996,22 @@
         <div class="controls">
           <div id="timeline">
             <div class="timeline-viewport">
-              <div class="timeline-container" id="timelineContainer">
-                <!-- Timeline frames will be generated here -->
+              <!-- Time Hash Ticks -->
+              <div id="time-hashes" class="absolute top-0 h-6 w-full flex items-end text-xs text-gray-400 font-mono z-10">
+                <!-- Time hash ticks will be generated here -->
               </div>
+              
+              <!-- Timeline Track -->
+              <div id="timeline-track" class="absolute top-6 left-0 h-26 flex">
+                <div class="timeline-container" id="timelineContainer">
+                  <!-- Timeline frames will be generated here -->
+                </div>
+              </div>
+              
+              <!-- Fixed Scrubber -->
               <div class="timeline-scrubber"></div>
+              
+              <!-- Live Marker -->
               <div class="timeline-live-marker">
                 <svg viewBox="0 0 24 24" fill="currentColor">
                   <circle cx="12" cy="12" r="10"></circle>
@@ -2065,6 +2121,60 @@
     let webrtcTimelineInterval = null;
     let timelineScrollOffset = 0;
     let isTimelineDragging = false;
+    let currentZoomLevel = 1;
+    
+    // Time formatting function
+    function formatTime(seconds) {
+      const minutes = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${minutes}:${secs.toString().padStart(2, '0')}`;
+    }
+    
+    // Generate time hash ticks
+    function generateTimeHashes(duration, zoomLevel = 1) {
+      const timeHashes = document.getElementById('time-hashes');
+      if (!timeHashes) return;
+      
+      // Determine tick interval based on zoom level and duration
+      let tickInterval = 10; // Default 10 seconds
+      if (duration > 3600) tickInterval = 60; // 1 minute for long streams
+      else if (duration > 1800) tickInterval = 30; // 30 seconds for medium streams
+      else if (zoomLevel > 2) tickInterval = 5; // 5 seconds when zoomed in
+      
+      const containerWidth = duration * zoomLevel * 2; // Adjust multiplier as needed
+      const tickSpacing = (tickInterval / duration) * containerWidth;
+      
+      let ticksHTML = '';
+      for (let time = 0; time <= duration; time += tickInterval) {
+        const leftPosition = (time / duration) * containerWidth;
+        ticksHTML += `
+          <div class="time-tick" style="left: ${leftPosition}px;">
+            <div class="time-tick-line"></div>
+            <div class="time-tick-label">${formatTime(time)}</div>
+          </div>
+        `;
+      }
+      
+      timeHashes.innerHTML = ticksHTML;
+      console.log(`📏 Generated time hashes: ${Math.ceil(duration / tickInterval)} ticks`);
+    }
+    
+    // Timeline zoom functionality
+    function zoomTimeline(factor) {
+      currentZoomLevel = Math.max(0.5, Math.min(5, currentZoomLevel * factor));
+      
+      // Regenerate time hashes with new zoom level
+      generateTimeHashes(streamDuration, currentZoomLevel);
+      
+      // Update timeline container width
+      const timelineContainer = document.getElementById('timelineContainer');
+      if (timelineContainer) {
+        const newWidth = streamDuration * currentZoomLevel * 2;
+        timelineContainer.style.minWidth = `${newWidth}px`;
+      }
+      
+      console.log(`🔍 Timeline zoom level: ${currentZoomLevel.toFixed(1)}x`);
+    }
     
     function startWebRTCTimelineUpdates() {
       if (webrtcTimelineInterval) {
@@ -2091,25 +2201,29 @@
       const currentTime = streamTimer.currentTime;
       const duration = streamDuration;
       const timeline = document.getElementById('timeline');
-      const container = document.getElementById('timelineContainer');
+      const timelineTrack = document.getElementById('timeline-track');
+      const timeHashes = document.getElementById('time-hashes');
       
-      if (!timeline || !container || duration <= 0) return;
+      if (!timeline || !timelineTrack || !timeHashes || duration <= 0) return;
       
       // Calculate scroll position to keep current time centered
       const timelineWidth = timeline.offsetWidth;
-      const containerWidth = container.offsetWidth;
+      const trackWidth = timelineTrack.offsetWidth || (duration * currentZoomLevel * 2);
       const timeProgress = currentTime / duration;
       
       // Calculate the scroll offset to center the current time
       const centerOffset = timelineWidth / 2;
-      const targetScrollPosition = (timeProgress * containerWidth) - centerOffset;
+      const targetScrollPosition = (timeProgress * trackWidth) - centerOffset;
       
       // Clamp scroll position to valid range
-      const maxScroll = containerWidth - timelineWidth;
+      const maxScroll = Math.max(0, trackWidth - timelineWidth);
       const clampedScroll = Math.max(0, Math.min(maxScroll, targetScrollPosition));
       
-      // Apply smooth transform
-      container.style.transform = `translateX(-${clampedScroll}px)`;
+      // Apply smooth transform to both timeline track and time hashes
+      const transformValue = `translateX(-${clampedScroll}px)`;
+      timelineTrack.style.transform = transformValue;
+      timeHashes.style.transform = transformValue;
+      
       timelineScrollOffset = clampedScroll;
     }
     
@@ -2141,15 +2255,13 @@
       console.log('🎬 Initializing WebRTC timeline');
       
       // Clear existing timeline content
-      const timelineContainer = timeline.querySelector('.timeline-container');
+      const timelineContainer = document.getElementById('timelineContainer');
       if (timelineContainer) {
         timelineContainer.innerHTML = '';
-      } else {
-        // Create timeline container if it doesn't exist
-        const container = document.createElement('div');
-        container.className = 'timeline-container';
-        timeline.appendChild(container);
       }
+      
+      // Generate time hash ticks
+      generateTimeHashes(streamDuration, currentZoomLevel);
       
       // Generate timeline frames for WebRTC
       generateWebRTCTimelineFrames();
@@ -2488,34 +2600,79 @@
     // function updatePlayButton() {
     //   playBtn.textContent = video.paused ? 'Play' : 'Pause';
     // }
-    // Timeline click functionality is already implemented above
-    // WebRTC timeline is handled by the WebRTC timeline update functions
-    
-    
-    // Timeline hover for thumbnail preview - WebRTC only
-    timeline.addEventListener('mousemove', function(e) {
-      const duration = getDuration();
-      
-      if (!duration || webrtcThumbnailCache.length === 0) return;
+    // Timeline click functionality for WebRTC with time hashes
+    timeline.addEventListener('click', function(e) {
+      if (!streamTimer) return;
       
       const rect = timeline.getBoundingClientRect();
-      const pos = (e.clientX - rect.left) / rect.width;
-      const hoverTime = pos * duration;
+      const timelineTrack = document.getElementById('timeline-track');
+      
+      if (!timelineTrack) return;
+      
+      // Calculate the actual time position considering the scroll offset
+      const clickX = e.clientX - rect.left;
+      const timelineWidth = rect.width;
+      const trackWidth = timelineTrack.offsetWidth || (streamDuration * currentZoomLevel * 2);
+      
+      // Account for the current scroll position
+      const scrolledClickX = clickX + timelineScrollOffset;
+      const timeProgress = scrolledClickX / trackWidth;
+      const newTime = Math.max(0, Math.min(streamDuration, timeProgress * streamDuration));
+      
+      // Pause auto-scrolling temporarily
+      isTimelineDragging = true;
+      
+      // Set the new time
+      streamTimer.setTime(newTime);
+      
+      // Resume auto-scrolling after a short delay
+      setTimeout(() => {
+        isTimelineDragging = false;
+      }, 1000);
+      
+      console.log(`🎯 WebRTC timeline clicked: seeking to ${formatTime(newTime)}`);
+    });
+    
+    
+    // Timeline hover for thumbnail preview - WebRTC only with time hashes
+    timeline.addEventListener('mousemove', function(e) {
+      const duration = getDuration();
+      const timelineTrack = document.getElementById('timeline-track');
+      
+      if (!duration || !timelineTrack || webrtcThumbnailCache.length === 0) return;
+      
+      const rect = timeline.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const trackWidth = timelineTrack.offsetWidth || (streamDuration * currentZoomLevel * 2);
+      
+      // Account for the current scroll position
+      const scrolledClickX = clickX + timelineScrollOffset;
+      const timeProgress = scrolledClickX / trackWidth;
+      const hoverTime = Math.max(0, Math.min(duration, timeProgress * duration));
       
       const thumbnail = getThumbnailForTime(hoverTime);
-      if (thumbnail) {
+      if (thumbnail && thumbnailImg && thumbnailTime && thumbnailPreview) {
         thumbnailImg.src = thumbnail.img ? thumbnail.img.src : thumbnail.url;
         thumbnailTime.textContent = formatTime(hoverTime);
         
         // Position the preview
-        const previewX = e.clientX - rect.left;
-        thumbnailPreview.style.left = previewX + 'px';
+        thumbnailPreview.style.left = clickX + 'px';
         thumbnailPreview.style.display = 'block';
       }
     });
     
     timeline.addEventListener('mouseleave', function() {
-      thumbnailPreview.style.display = 'none';
+      if (thumbnailPreview) {
+        thumbnailPreview.style.display = 'none';
+      }
+    });
+    
+    // Timeline zoom with mouse wheel
+    timeline.addEventListener('wheel', function(e) {
+      e.preventDefault();
+      
+      const zoomFactor = e.deltaY > 0 ? 0.8 : 1.25;
+      zoomTimeline(zoomFactor);
     });
     
     // Helper function to format time
@@ -3074,9 +3231,12 @@
         streamTimer.reset();
         
         // Reset timeline scroll to show live position
-        const container = document.getElementById('timelineContainer');
-        if (container) {
-          container.style.transform = 'translateX(0px)';
+        const timelineTrack = document.getElementById('timeline-track');
+        const timeHashes = document.getElementById('time-hashes');
+        
+        if (timelineTrack && timeHashes) {
+          timelineTrack.style.transform = 'translateX(0px)';
+          timeHashes.style.transform = 'translateX(0px)';
           timelineScrollOffset = 0;
         }
         

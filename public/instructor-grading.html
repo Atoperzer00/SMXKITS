@@ -512,35 +512,106 @@
       border: 1px solid rgba(239, 68, 68, 0.3);
     }
 
-    /* Legacy slider styles for compatibility */
-    .slider-group {
+    /* Number Box Scoring System */
+    .score-boxes-container {
       display: flex;
-      justify-content: space-between;
+      gap: 8px;
       align-items: center;
-      background: var(--glass-bg);
-      backdrop-filter: blur(10px);
-      border: 1px solid var(--glass-border);
-      padding: 12px 16px;
+    }
+
+    .score-box {
+      width: 35px;
+      height: 35px;
+      border: 2px solid var(--glass-border);
       border-radius: 8px;
-      box-shadow: var(--glass-shadow);
+      background: var(--glass-bg);
+      color: var(--text-primary);
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(10px);
     }
 
-    .slider-group label {
-      min-width: 150px;
-      font-weight: 500;
-      color: var(--bubble-text);
+    .score-box:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
     }
 
-    .slider-group input[type="range"] {
-      width: 150px;
-      margin: 0 15px;
+    .score-box.selected {
+      border-width: 3px;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
     }
 
-    .slider-value {
-      min-width: 30px;
-      text-align: center;
-      font-weight: bold;
-      color: var(--accent);
+    /* Score colors */
+    .score-box.score-9, .score-box.score-10 {
+      background: #22c55e;
+      border-color: #16a34a;
+      color: #000;
+    }
+
+    .score-box.score-7, .score-box.score-8 {
+      background: #3b82f6;
+      border-color: #2563eb;
+      color: #fff;
+    }
+
+    .score-box.score-5, .score-box.score-6 {
+      background: #ffc107;
+      border-color: #f59e0b;
+      color: #000;
+    }
+
+    .score-box.score-1, .score-box.score-2, .score-box.score-3, .score-box.score-4 {
+      background: #ef4444;
+      border-color: #dc2626;
+      color: #fff;
+    }
+
+    /* Class and Student Dropdowns */
+    .dropdown-container {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .dropdown-group {
+      flex: 1;
+    }
+
+    .dropdown-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: var(--text-accent);
+      font-size: 0.9em;
+    }
+
+    .dropdown-group select {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 8px;
+      padding: 12px;
+      color: var(--text-primary);
+      font-size: 1em;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .dropdown-group select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(255, 167, 38, 0.3);
+    }
+
+    .dropdown-group select option {
+      background: var(--input-bg);
+      color: var(--text-primary);
     }
 
     .chart-container {
@@ -554,12 +625,11 @@
       box-shadow: var(--glass-shadow);
     }
 
-    /* Notes Section */
+    /* Notes Section - Styled to match Grade History */
     .notes-section {
-      background: var(--glass-bg);
-      backdrop-filter: blur(10px);
+      background: var(--sidebar);
       border: 1px solid var(--glass-border);
-      border-radius: 12px;
+      border-radius: 8px;
       padding: 20px;
       box-shadow: var(--glass-shadow);
     }
@@ -572,7 +642,7 @@
 
     .notes-section textarea {
       width: 100%;
-      min-height: 120px;
+      height: 100px;
       background: var(--input-bg);
       border: 1px solid var(--input-border);
       border-radius: 8px;
@@ -580,14 +650,14 @@
       color: var(--bubble-text);
       font-family: inherit;
       font-size: 1em;
-      resize: vertical;
+      resize: none;
       box-sizing: border-box;
     }
 
     .notes-section textarea:focus {
       outline: none;
       border-color: var(--accent);
-      box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.3);
+      box-shadow: 0 0 0 2px rgba(255, 167, 38, 0.3);
     }
 
     /* File Drop Zone */
@@ -673,6 +743,18 @@
       padding: 15px;
       margin-bottom: 15px;
       box-shadow: var(--glass-shadow);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .history-item:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(255, 167, 38, 0.2);
+    }
+
+    .history-item.expanded {
+      border-color: var(--accent);
     }
 
     .history-item h4 {
@@ -698,6 +780,31 @@
       font-size: 0.8em;
       color: #888;
       font-family: 'Consolas', monospace;
+    }
+
+    .history-notes {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid var(--glass-border);
+      display: none;
+    }
+
+    .history-notes.visible {
+      display: block;
+    }
+
+    .history-notes h5 {
+      margin: 0 0 8px 0;
+      color: var(--text-accent);
+      font-size: 0.9em;
+    }
+
+    .history-notes p {
+      margin: 0;
+      color: var(--text-secondary);
+      font-size: 0.85em;
+      line-height: 1.4;
+      font-style: italic;
     }
 
     /* Modal */
@@ -763,7 +870,6 @@
       <!-- Navigation -->
       <div class="nav">
         <button type="button" class="nav-btn" onclick="goToDashboard()">Dashboard</button>
-        <button type="button" class="nav-btn active">Instructor Grading</button>
       </div>
       
       <div class="divider"></div>
@@ -773,6 +879,27 @@
         Start New Exercise
       </button>
 
+      <!-- Class and Student Selection -->
+      <div class="exercise-section">
+        <h4 style="margin: 0 0 15px 0; color: var(--text-accent);">Class Submissions</h4>
+        
+        <!-- Class and Student Dropdowns -->
+        <div class="dropdown-container">
+          <div class="dropdown-group">
+            <label for="classSelect">Choose Class</label>
+            <select id="classSelect" onchange="loadStudentsForClass()">
+              <option value="">Select a class...</option>
+            </select>
+          </div>
+          <div class="dropdown-group">
+            <label for="studentSelect">Choose Student</label>
+            <select id="studentSelect" onchange="loadStudentSubmission()" disabled>
+              <option value="">Select a student...</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
       <!-- Current Exercise -->
       <div class="exercise-section" id="currentExercise" style="display: none;">
         <div class="exercise-header">
@@ -780,7 +907,6 @@
           <div class="exercise-timestamp" id="exerciseTimestamp"></div>
         </div>
         
-        <h4 style="margin: 0 0 10px 0; color: var(--bubble-text);">Submissions</h4>
         <div class="submissions-list" id="submissionsList">
           <!-- Submissions will be populated here -->
         </div>
@@ -810,17 +936,17 @@
             <!-- Grading Wheel and Sliders -->
             <div class="grading-wheel-container">
               <div class="sliders-container" id="slidersContainer">
-                <!-- Sliders will be generated here -->
+                <!-- Number boxes will be generated here -->
               </div>
               <div class="chart-container">
                 <canvas id="gradingChart" width="360" height="360"></canvas>
               </div>
             </div>
 
-            <!-- Instructor Notes -->
+            <!-- Instructor Notes - Moved below chart -->
             <div class="notes-section">
               <h3>Instructor Notes (Private)</h3>
-              <textarea id="instructorNotes" placeholder="Enter private notes about this submission..."></textarea>
+              <textarea id="instructorNotes" placeholder="Enter private notes about this submission..." rows="4"></textarea>
             </div>
 
             <!-- Feedback File Drop -->
@@ -987,6 +1113,10 @@
       loadExercises();
       initializeGradingChart();
       setupFileDropZone();
+      loadClasses();
+      
+      // Initialize current scores
+      window.currentScores = {};
     });
 
     function checkAuth() {
@@ -1092,51 +1222,11 @@
     }
 
     function selectSubmission(submissionId) {
+      // This function is now handled by loadStudentSubmission()
       console.log('Selected submission:', submissionId);
-      const selectedStudent = document.getElementById('selectedStudent');
-      selectedStudent.textContent = `Submission ID: ${submissionId}`;
     }
 
-    function loadExistingGrade() {
-      const existingGrade = grades.find(grade => 
-        grade.student === selectedSubmission.student && 
-        grade.exercise === currentExercise.id &&
-        grade.mission === selectedSubmission.mission
-      );
-
-      if (existingGrade) {
-        // Load scores into rubric sliders
-        categories.forEach((category) => {
-          const slider = document.querySelector(`input[data-category="${category}"]`);
-          const value = existingGrade.scores[category] || 5;
-          if (slider) {
-            slider.value = value;
-            updateSliderValue(slider, value);
-          }
-        });
-        
-        // Load instructor notes
-        document.getElementById('instructorNotes').value = existingGrade.instructorNotes || '';
-        
-        // Update chart
-        updateGradingChart();
-      } else {
-        // Reset to defaults
-        resetGradingForm();
-      }
-    }
-
-    function resetGradingForm() {
-      categories.forEach(category => {
-        const slider = document.querySelector(`input[data-category="${category}"]`);
-        if (slider) {
-          slider.value = 5;
-          updateSliderValue(slider, 5);
-        }
-      });
-      document.getElementById('instructorNotes').value = '';
-      updateGradingChart();
-    }
+    // loadExistingGrade and resetGradingForm functions moved to Class and Student Management section
 
     function initializeGradingChart() {
       const ctx = document.getElementById('gradingChart').getContext('2d');
@@ -1181,7 +1271,7 @@
         }
       });
 
-      // Generate sliders
+      // Generate number boxes
       generateSliders();
     }
 
@@ -1193,10 +1283,12 @@
           <div class="rubric-panel">
             <div class="rubric-header">
               <div class="rubric-title">${rubric.name}</div>
-              <div class="rubric-score-container">
-                <input type="range" min="1" max="10" value="5" data-category="${category}" 
-                       oninput="updateSliderValue(this, this.value)" class="rubric-slider">
-                <span class="rubric-score">5</span>
+              <div class="score-boxes-container" data-category="${category}">
+                ${[1,2,3,4,5,6,7,8,9,10].map(num => `
+                  <div class="score-box score-${num}" data-score="${num}" onclick="selectScore('${category}', ${num})">
+                    ${num}
+                  </div>
+                `).join('')}
               </div>
             </div>
             <div class="rubric-criteria">
@@ -1220,32 +1312,26 @@
       }).join('');
     }
 
-    function updateSliderValue(slider, value) {
-      // Update rubric score display
-      const scoreSpan = slider.parentElement.querySelector('.rubric-score');
-      if (scoreSpan) {
-        scoreSpan.textContent = value;
-        
-        // Update score color based on value
-        const numValue = parseInt(value);
-        if (numValue >= 9) {
-          scoreSpan.style.background = '#22c55e';
-          scoreSpan.style.color = '#000';
-        } else if (numValue >= 7) {
-          scoreSpan.style.background = '#3b82f6';
-          scoreSpan.style.color = '#fff';
-        } else if (numValue >= 5) {
-          scoreSpan.style.background = '#ffc107';
-          scoreSpan.style.color = '#000';
-        } else if (numValue >= 3) {
-          scoreSpan.style.background = '#ff9800';
-          scoreSpan.style.color = '#fff';
-        } else {
-          scoreSpan.style.background = '#ef4444';
-          scoreSpan.style.color = '#fff';
-        }
-      }
+    // Score selection for number boxes
+    function selectScore(category, score) {
+      // Remove selected class from all boxes in this category
+      const container = document.querySelector(`[data-category="${category}"]`);
+      container.querySelectorAll('.score-box').forEach(box => {
+        box.classList.remove('selected');
+      });
       
+      // Add selected class to clicked box
+      const selectedBox = container.querySelector(`[data-score="${score}"]`);
+      selectedBox.classList.add('selected');
+      
+      // Store the score
+      if (!window.currentScores) window.currentScores = {};
+      window.currentScores[category] = score;
+      
+      updateGradingChart();
+    }
+
+    function updateSliderValue(slider, value) {
       // Legacy support for old slider format
       const valueSpan = slider.parentElement.querySelector('.slider-value');
       if (valueSpan) {
@@ -1257,83 +1343,27 @@
 
     function updateGradingChart() {
       const scores = categories.map(category => {
+        // Check for number box scores first
+        if (window.currentScores && window.currentScores[category]) {
+          return window.currentScores[category];
+        }
+        
+        // Fallback to slider if exists (legacy support)
         const slider = document.querySelector(`input[data-category="${category}"]`);
-        return parseInt(slider.value);
+        if (slider) {
+          return parseInt(slider.value);
+        }
+        
+        return 5; // Default score
       });
       
       gradingChart.data.datasets[0].data = scores;
       gradingChart.update();
     }
 
-    function saveGrade() {
-      if (!selectedSubmission) {
-        alert('Please select a submission first.');
-        return;
-      }
+    // saveGrade function moved to Class and Student Management section
 
-      const scores = {};
-      categories.forEach(category => {
-        const slider = document.querySelector(`input[data-category="${category}"]`);
-        scores[category] = parseInt(slider.value);
-      });
-
-      const gradeData = {
-        id: 'grade_' + Date.now(),
-        student: selectedSubmission.student,
-        class: selectedSubmission.class,
-        exercise: currentExercise.name,
-        exerciseId: currentExercise.id,
-        mission: selectedSubmission.mission,
-        submittedAt: selectedSubmission.submittedAt,
-        gradedAt: new Date().toISOString(),
-        scores: scores,
-        rubricData: rubricCategories, // Store full rubric for reference
-        instructorNotes: document.getElementById('instructorNotes').value,
-        feedbackFile: null, // Would handle file upload in real implementation
-        gradingMethod: 'comprehensive_rubric',
-        overallScore: Object.values(scores).reduce((a, b) => a + b, 0) / Object.values(scores).length
-      };
-
-      // Remove existing grade for same student/exercise/mission
-      grades = grades.filter(grade => 
-        !(grade.student === gradeData.student && 
-          grade.exerciseId === gradeData.exerciseId &&
-          grade.mission === gradeData.mission)
-      );
-
-      grades.push(gradeData);
-      localStorage.setItem('grades', JSON.stringify(grades));
-
-      alert('Grade saved successfully!');
-      loadGradeHistory();
-    }
-
-    function loadGradeHistory() {
-      if (!selectedSubmission) return;
-
-      const studentGrades = grades.filter(grade => grade.student === selectedSubmission.student);
-      const historyContainer = document.getElementById('gradeHistory');
-
-      if (studentGrades.length === 0) {
-        historyContainer.innerHTML = '<div style="text-align: center; color: #888; margin-top: 50px;">No grades found for this student</div>';
-        return;
-      }
-
-      historyContainer.innerHTML = studentGrades.map(grade => `
-        <div class="history-item">
-          <h4>${grade.exercise} - ${grade.mission}</h4>
-          <div class="history-scores">
-            ${Object.entries(grade.scores).map(([category, score]) => `
-              <div class="history-score">
-                <span>${category}:</span>
-                <span>${score}</span>
-              </div>
-            `).join('')}
-          </div>
-          <div class="history-timestamp">${new Date(grade.gradedAt).toLocaleString()}</div>
-        </div>
-      `).join('');
-    }
+    // loadGradeHistory function moved to Class and Student Management section
 
     function clearGrading() {
       resetGradingForm();
@@ -1361,17 +1391,270 @@
       });
     }
 
+    let selectedFeedbackFile = null;
+
     function handleFileUpload(input) {
       const file = input.files[0];
       if (!file) return;
 
-      // In a real implementation, you would upload the file to a server
-      console.log('File selected:', file.name);
-      alert(`Feedback file "${file.name}" selected. In a real implementation, this would be uploaded to the server.`);
+      // Store file information for later use
+      selectedFeedbackFile = {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        lastModified: file.lastModified,
+        // In a real implementation, you would upload to server and store URL
+        // For demo purposes, we'll store file data as base64
+        data: null
+      };
+
+      // Read file as base64 for storage
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        selectedFeedbackFile.data = e.target.result;
+        updateFileDropZone();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function updateFileDropZone() {
+      const dropZone = document.getElementById('fileDropZone');
+      if (selectedFeedbackFile) {
+        dropZone.innerHTML = `
+          <i class="fas fa-file-check" style="color: var(--qc-green);"></i>
+          <div style="color: var(--qc-green);">File Selected: ${selectedFeedbackFile.name}</div>
+          <div style="font-size: 0.9em; color: #888; margin-top: 5px;">Click to change file</div>
+        `;
+        dropZone.style.borderColor = 'var(--qc-green)';
+        dropZone.style.backgroundColor = 'rgba(34, 197, 94, 0.1)';
+      } else {
+        dropZone.innerHTML = `
+          <i class="fas fa-cloud-upload-alt"></i>
+          <div>Drop feedback file here or click to browse</div>
+          <div style="font-size: 0.9em; color: #888; margin-top: 5px;">PDF, DOC, DOCX files accepted</div>
+        `;
+        dropZone.style.borderColor = '';
+        dropZone.style.backgroundColor = '';
+      }
     }
 
     function goToDashboard() {
       window.location.href = '/dashboard.html';
+    }
+
+    // Class and Student Management
+    function loadClasses() {
+      // Mock classes data - in real implementation, fetch from server
+      const classes = [
+        { id: 'class_1', name: 'Alpha Squadron' },
+        { id: 'class_2', name: 'Bravo Squadron' },
+        { id: 'class_3', name: 'Charlie Squadron' },
+        { id: 'class_4', name: 'Delta Squadron' }
+      ];
+      
+      const classSelect = document.getElementById('classSelect');
+      classSelect.innerHTML = '<option value="">Select a class...</option>' +
+        classes.map(cls => `<option value="${cls.id}">${cls.name}</option>`).join('');
+    }
+
+    function loadStudentsForClass() {
+      const classSelect = document.getElementById('classSelect');
+      const studentSelect = document.getElementById('studentSelect');
+      const selectedClass = classSelect.value;
+      
+      if (!selectedClass) {
+        studentSelect.innerHTML = '<option value="">Select a student...</option>';
+        studentSelect.disabled = true;
+        return;
+      }
+      
+      // Mock students data - in real implementation, fetch from server based on class
+      const students = [
+        { id: 'student_1', name: 'Alice Johnson', class: selectedClass },
+        { id: 'student_2', name: 'Bob Smith', class: selectedClass },
+        { id: 'student_3', name: 'Charlie Brown', class: selectedClass },
+        { id: 'student_4', name: 'Diana Prince', class: selectedClass },
+        { id: 'student_5', name: 'Eve Wilson', class: selectedClass }
+      ];
+      
+      studentSelect.innerHTML = '<option value="">Select a student...</option>' +
+        students.map(student => `<option value="${student.id}">${student.name}</option>`).join('');
+      studentSelect.disabled = false;
+    }
+
+    function loadStudentSubmission() {
+      const studentSelect = document.getElementById('studentSelect');
+      const selectedStudent = studentSelect.value;
+      
+      if (!selectedStudent) {
+        document.getElementById('gradingContent').style.display = 'none';
+        document.getElementById('noSelectionMessage').style.display = 'block';
+        return;
+      }
+      
+      // Mock submission data - in real implementation, fetch from mission-links.html dropboxes
+      const studentName = studentSelect.options[studentSelect.selectedIndex].text;
+      selectedSubmission = {
+        id: 'sub_' + selectedStudent,
+        student: studentName,
+        class: document.getElementById('classSelect').options[document.getElementById('classSelect').selectedIndex].text,
+        mission: 'Current Mission',
+        submittedAt: new Date().toISOString()
+      };
+      
+      document.getElementById('selectedStudent').textContent = `Grading: ${studentName}`;
+      document.getElementById('gradingContent').style.display = 'block';
+      document.getElementById('noSelectionMessage').style.display = 'none';
+      
+      loadExistingGrade();
+      loadGradeHistory();
+    }
+
+    // Updated Grade History with clickable items and notes
+    function loadGradeHistory() {
+      if (!selectedSubmission) return;
+
+      const studentGrades = grades.filter(grade => grade.student === selectedSubmission.student);
+      const historyContainer = document.getElementById('gradeHistory');
+
+      if (studentGrades.length === 0) {
+        historyContainer.innerHTML = '<div style="text-align: center; color: #888; margin-top: 50px;">No grades found for this student</div>';
+        return;
+      }
+
+      historyContainer.innerHTML = studentGrades.map((grade, index) => `
+        <div class="history-item" onclick="toggleHistoryNotes(${index})">
+          <h4>${grade.exercise} - ${grade.mission}</h4>
+          <div class="history-scores">
+            ${Object.entries(grade.scores).map(([category, score]) => `
+              <div class="history-score">
+                <span>${category}:</span>
+                <span>${score}</span>
+              </div>
+            `).join('')}
+          </div>
+          <div class="history-timestamp">${new Date(grade.gradedAt).toLocaleString()}</div>
+          <div class="history-notes" id="notes-${index}">
+            <h5>Instructor Notes:</h5>
+            <p>${grade.instructorNotes || 'No notes provided'}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function toggleHistoryNotes(index) {
+      const notesElement = document.getElementById(`notes-${index}`);
+      const historyItem = notesElement.parentElement;
+      
+      if (notesElement.classList.contains('visible')) {
+        notesElement.classList.remove('visible');
+        historyItem.classList.remove('expanded');
+      } else {
+        // Hide all other notes first
+        document.querySelectorAll('.history-notes').forEach(notes => {
+          notes.classList.remove('visible');
+          notes.parentElement.classList.remove('expanded');
+        });
+        
+        // Show this one
+        notesElement.classList.add('visible');
+        historyItem.classList.add('expanded');
+      }
+    }
+
+    // Updated save function to work with number boxes
+    function saveGrade() {
+      if (!selectedSubmission) {
+        alert('Please select a submission first.');
+        return;
+      }
+
+      const scores = {};
+      categories.forEach(category => {
+        scores[category] = window.currentScores[category] || 5;
+      });
+
+      const gradeData = {
+        id: 'grade_' + Date.now(),
+        student: selectedSubmission.student,
+        class: selectedSubmission.class,
+        classId: document.getElementById('classSelect').value,
+        studentId: document.getElementById('studentSelect').value,
+        exercise: currentExercise ? currentExercise.name : 'Current Exercise',
+        exerciseId: currentExercise ? currentExercise.id : 'current',
+        mission: selectedSubmission.mission,
+        missionId: selectedSubmission.mission.toLowerCase().replace(/\s+/g, '_'),
+        submittedAt: selectedSubmission.submittedAt,
+        gradedAt: new Date().toISOString(),
+        scores: scores,
+        rubricData: rubricCategories,
+        instructorNotes: document.getElementById('instructorNotes').value,
+        feedbackFile: selectedFeedbackFile,
+        gradingMethod: 'number_box_rubric',
+        overallScore: Object.values(scores).reduce((a, b) => a + b, 0) / Object.values(scores).length
+      };
+
+      // Remove existing grade for same student/exercise/mission
+      grades = grades.filter(grade => 
+        !(grade.student === gradeData.student && 
+          grade.exerciseId === gradeData.exerciseId &&
+          grade.mission === gradeData.mission)
+      );
+
+      grades.push(gradeData);
+      localStorage.setItem('grades', JSON.stringify(grades));
+
+      alert('Grade saved successfully!');
+      loadGradeHistory();
+    }
+
+    // Updated reset function for number boxes
+    function resetGradingForm() {
+      // Reset all score boxes
+      document.querySelectorAll('.score-box').forEach(box => {
+        box.classList.remove('selected');
+      });
+      
+      // Reset current scores
+      window.currentScores = {};
+      
+      // Clear notes
+      document.getElementById('instructorNotes').value = '';
+      
+      // Clear feedback file
+      selectedFeedbackFile = null;
+      document.getElementById('feedbackFile').value = '';
+      updateFileDropZone();
+      
+      // Update chart with default scores
+      updateGradingChart();
+    }
+
+    // Updated load existing grade function
+    function loadExistingGrade() {
+      const existingGrade = grades.find(grade => 
+        grade.student === selectedSubmission.student && 
+        grade.exercise === (currentExercise ? currentExercise.name : 'Current Exercise') &&
+        grade.mission === selectedSubmission.mission
+      );
+
+      if (existingGrade) {
+        // Load scores into number boxes
+        categories.forEach((category) => {
+          const score = existingGrade.scores[category] || 5;
+          selectScore(category, score);
+        });
+        
+        // Load instructor notes
+        document.getElementById('instructorNotes').value = existingGrade.instructorNotes || '';
+        
+        // Load feedback file
+        selectedFeedbackFile = existingGrade.feedbackFile || null;
+        updateFileDropZone();
+      } else {
+        // Reset to defaults
+        resetGradingForm();
+      }
     }
 
     function logout() {
