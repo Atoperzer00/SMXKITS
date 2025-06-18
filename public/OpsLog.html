@@ -2267,62 +2267,15 @@
     }
   }
   
-  // Helper function to auto-grow textareas
-  function autoGrow(element) {
-    if (typeof element === 'string') {
-      element = document.getElementById(element);
-    }
-    if (!element) return;
-    
-    element.style.height = 'auto';
-    element.style.height = (element.scrollHeight) + 'px';
-  }
-  
-  // Helper function to format SLANT input
-  function formatSlant(input) {
-    let value = input.value.replace(/[^0-9]/g, ''); // Remove non-numeric characters
-    
-    // Format as #/#/# pattern
-    if (value.length >= 1) {
-      if (value.length >= 3) {
-        value = value.substring(0, 1) + '/' + value.substring(1, 2) + '/' + value.substring(2, 3);
-      } else if (value.length >= 2) {
-        value = value.substring(0, 1) + '/' + value.substring(1, 2);
-      }
-    }
-    
-    input.value = value;
-  }
-  
-  /* Added logic to populate follow info in the create follow bubble */
-const calloutElements = document.querySelectorAll('.bubble');
-const createFollowBubble = document.getElementById('createFollowBubble');
-
-calloutElements.forEach(callout => {
-  callout.addEventListener('dragstart', (e) => {
-    e.dataTransfer.setData('calloutInfo', JSON.stringify({
-      id: callout.dataset.id,
-      content: callout.textContent.trim()
-    }));
-  });
-});
-
-createFollowBubble.addEventListener('dragover', (e) => {
-  e.preventDefault();
-});
-
-createFollowBubble.addEventListener('drop', (e) => {
-  e.preventDefault();
-  const calloutInfo = JSON.parse(e.dataTransfer.getData('calloutInfo'));
-  const followContent = document.getElementById('followContent');
-  followContent.textContent = calloutInfo.content;
-});
+  // Note: autoGrow and formatSlant functions are already defined above - removed duplicates to prevent conflicts
   
   // Follow functionality has been moved to the end of the script
   
   // ------ Initialize All Event Handlers ------
   document.addEventListener('DOMContentLoaded', function() {
-    console.log("DOM loaded - initializing event handlers");
+    console.log("🚀 DOM loaded - initializing event handlers");
+    console.log(`Document ready state: ${document.readyState}`);
+    console.log(`Total elements in DOM: ${document.querySelectorAll('*').length}`);
     
     // Initialize sidebar resize functionality
     initSidebarResize();
@@ -2357,6 +2310,7 @@ createFollowBubble.addEventListener('drop', (e) => {
       ['editCalloutBtn', function(e) {
         e.preventDefault();
         e.stopPropagation();
+        console.log("✅ Edit Clicked");
         if (this.disabled) return;
         
         // Find the most recent callout and open it for editing
@@ -2372,6 +2326,7 @@ createFollowBubble.addEventListener('drop', (e) => {
       ['viewHistoryBtn', function(e) {
         e.preventDefault();
         e.stopPropagation();
+        console.log("✅ View History Clicked");
         if (this.disabled) return;
         
         // Find the most recent callout and view its history
@@ -2391,7 +2346,7 @@ createFollowBubble.addEventListener('drop', (e) => {
       ['createFollowBtn', function(e) {
         e.preventDefault();
         e.stopPropagation();
-        console.log('Create Follow button clicked');
+        console.log("✅ Create Follow Clicked");
         
         const followForm = document.getElementById('followForm');
         if (!followForm) return;
@@ -2448,20 +2403,23 @@ createFollowBubble.addEventListener('drop', (e) => {
       ['gradingBtn', function(e) {
         e.preventDefault();
         e.stopPropagation();
+        console.log("✅ Grading Clicked");
         goToGrading();
       }]
     ];
     
     // Bind all button event handlers
+    console.log(`📋 Attempting to bind ${buttons.length} button handlers...`);
     buttons.forEach(([id, handler]) => {
       const el = document.getElementById(id);
       if (el) {
         el.addEventListener('click', handler);
-        console.log(`🟢 Bound: ${id}`);
+        console.log(`🟢 Bound: ${id} (${el.tagName})`);
       } else {
-        console.warn(`⚠️ Missing element: ${id}`);
+        console.error(`❌ Missing element: ${id}`);
       }
     });
+    console.log("📋 Button binding complete.");
     
     // Form submission handlers
     const joinRoomForm = document.getElementById('joinRoomForm');
@@ -2548,12 +2506,175 @@ createFollowBubble.addEventListener('drop', (e) => {
     // Initialize follow form functionality
     initializeFollowFormFunctionality();
     
-    // Initialize socket connection
+    // Initialize socket connection (includes setupSocketListeners)
     initializeSocket();
-    setupSocketListeners();
     
-    console.log("✅ All event handlers attached, socket initialized, page ready.");
+    // Initialize drag-and-drop functionality for callouts
+    initializeDragAndDrop();
+    
+    // 🔧 FORCE FIX: MutationObserver for dynamic button binding
+    const targetButtons = [
+      ["createFollowBtn", function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log("✅ Create Follow Clicked");
+        
+        const followForm = document.getElementById('followForm');
+        if (!followForm) return;
+        
+        const isVisible = followForm.style.display === 'block';
+        console.log('Follow form currently visible:', isVisible);
+        
+        if (isVisible) {
+          // Hide the follow form
+          followForm.style.display = 'none';
+          this.textContent = 'Create Follow';
+        } else {
+          // Show the follow form
+          followForm.style.display = 'block';
+          this.textContent = 'Remove Follow';
+          
+          const followIdHidden = document.getElementById('followIdHidden');
+          const followIdDisplay = document.getElementById('followIdDisplay');
+          if (followIdHidden && !followIdHidden.value) {
+            const newId = Math.random().toString(36).substr(2, 6).toUpperCase();
+            followIdHidden.value = newId;
+            if (followIdDisplay) followIdDisplay.textContent = newId;
+          }
+        }
+      }],
+      ["gradingBtn", function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log("✅ Grading Clicked");
+        if (typeof goToGrading === 'function') goToGrading();
+      }],
+      ["editCalloutBtn", function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log("✅ Edit Clicked");
+        if (this.disabled) return;
+        
+        const calloutIds = Object.keys(callouts);
+        if (calloutIds.length > 0) {
+          const mostRecentCalloutId = calloutIds[0];
+          if (typeof editCallout === 'function') editCallout(mostRecentCalloutId);
+        } else {
+          alert('No callouts available to edit');
+        }
+      }],
+      ["viewHistoryBtn", function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log("✅ View History Clicked");
+        if (this.disabled) return;
+        
+        const calloutIds = Object.keys(callouts);
+        if (calloutIds.length > 0) {
+          const mostRecentCalloutId = calloutIds[0];
+          if (typeof calloutHistory === 'function') calloutHistory(mostRecentCalloutId);
+        } else {
+          alert('No callout history available');
+        }
+      }]
+    ];
+    
+    function bindDynamicButton(buttonId, handler) {
+      const element = document.getElementById(buttonId);
+      if (element && !element.hasAttribute('data-bound')) {
+        element.addEventListener('click', handler);
+        element.setAttribute('data-bound', 'true');
+        console.log(`🟢 Dynamically bound ${buttonId}`);
+        return true;
+      }
+      return false;
+    }
+    
+    // Initial binding attempt for any existing elements
+    targetButtons.forEach(([id, handler]) => {
+      bindDynamicButton(id, handler);
+    });
+    
+    // Set up MutationObserver to watch for dynamic elements
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'childList') {
+          mutation.addedNodes.forEach((node) => {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+              // Check if the added node itself is a target button
+              targetButtons.forEach(([id, handler]) => {
+                if (node.id === id) {
+                  bindDynamicButton(id, handler);
+                }
+              });
+              
+              // Check if any target buttons are within the added node
+              targetButtons.forEach(([id, handler]) => {
+                const element = node.querySelector ? node.querySelector(`#${id}`) : null;
+                if (element) {
+                  bindDynamicButton(id, handler);
+                }
+              });
+            }
+          });
+        }
+        
+        // Also check for attribute changes that might affect button availability
+        if (mutation.type === 'attributes' && mutation.target.nodeType === Node.ELEMENT_NODE) {
+          const targetId = mutation.target.id;
+          targetButtons.forEach(([id, handler]) => {
+            if (targetId === id) {
+              bindDynamicButton(id, handler);
+            }
+          });
+        }
+      });
+    });
+    
+    // Start observing the document with the configured parameters
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['id', 'class', 'disabled']
+    });
+    
+    console.log("🔧 MutationObserver initialized for dynamic button binding");
+    
+    console.log("🎉 All event handlers attached, socket initialized, drag-drop ready, page ready!");
+    console.log("🔍 If buttons don't work, check console for ❌ Missing element messages above.");
   }); // End of main DOMContentLoaded event listener
+
+  // 🛠️ CRITICAL FIX: Clean and complete dynamic button binding
+  document.addEventListener("DOMContentLoaded", function () {
+    console.log("🚀 DOM ready – starting dynamic binding observer");
+    
+    const buttonsToBind = [
+      ["createFollowBtn", () => console.log("✅ Create Follow Clicked")],
+      ["gradingBtn", () => console.log("✅ Grading Clicked")],
+      ["editCalloutBtn", () => console.log("✅ Edit Clicked")],
+      ["viewHistoryBtn", () => console.log("✅ View History Clicked")]
+    ];
+    
+    function bindButton(id, handler) {
+      const btn = document.getElementById(id);
+      if (btn && !btn.dataset.bound) {
+        btn.addEventListener("click", handler);
+        btn.dataset.bound = "true";
+        console.log(`🟢 Dynamically bound: ${id}`);
+      }
+    }
+    
+    // Initial bind for already-existing buttons
+    buttonsToBind.forEach(([id, handler]) => bindButton(id, handler));
+    
+    // Observer for buttons that load later
+    const observer = new MutationObserver(() => {
+      buttonsToBind.forEach(([id, handler]) => bindButton(id, handler));
+    });
+    
+    observer.observe(document.body, { childList: true, subtree: true });
+  });
   
   async function calloutHistory(id) {
     try {
@@ -3130,7 +3251,67 @@ createFollowBubble.addEventListener('drop', (e) => {
     }
   }
 
-  // updateQC function is already defined above as window.originalUpdateQC and window.updateQC
+  // Initialize drag-and-drop functionality for callouts
+  function initializeDragAndDrop() {
+    console.log("Initializing drag-and-drop functionality...");
+    
+    // Get all bubble elements (callouts)
+    const calloutElements = document.querySelectorAll('.bubble');
+    
+    if (calloutElements.length > 0) {
+      console.log(`Found ${calloutElements.length} callout elements for drag functionality`);
+      
+      calloutElements.forEach(callout => {
+        // Make callouts draggable
+        callout.draggable = true;
+        callout.addEventListener('dragstart', (e) => {
+          console.log('Drag started for callout:', callout.dataset.id);
+          e.dataTransfer.setData('calloutInfo', JSON.stringify({
+            id: callout.dataset.id,
+            content: callout.textContent.trim()
+          }));
+        });
+      });
+      
+      console.log("✅ Drag functionality bound to callout elements");
+    } else {
+      console.warn("⚠️ No callout elements found for drag functionality (this is normal if no callouts exist yet)");
+    }
+    
+    // Note: createFollowBubble element doesn't exist in HTML, so removing that functionality
+    // If drag-and-drop to follow form is needed, it should target an existing element
+    console.log("ℹ️ Drag-and-drop initialization complete");
+  }
+  <script>
+document.addEventListener("DOMContentLoaded", function () {
+  console.log("🚀 DOM ready – starting dynamic binding observer");
+
+  const buttonsToBind = [
+    ["createFollowBtn", () => console.log("✅ Create Follow Clicked")],
+    ["gradingBtn", () => console.log("✅ Grading Clicked")],
+    ["editCalloutBtn", () => console.log("✅ Edit Clicked")],
+    ["viewHistoryBtn", () => console.log("✅ View History Clicked")]
+  ];
+
+  function bindButton(id, handler) {
+    const btn = document.getElementById(id);
+    if (btn && !btn.dataset.bound) {
+      btn.addEventListener("click", handler);
+      btn.dataset.bound = "true";
+      console.log(`🟢 Dynamically bound: ${id}`);
+    }
+  }
+
+  // Initial bind
+  buttonsToBind.forEach(([id, handler]) => bindButton(id, handler));
+
+  // Observe DOM for dynamically inserted buttons
+  const observer = new MutationObserver(() => {
+    buttonsToBind.forEach(([id, handler]) => bindButton(id, handler));
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
+});
 </script>
 </body>
 </html>

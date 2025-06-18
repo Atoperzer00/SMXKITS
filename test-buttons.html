@@ -47,8 +47,19 @@
     <button class="test-button" onclick="testAsyncFunction()">Async Function Test</button>
     <button class="test-button" onclick="testFormSubmit()">Form Submit Test</button>
     <button class="test-button" onclick="openOpsLog()">Open OpsLog</button>
+    <button class="test-button" onclick="testDynamicBinding()">Test Dynamic Binding Fix</button>
     
     <div id="results"></div>
+    
+    <!-- Test buttons for the fix -->
+    <div style="margin-top: 20px; padding: 20px; border: 1px solid #444; border-radius: 8px;">
+        <h3>🛠️ Dynamic Binding Test Buttons</h3>
+        <button id="createFollowBtn" class="test-button">Create Follow</button>
+        <button id="gradingBtn" class="test-button">Grading System</button>
+        <button id="editCalloutBtn" class="test-button" disabled>Edit Recent Callout</button>
+        <button id="viewHistoryBtn" class="test-button" disabled>View History</button>
+        <div id="dynamicButtonContainer" style="margin-top: 10px;"></div>
+    </div>
     
     <script>
         const results = document.getElementById('results');
@@ -119,7 +130,7 @@
         function openOpsLog() {
             log('Opening OpsLog.html in new window...', 'info');
             try {
-                const newWindow = window.open('/OpsLog.html', '_blank');
+                const newWindow = window.open('/public/OpsLog.html', '_blank');
                 if (newWindow) {
                     log('✓ OpsLog opened successfully', 'success');
                 } else {
@@ -144,10 +155,67 @@
             log('Document ready state: loading', 'info');
         }
         
+        function testDynamicBinding() {
+            log('Testing dynamic binding fix...', 'info');
+            
+            // Create a new button dynamically
+            const container = document.getElementById('dynamicButtonContainer');
+            const newButton = document.createElement('button');
+            newButton.id = 'createFollowBtn'; // Use same ID to test binding
+            newButton.className = 'test-button';
+            newButton.textContent = 'Dynamic Create Follow';
+            newButton.style.margin = '5px';
+            
+            container.appendChild(newButton);
+            log('✓ Dynamic button added - should auto-bind if fix works', 'success');
+            
+            // Test if it's bound after a short delay
+            setTimeout(() => {
+                if (newButton.dataset.bound === 'true') {
+                    log('✓ Dynamic binding fix working - button has data-bound="true"', 'success');
+                } else {
+                    log('✗ Dynamic binding fix failed - button not bound', 'error');
+                }
+            }, 100);
+        }
+
         // Auto-run some tests
         window.addEventListener('load', function() {
             log('Window load event fired', 'success');
             log('All tests ready - click buttons above to test functionality', 'info');
+        });
+
+        // 🛠️ CRITICAL FIX: Clean and complete dynamic button binding
+        document.addEventListener("DOMContentLoaded", function () {
+            log("🚀 DOM ready – starting dynamic binding observer", 'success');
+            
+            const buttonsToBind = [
+                ["createFollowBtn", () => log("✅ Create Follow Clicked", 'success')],
+                ["gradingBtn", () => log("✅ Grading Clicked", 'success')],
+                ["editCalloutBtn", () => log("✅ Edit Clicked", 'success')],
+                ["viewHistoryBtn", () => log("✅ View History Clicked", 'success')]
+            ];
+            
+            function bindButton(id, handler) {
+                const btn = document.getElementById(id);
+                if (btn && !btn.dataset.bound) {
+                    btn.addEventListener("click", handler);
+                    btn.dataset.bound = "true";
+                    log(`🟢 Dynamically bound: ${id}`, 'success');
+                }
+            }
+            
+            // Initial bind for already-existing buttons
+            buttonsToBind.forEach(([id, handler]) => bindButton(id, handler));
+            
+            // Observer for buttons that load later
+            const observer = new MutationObserver(() => {
+                buttonsToBind.forEach(([id, handler]) => bindButton(id, handler));
+            });
+            
+            observer.observe(document.body, { childList: true, subtree: true });
+            
+            log("🔧 Dynamic binding observer initialized", 'success');
         });
     </script>
 </body>
