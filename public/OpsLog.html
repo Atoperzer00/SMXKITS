@@ -2547,38 +2547,7 @@
     
     // 🔧 FORCE FIX: MutationObserver for dynamic button binding
     const targetButtons = [
-      ["createFollowBtn", function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log("✅ Create Follow Clicked");
-        
-        const followForm = document.getElementById('followForm');
-        if (!followForm) {
-          console.error("❌ followForm not found");
-          return;
-        }
-        
-        const isVisible = window.getComputedStyle(followForm).display !== 'none';
-        console.log('Follow form currently visible:', isVisible);
-        
-        if (isVisible) {
-          // Hide the follow form
-          followForm.style.display = 'none';
-          this.textContent = 'Create Follow';
-        } else {
-          // Show the follow form
-          followForm.style.display = 'block';
-          this.textContent = 'Remove Follow';
-          
-          const followIdHidden = document.getElementById('followIdHidden');
-          const followIdDisplay = document.getElementById('followIdDisplay');
-          if (followIdHidden && !followIdHidden.value) {
-            const newId = Math.random().toString(36).substr(2, 6).toUpperCase();
-            followIdHidden.value = newId;
-            followIdDisplay.textContent = newId;
-          }
-        }
-      }],
+
       ["gradingBtn", function(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -3158,6 +3127,13 @@
         console.log("No follow data in dropped callout");
       }
       
+      // Debug SLANT data specifically
+      if (data.slant) {
+        console.log("SLANT data found in dropped callout:", data.slant);
+      } else {
+        console.log("No SLANT data in dropped callout");
+      }
+      
       // Fill form with callout data
       const form = document.getElementById('logForm');
       if (form) {
@@ -3172,7 +3148,14 @@
         if (data.location) form.elements.location.value = data.location;
         if (data.activity) form.elements.activity.value = data.activity;
         if (data.iaNotes) form.elements.iaNotes.value = data.iaNotes;
-        if (data.slant) form.elements.slant.value = data.slant;
+        if (data.slant) {
+          form.elements.slant.value = data.slant;
+          // Trigger SLANT formatting if the formatSlant function exists
+          if (typeof formatSlant === 'function') {
+            formatSlant(form.elements.slant);
+          }
+          console.log('Set SLANT:', data.slant);
+        }
         if (data.vehicles) form.elements.vehicles.value = data.vehicles;
         
         // Handle follow information if present
@@ -3269,24 +3252,20 @@
       console.log(`Found ${calloutElements.length} callout elements for drag functionality`);
       
       calloutElements.forEach(callout => {
-        // Make callouts draggable
-        callout.draggable = true;
-        callout.addEventListener('dragstart', (e) => {
-          console.log('Drag started for callout:', callout.dataset.id);
-          e.dataTransfer.setData('calloutInfo', JSON.stringify({
-            id: callout.dataset.id,
-            content: callout.textContent.trim()
-          }));
-        });
+        // Only make draggable if not already set up (individual callouts set up their own drag handlers with full data)
+        if (!callout.draggable) {
+          callout.draggable = true;
+          console.log('Made callout draggable (no existing drag handler):', callout.dataset.id);
+        } else {
+          console.log('Callout already has drag functionality (preserving existing handler):', callout.dataset.id);
+        }
       });
       
-      console.log("✅ Drag functionality bound to callout elements");
+      console.log("✅ Drag functionality verified for callout elements");
     } else {
       console.warn("⚠️ No callout elements found for drag functionality (this is normal if no callouts exist yet)");
     }
     
-    // Note: createFollowBubble element doesn't exist in HTML, so removing that functionality
-    // If drag-and-drop to follow form is needed, it should target an existing element
     console.log("ℹ️ Drag-and-drop initialization complete");
   }
 </script>
