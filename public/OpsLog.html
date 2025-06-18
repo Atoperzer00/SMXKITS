@@ -896,7 +896,7 @@
       <div class="nav">
         <button type="button" id="editCalloutBtn" class="nav-btn" disabled>Edit Recent Callout</button>
         <button type="button" id="viewHistoryBtn" class="nav-btn" disabled>View History</button>
-        <button type="button" id="gradingBtn" class="nav-btn" onclick="goToGrading()">Grading System</button>
+        <button type="button" id="gradingBtn" class="nav-btn">Grading System</button>
       </div>
       
       <div class="divider"></div>
@@ -2444,6 +2444,11 @@ createFollowBubble.addEventListener('drop', (e) => {
         e.preventDefault();
         e.stopPropagation();
         clearBubbleSelection();
+      }],
+      ['gradingBtn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        goToGrading();
       }]
     ];
     
@@ -2543,7 +2548,11 @@ createFollowBubble.addEventListener('drop', (e) => {
     // Initialize follow form functionality
     initializeFollowFormFunctionality();
     
-    console.log("✅ All event handlers attached, page ready.");
+    // Initialize socket connection
+    initializeSocket();
+    setupSocketListeners();
+    
+    console.log("✅ All event handlers attached, socket initialized, page ready.");
   }); // End of main DOMContentLoaded event listener
   
   async function calloutHistory(id) {
