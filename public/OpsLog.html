@@ -2271,31 +2271,31 @@
   
   // Follow functionality has been moved to the end of the script
   
-  // ------ Initialize All Event Handlers ------
+  // ------ CONSOLIDATED EVENT HANDLER INITIALIZATION ------
   document.addEventListener('DOMContentLoaded', function() {
-    console.log("🚀 DOM loaded - initializing event handlers");
+    console.log("🚀 DOM loaded - initializing ALL event handlers");
     console.log(`Document ready state: ${document.readyState}`);
     console.log(`Total elements in DOM: ${document.querySelectorAll('*').length}`);
     
     // Initialize sidebar resize functionality
     initSidebarResize();
     
-    // Define all button event handlers using the cleaner approach
-    const buttons = [
+    // CONSOLIDATED BUTTON EVENT HANDLERS - Single source of truth
+    const buttonHandlers = [
       ['dashboardBtn', function(e) {
         e.preventDefault();
         e.stopPropagation();
-        console.log('Dashboard button clicked');
+        console.log('✅ Dashboard button clicked');
         try {
           goDashboard();
         } catch (error) {
-          console.error('Error in dashboard button handler:', error);
+          console.error('❌ Error in dashboard button handler:', error);
         }
       }],
       ['joinRoomBtn', function(e) {
         e.preventDefault();
         e.stopPropagation();
-        console.log('Join Room button clicked');
+        console.log('✅ Join Room button clicked');
         try {
           openRoomModal();
         } catch (error) {
@@ -2409,8 +2409,8 @@
     ];
     
     // Bind all button event handlers
-    console.log(`📋 Attempting to bind ${buttons.length} button handlers...`);
-    buttons.forEach(([id, handler]) => {
+    console.log(`📋 Attempting to bind ${buttonHandlers.length} button handlers...`);
+    buttonHandlers.forEach(([id, handler]) => {
       const el = document.getElementById(id);
       if (el) {
         el.addEventListener('click', handler);
@@ -2645,37 +2645,7 @@
     console.log("🔍 If buttons don't work, check console for ❌ Missing element messages above.");
   }); // End of main DOMContentLoaded event listener
 
-  // 🛠️ CRITICAL FIX: Clean and complete dynamic button binding
-  document.addEventListener("DOMContentLoaded", function () {
-    console.log("🚀 DOM ready – starting dynamic binding");
-    
-    const buttonsToBind = [
-      ["createFollowBtn", () => console.log("✅ Create Follow Clicked")],
-      ["gradingBtn", () => console.log("✅ Grading Clicked")],
-      ["editCalloutBtn", () => console.log("✅ Edit Clicked")],
-      ["viewHistoryBtn", () => console.log("✅ View History Clicked")],
-      ["joinRoomBtn", () => console.log("✅ Join Room Clicked")]
-    ];
-    
-    function bindButton(id, handler) {
-      const btn = document.getElementById(id);
-      if (btn && !btn.dataset.bound) {
-        btn.addEventListener("click", handler);
-        btn.dataset.bound = "true";
-        console.log(`🟢 Dynamically bound: ${id}`);
-      }
-    }
-    
-    // Initial bind for already-existing buttons
-    buttonsToBind.forEach(([id, handler]) => bindButton(id, handler));
-    
-    // Observer for buttons that load later
-    const observer = new MutationObserver(() => {
-      buttonsToBind.forEach(([id, handler]) => bindButton(id, handler));
-    });
-    
-    observer.observe(document.body, { childList: true, subtree: true });
-  });
+  // DUPLICATE REMOVED - All button binding is now handled in the main DOMContentLoaded listener above
   
   async function calloutHistory(id) {
     try {
@@ -3284,33 +3254,6 @@
     console.log("ℹ️ Drag-and-drop initialization complete");
   }
 </script>
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  console.log("🚀 Starting dynamic binding");
-
-  const buttons = [
-    ["createFollowBtn", () => console.log("✅ Create Follow Clicked")],
-    ["gradingBtn", () => console.log("✅ Grading Clicked")],
-    ["editCalloutBtn", () => console.log("✅ Edit Clicked")],
-    ["viewHistoryBtn", () => console.log("✅ View History Clicked")],
-    ["joinRoomBtn", () => console.log("✅ Join Room Clicked")]
-  ];
-
-  const bind = (id, fn) => {
-    const el = document.getElementById(id);
-    if (el && !el.dataset.bound) {
-      el.addEventListener("click", fn);
-      el.dataset.bound = "true";
-      console.log(`🟢 Bound ${id}`);
-    }
-  };
-
-  buttons.forEach(([id, fn]) => bind(id, fn));
-
-  new MutationObserver(() => {
-    buttons.forEach(([id, fn]) => bind(id, fn));
-  }).observe(document.body, { childList: true, subtree: true });
-});
-</script>
+<!-- DUPLICATE SCRIPT BLOCK REMOVED - All functionality consolidated into main DOMContentLoaded listener -->
 </body>
 </html>
