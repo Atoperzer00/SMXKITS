@@ -1180,6 +1180,9 @@
     window.addEventListener('load', function() {
       showWelcomeModal();
       
+      // Check for live stream video from localStorage first
+      checkForLiveStreamVideo();
+      
       // Initialize stream timer for WebRTC
       if (!streamTimer) {
         streamTimer = createStreamTimer();
@@ -1198,6 +1201,156 @@
         webrtcStatus.style.display = 'flex';
       }
     });
+
+    // Check for live stream video from localStorage and autoplay
+    function checkForLiveStreamVideo() {
+      try {
+        const liveStreamVideoData = localStorage.getItem('liveStreamVideo');
+        if (liveStreamVideoData) {
+          const videoData = JSON.parse(liveStreamVideoData);
+          console.log('🎬 Found live stream video in localStorage:', videoData.name);
+          
+          // Load and autoplay the video
+          loadLiveStreamVideo(videoData);
+          
+          // Clear the localStorage entry after loading
+          localStorage.removeItem('liveStreamVideo');
+          console.log('🧹 Cleared live stream video from localStorage');
+        } else {
+          console.log('📭 No live stream video found in localStorage');
+        }
+      } catch (error) {
+        console.error('❌ Error checking for live stream video:', error);
+      }
+    }
+
+    // Load and autoplay the live stream video
+    function loadLiveStreamVideo(videoData) {
+      const video = document.getElementById('video');
+      const webrtcVideo = document.getElementById('webrtcVideo');
+      
+      if (!video) {
+        console.error('❌ Video element not found');
+        return;
+      }
+      
+      console.log('🚀 Loading live stream video:', videoData.name);
+      
+      // Hide WebRTC video and show regular video
+      if (webrtcVideo) {
+        webrtcVideo.style.display = 'none';
+      }
+      video.style.display = 'block';
+      
+      // Set video source
+      video.src = videoData.url;
+      
+      // Set up event listeners for autoplay
+      video.addEventListener('loadeddata', function() {
+        console.log('✅ Live stream video data loaded');
+        
+        // Attempt to autoplay
+        video.play().then(() => {
+          console.log('▶️ Live stream video started playing automatically');
+          
+          // Update UI to show live status
+          updateLiveStatus(true);
+          
+          // Update video title
+          updateVideoTitle(videoData.name);
+          
+        }).catch(error => {
+          console.log('🔇 Autoplay prevented, user interaction required:', error);
+          
+          // Show play button overlay or notification
+          showPlayPrompt(videoData.name);
+        });
+      }, { once: true });
+      
+      video.addEventListener('error', function(e) {
+        console.error('❌ Error loading live stream video:', e);
+        showErrorMessage('Video Load Error', 'Failed to load the live stream video. Please try again.');
+      }, { once: true });
+      
+      // Load the video
+      video.load();
+    }
+
+    // Update live status indicator
+    function updateLiveStatus(isLive) {
+      const liveBadge = document.querySelector('.live-badge');
+      if (liveBadge) {
+        if (isLive) {
+          liveBadge.classList.remove('hidden');
+          liveBadge.textContent = 'LIVE';
+        } else {
+          liveBadge.classList.add('hidden');
+        }
+      }
+    }
+
+    // Update video title
+    function updateVideoTitle(title) {
+      const videoTitle = document.querySelector('.video-title');
+      if (videoTitle) {
+        videoTitle.textContent = title || 'Live Stream';
+      }
+    }
+
+    // Show play prompt when autoplay is prevented
+    function showPlayPrompt(videoName) {
+      // Create a play prompt overlay
+      const videoContainer = document.querySelector('.video-container');
+      if (!videoContainer) return;
+      
+      const playPrompt = document.createElement('div');
+      playPrompt.className = 'play-prompt-overlay';
+      playPrompt.style.cssText = `
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        color: white;
+        text-align: center;
+        padding: 2rem;
+      `;
+      
+      playPrompt.innerHTML = `
+        <div style="font-size: 1.5rem; margin-bottom: 1rem;">🎬 ${videoName}</div>
+        <div style="font-size: 1rem; margin-bottom: 2rem; opacity: 0.8;">Click to start the live stream</div>
+        <button style="
+          background: var(--primary-gradient);
+          border: 2px solid var(--accent);
+          color: white;
+          font-size: 1.2rem;
+          padding: 1rem 2rem;
+          border-radius: 50px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        ">▶️ Play Live Stream</button>
+      `;
+      
+      const playButton = playPrompt.querySelector('button');
+      playButton.addEventListener('click', () => {
+        const video = document.getElementById('video');
+        video.play().then(() => {
+          console.log('▶️ Live stream started after user interaction');
+          updateLiveStatus(true);
+          videoContainer.removeChild(playPrompt);
+        }).catch(error => {
+          console.error('❌ Failed to play video after user interaction:', error);
+        });
+      });
+      
+      videoContainer.appendChild(playPrompt);
+    }
     
     // Error message display function
     function showErrorMessage(title, message) {
