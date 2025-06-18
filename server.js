@@ -325,6 +325,80 @@ io.on('connection', socket => {
     socket.join(roomId);
   });
   
+  // ===== FILE SUBMISSION HANDLERS =====
+  // Handle file submissions from mission-links to instructor grading
+  socket.on('file-submission', (data) => {
+    console.log('📁 File submission received:', data.fileName);
+    
+    // Create submission object
+    const submission = {
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+      studentName: data.studentName || 'Unknown Student',
+      fileName: data.fileName,
+      fileSize: data.fileSize,
+      fileType: data.fileType,
+      fileData: data.fileData,
+      submittedAt: new Date().toISOString(),
+      status: 'pending',
+      vaultType: data.vaultType // 'slideVault' or 'sheetVault'
+    };
+    
+    // Broadcast to all instructor grading pages
+    io.emit('new-file-submission', submission);
+    
+    console.log(`📤 File submission broadcasted: ${data.fileName} from ${data.vaultType}`);
+  });
+  
+  // Handle instructor joining grading room
+  socket.on('join-instructor-grading', () => {
+    console.log('👨‍🏫 Instructor joined grading room');
+    socket.join('instructor-grading');
+  });
+  
+  // Handle student joining mission links
+  socket.on('join-mission-links', (studentData) => {
+    console.log('👤 Student joined mission links:', studentData.name);
+    socket.studentName = studentData.name;
+    socket.join('mission-links');
+  });
+  
+  // ===== FILE SUBMISSION HANDLERS =====
+  // Handle file submissions from mission-links to instructor grading
+  socket.on('file-submission', (data) => {
+    console.log('📁 File submission received:', data.fileName);
+    
+    // Create submission object
+    const submission = {
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+      studentName: data.studentName || 'Unknown Student',
+      fileName: data.fileName,
+      fileSize: data.fileSize,
+      fileType: data.fileType,
+      fileData: data.fileData,
+      submittedAt: new Date().toISOString(),
+      status: 'pending',
+      vaultType: data.vaultType // 'slideVault' or 'sheetVault'
+    };
+    
+    // Broadcast to all instructor grading pages
+    io.emit('new-file-submission', submission);
+    
+    console.log(`📤 File submission broadcasted: ${data.fileName} from ${data.vaultType}`);
+  });
+  
+  // Handle instructor joining grading room
+  socket.on('join-instructor-grading', () => {
+    console.log('👨‍🏫 Instructor joined grading room');
+    socket.join('instructor-grading');
+  });
+  
+  // Handle student joining mission links
+  socket.on('join-mission-links', (studentData) => {
+    console.log('👤 Student joined mission links:', studentData.name);
+    socket.studentName = studentData.name;
+    socket.join('mission-links');
+  });
+  
   // ===== STREAMING HANDLERS =====
   // Track connected viewers
   const activeStreamRooms = new Set();

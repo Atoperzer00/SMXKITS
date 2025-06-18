@@ -1735,6 +1735,32 @@ button:hover {
   box-shadow: 0 5px 20px rgba(0, 170, 255, 0.2);
 }
 
+.dark-vault.dragover {
+  border-color: #22c55e !important;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.3) 0%, rgba(22, 163, 74, 0.5) 100%) !important;
+  box-shadow: 0 8px 30px rgba(34, 197, 94, 0.4) !important;
+  transform: scale(1.02);
+  animation: pulse-green 1s infinite;
+}
+
+@keyframes pulse-green {
+  0%, 100% { box-shadow: 0 8px 30px rgba(34, 197, 94, 0.4); }
+  50% { box-shadow: 0 12px 40px rgba(34, 197, 94, 0.6); }
+}
+
+.dark-vault.dragover {
+  border-color: #22c55e !important;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.3) 0%, rgba(22, 163, 74, 0.5) 100%) !important;
+  box-shadow: 0 8px 30px rgba(34, 197, 94, 0.4) !important;
+  transform: scale(1.02);
+  animation: pulse-green 1s infinite;
+}
+
+@keyframes pulse-green {
+  0%, 100% { box-shadow: 0 8px 30px rgba(34, 197, 94, 0.4); }
+  50% { box-shadow: 0 12px 40px rgba(34, 197, 94, 0.6); }
+}
+
 .dark-vault input[type="file"] {
   position: absolute;
   top: 0;
