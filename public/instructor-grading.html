@@ -1092,20 +1092,9 @@
     }
 
     function selectSubmission(submissionId) {
-      selectedSubmission = submissions.find(sub => sub.id === submissionId);
-      if (!selectedSubmission) return;
-
-      // Update UI
-      document.querySelectorAll('.submission-item').forEach(item => item.classList.remove('selected'));
-      event.currentTarget.classList.add('selected');
-      
-      document.getElementById('selectedStudent').textContent = selectedSubmission.student;
-      document.getElementById('noSelectionMessage').style.display = 'none';
-      document.getElementById('gradingContent').style.display = 'block';
-
-      // Load existing grade if available
-      loadExistingGrade();
-      loadGradeHistory();
+      console.log('Selected submission:', submissionId);
+      const selectedStudent = document.getElementById('selectedStudent');
+      selectedStudent.textContent = `Submission ID: ${submissionId}`;
     }
 
     function loadExistingGrade() {

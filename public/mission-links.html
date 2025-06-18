@@ -533,8 +533,36 @@
         return;
       }
 
-      // Process files (e.g., upload to server)
-      console.log('Submitting files:', storedFiles);
+      const submissionsList = document.getElementById('submissionsList');
+
+      storedFiles.forEach((file, index) => {
+        const submissionItem = document.createElement('div');
+        submissionItem.className = 'submission-item';
+        submissionItem.onclick = () => selectSubmission(`sub_${Date.now()}_${index}`);
+
+        const submissionInfo = document.createElement('div');
+        submissionInfo.className = 'submission-info';
+
+        const submissionStudent = document.createElement('div');
+        submissionStudent.className = 'submission-student';
+        submissionStudent.textContent = file.name;
+
+        const submissionMission = document.createElement('div');
+        submissionMission.className = 'submission-mission';
+        submissionMission.textContent = 'Mission Upload';
+
+        submissionInfo.appendChild(submissionStudent);
+        submissionInfo.appendChild(submissionMission);
+
+        const submissionTime = document.createElement('div');
+        submissionTime.className = 'submission-time';
+        submissionTime.textContent = new Date().toLocaleTimeString();
+
+        submissionItem.appendChild(submissionInfo);
+        submissionItem.appendChild(submissionTime);
+
+        submissionsList.appendChild(submissionItem);
+      });
 
       // Clear temporary storage
       localStorage.removeItem('droppedFiles');
@@ -542,22 +570,25 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-      const dropZone = document.querySelector('.tools-grid');
+      const documentVault = document.querySelector('.tool-card:nth-child(1)');
+      const mediaVault = document.querySelector('.tool-card:nth-child(2)');
 
-      if (dropZone) {
-        dropZone.addEventListener('dragover', function(event) {
-          event.preventDefault();
-        });
+      [documentVault, mediaVault].forEach(vault => {
+        if (vault) {
+          vault.addEventListener('dragover', function(event) {
+            event.preventDefault();
+          });
 
-        dropZone.addEventListener('drop', handleFileDrop);
+          vault.addEventListener('drop', handleFileDrop);
 
-        const submitButton = document.createElement('button');
-        submitButton.textContent = 'Submit Files';
-        submitButton.style = 'margin-top: 1rem; padding: 0.5rem 1rem; background: var(--accent-gradient); border: none; color: white; border-radius: 5px; cursor: pointer;';
-        submitButton.addEventListener('click', handleFileSubmit);
+          const submitButton = document.createElement('button');
+          submitButton.textContent = 'Submit Files';
+          submitButton.style = 'margin-top: 1rem; padding: 0.5rem 1rem; background: var(--accent-gradient); border: none; color: white; border-radius: 5px; cursor: pointer;';
+          submitButton.addEventListener('click', handleFileSubmit);
 
-        dropZone.appendChild(submitButton);
-      }
+          vault.appendChild(submitButton);
+        }
+      });
     });
     
     // Debug: Test if JavaScript is working
