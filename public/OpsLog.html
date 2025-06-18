@@ -392,31 +392,41 @@
       cursor: pointer;
       appearance: none;
       -webkit-appearance: none;
-      background: rgba(35, 39, 46, 0.7);
-      border: 1px solid var(--inactive);
+      background: transparent;
+      border: none;
       border-radius: 4px;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
       transition: all 0.2s;
       margin-bottom: 1px;
       flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     
     .lock-checkbox:checked {
-      background: var(--accent);
-      border-color: var(--accent);
+      background: transparent;
+    }
+    
+    .lock-checkbox::after {
+      content: "🔒";
+      font-size: 12px;
+      opacity: 0.3;
+      transition: all 0.2s;
     }
     
     .lock-checkbox:checked::after {
-      content: "🔒";
-      position: relative;
-      color: white;
-      font-size: 12px;
-      top: -2px;
-      left: -1px;
+      color: var(--accent);
+      opacity: 1;
+      filter: drop-shadow(0 0 3px var(--accent));
     }
     
-    .lock-checkbox:hover {
-      background: rgba(35, 39, 46, 0.9);
+    .lock-checkbox:hover::after {
+      opacity: 0.6;
+    }
+    
+    .lock-checkbox:checked:hover::after {
+      opacity: 1;
+      filter: drop-shadow(0 0 5px var(--accent));
     }
     
     .refresh-btn {
@@ -2648,8 +2658,15 @@
     buttonHandlers.forEach(([id, handler]) => {
       const el = document.getElementById(id);
       if (el) {
+        // Remove any existing event listeners to prevent duplicates
+        el.removeEventListener('click', handler);
         el.addEventListener('click', handler);
         console.log(`🟢 Bound: ${id} (${el.tagName})`);
+        
+        // Special debugging for problematic buttons
+        if (id === 'createFollowBtn' || id === 'joinRoomBtn') {
+          console.log(`🔍 Debug ${id}: Element found, event bound, current text: "${el.textContent}"`);
+        }
       } else {
         console.error(`❌ Missing element: ${id}`);
       }
@@ -3485,10 +3502,10 @@
         return;
       }
       
-      // Get current time and format as HHMM
+      // Get current UTC time and format as HHMM (Zulu time)
       const now = new Date();
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const hours = String(now.getUTCHours()).padStart(2, '0');
+      const minutes = String(now.getUTCMinutes()).padStart(2, '0');
       const zuluTime = hours + minutes;
       
       // Update the input field
