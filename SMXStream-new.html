@@ -211,13 +211,12 @@
       scrollbar-color: var(--accent) transparent;
     }
 
-    /* Video Overlay Controls */
+    /* Video Overlay Controls - Bottom Center */
     .video-controls-overlay {
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -225,6 +224,7 @@
       opacity: 0;
       transition: opacity 0.3s ease;
       pointer-events: none;
+      z-index: 30;
     }
 
     .video-container:hover .video-controls-overlay {
@@ -238,10 +238,17 @@
       color: white;
       font-size: 1.5rem;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
     }
 
     .video-control-btn:hover {
-      transform: scale(1.2);
+      transform: scale(1.1);
       box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
     }
     
@@ -266,15 +273,37 @@
       transform: rotate(5deg) scale(1.1);
     }
     
-    /* Live button specific styling */
-    .live-btn {
+    /* Live Badge - Top Left */
+    .live-badge {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(255, 71, 87, 0.9);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      z-index: 30;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-    }
-    
-    .live-btn svg {
+      gap: 6px;
       animation: pulse 2s infinite;
+      transition: opacity 0.3s ease;
+    }
+
+    .live-badge.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .live-badge::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background: white;
+      border-radius: 50%;
+      display: inline-block;
     }
     
     @keyframes pulse {
@@ -302,21 +331,62 @@
       border-color: rgba(255, 71, 87, 0.8);
     }
 
-    .zoom-controls {
+    /* Zoom Toggle and Fullscreen Controls - Bottom Right */
+    .video-utility-controls {
       position: absolute;
-      top: 20px;
+      bottom: 20px;
       right: 20px;
       display: flex;
-      gap: 0.5rem;
+      gap: 0.75rem;
+      align-items: center;
+      z-index: 30;
     }
 
-    .zoom-btn {
-      width: 45px;
-      height: 45px;
-      font-size: 1rem;
+    .zoom-toggle-btn {
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--glass-border);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
     }
 
-    .time-display {
+    .zoom-toggle-btn.active {
+      background: var(--primary-gradient);
+      border-color: var(--accent);
+    }
+
+    .zoom-toggle-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .fullscreen-btn {
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--glass-border);
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .fullscreen-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Clock Time Display - Bottom Left */
+    .clock-display {
       position: absolute;
       bottom: 20px;
       left: 20px;
@@ -328,6 +398,11 @@
       color: white;
       backdrop-filter: blur(10px);
       border: 1px solid var(--glass-border);
+      z-index: 30;
+    }
+
+    .clock-display.not-live {
+      color: rgba(255, 255, 255, 0.7);
     }
 
     /* Hide default video controls */
@@ -363,13 +438,13 @@
     
     .controls {
       display: flex;
-      padding: 1.5rem;
+      padding: 0;
       background: rgba(0, 0, 0, 0.4);
       backdrop-filter: blur(15px);
       -webkit-backdrop-filter: blur(15px);
       border-radius: 0;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-      gap: 1rem;
+      border-top: none;
+      gap: 0;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
@@ -558,15 +633,16 @@
     #scrubber {
       position: absolute;
       top: 0;
-      left: 0;
-      width: 3px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
       height: 100%;
       background: var(--primary-gradient);
       z-index: 100;
       cursor: grab;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
       transition: left 0.1s ease;
-      pointer-events: none; /* Disable dragging */
+      pointer-events: all; /* Enable dragging */
     }
 
     #scrubber:active {
@@ -575,6 +651,7 @@
 
     #scrubber.dragging {
       transition: none;
+      user-select: none;
     }
 
     #scrubber::before {
@@ -916,7 +993,10 @@
   <div class="main-content">
     <div class="player-wrapper">
         <div class="video-container">
-          <div class="live-badge">LIVE</div>
+          <!-- Live Badge - Top Left -->
+          <div class="live-badge" id="liveBadge">LIVE</div>
+          
+          <!-- Video Elements -->
           <video id="video" autoplay muted style="display:none;"></video>
           <video id="webrtcVideo" autoplay playsinline muted style="display:block; width:100%; height:100%; background:#000;"></video>
           <div class="loading-spinner" id="loading"></div>
@@ -928,62 +1008,37 @@
             LIVE WebRTC
           </div>
           
-          <!-- Video Overlay Controls (Hidden by default, show on hover) -->
+          <!-- Video Overlay Controls - Bottom Center -->
           <div class="video-controls-overlay">
-            <!-- Play/Pause Button -->
-            <button class="video-control-btn play-pause-btn" onclick="togglePlayPause()">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polygon points="5,3 19,12 5,21"></polygon>
-              </svg>
+            <!-- Rewind Button -->
+            <button class="video-control-btn rewind-btn" onclick="rewindVideo()" title="Rewind 10s">
+              ⏪
             </button>
             
-            <!-- Rewind Button -->
-            <button class="video-control-btn rewind-btn" onclick="rewindVideo()">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polygon points="11,19 2,12 11,5"></polygon>
-                <polygon points="22,19 13,12 22,5"></polygon>
-              </svg>
+            <!-- Play/Pause Button -->
+            <button class="video-control-btn play-pause-btn" id="playPauseBtn" onclick="togglePlayPause()" title="Play/Pause">
+              ⏸
             </button>
             
             <!-- Fast Forward Button -->
-            <button class="video-control-btn forward-btn" onclick="forwardVideo()">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polygon points="13,19 22,12 13,5"></polygon>
-                <polygon points="2,19 11,12 2,5"></polygon>
-              </svg>
+            <button class="video-control-btn forward-btn" onclick="forwardVideo()" title="Forward 10s">
+              ⏩
             </button>
-            
-            <!-- Jump to Live Button (for live streams) -->
-            <button class="video-control-btn live-btn" onclick="jumpToLive()">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color: #ff4757;">
-                <circle cx="12" cy="12" r="10"></circle>
-              </svg>
-              <span>LIVE</span>
+          </div>
+          
+          <!-- Zoom Toggle and Fullscreen - Bottom Right -->
+          <div class="video-utility-controls">
+            <button class="zoom-toggle-btn" id="zoomToggleBtn" onclick="toggleZoomMode()" title="Toggle Timeline Zoom">
+              Zoom
             </button>
-            
-            <!-- Zoom Controls -->
-            <div class="zoom-controls">
-              <button class="video-control-btn zoom-btn" onclick="zoomTimeline(0.5)">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="11" cy="11" r="8"></circle>
-                  <path d="M21 21l-4.35-4.35"></path>
-                  <line x1="8" y1="11" x2="14" y2="11"></line>
-                </svg>
-              </button>
-              <button class="video-control-btn zoom-btn" onclick="zoomTimeline(2)">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="11" cy="11" r="8"></circle>
-                  <path d="M21 21l-4.35-4.35"></path>
-                  <line x1="11" y1="8" x2="11" y2="14"></line>
-                  <line x1="8" y1="11" x2="14" y2="11"></line>
-                </svg>
-              </button>
-            </div>
-            
-            <!-- Time Display -->
-            <div class="time-display">
-              <span id="currentTime">0:00</span> / <span id="totalTime">0:00</span>
-            </div>
+            <button class="fullscreen-btn" onclick="toggleFullscreen()" title="Fullscreen">
+              ⛶
+            </button>
+          </div>
+          
+          <!-- Clock Time Display - Bottom Left -->
+          <div class="clock-display" id="clockDisplay">
+            --:--:--
           </div>
         </div>
         
@@ -993,6 +1048,7 @@
         </div>
 
         
+        <!-- Timeline (flush with video, no spacing) -->
         <div class="controls">
           <div id="timeline">
             <div class="timeline-viewport">
@@ -1008,8 +1064,8 @@
                 </div>
               </div>
               
-              <!-- Fixed Scrubber -->
-              <div class="timeline-scrubber"></div>
+              <!-- Draggable Scrubber -->
+              <div id="scrubber"></div>
               
               <!-- Live Marker -->
               <div class="timeline-live-marker">
@@ -3193,35 +3249,64 @@
       }
     }
 
+    // Global variables for new functionality
+    let zoomEnabled = false;
+    let isDraggingScrubber = false;
+    let scrubberCentered = true;
+
     // Global functions for video controls
     function togglePlayPause() {
-      const video = document.getElementById('video');
-      const playPauseBtn = document.querySelector('.play-pause-btn');
+      const playPauseBtn = document.getElementById('playPauseBtn');
       
-      if (video.paused) {
-        video.play();
-        playPauseBtn.innerHTML = '<span>⏸</span>';
+      if (isWebRTCMode && streamTimer) {
+        // For WebRTC, toggle the stream timer
+        if (streamTimer.isPaused) {
+          streamTimer.resume();
+          playPauseBtn.textContent = '⏸';
+          console.log('▶️ WebRTC stream timer resumed');
+        } else {
+          streamTimer.pause();
+          playPauseBtn.textContent = '▶';
+          console.log('⏸️ WebRTC stream timer paused');
+        }
       } else {
-        video.pause();
-        playPauseBtn.innerHTML = '<span>▶</span>';
+        // For regular video
+        const video = document.getElementById('video');
+        if (video.paused) {
+          video.play();
+          playPauseBtn.textContent = '⏸';
+        } else {
+          video.pause();
+          playPauseBtn.textContent = '▶';
+        }
       }
     }
 
     function rewindVideo() {
-      if (streamTimer) {
+      if (isWebRTCMode && streamTimer) {
         // For WebRTC, adjust the timer (UI feedback only)
         const newTime = Math.max(0, streamTimer.currentTime - 10);
         streamTimer.setTime(newTime);
+        scrubberCentered = false; // Allow free movement after user interaction
         console.log(`⏪ WebRTC rewind to ${formatTime(newTime)}`);
+      } else {
+        // For regular video
+        const video = document.getElementById('video');
+        video.currentTime = Math.max(0, video.currentTime - 10);
       }
     }
 
     function forwardVideo() {
-      if (streamTimer) {
+      if (isWebRTCMode && streamTimer) {
         // For WebRTC, adjust the timer (UI feedback only)
         const newTime = Math.min(streamDuration, streamTimer.currentTime + 10);
         streamTimer.setTime(newTime);
+        scrubberCentered = false; // Allow free movement after user interaction
         console.log(`⏩ WebRTC forward to ${formatTime(newTime)}`);
+      } else {
+        // For regular video
+        const video = document.getElementById('video');
+        video.currentTime = Math.min(video.duration || 0, video.currentTime + 10);
       }
     }
 
