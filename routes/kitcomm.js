@@ -159,6 +159,37 @@ router.post('/upload', upload.single('file'), async (req, res) => {
   }
 });
 
+// Clear all messages in a channel (Admin only)
+router.delete('/channels/:channel/messages', auth, async (req, res) => {
+  try {
+    const { channel } = req.params;
+    
+    // Check if user is admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Only admins can clear chat logs' });
+    }
+    
+    // Delete all messages in the channel
+    const result = await KitCommMessage.deleteMany({ channel });
+    
+    // Notify all clients that the channel has been cleared
+    req.app.get('io').to(`kitcomm:${channel}`).emit('kitcomm:channelCleared', { 
+      channel,
+      clearedBy: req.user.name || 'Admin',
+      timestamp: new Date()
+    });
+    
+    res.json({ 
+      success: true, 
+      message: `Cleared ${result.deletedCount} messages from ${channel}`,
+      deletedCount: result.deletedCount
+    });
+  } catch (error) {
+    console.error('❌ Error clearing channel messages:', error);
+    res.status(500).json({ error: 'Server error clearing messages' });
+  }
+});
+
 // Delete a channel
 router.delete('/channels/:name', auth, async (req, res) => {
   try {

@@ -100,8 +100,7 @@
       </div>
       <div class="flex items-center gap-2">
         <span class="text-sm text-zinc-400">Logged in as: <span class="text-white font-semibold" id="userNameDisplay"></span></span>
-        <button id="toggleSidebar" class="text-sm bg-zinc-700 px-3 py-1.5 rounded-md hover:bg-zinc-600 hidden md:inline">Toggle Channels</button>
-        <button id="toggleUsers" class="text-sm bg-zinc-700 px-3 py-1.5 rounded-md hover:bg-zinc-600 hidden md:inline">Toggle Users</button>
+        <button id="clearLogBtn" class="text-sm bg-red-700 px-3 py-1.5 rounded-md hover:bg-red-600 hidden" title="Clear all messages in current channel">Clear Log</button>
       </div>
     </header>
     
@@ -161,6 +160,18 @@
     
     // Display user name
     userNameDisplayEl.textContent = userName;
+    
+    // Show Clear Log button only for admins
+    const clearLogBtn = document.getElementById('clearLogBtn');
+    if (role === 'admin') {
+      clearLogBtn.classList.remove('hidden');
+    }
+    
+    // Show Clear Log button only for admins
+    const clearLogBtn = document.getElementById('clearLogBtn');
+    if (role === 'admin') {
+      clearLogBtn.classList.remove('hidden');
+    }
     
     // ===== Helpers =====
     function escapeHtml(text) {
@@ -439,9 +450,35 @@
         console.warn('Socket disconnected, will auto-reconnect');
       });
       
+      // Listen for channel cleared events
+      socket.on('kitcomm:channelCleared', (data) => {
+        if (data.channel === currentChannel) {
+          messagePaneEl.innerHTML = `
+            <div class="text-center text-zinc-500 py-8">
+              <div class="mb-2">🧹 Chat log cleared by ${escapeHtml(data.clearedBy)}</div>
+              <div class="text-xs text-zinc-600">${new Date(data.timestamp).toLocaleString()}</div>
+            </div>
+          `;
+          console.log(`📢 Channel ${data.channel} cleared by ${data.clearedBy}`);
+        }
+      });
+      
       // Listen for user status updates
       socket.on('kitcomm:userStatus', (data) => {
         updateUserList();
+      });
+      
+      // Listen for channel cleared events
+      socket.on('kitcomm:channelCleared', (data) => {
+        if (data.channel === currentChannel) {
+          messagePaneEl.innerHTML = `
+            <div class="text-center text-zinc-500 py-8">
+              <div class="mb-2">🧹 Chat log cleared by ${escapeHtml(data.clearedBy)}</div>
+              <div class="text-xs text-zinc-600">${new Date(data.timestamp).toLocaleString()}</div>
+            </div>
+          `;
+          console.log(`📢 Channel ${data.channel} cleared by ${data.clearedBy}`);
+        }
       });
       
       // Listen for channel deletion
@@ -541,29 +578,82 @@
     });
     
     // Auto-resize textarea on input
-    chatInputEl.addEventListener('input', () => {
+    chatInputEl.addEventListener('input', async () => {
       autoResizeTextarea(chatInputEl);
     });
     
     // Allow sending with Enter key (Shift+Enter for new line)
     chatInputEl.addEventListener('keypress', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
+      if (role !== 'admin') {
+          alert('Only admins can clear chat logs.');
+          return;
+        }
+        
+        const confirmClear = confirm(`Are you sure you want to clear ALL messages in the "${currentChannel}" channel? This action cannot be undone.`);
+        if (!confirmClear) return;
+        
+        try {
+          const response = await fetch(`/api/kitcomm/channels/${encodeURIComponent(currentChannel)}/messages`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          e.preventDefault();
         chatFormEl.dispatchEvent(new Event('submit'));
       }
     });
+          if (response.ok) {
+            const result = await response.json();
+            // Clear the message pane immediately
+            messagePaneEl.innerHTML = '<div class="text-center text-zinc-500 py-8">Chat log cleared by admin.</div>';
+            console.log(`✅ Cleared ${result.deletedCount} messages from ${currentChannel}`);
+          } else {
+            const error = await response.json();
+            alert(`Error clearing log: ${error.error}`);
+          }
+        } catch (error) {
+          console.error('❌ Error clearing chat log:', error);
+          alert('Failed to clear chat log. Please try again.');
+        }
+      });
+    }
+    // Clear Log functionality (Admin only)
+    if (clearLogBtn) {
+      clearLogBtn.addEventListener('click', async () => {
+      if (role !== 'admin') {
+          alert('Only admins can clear chat logs.');
+          return;
+        }
+        
+        const confirmClear = confirm(`Are you sure you want to clear ALL messages in the "${currentChannel}" channel? This action cannot be undone.`);
+        if (!confirmClear) return;
+        
+        try {
+          const response = await fetch(`/api/kitcomm/channels/${encodeURIComponent(currentChannel)}/messages`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+            });
+                if (response.ok) {
+            const result = await response.json();
+            // Clear the message pane immediately
+            messagePaneEl.innerHTML = '<div class="text-center text-zinc-500 py-8">Chat log cleared by admin.</div>';
+            console.log(`✅ Cleared ${result.deletedCount} messages from ${currentChannel}`);
+          } else {
+            const error = await response.json();
+            alert(`Error clearing log: ${error.error}`);
+          }
+        } catch (error) {
+          console.error('❌ Error clearing chat log:', error);
+          alert('Failed to clear chat log. Please try again.');
+        }
+      });
+    }
     
-    // Toggle channel sidebar
-    document.getElementById('toggleSidebar').addEventListener('click', () => {
-      const sidebar = document.getElementById('channelSidebar');
-      sidebar.classList.toggle('hidden');
-    });
-    
-    // Toggle user sidebar
-    document.getElementById('toggleUsers').addEventListener('click', () => {
-      const userSidebar = document.getElementById('userSidebar');
-      userSidebar.classList.toggle('hidden');
-    });
     
     // Channel search functionality
     document.getElementById('searchChannels').addEventListener('input', function() {
