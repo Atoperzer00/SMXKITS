@@ -732,6 +732,44 @@
           const result = await response.json();
           console.log(`✅ Stream ${endpoint} successful:`, result);
           
+          // Push stream URL to SMXStream.html when going live
+          if (status === 'live') {
+            let streamUrl = null;
+            let streamType = 'live';
+            
+            if (window.currentUploadedVideo) {
+              streamUrl = window.currentUploadedVideo.url;
+              streamType = 'upload';
+            } else if (window.currentLocalVideo) {
+              streamUrl = window.currentLocalVideo.url;
+              streamType = 'local';
+            } else if (result.streamUrl) {
+              streamUrl = result.streamUrl;
+              streamType = 'live';
+            }
+            
+            if (streamUrl) {
+              // Store stream info for SMXStream.html
+              localStorage.setItem('currentStreamUrl', streamUrl);
+              localStorage.setItem('currentStreamType', streamType);
+              localStorage.setItem('currentStreamClass', currentClassId);
+              localStorage.setItem('streamStartTime', new Date().toISOString());
+              
+              console.log('🎯 Stream URL pushed to SMXStream:', streamUrl, 'Type:', streamType);
+              
+              // Optionally open SMXStream.html in a new tab
+              if (confirm('Stream is now live! Would you like to open the viewer in a new tab?')) {
+                window.open('/SMXStream.html', '_blank');
+              }
+            }
+          } else if (status === 'offline') {
+            // Clear stream info when stopping
+            localStorage.removeItem('currentStreamUrl');
+            localStorage.removeItem('currentStreamType');
+            localStorage.removeItem('currentStreamClass');
+            localStorage.removeItem('streamStartTime');
+          }
+          
           // Control video playback based on status
           if (window.currentUploadedVideo || window.currentLocalVideo) {
             const previewVideo = document.getElementById('previewVideo');
@@ -1081,18 +1119,30 @@
             originalName: file.name
           };
           
+          // Update the submitted files list with the uploaded video URL
+          const files = loadSubmittedFiles();
+          const existingFileIndex = files.findIndex(f => f.name === file.name);
+          if (existingFileIndex !== -1) {
+            // Update existing file with server URL
+            files[existingFileIndex].url = result.streamUrl;
+            files[existingFileIndex].uploaded = true;
+            files[existingFileIndex].serverFilename = result.filename;
+            saveSubmittedFiles(files);
+            displaySubmittedFiles(files);
+          }
+          
           // Clear local video reference
           window.currentLocalVideo = null;
           
           uploadStatus.textContent = `"${file.name}" ready to stream! Click "Go Live" to broadcast.`;
         }
 
-        // Clear after 8 seconds
+        // Clear status after 8 seconds but keep file info visible
         setTimeout(() => {
           uploadStatus.textContent = '';
           uploadStatus.className = 'upload-status';
           progressFill.style.width = '0';
-          hideFileInfo();
+          // Don't hide file info - keep it visible for user reference
         }, 8000);
       } catch (error) {
         console.error('Error uploading file:', error);
@@ -1513,6 +1563,7 @@
         const files = JSON.parse(localStorage.getItem(SUBMITTED_FILES_KEY) || '[]');
         console.log('📂 Loaded submitted files from localStorage:', files.length);
         displaySubmittedFiles(files);
+        updateFileDropStatus(files);
         return files;
       } catch (error) {
         console.error('❌ Error loading submitted files:', error);
@@ -1525,6 +1576,7 @@
       try {
         localStorage.setItem(SUBMITTED_FILES_KEY, JSON.stringify(files));
         console.log('💾 Saved submitted files to localStorage:', files.length);
+        updateFileDropStatus(files);
       } catch (error) {
         console.error('❌ Error saving submitted files:', error);
       }
@@ -1533,21 +1585,35 @@
     // Add a new submitted file
     function addSubmittedFile(fileData) {
       const files = loadSubmittedFiles();
-      const newFile = {
-        id: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-        name: fileData.name,
-        url: fileData.url,
-        size: fileData.size,
-        type: fileData.type,
-        timestamp: new Date().toISOString(),
-        originalFile: fileData.originalFile || null
-      };
       
-      files.unshift(newFile); // Add to beginning of array (most recent first)
+      // Check if file already exists (by name and size)
+      const existingIndex = files.findIndex(f => f.name === fileData.name && f.size === fileData.size);
+      if (existingIndex !== -1) {
+        console.log('📝 File already exists, updating:', fileData.name);
+        files[existingIndex] = {
+          ...files[existingIndex],
+          ...fileData,
+          timestamp: new Date().toISOString()
+        };
+      } else {
+        const newFile = {
+          id: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+          name: fileData.name,
+          url: fileData.url,
+          size: fileData.size,
+          type: fileData.type,
+          timestamp: new Date().toISOString(),
+          originalFile: fileData.originalFile || null,
+          uploaded: fileData.uploaded || false
+        };
+        
+        files.unshift(newFile); // Add to beginning of array (most recent first)
+        console.log('🟢 File added to submitted files:', newFile.name);
+      }
+      
       saveSubmittedFiles(files);
       displaySubmittedFiles(files);
-      console.log('🟢 File added to submitted files:', newFile.name);
-      return newFile;
+      return files[0];
     }
 
     // Delete a submitted file
@@ -1585,15 +1651,20 @@
       container.innerHTML = files.map(file => {
         const fileSize = file.size ? formatFileSize(file.size) : 'Unknown size';
         const timestamp = new Date(file.timestamp).toLocaleString();
+        const isUploaded = file.uploaded || false;
+        const statusText = isUploaded ? 'Uploaded to server' : 'Local file';
+        const statusColor = isUploaded ? 'var(--success)' : 'var(--text-secondary)';
         
         return `
           <div class="upload-item" data-file-id="${file.id}">
             <div style="flex: 1;">
               <div style="font-weight: 600; color: var(--text-main);">${file.name}</div>
               <div style="font-size: 0.8rem; color: var(--text-secondary);">${fileSize} • ${timestamp}</div>
+              <div style="font-size: 0.75rem; color: ${statusColor}; margin-top: 2px;">📁 ${statusText}</div>
             </div>
             <div style="display: flex; gap: 8px; align-items: center;">
               <button onclick="viewSubmittedFile('${file.id}')" style="background: var(--accent); color: white; border: none; border-radius: 4px; padding: 0.3em 0.6em; font-size: 0.8rem; cursor: pointer;">👁️ View</button>
+              <button onclick="streamSubmittedFile('${file.id}')" style="background: var(--success); color: white; border: none; border-radius: 4px; padding: 0.3em 0.6em; font-size: 0.8rem; cursor: pointer;">🎬 Stream</button>
               <button onclick="deleteSubmittedFile('${file.id}')" style="background: var(--error); color: white; border: none; border-radius: 4px; padding: 0.3em 0.6em; font-size: 0.8rem; cursor: pointer;">🗑️ Delete</button>
             </div>
           </div>
@@ -1621,12 +1692,22 @@
         videoOverlay.style.display = 'flex';
         videoReady.style.display = 'block';
         
-        // Update current video reference
-        window.currentLocalVideo = {
-          file: file.originalFile,
-          url: file.url,
-          name: file.name
-        };
+        // Update current video reference based on whether it's uploaded or local
+        if (file.uploaded) {
+          window.currentUploadedVideo = {
+            url: file.url,
+            filename: file.serverFilename,
+            originalName: file.name
+          };
+          window.currentLocalVideo = null;
+        } else {
+          window.currentLocalVideo = {
+            file: file.originalFile,
+            url: file.url,
+            name: file.name
+          };
+          window.currentUploadedVideo = null;
+        }
         
         // Update upload status
         const uploadStatus = document.getElementById('uploadStatus');
@@ -1641,6 +1722,30 @@
       }
     }
 
+    // Stream a submitted file directly
+    function streamSubmittedFile(fileId) {
+      const files = loadSubmittedFiles();
+      const file = files.find(f => f.id === fileId);
+      
+      if (file) {
+        console.log('🎬 Streaming submitted file:', file.name);
+        
+        // First load the file into the player
+        viewSubmittedFile(fileId);
+        
+        // Then trigger the streaming
+        setTimeout(() => {
+          if (file.uploaded) {
+            // File is already uploaded, can stream directly
+            setStatus('live');
+          } else {
+            // File needs to be uploaded first
+            alert('This file needs to be uploaded to the server first. Please click "View" to load it, then click "Upload to Server".');
+          }
+        }, 500);
+      }
+    }
+
     // Format file size helper
     function formatFileSize(bytes) {
       if (bytes === 0) return '0 Bytes';
@@ -1648,6 +1753,32 @@
       const sizes = ['Bytes', 'KB', 'MB', 'GB'];
       const i = Math.floor(Math.log(bytes) / Math.log(k));
       return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // Update file drop area status based on submitted files
+    function updateFileDropStatus(files) {
+      const fileDrop = document.getElementById('fileDrop');
+      const uploadStatus = document.getElementById('uploadStatus');
+      
+      if (!fileDrop) return;
+      
+      if (files.length > 0) {
+        const latestFile = files[0]; // Most recent file
+        const isUploaded = latestFile.uploaded || false;
+        
+        fileDrop.classList.add('has-file');
+        
+        if (!uploadStatus.textContent) { // Only update if no current status message
+          uploadStatus.textContent = `${files.length} file(s) available. Latest: "${latestFile.name}" ${isUploaded ? '(uploaded)' : '(local)'}`;
+          uploadStatus.className = 'upload-status info';
+        }
+      } else {
+        fileDrop.classList.remove('has-file');
+        if (!uploadStatus.textContent) {
+          uploadStatus.textContent = '';
+          uploadStatus.className = 'upload-status';
+        }
+      }
     }
 
     // Enhanced Go Live functionality
@@ -1679,6 +1810,8 @@
 
     // Enhanced file handling to add files to submitted list
     function enhancedShowFileInfo(file) {
+      console.log('🔄 Enhanced file handling for:', file.name);
+      
       // Call original showFileInfo
       showFileInfo(file);
       
@@ -1691,12 +1824,14 @@
         originalFile: file
       };
       
+      console.log('📁 Adding file to submitted files:', fileData.name);
       addSubmittedFile(fileData);
     }
 
     // Make functions globally accessible
     window.deleteSubmittedFile = deleteSubmittedFile;
     window.viewSubmittedFile = viewSubmittedFile;
+    window.streamSubmittedFile = streamSubmittedFile;
 
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', () => {

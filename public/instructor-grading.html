@@ -855,6 +855,121 @@
       box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.3);
     }
 
+    /* Submission Overlay Styles */
+    .submission-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+
+    .submission-overlay-content {
+      background: var(--card-gradient);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-hover);
+      position: relative;
+    }
+
+    .overlay-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      color: var(--text-primary);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .overlay-close:hover {
+      background: var(--qc-red);
+      border-color: var(--qc-red);
+      color: white;
+    }
+
+    .submission-details {
+      margin-bottom: 1.5rem;
+    }
+
+    .submission-details h3 {
+      color: var(--text-accent);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .detail-row:last-child {
+      border-bottom: none;
+    }
+
+    .detail-label {
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .detail-value {
+      color: var(--text-primary);
+    }
+
+    .file-preview {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+      text-align: center;
+    }
+
+    .file-icon-large {
+      font-size: 3rem;
+      color: var(--text-accent);
+      margin-bottom: 0.5rem;
+    }
+
+    .download-btn {
+      background: var(--accent-gradient);
+      border: none;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      margin-top: 1rem;
+      transition: var(--transition);
+    }
+
+    .download-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 167, 38, 0.3);
+    }
+
     /* Scrollbars */
     ::-webkit-scrollbar { width: 10px; background: #17181a; }
     ::-webkit-scrollbar-thumb { background: #22262b; border-radius: 6px; }
@@ -990,6 +1105,22 @@
     </div>
   </div>
 
+  <!-- Submission Overlay -->
+  <div id="submissionOverlay" class="submission-overlay" style="display: none;">
+    <div class="submission-overlay-content">
+      <button class="overlay-close" onclick="closeSubmissionOverlay()">
+        <i class="fas fa-times"></i>
+      </button>
+      
+      <div class="submission-details">
+        <h3><i class="fas fa-file-alt"></i> Submission Details</h3>
+        <div id="submissionDetailsContent">
+          <!-- Content will be populated by JavaScript -->
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
   <script>
     // Global state
@@ -1114,6 +1245,7 @@
       initializeGradingChart();
       setupFileDropZone();
       loadClasses();
+      loadSubmissions(); // Load submissions on page load
       
       // Initialize current scores
       window.currentScores = {};
@@ -1200,21 +1332,23 @@
     }
 
     function loadSubmissions() {
-      if (!currentExercise) return;
+      // Load both exercise submissions and file submissions
+      const exerciseSubmissions = currentExercise ? submissions.filter(sub => sub.exercise === currentExercise.id) : [];
+      const fileSubmissions = JSON.parse(localStorage.getItem('fileSubmissions') || '[]');
       
-      const exerciseSubmissions = submissions.filter(sub => sub.exercise === currentExercise.id);
+      const allSubmissions = [...exerciseSubmissions, ...fileSubmissions];
       const submissionsList = document.getElementById('submissionsList');
       
-      if (exerciseSubmissions.length === 0) {
+      if (allSubmissions.length === 0) {
         submissionsList.innerHTML = '<div style="padding: 20px; text-align: center; color: #888;">No submissions yet</div>';
         return;
       }
 
-      submissionsList.innerHTML = exerciseSubmissions.map(submission => `
-        <div class="submission-item" onclick="selectSubmission('${submission.id}')">
+      submissionsList.innerHTML = allSubmissions.map(submission => `
+        <div class="submission-item" onclick="openSubmissionOverlay('${submission.id}')">
           <div class="submission-info">
-            <div class="submission-student">${submission.student}</div>
-            <div class="submission-mission">${submission.mission}</div>
+            <div class="submission-student">${submission.studentName || submission.student}</div>
+            <div class="submission-mission">${submission.fileName || submission.mission || submission.exercise}</div>
           </div>
           <div class="submission-time">${new Date(submission.submittedAt).toLocaleTimeString()}</div>
         </div>
@@ -1225,6 +1359,131 @@
       // This function is now handled by loadStudentSubmission()
       console.log('Selected submission:', submissionId);
     }
+
+    // Submission overlay functions
+    function openSubmissionOverlay(submissionId) {
+      // Find the submission in both exercise submissions and file submissions
+      const exerciseSubmissions = currentExercise ? submissions.filter(sub => sub.exercise === currentExercise.id) : [];
+      const fileSubmissions = JSON.parse(localStorage.getItem('fileSubmissions') || '[]');
+      const allSubmissions = [...exerciseSubmissions, ...fileSubmissions];
+      
+      const submission = allSubmissions.find(sub => sub.id === submissionId);
+      
+      if (!submission) {
+        console.error('Submission not found:', submissionId);
+        return;
+      }
+
+      displaySubmissionDetails(submission);
+      document.getElementById('submissionOverlay').style.display = 'flex';
+    }
+
+    function closeSubmissionOverlay() {
+      document.getElementById('submissionOverlay').style.display = 'none';
+    }
+
+    function displaySubmissionDetails(submission) {
+      const content = document.getElementById('submissionDetailsContent');
+      
+      // Format file size if available
+      const fileSize = submission.fileSize ? formatFileSize(submission.fileSize) : 'Unknown';
+      
+      // Get file icon
+      const fileName = submission.fileName || submission.mission || 'Unknown file';
+      const fileIcon = getFileIcon(fileName);
+      
+      content.innerHTML = `
+        <div class="detail-row">
+          <span class="detail-label">Student:</span>
+          <span class="detail-value">${submission.studentName || submission.student}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">File Name:</span>
+          <span class="detail-value">${fileName}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">File Size:</span>
+          <span class="detail-value">${fileSize}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Submitted:</span>
+          <span class="detail-value">${new Date(submission.submittedAt).toLocaleString()}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Status:</span>
+          <span class="detail-value" style="color: ${submission.status === 'graded' ? 'var(--qc-green)' : 'var(--qc-yellow)'}">
+            ${submission.status || 'Pending'}
+          </span>
+        </div>
+        
+        <div class="file-preview">
+          <div class="file-icon-large">
+            <i class="${fileIcon}"></i>
+          </div>
+          <div style="font-weight: 600; margin-bottom: 0.5rem;">${fileName}</div>
+          <div style="color: var(--text-secondary); font-size: 0.9rem;">
+            ${submission.fileType || 'File type unknown'}
+          </div>
+          ${submission.fileData ? `
+            <button class="download-btn" onclick="downloadFile('${submission.id}')">
+              <i class="fas fa-download"></i> Open File
+            </button>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function getFileIcon(fileName) {
+      const extension = fileName.split('.').pop().toLowerCase();
+      const iconMap = {
+        'pdf': 'fas fa-file-pdf',
+        'doc': 'fas fa-file-word',
+        'docx': 'fas fa-file-word',
+        'txt': 'fas fa-file-alt',
+        'jpg': 'fas fa-file-image',
+        'jpeg': 'fas fa-file-image',
+        'png': 'fas fa-file-image',
+        'gif': 'fas fa-file-image',
+        'mp4': 'fas fa-file-video',
+        'mov': 'fas fa-file-video',
+        'avi': 'fas fa-file-video'
+      };
+      return iconMap[extension] || 'fas fa-file';
+    }
+
+    function downloadFile(submissionId) {
+      const fileSubmissions = JSON.parse(localStorage.getItem('fileSubmissions') || '[]');
+      const submission = fileSubmissions.find(sub => sub.id === submissionId);
+      
+      if (!submission || !submission.fileData) {
+        alert('File not available for download.');
+        return;
+      }
+
+      // Create a blob URL and trigger download
+      const blob = new Blob([submission.fileData], { type: submission.fileType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = submission.fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // Make functions globally accessible
+    window.openSubmissionOverlay = openSubmissionOverlay;
+    window.closeSubmissionOverlay = closeSubmissionOverlay;
+    window.downloadFile = downloadFile;
 
     // loadExistingGrade and resetGradingForm functions moved to Class and Student Management section
 

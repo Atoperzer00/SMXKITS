@@ -298,6 +298,120 @@
       background: var(--primary-gradient);
     }
 
+    /* File Submission System Styles */
+    .file-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+      transition: var(--transition);
+    }
+
+    .file-item:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--text-accent);
+    }
+
+    .file-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex: 1;
+    }
+
+    .file-icon {
+      font-size: 1.5rem;
+      color: var(--text-accent);
+      width: 24px;
+      text-align: center;
+    }
+
+    .file-details {
+      flex: 1;
+    }
+
+    .file-name {
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .file-size {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .file-remove {
+      background: var(--glass-bg);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #ef4444;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: var(--transition);
+    }
+
+    .file-remove:hover {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: #ef4444;
+    }
+
+    .student-dropdown {
+      box-shadow: var(--shadow-primary);
+    }
+
+    .student-option {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem;
+      cursor: pointer;
+      transition: var(--transition);
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .student-option:last-child {
+      border-bottom: none;
+    }
+
+    .student-option:hover {
+      background: var(--glass-bg);
+    }
+
+    .student-checkbox {
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--glass-border);
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+    }
+
+    .student-checkbox.checked {
+      background: var(--accent-gradient);
+      border-color: var(--text-accent);
+    }
+
+    .student-checkbox.checked::after {
+      content: '✓';
+      color: white;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+
+    #fileSubmissionCard.dragover {
+      border-color: var(--text-accent);
+      background: rgba(255, 167, 38, 0.1);
+      transform: scale(1.02);
+    }
+
     /* Responsive Design */
     @media (max-width: 768px) {
       .admin-layout {
@@ -325,6 +439,16 @@
       
       .tools-grid {
         grid-template-columns: 1fr;
+      }
+
+      .file-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+      }
+
+      .file-info {
+        width: 100%;
       }
     }
   </style>
@@ -429,25 +553,66 @@
           
 
 
-      <!-- Upload Vaults Section -->
+      <!-- File Submission System -->
       <section class="fade-in stagger-3">
         <h2 class="section-title">
           <i class="fas fa-cloud-upload-alt"></i>
-          Resource Upload Vaults
+          File Submission System
         </h2>
-        <div class="tools-grid">
-          <div class="tool-card" style="border: 2px dashed var(--glass-border); text-align: center;">
-            <div class="tool-icon"><i class="fas fa-file-upload"></i></div>
-            <h3 class="tool-title">Document Vault</h3>
-            <p class="tool-description">Upload mission documents, reports, and reference materials for team access.</p>
-            <input type="file" multiple accept=".pdf,.doc,.docx,.txt" style="margin-top: 1rem; padding: 0.5rem; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text-primary); width: 100%;">
+        
+        <!-- Combined File Drop Zone -->
+        <div id="fileSubmissionCard" class="tool-card" style="border: 2px dashed var(--glass-border); text-align: center; cursor: pointer; transition: var(--transition);">
+          <div class="tool-icon"><i class="fas fa-file-upload"></i></div>
+          <h3 class="tool-title">Drop Files Here</h3>
+          <p class="tool-description">Upload documents, images, videos, and other files for student submission.</p>
+          <div style="margin-top: 1rem; color: var(--text-secondary); font-size: 0.9rem;">
+            Supports: PDF, DOC, DOCX, TXT, JPG, PNG, GIF, MP4, MOV, AVI
+          </div>
+          <input type="file" id="fileInput" multiple accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.mp4,.mov,.avi" style="display: none;">
+        </div>
+
+        <!-- File List View (Hidden initially) -->
+        <div id="fileListView" class="tool-card" style="display: none; text-align: left;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3 class="tool-title" style="margin: 0;">
+              <i class="fas fa-list"></i> Files Ready for Submission
+            </h3>
+            <button id="addMoreFiles" style="background: var(--accent-gradient); border: none; color: white; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem;">
+              <i class="fas fa-plus"></i> Add More Files
+            </button>
           </div>
           
-          <div class="tool-card" style="border: 2px dashed var(--glass-border); text-align: center;">
-            <div class="tool-icon"><i class="fas fa-images"></i></div>
-            <h3 class="tool-title">Media Vault</h3>
-            <p class="tool-description">Upload images, videos, and multimedia resources for training and operations.</p>
-            <input type="file" multiple accept=".jpg,.jpeg,.png,.gif,.mp4,.mov,.avi" style="margin-top: 1rem; padding: 0.5rem; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text-primary); width: 100%;">
+          <div id="filesList" style="margin-bottom: 1.5rem;">
+            <!-- Files will be listed here -->
+          </div>
+          
+          <div style="display: flex; gap: 1rem; align-items: flex-start; margin-bottom: 1.5rem;">
+            <div style="flex: 1;">
+              <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-accent);">
+                <i class="fas fa-users"></i> Select Students:
+              </label>
+              <div class="student-dropdown-container" style="position: relative;">
+                <button id="studentDropdownBtn" style="width: 100%; padding: 0.75rem; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text-primary); text-align: left; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                  <span>Select students...</span>
+                  <i class="fas fa-chevron-down"></i>
+                </button>
+                <div id="studentDropdown" class="student-dropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: var(--card-gradient); border: 1px solid var(--glass-border); border-radius: 8px; max-height: 200px; overflow-y: auto; z-index: 1000; margin-top: 4px;">
+                  <!-- Students will be populated here -->
+                </div>
+              </div>
+              <div id="selectedStudentsDisplay" style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">
+                No students selected
+              </div>
+            </div>
+          </div>
+          
+          <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+            <button id="cancelSubmission" style="background: var(--glass-bg); border: 1px solid var(--glass-border); color: var(--text-primary); padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer;">
+              <i class="fas fa-times"></i> Cancel
+            </button>
+            <button id="submitFiles" style="background: var(--primary-gradient); border: none; color: white; padding: 0.75rem 2rem; border-radius: 8px; cursor: pointer; font-weight: 600;">
+              <i class="fas fa-paper-plane"></i> Submit to Grading
+            </button>
           </div>
         </div>
       </section>
@@ -455,6 +620,11 @@
   </div>
 
   <script>
+    // Global state
+    let uploadedFiles = [];
+    let selectedStudents = [];
+    let classStudents = [];
+
     function openLink(url, name) {
       console.log('Opening link:', name, 'URL:', url);
       try {
@@ -504,102 +674,275 @@
       localStorage.removeItem('classId');
       window.location.replace('/login.html');
     }
-    
-    function handleFileDrop(event) {
-      event.preventDefault();
-      const files = event.dataTransfer.files;
-      const fileList = [];
 
-      for (const file of files) {
-        fileList.push(file);
-      }
-
-      // Store files temporarily
-      localStorage.setItem('droppedFiles', JSON.stringify(fileList));
-      alert('Files have been added. Please click submit to proceed.');
+    // File handling functions
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
-    function handleFileSubmit() {
-      const storedFiles = JSON.parse(localStorage.getItem('droppedFiles')) || [];
+    function getFileIcon(fileName) {
+      const extension = fileName.split('.').pop().toLowerCase();
+      const iconMap = {
+        'pdf': 'fas fa-file-pdf',
+        'doc': 'fas fa-file-word',
+        'docx': 'fas fa-file-word',
+        'txt': 'fas fa-file-alt',
+        'jpg': 'fas fa-file-image',
+        'jpeg': 'fas fa-file-image',
+        'png': 'fas fa-file-image',
+        'gif': 'fas fa-file-image',
+        'mp4': 'fas fa-file-video',
+        'mov': 'fas fa-file-video',
+        'avi': 'fas fa-file-video'
+      };
+      return iconMap[extension] || 'fas fa-file';
+    }
 
-      if (storedFiles.length === 0) {
-        alert('No files to submit. Please drop files first.');
+    function handleFiles(files) {
+      for (let file of files) {
+        if (!uploadedFiles.find(f => f.name === file.name && f.size === file.size)) {
+          uploadedFiles.push(file);
+        }
+      }
+      updateFilesList();
+      showFileListView();
+    }
+
+    function updateFilesList() {
+      const filesList = document.getElementById('filesList');
+      if (uploadedFiles.length === 0) {
+        filesList.innerHTML = '<div style="text-align: center; color: var(--text-secondary); padding: 1rem;">No files selected</div>';
         return;
       }
 
-      const submissionsList = document.getElementById('submissionsList');
-
-      storedFiles.forEach((file, index) => {
-        const submissionItem = document.createElement('div');
-        submissionItem.className = 'submission-item';
-        submissionItem.onclick = () => selectSubmission(`sub_${Date.now()}_${index}`);
-
-        const submissionInfo = document.createElement('div');
-        submissionInfo.className = 'submission-info';
-
-        const submissionStudent = document.createElement('div');
-        submissionStudent.className = 'submission-student';
-        submissionStudent.textContent = file.name;
-
-        const submissionMission = document.createElement('div');
-        submissionMission.className = 'submission-mission';
-        submissionMission.textContent = 'Mission Upload';
-
-        submissionInfo.appendChild(submissionStudent);
-        submissionInfo.appendChild(submissionMission);
-
-        const submissionTime = document.createElement('div');
-        submissionTime.className = 'submission-time';
-        submissionTime.textContent = new Date().toLocaleTimeString();
-
-        submissionItem.appendChild(submissionInfo);
-        submissionItem.appendChild(submissionTime);
-
-        submissionsList.appendChild(submissionItem);
-      });
-
-      // Clear temporary storage
-      localStorage.removeItem('droppedFiles');
-      alert('Files submitted successfully.');
+      filesList.innerHTML = uploadedFiles.map((file, index) => `
+        <div class="file-item">
+          <div class="file-info">
+            <i class="${getFileIcon(file.name)} file-icon"></i>
+            <div class="file-details">
+              <div class="file-name">${file.name}</div>
+              <div class="file-size">${formatFileSize(file.size)}</div>
+            </div>
+          </div>
+          <button class="file-remove" onclick="removeFile(${index})">
+            <i class="fas fa-times"></i> Remove
+          </button>
+        </div>
+      `).join('');
     }
 
+    function removeFile(index) {
+      uploadedFiles.splice(index, 1);
+      updateFilesList();
+      if (uploadedFiles.length === 0) {
+        showFileDropView();
+      }
+    }
+
+    function showFileListView() {
+      document.getElementById('fileSubmissionCard').style.display = 'none';
+      document.getElementById('fileListView').style.display = 'block';
+    }
+
+    function showFileDropView() {
+      document.getElementById('fileSubmissionCard').style.display = 'block';
+      document.getElementById('fileListView').style.display = 'none';
+      uploadedFiles = [];
+      selectedStudents = [];
+      updateSelectedStudentsDisplay();
+    }
+
+    // Student selection functions
+    async function loadClassStudents() {
+      try {
+        const token = localStorage.getItem('token');
+        const classId = localStorage.getItem('classId');
+        
+        if (!token || !classId) {
+          console.warn('No token or class ID found');
+          return;
+        }
+
+        const response = await fetch(`/api/classes/${classId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const classData = await response.json();
+          classStudents = classData.students || [];
+          updateStudentDropdown();
+        } else {
+          console.error('Failed to load class students');
+        }
+      } catch (error) {
+        console.error('Error loading class students:', error);
+      }
+    }
+
+    function updateStudentDropdown() {
+      const dropdown = document.getElementById('studentDropdown');
+      if (classStudents.length === 0) {
+        dropdown.innerHTML = '<div style="padding: 1rem; text-align: center; color: var(--text-secondary);">No students found in this class</div>';
+        return;
+      }
+
+      dropdown.innerHTML = classStudents.map(student => `
+        <div class="student-option" onclick="toggleStudent('${student._id}', '${student.username}')">
+          <div class="student-checkbox ${selectedStudents.includes(student._id) ? 'checked' : ''}"></div>
+          <span>${student.username}</span>
+        </div>
+      `).join('');
+    }
+
+    function toggleStudent(studentId, studentName) {
+      const index = selectedStudents.indexOf(studentId);
+      if (index > -1) {
+        selectedStudents.splice(index, 1);
+      } else {
+        selectedStudents.push(studentId);
+      }
+      updateStudentDropdown();
+      updateSelectedStudentsDisplay();
+    }
+
+    function updateSelectedStudentsDisplay() {
+      const display = document.getElementById('selectedStudentsDisplay');
+      if (selectedStudents.length === 0) {
+        display.textContent = 'No students selected';
+        display.style.color = 'var(--text-secondary)';
+      } else {
+        const selectedNames = selectedStudents.map(id => {
+          const student = classStudents.find(s => s._id === id);
+          return student ? student.username : 'Unknown';
+        });
+        display.textContent = `${selectedStudents.length} student(s) selected: ${selectedNames.join(', ')}`;
+        display.style.color = 'var(--text-accent)';
+      }
+    }
+
+    // Submission function
+    async function submitFilesToGrading() {
+      if (uploadedFiles.length === 0) {
+        alert('Please select files to submit.');
+        return;
+      }
+
+      if (selectedStudents.length === 0) {
+        alert('Please select at least one student.');
+        return;
+      }
+
+      try {
+        // Create submissions for instructor grading
+        const submissions = selectedStudents.map(studentId => {
+          const student = classStudents.find(s => s._id === studentId);
+          return uploadedFiles.map(file => ({
+            id: `sub_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            studentId: studentId,
+            studentName: student ? student.username : 'Unknown',
+            fileName: file.name,
+            fileSize: file.size,
+            fileType: file.type,
+            fileData: file, // Store file object for now
+            submittedAt: new Date().toISOString(),
+            status: 'pending',
+            exercise: 'File Submission'
+          }));
+        }).flat();
+
+        // Store submissions in localStorage for instructor grading
+        const existingSubmissions = JSON.parse(localStorage.getItem('fileSubmissions') || '[]');
+        existingSubmissions.push(...submissions);
+        localStorage.setItem('fileSubmissions', JSON.stringify(existingSubmissions));
+
+        alert(`Successfully submitted ${uploadedFiles.length} file(s) for ${selectedStudents.length} student(s) to instructor grading.`);
+        
+        // Reset the form
+        showFileDropView();
+        
+        // Optionally open instructor grading
+        const openGrading = confirm('Would you like to open the instructor grading page now?');
+        if (openGrading) {
+          openInstructorGrading();
+        }
+
+      } catch (error) {
+        console.error('Error submitting files:', error);
+        alert('Error submitting files. Please try again.');
+      }
+    }
+
+    // Event listeners
     document.addEventListener('DOMContentLoaded', function() {
-      const documentVault = document.querySelector('.tool-card:nth-child(1)');
-      const mediaVault = document.querySelector('.tool-card:nth-child(2)');
+      // Load class students
+      loadClassStudents();
 
-      [documentVault, mediaVault].forEach(vault => {
-        if (vault) {
-          vault.addEventListener('dragover', function(event) {
-            event.preventDefault();
-          });
+      // File drop zone
+      const fileSubmissionCard = document.getElementById('fileSubmissionCard');
+      const fileInput = document.getElementById('fileInput');
 
-          vault.addEventListener('drop', handleFileDrop);
+      fileSubmissionCard.addEventListener('click', () => {
+        fileInput.click();
+      });
 
-          const submitButton = document.createElement('button');
-          submitButton.textContent = 'Submit Files';
-          submitButton.style = 'margin-top: 1rem; padding: 0.5rem 1rem; background: var(--accent-gradient); border: none; color: white; border-radius: 5px; cursor: pointer;';
-          submitButton.addEventListener('click', handleFileSubmit);
+      fileSubmissionCard.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        fileSubmissionCard.classList.add('dragover');
+      });
 
-          vault.appendChild(submitButton);
+      fileSubmissionCard.addEventListener('dragleave', (e) => {
+        if (!fileSubmissionCard.contains(e.relatedTarget)) {
+          fileSubmissionCard.classList.remove('dragover');
         }
       });
+
+      fileSubmissionCard.addEventListener('drop', (e) => {
+        e.preventDefault();
+        fileSubmissionCard.classList.remove('dragover');
+        handleFiles(e.dataTransfer.files);
+      });
+
+      fileInput.addEventListener('change', (e) => {
+        handleFiles(e.target.files);
+      });
+
+      // Add more files button
+      document.getElementById('addMoreFiles').addEventListener('click', () => {
+        fileInput.click();
+      });
+
+      // Student dropdown
+      document.getElementById('studentDropdownBtn').addEventListener('click', () => {
+        const dropdown = document.getElementById('studentDropdown');
+        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+      });
+
+      // Close dropdown when clicking outside
+      document.addEventListener('click', (e) => {
+        const dropdown = document.getElementById('studentDropdown');
+        const btn = document.getElementById('studentDropdownBtn');
+        if (!dropdown.contains(e.target) && !btn.contains(e.target)) {
+          dropdown.style.display = 'none';
+        }
+      });
+
+      // Action buttons
+      document.getElementById('cancelSubmission').addEventListener('click', showFileDropView);
+      document.getElementById('submitFiles').addEventListener('click', submitFilesToGrading);
     });
+
+    // Make functions globally accessible
+    window.removeFile = removeFile;
+    window.toggleStudent = toggleStudent;
     
     // Debug: Test if JavaScript is working
     console.log('Mission Links JavaScript loaded successfully');
-    
-    // Add click event listeners as backup
-    document.addEventListener('DOMContentLoaded', function() {
-      console.log('DOM loaded, setting up event listeners');
-      const toolCards = document.querySelectorAll('.tool-card');
-      console.log('Found', toolCards.length, 'tool cards');
-      
-      toolCards.forEach((card, index) => {
-        card.addEventListener('click', function(e) {
-          console.log('Card clicked:', index, e.target);
-        });
-      });
-    });
   </script>
 </body>
 </html>

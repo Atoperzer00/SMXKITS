@@ -57,11 +57,17 @@
       position: relative;
       height: 100px;
       background: var(--track);
+      cursor: pointer;
+      user-select: none;
     }
     #timelineCanvas {
       width: 100%;
       height: 100%;
       display: block;
+      cursor: crosshair;
+    }
+    #timelineCanvas:active {
+      cursor: grabbing;
     }
     #hoverLabel {
       position: absolute;
@@ -79,10 +85,15 @@
 </head>
 <body>
   <div id="playerContainer">
-    <video id="video" src="Drone.mp4" preload="auto"></video>
+    <video id="video" preload="auto" crossorigin="anonymous"></video>
     <div id="controls">
       <button id="playBtn" class="ctrl-btn">▶️</button>
-      <button id="liveBtn" class="ctrl-btn" style="display: none;">LIVE</button>
+      <button id="rewindBtn" class="ctrl-btn">⏪</button>
+      <button id="fastForwardBtn" class="ctrl-btn">⏩</button>
+      <span id="timeDisplay" class="ctrl-btn" style="background: transparent; cursor: default;">00:00 / 00:00</span>
+      <span id="connectionStatus" class="ctrl-btn" style="background: transparent; cursor: default; color: #888;">●</span>
+      <button id="liveBtn" class="ctrl-btn" style="display: none;">🔴 LIVE</button>
+      <button id="fullscreenBtn" class="ctrl-btn">⛶</button>
     </div>
     <div id="timelineWrapper">
       <canvas id="timelineCanvas"></canvas>
@@ -93,7 +104,12 @@
   <script>
     const video = document.getElementById('video');
     const playBtn = document.getElementById('playBtn');
+    const rewindBtn = document.getElementById('rewindBtn');
+    const fastForwardBtn = document.getElementById('fastForwardBtn');
     const liveBtn = document.getElementById('liveBtn');
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    const timeDisplay = document.getElementById('timeDisplay');
+    const connectionStatus = document.getElementById('connectionStatus');
     const timeline = document.getElementById('timelineCanvas');
     const ctx = timeline.getContext('2d');
     const hoverLabel = document.getElementById('hoverLabel');
@@ -103,18 +119,102 @@
     const tickPx = 50;
     let dragging = false;
     let dragOffset = 0;
+    let isLiveStream = false;
+    let streamUrl = null;
 
+    // Initialize stream connection
+    function initializeStream() {
+      // Check for stream URL from localStorage (set by Stream Mode)
+      const storedStreamUrl = localStorage.getItem('currentStreamUrl');
+      const storedStreamType = localStorage.getItem('currentStreamType');
+      
+      if (storedStreamUrl) {
+        streamUrl = storedStreamUrl;
+        isLiveStream = storedStreamType === 'live';
+        video.src = streamUrl;
+        console.log('Loading stream:', streamUrl, 'Type:', storedStreamType);
+      } else {
+        // Fallback to default video
+        video.src = 'Drone.mp4';
+      }
+    }
+
+    // Control button handlers
     playBtn.onclick = () => {
       if (video.paused) {
-        video.play(); playBtn.textContent = "⏸️";
+        video.play(); 
+        playBtn.textContent = "⏸️";
       } else {
-        video.pause(); playBtn.textContent = "▶️";
+        video.pause(); 
+        playBtn.textContent = "▶️";
       }
     };
 
-    liveBtn.onclick = () => {
-      video.currentTime = video.duration - 0.05;
+    // Enhanced rewind functionality
+    rewindBtn.onclick = () => {
+      video.currentTime = Math.max(0, video.currentTime - 10);
     };
+
+    // Enhanced fast forward functionality
+    fastForwardBtn.onclick = () => {
+      video.currentTime = Math.min(video.duration, video.currentTime + 10);
+    };
+
+    liveBtn.onclick = () => {
+      if (isLiveStream) {
+        // For live streams, reload to get latest
+        video.load();
+      } else {
+        // For recorded videos, go to end
+        video.currentTime = video.duration - 0.05;
+      }
+    };
+
+    // Fullscreen functionality
+    fullscreenBtn.onclick = () => {
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      } else {
+        video.requestFullscreen();
+      }
+    };
+
+    // Update time display
+    function updateTimeDisplay() {
+      const current = formatTime(video.currentTime);
+      const duration = formatTime(video.duration || 0);
+      timeDisplay.textContent = `${current} / ${duration}`;
+    }
+
+    // Update connection status
+    function updateConnectionStatus() {
+      if (video.readyState >= 2) {
+        connectionStatus.textContent = isLiveStream ? '🔴 LIVE' : '● Connected';
+        connectionStatus.style.color = isLiveStream ? '#e91e63' : '#4CAF50';
+      } else if (video.networkState === 2) {
+        connectionStatus.textContent = '⚠ Loading';
+        connectionStatus.style.color = '#FF9800';
+      } else {
+        connectionStatus.textContent = '● Offline';
+        connectionStatus.style.color = '#888';
+      }
+    }
+
+    // Enhanced timeline click-to-seek
+    timeline.addEventListener("click", e => {
+      if (dragging) return;
+      
+      const rect = timeline.getBoundingClientRect();
+      const centerX = rect.width / 2;
+      const clickX = e.clientX - rect.left;
+      const deltaX = clickX - centerX;
+      const scale = zoomLevels[zoomIndex];
+      const deltaTime = (deltaX / tickPx) * scale;
+      const newTime = Math.min(video.duration, Math.max(0, video.currentTime + deltaTime));
+      
+      video.currentTime = newTime;
+      e.preventDefault();
+    });
 
     function formatTime(sec) {
       sec = Math.max(0, sec);
@@ -176,20 +276,33 @@
       requestAnimationFrame(drawTimeline);
     }
 
-    // Drag Playhead
+    // Enhanced Drag Playhead functionality
     timeline.addEventListener("mousedown", e => {
       dragging = true;
       const rect = timeline.getBoundingClientRect();
-      dragOffset = e.clientX - rect.width / 2;
+      const centerX = rect.width / 2;
+      dragOffset = e.clientX - rect.left - centerX;
+      
+      // Immediate seek on click
+      const scale = zoomLevels[zoomIndex];
+      const deltaTime = (dragOffset / tickPx) * scale;
+      const newTime = Math.min(video.duration, Math.max(0, video.currentTime + deltaTime));
+      video.currentTime = newTime;
+      
+      e.preventDefault();
     });
 
     window.addEventListener("mousemove", e => {
       if (!dragging) return;
       const rect = timeline.getBoundingClientRect();
-      const delta = e.clientX - rect.width / 2;
+      const centerX = rect.width / 2;
+      const currentX = e.clientX - rect.left;
+      const delta = currentX - centerX;
       const scale = zoomLevels[zoomIndex];
       const deltaTime = (delta / tickPx) * scale;
-      video.currentTime = Math.min(video.duration, Math.max(0, video.currentTime + deltaTime));
+      const newTime = Math.min(video.duration, Math.max(0, video.currentTime + deltaTime));
+      video.currentTime = newTime;
+      dragOffset = delta;
     });
 
     window.addEventListener("mouseup", () => {
@@ -225,7 +338,98 @@
       liveBtn.style.display = atLive ? 'none' : 'inline-block';
     }, 300);
 
-    video.addEventListener("loadedmetadata", () => drawTimeline());
+    // Video event listeners
+    video.addEventListener("loadedmetadata", () => {
+      drawTimeline();
+      updateTimeDisplay();
+      updateConnectionStatus();
+    });
+
+    video.addEventListener("timeupdate", () => {
+      updateTimeDisplay();
+    });
+
+    video.addEventListener("loadstart", () => {
+      updateConnectionStatus();
+    });
+
+    video.addEventListener("canplay", () => {
+      updateConnectionStatus();
+    });
+
+    video.addEventListener("waiting", () => {
+      connectionStatus.textContent = '⏳ Buffering';
+      connectionStatus.style.color = '#FF9800';
+    });
+
+    video.addEventListener("playing", () => {
+      updateConnectionStatus();
+    });
+
+    video.addEventListener("ended", () => {
+      playBtn.textContent = "▶️";
+    });
+
+    video.addEventListener("error", (e) => {
+      connectionStatus.textContent = '❌ Error';
+      connectionStatus.style.color = '#f44336';
+      console.error('Video error:', e);
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener("keydown", (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      
+      switch(e.code) {
+        case 'Space':
+          e.preventDefault();
+          playBtn.click();
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          video.currentTime = Math.max(0, video.currentTime - (e.shiftKey ? 30 : 5));
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          video.currentTime = Math.min(video.duration, video.currentTime + (e.shiftKey ? 30 : 5));
+          break;
+        case 'KeyF':
+          e.preventDefault();
+          fullscreenBtn.click();
+          break;
+        case 'KeyL':
+          e.preventDefault();
+          if (liveBtn.style.display !== 'none') liveBtn.click();
+          break;
+      }
+    });
+
+    // Click to play/pause video
+    video.addEventListener('click', () => {
+      playBtn.click();
+    });
+
+    // Periodic check for stream updates
+    setInterval(() => {
+      const newStreamUrl = localStorage.getItem('currentStreamUrl');
+      if (newStreamUrl && newStreamUrl !== streamUrl) {
+        console.log('🔄 Stream URL updated, reloading:', newStreamUrl);
+        streamUrl = newStreamUrl;
+        isLiveStream = localStorage.getItem('currentStreamType') === 'live';
+        video.src = streamUrl;
+        video.load();
+      }
+      updateConnectionStatus();
+    }, 2000);
+
+    // Initialize the stream
+    initializeStream();
+    
+    // Start the timeline drawing loop
+    drawTimeline();
+    
+    // Initial connection status
+    updateConnectionStatus();
   </script>
 </body>
 </html>

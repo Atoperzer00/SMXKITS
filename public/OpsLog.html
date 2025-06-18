@@ -917,7 +917,7 @@
         
         <div class="form-group" style="margin-bottom: 12px;">
           <label>Asset Name</label>
-          <input type="text" name="asset" required/>
+          <input type="text" name="asset" required oninput="autoGrow(this)"/>
         </div>
         
         <div class="form-group" style="margin-bottom: 12px;">
@@ -929,17 +929,17 @@
         
         <div class="form-group" style="margin-bottom: 12px;">
           <label>Mission / Operation</label>
-          <input type="text" name="operation" value="OBJ" required/>
+          <input type="text" name="operation" value="OBJ" required oninput="autoGrow(this)"/>
         </div>
         
         <div class="form-group" style="margin-bottom: 12px;">
           <label>Country Code</label>
-          <input type="text" name="countryCode" maxlength="3"/>
+          <input type="text" name="countryCode" maxlength="3" oninput="autoGrow(this)"/>
         </div>
         
         <div class="form-group" style="margin-bottom: 12px;">
           <label>Team Name</label>
-          <input type="text" name="team"/>
+          <input type="text" name="team" oninput="autoGrow(this)"/>
         </div>
         
         <div class="form-group" style="margin-bottom: 12px;">
@@ -1018,6 +1018,16 @@
         <div class="form-group" style="margin-bottom: 12px;">
           <label>Vehicles</label>
           <input type="number" name="vehicles" min="0" value="0" style="text-align: center;"/>
+        </div>
+        
+        <!-- Target Status field -->
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Target Status</label>
+          <select name="targetStatus" required>
+            <option value="">Select Status</option>
+            <option value="ON TARGET">ON TARGET</option>
+            <option value="OFF TARGET">OFF TARGET</option>
+          </select>
         </div>
         
         <button type="submit" class="submit-btn" style="width: 100%;">Submit</button>
@@ -1207,10 +1217,29 @@
     }
   }
   
-  // Helper for growing textareas
+  // Helper for growing textareas and text inputs
   function autoGrow(el) {
-    el.style.height = '38px';
-    el.style.height = (el.scrollHeight)+'px';
+    if (el.tagName.toLowerCase() === 'textarea') {
+      el.style.height = '38px';
+      el.style.height = (el.scrollHeight)+'px';
+    } else if (el.tagName.toLowerCase() === 'input' && el.type === 'text') {
+      // For text inputs, expand width based on content
+      const tempSpan = document.createElement('span');
+      tempSpan.style.visibility = 'hidden';
+      tempSpan.style.position = 'absolute';
+      tempSpan.style.fontSize = window.getComputedStyle(el).fontSize;
+      tempSpan.style.fontFamily = window.getComputedStyle(el).fontFamily;
+      tempSpan.style.padding = window.getComputedStyle(el).padding;
+      tempSpan.textContent = el.value || el.placeholder;
+      document.body.appendChild(tempSpan);
+      
+      const minWidth = 150; // Minimum width
+      const maxWidth = 400; // Maximum width
+      const contentWidth = tempSpan.offsetWidth + 20; // Add some padding
+      
+      el.style.width = Math.min(Math.max(contentWidth, minWidth), maxWidth) + 'px';
+      document.body.removeChild(tempSpan);
+    }
   }
   
   // Format SLANT input to #/#/# pattern
@@ -1633,7 +1662,8 @@
             <span class="bubble-time">${data.zulu ? data.zulu + 'Z' : '-'}</span>
           </div>
           <span><b>MGRS:</b> <span style="letter-spacing: 0.5px; font-size: 1.05em;">${data.mgrs || '-'}</span></span> 
-          <span><b>S:</b> ${data.slant || '-'} &nbsp; <b>VIC:</b> ${data.vehicles || '0'}</span> 
+          <span><b>S:</b> ${data.slant || '-'} &nbsp; <b>VIC:</b> ${data.vehicles || '0'}</span>
+          ${data.targetStatus ? `<div style="margin-top: 8px; padding: 4px 8px; border-radius: 6px; font-size: 0.9em; font-weight: bold; text-align: center; ${data.targetStatus === 'ON TARGET' ? 'background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3);' : 'background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);'}">${data.targetStatus}</div>` : ''}
         </div>
       `;
       

@@ -30,6 +30,16 @@
     .message-appear {
       animation: fadeIn 0.3s ease;
     }
+    
+    /* Auto-resizing textarea styles */
+    #chatInput {
+      transition: height 0.1s ease;
+      line-height: 1.4;
+    }
+    
+    #chatInput:focus {
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+    }
   </style>
 </head>
 <body class="h-screen w-screen bg-zinc-900 text-zinc-100 flex">
@@ -116,9 +126,9 @@
         <button id="attachButton" class="p-2 bg-zinc-700 rounded-md hover:bg-zinc-600 text-zinc-300" title="Attach File">
           📎
         </button>
-        <form id="chatForm" class="flex-1 flex gap-3">
-          <input type="text" id="chatInput" class="flex-1 bg-zinc-700 rounded-md py-2 px-3 text-sm focus:outline-none" placeholder="Type your message…" autocomplete="off" />
-          <button type="submit" class="bg-blue-600 hover:bg-blue-500 px-4 rounded-md text-sm">Send</button>
+        <form id="chatForm" class="flex-1 flex gap-3 items-end">
+          <textarea id="chatInput" class="flex-1 bg-zinc-700 rounded-md py-2 px-3 text-sm focus:outline-none resize-none overflow-hidden min-h-[2.5rem] max-h-32" placeholder="Type your message…" autocomplete="off" rows="1"></textarea>
+          <button type="submit" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-md text-sm">Send</button>
         </form>
         <input type="file" id="fileInput" class="hidden" />
       </div>
@@ -507,6 +517,16 @@
       }
     }
     
+    // ===== Auto-resize textarea function =====
+    function autoResizeTextarea(textarea) {
+      // Reset height to auto to get the correct scrollHeight
+      textarea.style.height = 'auto';
+      
+      // Calculate the new height based on content
+      const newHeight = Math.min(textarea.scrollHeight, 128); // Max height of 128px (8rem)
+      textarea.style.height = newHeight + 'px';
+    }
+    
     // ===== Form Handling =====
     chatFormEl.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -514,10 +534,18 @@
       
       await sendMessage(content);
       chatInputEl.value = '';
+      
+      // Reset textarea height after clearing
+      autoResizeTextarea(chatInputEl);
       chatInputEl.focus();
     });
     
-    // Allow sending with Enter key
+    // Auto-resize textarea on input
+    chatInputEl.addEventListener('input', () => {
+      autoResizeTextarea(chatInputEl);
+    });
+    
+    // Allow sending with Enter key (Shift+Enter for new line)
     chatInputEl.addEventListener('keypress', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -577,6 +605,9 @@
       fetchChannels();
       initSocket();
       updateUserList();
+      
+      // Initialize textarea height
+      autoResizeTextarea(chatInputEl);
       
       // Auto-focus chat input
       setTimeout(() => chatInputEl.focus(), 500);
