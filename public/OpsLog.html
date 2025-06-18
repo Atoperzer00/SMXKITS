@@ -950,8 +950,8 @@
           <div class="form-group-with-refresh-and-lock">
             <div class="form-group">
               <label>Zulu Time</label>
-              <input type="text" name="zulu" required placeholder="HHMM" pattern="[0-9]{4}" maxlength="4" 
-                    oninput="this.value = this.value.replace(/[^0-9]/g, '');"/>
+              <input type="text" name="zulu" required placeholder="HH:MM" pattern="[0-9]{2}:[0-9]{2}" maxlength="5" 
+                    oninput="this.value = this.value.replace(/[^0-9:]/g, '');"/>
             </div>
             <button type="button" class="refresh-btn" title="Update to current time" onclick="updateZuluTime(this)">🔄</button>
             <input type="checkbox" class="lock-checkbox" title="Lock this field">
@@ -1101,7 +1101,7 @@
         <div class="form-group-with-refresh-and-lock" style="margin-bottom: 12px;">
           <div class="form-group">
             <label>Zulu Time</label>
-            <input type="text" name="zulu" required placeholder="HHMM" pattern="[0-9]{4}" maxlength="4" oninput="this.value = this.value.replace(/[^0-9]/g, '');"/>
+            <input type="text" name="zulu" required placeholder="HH:MM" pattern="[0-9]{2}:[0-9]{2}" maxlength="5" oninput="this.value = this.value.replace(/[^0-9:]/g, '');"/>
           </div>
           <button type="button" class="refresh-btn" title="Update to current time" onclick="updateZuluTime(this)">🔄</button>
           <input type="checkbox" class="lock-checkbox" title="Lock this field">
@@ -1588,9 +1588,9 @@
       createBubble(log, false);
       
       // Store locked field values for future use
-      const lockCheckboxes = form.querySelectorAll('.lock-checkbox');
+      const lockCheckboxes2 = form.querySelectorAll('.lock-checkbox');
       const lockedValues = {};
-      lockCheckboxes.forEach((checkbox) => {
+      lockCheckboxes2.forEach((checkbox) => {
         if (checkbox.checked) {
           const formGroup = checkbox.closest('.form-group-with-lock, .form-group-with-refresh-and-lock');
           if (formGroup) {
@@ -2650,28 +2650,44 @@
         e.stopPropagation();
         console.log("✅ Grading Clicked");
         goToGrading();
+      }],
+      ['viewHistoryBtn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log("✅ View History Clicked");
+        if (this.disabled) return;
+        
+        const calloutIds = Object.keys(callouts);
+        if (calloutIds.length > 0) {
+          const mostRecentCalloutId = calloutIds[0];
+          if (typeof calloutHistory === 'function') calloutHistory(mostRecentCalloutId);
+        } else {
+          alert('No callout history available');
+        }
       }]
     ];
+    
+    // Proper button binding function that prevents duplicates
+    function bind(id, fn) {
+      const el = document.getElementById(id);
+      if (el && !el.dataset.bound) {
+        el.addEventListener("click", fn);
+        el.dataset.bound = "true";
+        console.log(`🟢 Bound: ${id}`);
+      }
+    }
     
     // Bind all button event handlers
     console.log(`📋 Attempting to bind ${buttonHandlers.length} button handlers...`);
     buttonHandlers.forEach(([id, handler]) => {
-      const el = document.getElementById(id);
-      if (el) {
-        // Remove any existing event listeners to prevent duplicates
-        el.removeEventListener('click', handler);
-        el.addEventListener('click', handler);
-        console.log(`🟢 Bound: ${id} (${el.tagName})`);
-        
-        // Special debugging for problematic buttons
-        if (id === 'createFollowBtn' || id === 'joinRoomBtn') {
-          console.log(`🔍 Debug ${id}: Element found, event bound, current text: "${el.textContent}"`);
-        }
-      } else {
-        console.error(`❌ Missing element: ${id}`);
-      }
+      bind(id, handler);
     });
     console.log("📋 Button binding complete.");
+    
+    // MutationObserver to rebind buttons if they're added dynamically
+    new MutationObserver(() => {
+      buttonHandlers.forEach(([id, handler]) => bind(id, handler));
+    }).observe(document.body, { childList: true, subtree: true });
     
     // Form submission handlers
     const joinRoomForm = document.getElementById('joinRoomForm');
@@ -2764,106 +2780,7 @@
     // Initialize drag-and-drop functionality for callouts
     initializeDragAndDrop();
     
-    // 🔧 FORCE FIX: MutationObserver for dynamic button binding
-    const targetButtons = [
 
-      ["gradingBtn", function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log("✅ Grading Clicked");
-        if (typeof goToGrading === 'function') goToGrading();
-      }],
-      ["editCalloutBtn", function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log("✅ Edit Clicked");
-        if (this.disabled) return;
-        
-        const calloutIds = Object.keys(callouts);
-        if (calloutIds.length > 0) {
-          const mostRecentCalloutId = calloutIds[0];
-          if (typeof editCallout === 'function') editCallout(mostRecentCalloutId);
-        } else {
-          alert('No callouts available to edit');
-        }
-      }],
-      ["viewHistoryBtn", function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log("✅ View History Clicked");
-        if (this.disabled) return;
-        
-        const calloutIds = Object.keys(callouts);
-        if (calloutIds.length > 0) {
-          const mostRecentCalloutId = calloutIds[0];
-          if (typeof calloutHistory === 'function') calloutHistory(mostRecentCalloutId);
-        } else {
-          alert('No callout history available');
-        }
-      }]
-    ];
-    
-    function bindDynamicButton(buttonId, handler) {
-      const element = document.getElementById(buttonId);
-      if (element && !element.hasAttribute('data-bound')) {
-        element.addEventListener('click', handler);
-        element.setAttribute('data-bound', 'true');
-        console.log(`🟢 Dynamically bound ${buttonId}`);
-        return true;
-      }
-      return false;
-    }
-    
-    // Initial binding attempt for any existing elements
-    targetButtons.forEach(([id, handler]) => {
-      bindDynamicButton(id, handler);
-    });
-    
-    // Set up MutationObserver to watch for dynamic elements
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.type === 'childList') {
-          mutation.addedNodes.forEach((node) => {
-            if (node.nodeType === Node.ELEMENT_NODE) {
-              // Check if the added node itself is a target button
-              targetButtons.forEach(([id, handler]) => {
-                if (node.id === id) {
-                  bindDynamicButton(id, handler);
-                }
-              });
-              
-              // Check if any target buttons are within the added node
-              targetButtons.forEach(([id, handler]) => {
-                const element = node.querySelector ? node.querySelector(`#${id}`) : null;
-                if (element) {
-                  bindDynamicButton(id, handler);
-                }
-              });
-            }
-          });
-        }
-        
-        // Also check for attribute changes that might affect button availability
-        if (mutation.type === 'attributes' && mutation.target.nodeType === Node.ELEMENT_NODE) {
-          const targetId = mutation.target.id;
-          targetButtons.forEach(([id, handler]) => {
-            if (targetId === id) {
-              bindDynamicButton(id, handler);
-            }
-          });
-        }
-      });
-    });
-    
-    // Start observing the document with the configured parameters
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['id', 'class', 'disabled']
-    });
-    
-    console.log("🔧 MutationObserver initialized for dynamic button binding");
     
     console.log("🎉 All event handlers attached, socket initialized, drag-drop ready, page ready!");
     console.log("🔍 If buttons don't work, check console for ❌ Missing element messages above.");
@@ -3502,11 +3419,11 @@
         return;
       }
       
-      // Get current UTC time and format as HHMM (Zulu time)
+      // Get current UTC time and format as HH:MM (Zulu time)
       const now = new Date();
       const hours = String(now.getUTCHours()).padStart(2, '0');
       const minutes = String(now.getUTCMinutes()).padStart(2, '0');
-      const zuluTime = hours + minutes;
+      const zuluTime = hours + ':' + minutes;
       
       // Update the input field
       zuluInput.value = zuluTime;
@@ -3517,7 +3434,7 @@
         button.style.transform = 'rotate(0deg)';
       }, 200);
       
-      console.log(`Updated Zulu time to: ${zuluTime} (${hours}:${minutes})`);
+      console.log(`Updated Zulu time to: ${zuluTime} (UTC format)`);
     } catch (error) {
       console.error('Error updating Zulu time:', error);
     }
