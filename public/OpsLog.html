@@ -1318,7 +1318,7 @@
       
       // Check if follow form is visible and has data
       const followForm = document.getElementById('followForm');
-      if (followForm && followForm.style.display === 'block') {
+      if (followForm && window.getComputedStyle(followForm).display !== 'none') {
         const followNameInput = document.getElementById('followNameInput');
         const followIdHidden = document.getElementById('followIdHidden');
         const followStageSelected = document.getElementById('followStageSelected');
@@ -2349,9 +2349,12 @@
         console.log("✅ Create Follow Clicked");
         
         const followForm = document.getElementById('followForm');
-        if (!followForm) return;
+        if (!followForm) {
+          console.error("❌ followForm not found");
+          return;
+        }
         
-        const isVisible = followForm.style.display === 'block';
+        const isVisible = window.getComputedStyle(followForm).display !== 'none';
         console.log('Follow form currently visible:', isVisible);
         
         if (isVisible) {
@@ -2520,9 +2523,12 @@
         console.log("✅ Create Follow Clicked");
         
         const followForm = document.getElementById('followForm');
-        if (!followForm) return;
+        if (!followForm) {
+          console.error("❌ followForm not found");
+          return;
+        }
         
-        const isVisible = followForm.style.display === 'block';
+        const isVisible = window.getComputedStyle(followForm).display !== 'none';
         console.log('Follow form currently visible:', isVisible);
         
         if (isVisible) {
@@ -3147,7 +3153,7 @@
           
           if (createFollowBtn && followForm) {
             // Check if follow form is already open
-            const isFormOpen = followForm.style.display === 'block';
+            const isFormOpen = window.getComputedStyle(followForm).display !== 'none';
             
             if (!isFormOpen) {
               // Manually expand the follow form instead of clicking

@@ -273,38 +273,7 @@
       transform: rotate(5deg) scale(1.1);
     }
     
-    /* Live Badge - Top Left */
-    .live-badge {
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      background: rgba(255, 71, 87, 0.9);
-      color: white;
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-size: 0.8rem;
-      font-weight: bold;
-      z-index: 30;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      animation: pulse 2s infinite;
-      transition: opacity 0.3s ease;
-    }
 
-    .live-badge.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .live-badge::before {
-      content: '';
-      width: 8px;
-      height: 8px;
-      background: white;
-      border-radius: 50%;
-      display: inline-block;
-    }
     
     @keyframes pulse {
       0%, 100% { opacity: 1; }
@@ -317,19 +286,7 @@
       font-size: 1.5rem;
     }
 
-    .live-btn {
-      width: auto;
-      padding: 0 1rem;
-      border-radius: 25px;
-      font-size: 0.9rem;
-      font-weight: bold;
-      gap: 0.5rem;
-    }
 
-    .live-btn:hover {
-      background: rgba(255, 71, 87, 0.8);
-      border-color: rgba(255, 71, 87, 0.8);
-    }
 
     /* Zoom Toggle and Fullscreen Controls - Bottom Right */
     .video-utility-controls {
@@ -567,29 +524,7 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     }
 
-    /* Live Marker */
-    .timeline-live-marker {
-      position: absolute;
-      right: 20px;
-      top: 50%;
-      transform: translateY(-50%);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(255, 71, 87, 0.9);
-      color: white;
-      padding: 4px 8px;
-      border-radius: 12px;
-      font-size: 10px;
-      font-weight: 600;
-      z-index: 15;
-      animation: pulse 2s infinite;
-    }
 
-    .timeline-live-marker svg {
-      width: 8px;
-      height: 8px;
-    }
 
     .thumbnail-frame {
       position: relative;
@@ -639,19 +574,8 @@
       height: 100%;
       background: var(--primary-gradient);
       z-index: 100;
-      cursor: grab;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
-      transition: left 0.1s ease;
-      pointer-events: all; /* Enable dragging */
-    }
-
-    #scrubber:active {
-      cursor: grabbing;
-    }
-
-    #scrubber.dragging {
-      transition: none;
-      user-select: none;
+      pointer-events: none; /* Disable dragging */
     }
 
     #scrubber::before {
@@ -739,60 +663,7 @@
       100% { transform: translate(-50%, -50%) rotate(360deg); }
     }
     
-    .live-badge {
-      position: absolute;
-      top: 1.5rem;
-      right: 1.5rem;
-      background: linear-gradient(135deg, #ef4444, #dc2626);
-      color: white;
-      padding: 0.5rem 1rem;
-      border-radius: 25px;
-      font-weight: bold;
-      font-size: 0.9rem;
-      z-index: 10;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
-      animation: pulse 2s infinite;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-    }
 
-    .jump-to-live-indicator {
-      position: absolute;
-      bottom: 140px;
-      right: 20px;
-      background: linear-gradient(135deg, #ff4757, #ff3742);
-      color: white;
-      padding: 0.75rem 1.5rem;
-      border-radius: 25px;
-      font-weight: bold;
-      font-size: 0.9rem;
-      z-index: 100;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      box-shadow: 0 6px 20px rgba(255, 71, 87, 0.4);
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: none;
-      animation: pulse 2s infinite;
-    }
-
-    .jump-to-live-indicator:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(255, 71, 87, 0.6);
-    }
-
-    .jump-to-live-indicator::before {
-      content: '';
-      width: 12px;
-      height: 12px;
-      background: #ff4757;
-      border-radius: 50%;
-      margin-right: 0.5rem;
-      display: inline-block;
-    }
     
     @keyframes pulse {
       0%, 100% { 
@@ -993,8 +864,7 @@
   <div class="main-content">
     <div class="player-wrapper">
         <div class="video-container">
-          <!-- Live Badge - Top Left -->
-          <div class="live-badge" id="liveBadge">LIVE</div>
+
           
           <!-- Video Elements -->
           <video id="video" autoplay muted style="display:none;"></video>
@@ -1042,10 +912,7 @@
           </div>
         </div>
         
-        <!-- Jump to Live Indicator -->
-        <div class="jump-to-live-indicator" id="jumpToLiveIndicator" onclick="jumpToLive()">
-          JUMP TO LIVE
-        </div>
+
 
         
         <!-- Timeline (flush with video, no spacing) -->
@@ -1067,13 +934,7 @@
               <!-- Draggable Scrubber -->
               <div id="scrubber"></div>
               
-              <!-- Live Marker -->
-              <div class="timeline-live-marker">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                  <circle cx="12" cy="12" r="10"></circle>
-                </svg>
-                LIVE
-              </div>
+
             </div>
           </div>
         </div>
@@ -3463,50 +3324,7 @@
       }
     }
 
-    function jumpToLive() {
-      if (streamTimer) {
-        // For WebRTC, reset timer to current live time
-        streamTimer.reset();
-        
-        // Reset timeline scroll to show live position
-        const timelineTrack = document.getElementById('timeline-track');
-        const timeHashes = document.getElementById('time-hashes');
-        
-        if (timelineTrack && timeHashes) {
-          timelineTrack.style.transform = 'translateX(0px)';
-          timeHashes.style.transform = 'translateX(0px)';
-          timelineScrollOffset = 0;
-        }
-        
-        // Resume auto-scrolling
-        isTimelineDragging = false;
-        
-        console.log('🔴 Jumped to live WebRTC stream');
-      }
-      
-      // Hide the jump to live indicator
-      const indicator = document.getElementById('jumpToLiveIndicator');
-      if (indicator) {
-        indicator.style.display = 'none';
-      }
-    }
 
-    // Monitor live status and show/hide jump to live indicator
-    function updateLiveStatus() {
-      const video = document.getElementById('video');
-      const indicator = document.getElementById('jumpToLiveIndicator');
-      
-      if (!video || !indicator || !video.duration) return;
-      
-      // Check if user is within 3 seconds of live edge
-      const isAtLive = Math.abs(video.duration - video.currentTime) < 3;
-      
-      // Show indicator if not at live edge, hide if at live edge
-      indicator.style.display = isAtLive ? 'none' : 'block';
-    }
-
-    // Update live status every 500ms
-    setInterval(updateLiveStatus, 500);
 
     function zoomTimeline(factor) {
       if (window.videoTimeline) {
@@ -3590,10 +3408,7 @@
       videoElement.currentTime += 10;
     }
 
-    // Jump to live functionality
-    function jumpToLive() {
-      videoElement.currentTime = videoElement.duration;
-    }
+
   </script>
 </body>
 </html>
