@@ -3282,35 +3282,28 @@
     // If drag-and-drop to follow form is needed, it should target an existing element
     console.log("ℹ️ Drag-and-drop initialization complete");
   }
-  <script>
-document.addEventListener("DOMContentLoaded", function () {
-  console.log("🚀 DOM ready – starting dynamic binding observer");
-
-  const buttonsToBind = [
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("🚀 Starting dynamic binding");
+  const buttons = [
     ["createFollowBtn", () => console.log("✅ Create Follow Clicked")],
     ["gradingBtn", () => console.log("✅ Grading Clicked")],
     ["editCalloutBtn", () => console.log("✅ Edit Clicked")],
-    ["viewHistoryBtn", () => console.log("✅ View History Clicked")]
+    ["viewHistoryBtn", () => console.log("✅ View History Clicked")],
+    ["joinRoomBtn", () => console.log("✅ Join Room Clicked")]
   ];
-
-  function bindButton(id, handler) {
-    const btn = document.getElementById(id);
-    if (btn && !btn.dataset.bound) {
-      btn.addEventListener("click", handler);
-      btn.dataset.bound = "true";
-      console.log(`🟢 Dynamically bound: ${id}`);
+  const bind = (id, fn) => {
+    const el = document.getElementById(id);
+    if (el && !el.dataset.bound) {
+      el.addEventListener("click", fn);
+      el.dataset.bound = "true";
+      console.log(`🟢 Bound ${id}`);
     }
-  }
-
-  // Initial bind
-  buttonsToBind.forEach(([id, handler]) => bindButton(id, handler));
-
-  // Observe DOM for dynamically inserted buttons
-  const observer = new MutationObserver(() => {
-    buttonsToBind.forEach(([id, handler]) => bindButton(id, handler));
-  });
-
-  observer.observe(document.body, { childList: true, subtree: true });
+  };
+  buttons.forEach(([id, fn]) => bind(id, fn));
+  new MutationObserver(() => {
+    buttons.forEach(([id, fn]) => bind(id, fn));
+  }).observe(document.body, { childList: true, subtree: true });
 });
 </script>
 </body>
