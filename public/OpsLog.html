@@ -2539,7 +2539,7 @@
           if (followIdHidden && !followIdHidden.value) {
             const newId = Math.random().toString(36).substr(2, 6).toUpperCase();
             followIdHidden.value = newId;
-            if (followIdDisplay) followIdDisplay.textContent = newId;
+            followIdDisplay.textContent = newId;
           }
         }
       }],
@@ -2647,13 +2647,14 @@
 
   // 🛠️ CRITICAL FIX: Clean and complete dynamic button binding
   document.addEventListener("DOMContentLoaded", function () {
-    console.log("🚀 DOM ready – starting dynamic binding observer");
+    console.log("🚀 DOM ready – starting dynamic binding");
     
     const buttonsToBind = [
       ["createFollowBtn", () => console.log("✅ Create Follow Clicked")],
       ["gradingBtn", () => console.log("✅ Grading Clicked")],
       ["editCalloutBtn", () => console.log("✅ Edit Clicked")],
-      ["viewHistoryBtn", () => console.log("✅ View History Clicked")]
+      ["viewHistoryBtn", () => console.log("✅ View History Clicked")],
+      ["joinRoomBtn", () => console.log("✅ Join Room Clicked")]
     ];
     
     function bindButton(id, handler) {
@@ -3282,9 +3283,11 @@
     // If drag-and-drop to follow form is needed, it should target an existing element
     console.log("ℹ️ Drag-and-drop initialization complete");
   }
+</script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   console.log("🚀 Starting dynamic binding");
+
   const buttons = [
     ["createFollowBtn", () => console.log("✅ Create Follow Clicked")],
     ["gradingBtn", () => console.log("✅ Grading Clicked")],
@@ -3292,6 +3295,7 @@ document.addEventListener("DOMContentLoaded", () => {
     ["viewHistoryBtn", () => console.log("✅ View History Clicked")],
     ["joinRoomBtn", () => console.log("✅ Join Room Clicked")]
   ];
+
   const bind = (id, fn) => {
     const el = document.getElementById(id);
     if (el && !el.dataset.bound) {
@@ -3300,7 +3304,9 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log(`🟢 Bound ${id}`);
     }
   };
+
   buttons.forEach(([id, fn]) => bind(id, fn));
+
   new MutationObserver(() => {
     buttons.forEach(([id, fn]) => bind(id, fn));
   }).observe(document.body, { childList: true, subtree: true });
