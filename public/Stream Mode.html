@@ -760,9 +760,9 @@
               
               console.log('🎯 Stream URL pushed to SMXStream:', streamUrl, 'Type:', streamType);
               
-              // Optionally open SMXStream.html in a new tab
+              // Optionally open SMXStream-new.html in a new tab
               if (confirm('Stream is now live! Would you like to open the viewer in a new tab?')) {
-                window.open('/SMXStream.html', '_blank');
+                window.open(`/SMXStream-new.html?classId=${currentClassId}`, '_blank');
               }
             }
           } else if (status === 'offline') {
@@ -1757,6 +1757,9 @@
           if (file.uploaded) {
             // File is already uploaded, can stream directly
             setStatus('live');
+            
+            // Open SMXStream-new.html in a new tab with class ID
+            window.open(`/SMXStream-new.html?classId=${currentClassId}`, '_blank');
           } else {
             // File needs to be uploaded first
             alert('This file needs to be uploaded to the server first. Please click "View" to load it, then click "Upload to Server".');
@@ -1820,6 +1823,9 @@
         
         // Continue with original go live functionality
         setStatus('live');
+        
+        // Open SMXStream-new.html in a new tab with class ID
+        window.open(`/SMXStream-new.html?classId=${currentClassId}`, '_blank');
         return;
       }
       
@@ -1848,6 +1854,9 @@
         
         // Continue with original go live functionality
         setStatus('live');
+        
+        // Open SMXStream-new.html in a new tab with class ID
+        window.open(`/SMXStream-new.html?classId=${currentClassId}`, '_blank');
         return;
       }
       

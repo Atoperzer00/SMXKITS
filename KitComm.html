@@ -6,6 +6,7 @@
   <title>KitComm - SMX Communications Platform</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <style>
     :root {
       --bg: #0f172a;
@@ -629,10 +630,16 @@
           </select>
           <span id="userInfo" class="user-info">Loading...</span>
         </div>
-        <button id="toggleSidebar" class="toggle-sidebar-btn">
-          <i class="fas fa-bars"></i>
-          Toggle Channels
-        </button>
+        <div class="nav-buttons">
+          <button id="clearLogBtn" class="btn" style="display: none;">
+            <i class="fas fa-trash"></i>
+            Clear Log
+          </button>
+          <button id="toggleSidebar" class="toggle-sidebar-btn">
+            <i class="fas fa-bars"></i>
+            Toggle Channels
+          </button>
+        </div>
       </header>
 
       <!-- Messages -->
@@ -692,11 +699,14 @@
   <!-- Socket & UI Logic -->
   <script>
     // ===== Configuration =====
-    const WEBSOCKET_URL = "wss://YOUR-SERVER-URL"; // <-- Replace with your backend endpoint
+    const API_BASE = window.location.origin; // Use current domain
     const DEFAULT_CHANNELS = ["Global", "Team-1", "Team-2", "Instructor"];
+    
     // ===== State =====
     let currentChannel = "Global";
     let socket;
+    let isConnected = false;
+    
     // ===== DOM =====
     const channelListEl = document.getElementById("channelList");
     const activeChannelEl = document.getElementById("activeChannel");
@@ -704,10 +714,13 @@
     const chatInputEl = document.getElementById("chatInput");
     const chatFormEl = document.getElementById("chatForm");
     const roleSelectEl = document.getElementById("roleSelect");
+    const clearLogBtn = document.getElementById("clearLogBtn");
+    
     // ===== Helpers =====
     function escapeHtml(text) {
       return text.replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch]));
     }
+    
     function addMessage({ author, role, content, timestamp }) {
       const time = new Date(timestamp).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"});
       const msg = document.createElement("div");
@@ -722,10 +735,57 @@
       messagePaneEl.appendChild(msg);
       messagePaneEl.scrollTop = messagePaneEl.scrollHeight;
     }
+    
+    function addSystemMessage(content) {
+      const msg = document.createElement("div");
+      msg.className = "message";
+      msg.style.background = "rgba(255, 193, 7, 0.1)";
+      msg.style.borderColor = "rgba(255, 193, 7, 0.3)";
+      msg.innerHTML = `
+        <div class="message-header">
+          <span class="message-author">System</span>
+          <span class="message-role">INFO</span>
+          <span>${new Date().toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"})}</span>
+        </div>
+        <div class="message-content">${escapeHtml(content)}</div>`;
+      messagePaneEl.appendChild(msg);
+      messagePaneEl.scrollTop = messagePaneEl.scrollHeight;
+    }
+    
+    async function loadChannelHistory(channel) {
+      try {
+        const response = await fetch(`${API_BASE}/api/kitcomm/channels/${channel}`);
+        if (response.ok) {
+          const messages = await response.json();
+          messagePaneEl.innerHTML = "";
+          messages.forEach(msg => addMessage(msg));
+        } else {
+          console.warn(`Failed to load history for ${channel}`);
+          messagePaneEl.innerHTML = "";
+        }
+      } catch (error) {
+        console.error('Error loading channel history:', error);
+        messagePaneEl.innerHTML = "";
+        addSystemMessage(`Failed to load channel history. Using offline mode.`);
+      }
+    }
+    
     function switchChannel(name) {
+      // Leave current channel room
+      if (socket && isConnected) {
+        socket.emit('leave', `kitcomm:${currentChannel}`);
+      }
+      
       currentChannel = name;
       activeChannelEl.textContent = name;
-      messagePaneEl.innerHTML = ""; // Clear messages (could fetch history)
+      
+      // Join new channel room
+      if (socket && isConnected) {
+        socket.emit('join', `kitcomm:${currentChannel}`);
+      }
+      
+      // Load channel history
+      loadChannelHistory(name);
       
       // Update active channel button
       document.querySelectorAll('.channel-btn').forEach(btn => {
@@ -735,7 +795,8 @@
         }
       });
     }
-    // ===== Channel Sidebar =====
+    
+    // ===== Channel Management =====
     function renderChannels() {
       channelListEl.innerHTML = "";
       DEFAULT_CHANNELS.forEach(ch => {
@@ -749,52 +810,155 @@
         channelListEl.appendChild(btn);
       });
     }
+    
     document.getElementById("addChannelBtn").onclick = () => {
       const name = prompt("Channel name?");
-      if (name) {
-        DEFAULT_CHANNELS.push(name);
-        renderChannels();
+      if (name && name.trim()) {
+        const channelName = name.trim();
+        if (!DEFAULT_CHANNELS.includes(channelName)) {
+          DEFAULT_CHANNELS.push(channelName);
+          renderChannels();
+          switchChannel(channelName);
+        } else {
+          alert("Channel already exists!");
+        }
       }
     };
-    // ===== WebSocket =====
+    
+    // ===== Clear Log Functionality =====
+    clearLogBtn.onclick = async () => {
+      const userRole = localStorage.getItem('role') || 'student';
+      
+      if (userRole !== 'admin') {
+        alert('Only administrators can clear chat logs.');
+        return;
+      }
+      
+      if (!confirm(`Are you sure you want to clear all messages in ${currentChannel}? This action cannot be undone.`)) {
+        return;
+      }
+      
+      try {
+        const response = await fetch(`${API_BASE}/api/kitcomm/channels/${currentChannel}/messages`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+          }
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          messagePaneEl.innerHTML = "";
+          addSystemMessage(`Chat log cleared by administrator. ${result.deletedCount} messages removed.`);
+        } else {
+          const error = await response.json();
+          alert(`Failed to clear log: ${error.error || 'Unknown error'}`);
+        }
+      } catch (error) {
+        console.error('Error clearing log:', error);
+        alert('Failed to clear log. Please try again.');
+      }
+    };
+    
+    // ===== Socket.io Connection =====
     function initSocket() {
-      socket = new WebSocket(WEBSOCKET_URL);
-      socket.addEventListener("open", () => {
-        console.log("Connected to KitComm server");
-      });
-      socket.addEventListener("message", ev => {
-        const data = JSON.parse(ev.data);
-        if (data.channel === currentChannel) addMessage(data);
-      });
-      socket.addEventListener("close", () => {
-        console.warn("Socket closed, retrying in 3s");
-        setTimeout(initSocket, 3000);
-      });
+      try {
+        socket = io(API_BASE);
+        
+        socket.on('connect', () => {
+          console.log('Connected to KitComm server');
+          isConnected = true;
+          addSystemMessage('Connected to KitComm server');
+          
+          // Join current channel
+          socket.emit('join', `kitcomm:${currentChannel}`);
+        });
+        
+        socket.on('disconnect', () => {
+          console.log('Disconnected from KitComm server');
+          isConnected = false;
+          addSystemMessage('Disconnected from server. Attempting to reconnect...');
+        });
+        
+        socket.on('kitcomm:message', (message) => {
+          if (message.channel === currentChannel) {
+            addMessage(message);
+          }
+        });
+        
+        socket.on('kitcomm:channelCleared', (data) => {
+          if (data.channel === currentChannel) {
+            messagePaneEl.innerHTML = "";
+            addSystemMessage(`Channel cleared by ${data.clearedBy}`);
+          }
+        });
+        
+        socket.on('connect_error', (error) => {
+          console.error('Connection error:', error);
+          addSystemMessage('Connection error. Working in offline mode.');
+        });
+        
+      } catch (error) {
+        console.error('Failed to initialize socket:', error);
+        addSystemMessage('Failed to connect to server. Working in offline mode.');
+      }
     }
-    // ===== Form =====
-    chatFormEl.addEventListener("submit", e => {
+    
+    // ===== Message Sending =====
+    chatFormEl.addEventListener("submit", async (e) => {
       e.preventDefault();
       const content = chatInputEl.value.trim();
       if (!content) return;
+      
+      const userName = localStorage.getItem('userName') || 'Anonymous';
       const msg = {
         channel: currentChannel,
-        author: "You", // Replace with username from auth layer
+        author: userName,
         role: roleSelectEl.value,
         content,
-        timestamp: Date.now()
+        timestamp: new Date()
       };
+      
+      // Add message locally first
       addMessage(msg);
-      socket?.send(JSON.stringify(msg));
       chatInputEl.value = "";
+      
+      // Send to server
+      try {
+        const response = await fetch(`${API_BASE}/api/kitcomm/message`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(msg)
+        });
+        
+        if (!response.ok) {
+          console.error('Failed to send message to server');
+          addSystemMessage('Message sent locally only (server unavailable)');
+        }
+      } catch (error) {
+        console.error('Error sending message:', error);
+        addSystemMessage('Message sent locally only (server unavailable)');
+      }
     });
+    
     // ===== Role-based restrictions =====
     function applyRoleRestrictions() {
-      const userRole = localStorage.getItem('role') || 'student'; // Default to student if no role found
+      const userRole = localStorage.getItem('role') || 'student';
       const roleSelect = document.getElementById('roleSelect');
       
       if (!roleSelect) {
         console.error('Role select element not found');
         return;
+      }
+      
+      // Show/hide clear log button based on role
+      if (userRole === 'admin') {
+        clearLogBtn.style.display = 'block';
+      } else {
+        clearLogBtn.style.display = 'none';
       }
       
       // Restricted roles that only instructors/admins can use
@@ -873,12 +1037,23 @@
       }
     }
     
-    // ===== Init =====
-    renderChannels();
-    switchChannel(currentChannel);
-    initSocket();
-    displayUserInfo();
-    applyRoleRestrictions();
+    // ===== Sidebar Toggle =====
+    document.getElementById("toggleSidebar").onclick = () => {
+      const sidebar = document.getElementById("channelSidebar");
+      sidebar.style.display = sidebar.style.display === 'none' ? 'flex' : 'none';
+    };
+    
+    // ===== Initialization =====
+    document.addEventListener('DOMContentLoaded', () => {
+      renderChannels();
+      switchChannel(currentChannel);
+      displayUserInfo();
+      applyRoleRestrictions();
+      initSocket();
+      
+      // Load initial channel history
+      loadChannelHistory(currentChannel);
+    });
   </script>
 </body>
 </html>

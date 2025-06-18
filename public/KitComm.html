@@ -167,12 +167,6 @@
       clearLogBtn.classList.remove('hidden');
     }
     
-    // Show Clear Log button only for admins
-    const clearLogBtn = document.getElementById('clearLogBtn');
-    if (role === 'admin') {
-      clearLogBtn.classList.remove('hidden');
-    }
-    
     // ===== Helpers =====
     function escapeHtml(text) {
       if (!text) return '';

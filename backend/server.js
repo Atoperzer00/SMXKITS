@@ -25,12 +25,12 @@ app.use(cors());
 // MongoDB connection
 mongoose.connect('mongodb://localhost:27017/smxkits', { 
   useNewUrlParser: true, 
-  useUnifiedTopology: true,
-  useCreateIndex: true
+  useUnifiedTopology: true
 }).then(() => {
   console.log('Connected to MongoDB');
 }).catch(err => {
   console.error('MongoDB connection error:', err);
+  console.log('Continuing without MongoDB - some features may not work');
 });
 
 // Multer setup for file uploads
@@ -172,6 +172,17 @@ io.on('connection', (socket) => {
   socket.on('join_room', roomId => {
     socket.join(roomId);
     console.log(`Client ${socket.id} joined Ops Log room ${roomId}`);
+  });
+  
+  // KitComm room joining
+  socket.on('join', (room) => {
+    socket.join(room);
+    console.log(`Client ${socket.id} joined KitComm room ${room}`);
+  });
+  
+  socket.on('leave', (room) => {
+    socket.leave(room);
+    console.log(`Client ${socket.id} left KitComm room ${room}`);
   });
 });
 
@@ -655,6 +666,13 @@ app.get('/api/callouts/:id/history', async (req, res) => {
   if (!callout) return res.status(404).end();
   res.json(callout.history || []);
 });
+
+// KitComm Routes
+const kitcommRoutes = require('../routes/kitcomm');
+app.use('/api/kitcomm', kitcommRoutes);
+
+// Make io available to routes
+app.set('io', io);
 
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
