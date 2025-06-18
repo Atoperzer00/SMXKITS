@@ -560,6 +560,9 @@
             <div style="margin-top: 12px; font-size: 0.85rem; opacity: 0.6;">
               Maximum file size: 4GB • Auto-deleted after 24 hours
             </div>
+            <div style="margin-top: 8px; font-size: 0.85rem; color: var(--accent); font-weight: 500;">
+              📋 Workflow: Upload file → Drag to video player → Upload to server → Go Live
+            </div>
             <div class="drag-instruction" id="dragInstruction" style="margin-top: 8px; font-size: 0.8rem; color: var(--success); display: none;">
               💡 You can drag this area to the video player to load the file
             </div>
@@ -572,7 +575,7 @@
             <div class="drag-hint" id="dragHint" style="font-size:0.8rem; color:var(--accent); margin-top:8px; display:none;">
               🎬 Drag this to the video player to load it
             </div>
-            <button class="control-btn" id="uploadBtn" style="width:100%; margin-top:12px; display:none;">Upload to Server</button>
+            <button class="control-btn" id="uploadBtn" style="width:100%; margin-top:12px; display:none;">📤 Upload to Server (Required for Streaming)</button>
           </div>
         </div>
         <div class="settings-section">
@@ -875,6 +878,19 @@
       
       // Make file info draggable
       setupFileDragAndDrop(file);
+      
+      // Automatically add file to submitted files list for easier access
+      const fileData = {
+        name: file.name,
+        url: URL.createObjectURL(file),
+        size: file.size,
+        type: file.type,
+        originalFile: file,
+        uploaded: false
+      };
+      
+      console.log('📁 Auto-adding file to submitted files:', fileData.name);
+      addSubmittedFile(fileData);
     }
     
     function loadFileIntoPlayer(file) {
@@ -897,6 +913,7 @@
       placeholder.style.display = 'none';
       videoOverlay.style.display = 'flex';
       videoReady.style.display = 'block';
+      videoReady.textContent = '⚠️ Upload Required';
       
       // Store the local file info
       window.currentLocalVideo = {
@@ -1111,6 +1128,7 @@
           placeholder.style.display = 'none';
           videoOverlay.style.display = 'flex';
           videoReady.style.display = 'block';
+          videoReady.textContent = '✅ Ready to Stream';
           
           // Store the stream info for when user clicks "Go Live"
           window.currentUploadedVideo = {
@@ -1694,6 +1712,7 @@
         
         // Update current video reference based on whether it's uploaded or local
         if (file.uploaded) {
+          videoReady.textContent = '✅ Ready to Stream';
           window.currentUploadedVideo = {
             url: file.url,
             filename: file.serverFilename,
@@ -1785,27 +1804,55 @@
     function enhancedGoLive() {
       console.log('📡 Go Live triggered');
       
-      // Get the most recently submitted file
-      const files = loadSubmittedFiles();
-      if (files.length === 0) {
-        alert('No submitted files available. Please upload a video first.');
+      // Check if we have a current video loaded (either local or uploaded)
+      if (window.currentUploadedVideo) {
+        console.log('🎬 Using uploaded video for live stream:', window.currentUploadedVideo.originalName);
+        
+        // Store the uploaded video info for the streaming page
+        const videoData = {
+          name: window.currentUploadedVideo.originalName,
+          url: window.currentUploadedVideo.url,
+          uploaded: true,
+          serverFilename: window.currentUploadedVideo.filename
+        };
+        localStorage.setItem(LIVE_STREAM_VIDEO_KEY, JSON.stringify(videoData));
+        console.log('💾 Stored uploaded video in localStorage');
+        
+        // Continue with original go live functionality
+        setStatus('live');
         return;
       }
       
-      const mostRecentFile = files[0]; // First item is most recent
-      console.log('🎬 Using most recent file for live stream:', mostRecentFile.name);
+      if (window.currentLocalVideo) {
+        console.log('🎬 Using local video for live stream:', window.currentLocalVideo.name);
+        
+        // For local videos, we need to upload them first
+        alert('Please upload your video to the server first before going live. Click the "Upload to Server" button.');
+        return;
+      }
       
-      // Store the file for the streaming page
-      localStorage.setItem(LIVE_STREAM_VIDEO_KEY, JSON.stringify(mostRecentFile));
-      console.log('💾 Stored live stream video in localStorage');
+      // Fallback: Check submitted files
+      const files = loadSubmittedFiles();
+      if (files.length > 0) {
+        const mostRecentFile = files[0]; // First item is most recent
+        console.log('🎬 Using most recent submitted file for live stream:', mostRecentFile.name);
+        
+        if (!mostRecentFile.uploaded) {
+          alert('The selected video needs to be uploaded to the server first. Please click "View" to load it, then "Upload to Server".');
+          return;
+        }
+        
+        // Store the file for the streaming page
+        localStorage.setItem(LIVE_STREAM_VIDEO_KEY, JSON.stringify(mostRecentFile));
+        console.log('💾 Stored live stream video in localStorage');
+        
+        // Continue with original go live functionality
+        setStatus('live');
+        return;
+      }
       
-      // Open SMXStream-new.html in a new tab
-      const streamUrl = 'SMXStream-new.html';
-      window.open(streamUrl, '_blank');
-      console.log('🚀 Opened streaming page in new tab');
-      
-      // Continue with original go live functionality
-      setStatus('live');
+      // No video available
+      alert('No video available for streaming. Please upload a video first, then drag it to the video player or click "Upload to Server".');
     }
 
     // Enhanced file handling to add files to submitted list
