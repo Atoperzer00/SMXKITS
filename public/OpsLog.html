@@ -828,20 +828,28 @@
       0%, 100% { opacity: 1; }
       50% { opacity: 0.7; }
     }
-    /* Modern Callout Card Styling */
+    /* Classic Callout Bubble Styling */
     .callout-card {
       position: relative;
-      transition: all 0.3s ease;
+      background: var(--bubble-bg);
+      border: 2px solid var(--qc-orange);
+      border-radius: 8px;
+      padding: 8px;
+      margin-bottom: 8px;
+      font-size: 11px;
+      line-height: 1.2;
+      color: var(--bubble-text);
       word-break: break-word;
       white-space: pre-line;
+      min-height: auto;
+      width: 100%;
+      box-sizing: border-box;
     }
-    .callout-card:hover {
-      transform: translateY(-2px);
-    }
-    .callout-card.qc-orange { border-color: var(--qc-orange) !important;}
-    .callout-card.qc-yellow { border-color: var(--qc-yellow) !important;}
-    .callout-card.qc-green  { border-color: var(--qc-green) !important;}
-    .callout-card.qc-red    { border-color: var(--qc-red) !important;}
+    
+    .callout-card.qc-orange { border-color: var(--qc-orange); }
+    .callout-card.qc-yellow { border-color: var(--qc-yellow); }
+    .callout-card.qc-green  { border-color: var(--qc-green); }
+    .callout-card.qc-red    { border-color: var(--qc-red); }
     
     /* Approved callout styling for students */
     .callout-card.qc-green.student-locked {
@@ -862,6 +870,69 @@
       border-radius: 10px;
       z-index: 5;
       box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    /* Classic Menu and QC Buttons */
+    .menu-btn, .qc-btn {
+      position: absolute;
+      top: 4px;
+      width: 18px;
+      height: 18px;
+      background: var(--button-bg);
+      border: 1px solid #555;
+      border-radius: 3px;
+      color: #ccc;
+      font-size: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      transition: all 0.2s;
+    }
+    
+    .menu-btn {
+      right: 4px;
+      font-size: 12px;
+      line-height: 1;
+    }
+    
+    .qc-btn {
+      right: 26px;
+      font-size: 8px;
+    }
+    
+    .menu-btn:hover, .qc-btn:hover {
+      background: var(--button-hover);
+      border-color: #777;
+    }
+
+    /* Selection Checkbox */
+    .bubble-select-checkbox {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      width: 14px;
+      height: 14px;
+      z-index: 10;
+      cursor: pointer;
+    }
+
+    /* Follow Indicator */
+    .follow-indicator {
+      position: absolute;
+      left: -3px;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: var(--follow-blue);
+      border-radius: 0 2px 2px 0;
+      z-index: 1;
+    }
+    
+    .follow-indicator.follow-ended {
+      background: #666;
     }
 
     /* Scrollbars */
@@ -1742,10 +1813,6 @@
         div.classList.add('has-follow');
       }
       
-      // Create the rest of the content
-      const content = document.createElement('div');
-      content.className = "bg-zinc-800/70 border border-zinc-700 rounded-md shadow-md p-4 mb-4";
-      
       // If has follow, add the vertical indicator bar
       if (hasFollow) {
         const followIndicator = document.createElement('div');
@@ -1760,50 +1827,76 @@
         div.appendChild(followIndicator);
       }
       
-      content.innerHTML = `
-        <!-- Top Row Layout -->
-        <div class="flex justify-between items-center">
-          <div class="font-bold text-white">
-            OBJ ${(data.operation || 'UNKNOWN').toUpperCase()} – ${(data.asset || 'UNKNOWN').toUpperCase()}
-          </div>
-          <div class="text-right">
-            <div class="text-sm text-white">${formatDateForBubble(data.createdAt)}</div>
-            <div class="text-green-400 text-lg font-bold">${data.zulu ? data.zulu + 'Z' : '0000Z'}</div>
-          </div>
-        </div>
-        
-        <!-- Separator Line -->
-        <hr class="my-2 border-zinc-600">
-        
-        <!-- Middle Content Block (Details) -->
-        <div class="space-y-1 leading-snug text-sm">
-          <div><span class="font-medium">AOI:</span> ${(data.location || 'Not specified').toUpperCase()}</div>
-          <div><span class="font-medium">MGRS:</span> ${(data.mgrs || 'Not specified').toUpperCase()}</div>
-          <div><span class="font-medium">S:</span> ${(data.slant || 'N/A').toUpperCase()} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="font-medium">VIC:</span> ${data.vehicles || '0'}</div>
-          <div><span class="font-medium">Activity:</span></div>
-          <div class="text-zinc-300 ml-2">${data.activity || 'No activity reported'}</div>
-          ${data.targetStatus ? `<div class="mt-2 text-center"><span class="px-2 py-1 rounded text-xs font-bold ${data.targetStatus === 'ON TARGET' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'}">${data.targetStatus}</span></div>` : ''}
-          ${data.iaNotes && data.iaNotes.trim() ? '<div class="mt-2 text-zinc-400 text-xs"><span class="font-medium">IA Notes:</span> ' + data.iaNotes.replace(/\n/g,'<br>') + '</div>' : ''}
-          ${ hasFollow ? `<div class="mt-2 p-2 bg-blue-500/10 border border-blue-500/30 rounded text-xs">
-            <span class="font-medium text-blue-400">Follow:</span> ${(data.follow.name || '').toUpperCase()} / ${(data.follow.stage || '').toUpperCase()}
-            ${data.follow.followId ? `<span class="text-blue-300 font-mono ml-2">#${data.follow.followId.toUpperCase()}</span>` : ''}
-          </div>` : '' }
-        </div>
-      `;
+      // Create the classic bubble content
+      const content = document.createElement('div');
+      content.style.paddingTop = '20px'; // Space for buttons
+      
+      // Build the classic layout
+      let html = '';
+      
+      // Line 1: Objective & Date on same line
+      html += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">`;
+      html += `<span><strong>OBJ ${(data.operation || 'UNKNOWN').toUpperCase()}</strong></span>`;
+      html += `<span>${formatDateForBubble(data.createdAt)}</span>`;
+      html += `</div>`;
+      
+      // Line 2: Asset & Time aligned on same line
+      html += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">`;
+      html += `<span>🛰️ <strong>${(data.asset || 'UNKNOWN').toUpperCase()}</strong></span>`;
+      html += `<span style="color: #22c55e; font-weight: bold;">${data.zulu ? data.zulu + 'Z' : '0000Z'}</span>`;
+      html += `</div>`;
+      
+      // Line 3: Location with MGRS and S/VIC right-aligned
+      html += `<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2px;">`;
+      html += `<span>📍 <strong>Location:</strong> ${(data.location || 'Not specified').toUpperCase()}</span>`;
+      html += `<div style="text-align: right; font-size: 10px;">`;
+      html += `<div>📐 ${(data.mgrs || 'Not specified').toUpperCase()}</div>`;
+      html += `<div>S: ${(data.slant || 'N/A').toUpperCase()} VIC: ${data.vehicles || '0'}</div>`;
+      html += `</div>`;
+      html += `</div>`;
+      
+      // Activity section
+      html += `<div style="margin-bottom: 2px;"><strong>Activity:</strong></div>`;
+      html += `<div style="margin-left: 8px; margin-bottom: 4px; color: #ccc;">${data.activity || 'No activity reported'}</div>`;
+      
+      // Target Status
+      if (data.targetStatus) {
+        const statusColor = data.targetStatus === 'ON TARGET' ? '#22c55e' : '#ef4444';
+        const statusBg = data.targetStatus === 'ON TARGET' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)';
+        html += `<div style="text-align: center; margin: 4px 0;">`;
+        html += `<span style="background: ${statusBg}; color: ${statusColor}; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold;">${data.targetStatus}</span>`;
+        html += `</div>`;
+      }
+      
+      // IA Notes
+      if (data.iaNotes && data.iaNotes.trim()) {
+        html += `<div style="margin-top: 4px; font-size: 10px; color: #999;">`;
+        html += `<strong>IA Notes:</strong> ${data.iaNotes.replace(/\n/g,'<br>')}`;
+        html += `</div>`;
+      }
+      
+      // Follow section - cleaned up, no label, START is bold, follow number beneath
+      if (hasFollow) {
+        html += `<div style="margin-top: 4px; padding: 3px; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 3px; font-size: 10px;">`;
+        html += `<div><strong style="color: #3b82f6;">${(data.follow.stage || 'START').toUpperCase()}</strong> ${(data.follow.name || '').toUpperCase()}</div>`;
+        if (data.follow.followId) {
+          html += `<div style="color: #93c5fd; font-family: monospace;">#${data.follow.followId.toUpperCase()}</div>`;
+        }
+        html += `</div>`;
+      }
+      
+      content.innerHTML = html;
       
       const footer = document.createElement('div');
-      footer.className = "flex justify-between items-center text-xs text-zinc-500 mt-3";
+      footer.style.cssText = 'font-size: 9px; color: #666; margin-top: 4px; text-align: right;';
       
-      // Left side - Last Edit By (if edited)
-      const leftSide = data.editedAt && data.editedBy ? `Last Edit By: ${data.editedBy}` : '';
+      // Simple footer with creator info
+      let footerText = `By ${data.createdBy}`;
+      if (data.editedAt && data.editedBy) {
+        footerText = `Edited by ${data.editedBy}`;
+      }
       
-      // Right side - Creator signature
-      const rightSide = `By ${data.createdBy} • ${(data.createdAt ? new Date(data.createdAt).toLocaleDateString() : '')} • ${(data.createdAt ? new Date(data.createdAt).toLocaleTimeString() : '')}`;
-      
-      footer.innerHTML = `
-        <div>${leftSide}</div>
-        <div>${rightSide}</div>
-      `;
+      footer.textContent = footerText;
       
       // Assemble the bubble
       div.appendChild(selectCheckbox);
