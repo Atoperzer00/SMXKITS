@@ -315,6 +315,134 @@ app.get('/admin-dashboard.html', (req, res) => {
 // Make io available to routes
 app.set('io', io);
 
+// ===== STREAM FILE SERVING ENDPOINTS =====
+
+// Serve uploaded stream files
+app.get('/api/stream/file/:classId', async (req, res) => {
+  try {
+    const { classId } = req.params;
+    const Class = require('./models/Class');
+    
+    const classObj = await Class.findById(classId);
+    if (!classObj || !classObj.currentStreamFile) {
+      return res.status(404).json({ error: 'No stream file found for this class' });
+    }
+    
+    const filePath = path.join(__dirname, 'uploads', classObj.currentStreamFile);
+    
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'Stream file not found on disk' });
+    }
+    
+    // Set appropriate headers for video streaming
+    const stat = fs.statSync(filePath);
+    const fileSize = stat.size;
+    const range = req.headers.range;
+    
+    if (range) {
+      // Support range requests for video seeking
+      const parts = range.replace(/bytes=/, "").split("-");
+      const start = parseInt(parts[0], 10);
+      const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+      const chunksize = (end - start) + 1;
+      const file = fs.createReadStream(filePath, { start, end });
+      const head = {
+        'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+        'Accept-Ranges': 'bytes',
+        'Content-Length': chunksize,
+        'Content-Type': 'video/mp4',
+      };
+      res.writeHead(206, head);
+      file.pipe(res);
+    } else {
+      const head = {
+        'Content-Length': fileSize,
+        'Content-Type': 'video/mp4',
+      };
+      res.writeHead(200, head);
+      fs.createReadStream(filePath).pipe(res);
+    }
+    
+  } catch (error) {
+    console.error('Error serving stream file:', error);
+    res.status(500).json({ error: 'Failed to serve stream file' });
+  }
+});
+
+// Get current stream state for late joiners
+app.get('/api/stream/state/:classId', async (req, res) => {
+  try {
+    const { classId } = req.params;
+    const io = req.app.get('io');
+    
+    // Get stream state from memory (managed by Socket.IO handlers)
+    const streamStates = io.streamStates || new Map();
+    const state = streamStates.get(classId);
+    
+    if (state) {
+      res.json({
+        ...state,
+        timeSinceStart: Date.now() - new Date(state.startTime).getTime()
+      });
+    } else {
+      // Try to get from database as fallback
+      const Class = require('./models/Class');
+      const classObj = await Class.findById(classId);
+      
+      if (classObj && classObj.streamStatus === 'live') {
+        res.json({
+          streamUrl: classObj.currentStreamFile ? `/api/stream/file/${classId}` : null,
+          currentTime: 0,
+          playing: true,
+          startTime: new Date().toISOString(),
+          timeSinceStart: 0
+        });
+      } else {
+        res.status(404).json({ error: 'No active stream found' });
+      }
+    }
+    
+  } catch (error) {
+    console.error('Error getting stream state:', error);
+    res.status(500).json({ error: 'Failed to get stream state' });
+  }
+});
+
+// Update stream state (for instructors)
+app.post('/api/stream/state/:classId', async (req, res) => {
+  try {
+    const { classId } = req.params;
+    const { currentTime, playing, streamUrl } = req.body;
+    const io = req.app.get('io');
+    
+    // Store in memory for Socket.IO
+    if (!io.streamStates) io.streamStates = new Map();
+    
+    const state = {
+      currentTime,
+      playing,
+      streamUrl,
+      startTime: io.streamStates.get(classId)?.startTime || new Date().toISOString(),
+      lastUpdate: new Date().toISOString()
+    };
+    
+    io.streamStates.set(classId, state);
+    
+    // Broadcast to all connected students
+    io.to(`stream:class_${classId}`).emit('stream:time', {
+      time: currentTime,
+      playing,
+      timestamp: new Date().toISOString()
+    });
+    
+    res.json({ success: true, state });
+    
+  } catch (error) {
+    console.error('Error updating stream state:', error);
+    res.status(500).json({ error: 'Failed to update stream state' });
+  }
+});
+
 // Real-time chat and streaming with MongoDB storage
 io.on('connection', socket => {
   console.log('🔌 New socket connection established');
@@ -546,7 +674,191 @@ io.on('connection', socket => {
     io.to(`webrtc:${classId}`).emit('instructor-stopped-webrtc', {});
   });
   
-  // Join stream room
+  // ===== LIVE STREAMING SYNCHRONIZATION HANDLERS =====
+  
+  // Instructor joins class for streaming
+  socket.on('instructor-join-class', (data) => {
+    const { classId } = data;
+    const roomName = `class:${classId}`;
+    
+    console.log(`👨‍🏫 Instructor joined class room: ${roomName}`);
+    socket.join(roomName);
+    socket.currentStreamRoom = roomName;
+    socket.classId = classId;
+    socket.isInstructor = true;
+    
+    // Send confirmation to instructor
+    socket.emit('stream:instructor-ready', {
+      message: 'Ready to broadcast to class',
+      classId: classId,
+      timestamp: new Date().toISOString()
+    });
+  });
+  
+  // Student joins class for streaming
+  socket.on('student-join-class', (data) => {
+    const { classId } = data;
+    const roomName = `class:${classId}`;
+    
+    console.log(`🎓 Student joined class room: ${roomName}`);
+    socket.join(roomName);
+    socket.currentStreamRoom = roomName;
+    socket.classId = classId;
+    socket.isInstructor = false;
+    
+    // Send current stream state to new student
+    const streamState = io.streamStates?.get(classId);
+    if (streamState) {
+      socket.emit('stream:current-state', streamState);
+    } else {
+      socket.emit('stream:no-state', { message: 'No active stream' });
+    }
+    
+    // Update viewer count for the class
+    const roomMembers = io.sockets.adapter.rooms.get(roomName);
+    const viewerCount = roomMembers ? roomMembers.size - 1 : 0; // Subtract instructor
+    io.to(roomName).emit('viewerCount', { count: viewerCount });
+  });
+  
+  // Legacy support for old join-stream method
+  socket.on('join-stream', (data) => {
+    const { classId, streamKey } = data;
+    // Convert to new class-based system
+    if (classId) {
+      socket.emit('student-join-class', { classId });
+    }
+  });
+  
+  // Instructor stream control events
+  socket.on('stream:init', (data) => {
+    if (!socket.currentStreamRoom) return;
+    
+    console.log('🎬 Stream initialized by instructor:', data);
+    socket.to(socket.currentStreamRoom).emit('stream:init', {
+      streamUrl: data.streamUrl,
+      startTime: data.startTime || new Date().toISOString(),
+      currentTime: data.currentTime || 0,
+      playing: data.playing || false
+    });
+  });
+  
+  // Initialize stream states if not exists
+  if (!io.streamStates) {
+    io.streamStates = new Map();
+  }
+  
+  // Initialize throttle tracking
+  if (!socket.lastTimeUpdate) {
+    socket.lastTimeUpdate = 0;
+  }
+  
+  socket.on('stream:play', (data) => {
+    if (!socket.currentStreamRoom || !socket.isInstructor) return;
+    
+    console.log('▶️ Instructor played stream at:', data.time);
+    
+    // Update stream state
+    const classId = socket.classId;
+    const state = io.streamStates.get(classId) || {};
+    const updatedState = {
+      ...state,
+      currentTime: data.time,
+      playing: true,
+      lastUpdate: new Date().toISOString(),
+      startTime: state.startTime || new Date().toISOString()
+    };
+    io.streamStates.set(classId, updatedState);
+    
+    socket.to(socket.currentStreamRoom).emit('stream:play', {
+      time: data.time,
+      timestamp: new Date().toISOString()
+    });
+  });
+  
+  socket.on('stream:pause', (data) => {
+    if (!socket.currentStreamRoom || !socket.isInstructor) return;
+    
+    console.log('⏸️ Instructor paused stream at:', data.time);
+    
+    // Update stream state
+    const classId = socket.classId;
+    const state = io.streamStates.get(classId) || {};
+    const updatedState = {
+      ...state,
+      currentTime: data.time,
+      playing: false,
+      lastUpdate: new Date().toISOString(),
+      startTime: state.startTime || new Date().toISOString()
+    };
+    io.streamStates.set(classId, updatedState);
+    
+    socket.to(socket.currentStreamRoom).emit('stream:pause', {
+      time: data.time,
+      timestamp: new Date().toISOString()
+    });
+  });
+  
+  socket.on('stream:seek', (data) => {
+    if (!socket.currentStreamRoom || !socket.isInstructor) return;
+    
+    console.log('⏭️ Instructor seeked to:', data.time);
+    
+    // Update stream state
+    const classId = socket.classId;
+    const state = io.streamStates.get(classId) || {};
+    const updatedState = {
+      ...state,
+      currentTime: data.time,
+      lastUpdate: new Date().toISOString(),
+      startTime: state.startTime || new Date().toISOString()
+    };
+    io.streamStates.set(classId, updatedState);
+    
+    socket.to(socket.currentStreamRoom).emit('stream:seek', {
+      time: data.time,
+      timestamp: new Date().toISOString()
+    });
+  });
+  
+  // Throttled time updates (max once every 500ms)
+  socket.on('stream:time', (data) => {
+    if (!socket.currentStreamRoom || !socket.isInstructor) return;
+    
+    const now = Date.now();
+    if (now - socket.lastTimeUpdate < 500) return; // Throttle to 500ms
+    socket.lastTimeUpdate = now;
+    
+    // Update stream state
+    const classId = socket.classId;
+    const state = io.streamStates.get(classId) || {};
+    const updatedState = {
+      ...state,
+      currentTime: data.time,
+      playing: data.playing,
+      lastUpdate: new Date().toISOString(),
+      startTime: state.startTime || new Date().toISOString()
+    };
+    io.streamStates.set(classId, updatedState);
+    
+    socket.to(socket.currentStreamRoom).emit('stream:time', {
+      time: data.time,
+      playing: data.playing,
+      timestamp: new Date().toISOString()
+    });
+  });
+  
+  socket.on('stream:time', (data) => {
+    if (!socket.currentStreamRoom) return;
+    
+    // Broadcast instructor's current time to all students (throttled)
+    socket.to(socket.currentStreamRoom).emit('stream:time', {
+      time: data.time,
+      playing: data.playing,
+      timestamp: new Date().toISOString()
+    });
+  });
+  
+  // Join stream room (legacy support)
   socket.on('join-stream', async (streamKey) => {
     console.log('🔌 Student attempting to join stream with key:', streamKey);
     
@@ -836,6 +1148,45 @@ io.on('connection', socket => {
           io.to(room).emit('viewerCount', { count: viewerCount });
         }
       }
+    }
+    
+    // Handle streaming room disconnection
+    if (socket.currentStreamRoom) {
+      console.log(`📺 User left stream room: ${socket.currentStreamRoom}`);
+    }
+  });
+  
+  // ===== STREAM STATE MANAGEMENT =====
+  const streamStates = new Map(); // classId -> { currentTime, playing, streamUrl, startTime }
+  
+  // Store stream state for late-joining students
+  socket.on('stream:state-update', (data) => {
+    const { classId, currentTime, playing, streamUrl, startTime } = data;
+    
+    streamStates.set(classId, {
+      currentTime,
+      playing,
+      streamUrl,
+      startTime: startTime || new Date().toISOString(),
+      lastUpdate: new Date().toISOString()
+    });
+    
+    console.log(`💾 Stream state updated for class ${classId}:`, { currentTime, playing });
+  });
+  
+  // Send current stream state to new joiners
+  socket.on('request-stream-state', (data) => {
+    const { classId } = data;
+    const state = streamStates.get(classId);
+    
+    if (state) {
+      socket.emit('stream:current-state', {
+        ...state,
+        timeSinceStart: Date.now() - new Date(state.startTime).getTime()
+      });
+      console.log(`📤 Sent current stream state to new joiner for class ${classId}`);
+    } else {
+      socket.emit('stream:no-state', { message: 'No active stream found' });
     }
   });
 });

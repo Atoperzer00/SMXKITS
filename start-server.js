@@ -69,6 +69,7 @@ app.post('/api/kitcomm/message', (req, res) => {
   }
   
   const message = {
+    channel,
     author,
     role,
     content,
@@ -83,13 +84,15 @@ app.post('/api/kitcomm/message', (req, res) => {
   res.json(message);
 });
 
+// Clear messages endpoint
 app.delete('/api/kitcomm/channels/:channel/messages', (req, res) => {
   const channel = req.params.channel;
   const deletedCount = mockMessages[channel] ? mockMessages[channel].length : 0;
   
+  // Clear the messages
   mockMessages[channel] = [];
   
-  // Notify all clients
+  // Notify all clients in the channel
   io.to(`kitcomm:${channel}`).emit('kitcomm:channelCleared', {
     channel,
     clearedBy: 'Admin',

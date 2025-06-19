@@ -2,199 +2,501 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>SMX Instructor Streaming Panel</title>
+  <title>SMX Stream Control Center</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <link href="https://fonts.googleapis.com/css?family=Inter:400,600,700&display=swap" rel="stylesheet">
+  <script src="/socket.io/socket.io.js"></script>
   <style>
     :root {
-      --main-bg: #101824;
-      --panel-bg: #182233;
-      --control-bg: #192637;
-      --accent: #45a2ff;
-      --accent-fade: #2478c9;
-      --success: #11e38b;
-      --error: #fa6060;
-      --border: #25344b;
-      --text-main: #e3e7ef;
-      --text-secondary: #9bacc8;
-      --paused: #ffe65e;
-      --live: #ff5a5a;
-      --rounded: 18px;
-      --shadow: 0 6px 40px 0 #0005;
+      --primary: #0f172a;
+      --secondary: #1e293b;
+      --tertiary: #334155;
+      --accent: #dc2626;
+      --accent-hover: #b91c1c;
+      --accent-light: rgba(220, 38, 38, 0.1);
+      --accent-glow: rgba(220, 38, 38, 0.3);
+      --text-primary: #f8fafc;
+      --text-secondary: #cbd5e1;
+      --text-muted: #64748b;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --border: #475569;
+      --border-light: #334155;
+      --glass: rgba(15, 23, 42, 0.8);
+      --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      --gradient-accent: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
     }
-    body {
+    * {
       margin: 0;
-      font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
-      background: var(--main-bg);
-      color: var(--text-main);
-      min-height: 100vh;
+      padding: 0;
       box-sizing: border-box;
     }
-    .container {
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 32px 18px 42px 18px;
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--gradient-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.6;
     }
+    
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: var(--secondary);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: var(--tertiary);
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--border);
+    }
+    /* Header */
     .header {
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-light);
+      padding: 1.5rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .header-content {
+      max-width: 1400px;
+      margin: 0 auto;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 32px;
     }
+    
     .header-title {
-      font-size: 2.1rem;
+      font-size: 1.75rem;
       font-weight: 700;
-      letter-spacing: .05em;
-      color: var(--text-main);
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
     }
+    
+    .header-icon {
+      width: 2.5rem;
+      height: 2.5rem;
+      background: var(--gradient-accent);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      box-shadow: var(--shadow);
+    }
+    
+    .status-section {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    
     .status-badge {
-      padding: 0.36em 1.25em;
-      border-radius: 1em;
-      font-weight: 700;
-      font-size: 1.1rem;
-      background: var(--panel-bg);
-      color: var(--text-secondary);
-      border: 2.2px solid var(--border);
-      margin-left: 16px;
-      transition: background .14s;
-    }
-    .status-live { color: var(--live); border-color: var(--live); }
-    .status-paused { color: var(--paused); border-color: var(--paused); }
-    .status-offline { color: var(--text-secondary); border-color: var(--border); }
-    .main-panel {
-      display: flex;
-      gap: 36px;
-      flex-wrap: wrap;
-    }
-    .left-panel {
-      flex: 2 1 480px;
-      background: var(--panel-bg);
-      border-radius: var(--rounded);
-      padding: 28px 26px 32px 26px;
-      box-shadow: var(--shadow);
-      min-width: 400px;
-      display: flex;
-      flex-direction: column;
-      min-height: 700px;
-    }
-    .right-panel {
-      flex: 1 1 340px;
-      background: var(--panel-bg);
-      border-radius: var(--rounded);
-      padding: 28px 26px 32px 26px;
-      box-shadow: var(--shadow);
-      min-width: 340px;
-      max-width: 410px;
-      display: flex;
-      flex-direction: column;
-      gap: 30px;
-    }
-    .panel-section {
-      margin-bottom: 36px;
-    }
-    .section-title {
-      font-size: 1.14rem;
+      padding: 0.5rem 1rem;
+      border-radius: 50px;
       font-weight: 600;
-      color: var(--accent);
-      margin-bottom: 14px;
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border: 2px solid;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
     }
-    .class-select {
+    
+    .status-badge::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
       width: 100%;
-      background: var(--control-bg);
-      color: var(--text-main);
-      border: 1.7px solid var(--border);
-      padding: 0.7em 1.2em;
-      font-size: 1.02rem;
-      border-radius: 9px;
-      margin-bottom: 15px;
-      font-family: inherit;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+      transition: left 0.5s;
+    }
+    
+    .status-badge:hover::before {
+      left: 100%;
+    }
+    
+    .status-live { 
+      color: var(--accent); 
+      border-color: var(--accent);
+      background: var(--accent-light);
+      animation: pulse-live 2s infinite;
+    }
+    
+    .status-offline { 
+      color: var(--text-muted); 
+      border-color: var(--border);
+      background: rgba(100, 116, 139, 0.1);
+    }
+    
+    @keyframes pulse-live {
+      0%, 100% { box-shadow: 0 0 0 0 var(--accent-glow); }
+      50% { box-shadow: 0 0 0 10px transparent; }
+    }
+    
+    /* Main Container */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    /* Main Layout */
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+    
+    @media (max-width: 1200px) {
+      .main-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    /* Cards */
+    .card {
+      background: var(--secondary);
+      border-radius: 20px;
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--accent);
+    }
+    
+    .card-header {
+      padding: 1.5rem 2rem;
+      border-bottom: 1px solid var(--border-light);
+      background: var(--glass);
+      backdrop-filter: blur(10px);
+    }
+    
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    
+    .card-icon {
+      width: 2rem;
+      height: 2rem;
+      background: var(--accent-light);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      font-size: 1rem;
+    }
+    
+    .card-content {
+      padding: 2rem;
+    }
+    
+    /* Stream Control Card */
+    .stream-control-card {
+      grid-column: 1;
+    }
+    
+    /* Video Preview */
+    .video-preview-container {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16/9;
+      border-radius: 16px;
+      overflow: hidden;
+      background: var(--primary);
+      border: 2px solid var(--border-light);
+      transition: all 0.3s ease;
+    }
+    
+    .video-preview-container:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 30px var(--accent-glow);
     }
     .video-preview {
       width: 100%;
-      aspect-ratio: 16/9;
-      border-radius: 13px;
-      background: #101929;
-      position: relative;
-      box-shadow: 0 0 0 2px var(--accent-fade);
-      margin-bottom: 10px;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .video-preview video, .video-preview .placeholder {
-      width: 100%;
       height: 100%;
-      border-radius: 13px;
       object-fit: cover;
-      display: block;
+      border-radius: 14px;
     }
-    .video-preview .placeholder {
-      background: #151d27 url('SMX%20Stream%20Loading%20Image.png') center/cover no-repeat;
-      filter: brightness(.82) blur(.3px);
-    }
-    .video-preview .video-overlay {
+    
+    .video-placeholder {
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0,0,0,0.3);
+      inset: 0;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      opacity: 0;
-      transition: opacity 0.3s;
-      border-radius: 13px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      color: var(--text-muted);
+      font-size: 1.125rem;
+      font-weight: 500;
     }
-    .video-preview:hover .video-overlay {
-      opacity: 1;
-    }
-    .video-preview .play-button {
-      width: 60px;
-      height: 60px;
-      background: var(--accent);
+    
+    .video-placeholder-icon {
+      width: 4rem;
+      height: 4rem;
+      background: var(--accent-light);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: white;
-      font-size: 24px;
-      cursor: pointer;
-      transition: transform 0.2s;
+      color: var(--accent);
+      font-size: 2rem;
+      margin-bottom: 1rem;
     }
-    .video-preview .play-button:hover {
-      transform: scale(1.1);
-    }
-    .video-preview .video-ready {
+    
+    .video-ready-indicator {
       position: absolute;
-      top: 10px;
-      right: 10px;
+      top: 1rem;
+      right: 1rem;
       background: var(--success);
       color: white;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 0.8rem;
+      padding: 0.5rem 1rem;
+      border-radius: 50px;
+      font-size: 0.875rem;
       font-weight: 600;
+      display: none;
     }
-    .video-preview.drop-target {
-      border: 3px dashed var(--accent);
-      background: rgba(69, 162, 255, 0.1);
-      transform: scale(1.02);
+    
+    /* Class Selection */
+    .class-selection {
+      margin-bottom: 2rem;
     }
-    .video-preview.drop-target::after {
-      content: '📹 Drop video here to load';
+    
+    .class-select {
+      width: 100%;
+      background: var(--tertiary);
+      color: var(--text-primary);
+      border: 2px solid var(--border-light);
+      padding: 1rem 1.25rem;
+      font-size: 1rem;
+      border-radius: 12px;
+      font-family: inherit;
+      transition: all 0.3s ease;
+    }
+    
+    .class-select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-light);
+    }
+    
+    /* Stream Controls */
+    .stream-controls {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+    
+    /* Buttons */
+    .btn {
+      padding: 0.875rem 1.5rem;
+      border: none;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .btn::before {
+      content: '';
       position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(0, 0, 0, 0.8);
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+      transition: left 0.5s;
+    }
+    
+    .btn:hover::before {
+      left: 100%;
+    }
+    
+    .btn-primary {
+      background: var(--gradient-accent);
+      color: white;
+      box-shadow: var(--shadow);
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+    
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .btn-secondary {
+      background: var(--tertiary);
+      color: var(--text-primary);
+      border: 2px solid var(--border-light);
+    }
+    
+    .btn-secondary:hover {
+      background: var(--border);
+      border-color: var(--accent);
+    }
+    
+    .btn-danger {
+      background: linear-gradient(135deg, var(--error) 0%, #dc2626 100%);
+      color: white;
+    }
+    
+    .btn-danger:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+    }
+    
+    .btn-full {
+      width: 100%;
+      justify-content: center;
+    }
+    
+    /* File Upload */
+    .file-upload-area {
+      border: 2px dashed var(--border-light);
+      border-radius: 16px;
+      padding: 3rem 2rem;
+      text-align: center;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      background: var(--glass);
+      backdrop-filter: blur(10px);
+    }
+    
+    .file-upload-area:hover,
+    .file-upload-area.drag-over {
+      border-color: var(--accent);
+      background: var(--accent-light);
+      transform: translateY(-2px);
+    }
+    
+    .file-upload-icon {
+      width: 4rem;
+      height: 4rem;
+      background: var(--accent-light);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       color: var(--accent);
-      padding: 12px 20px;
-      border-radius: 8px;
+      font-size: 2rem;
+      margin: 0 auto 1rem;
+    }
+    
+    .file-upload-text {
+      font-size: 1.125rem;
       font-weight: 600;
-      z-index: 10;
-      pointer-events: none;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+    
+    .file-upload-hint {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+    
+    .file-info {
+      background: var(--tertiary);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-top: 1rem;
+      display: none;
+    }
+    
+    .file-info.show {
+      display: block;
+    }
+    
+    .file-name {
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+    
+    .file-details {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+    
+    /* Sidebar */
+    .sidebar-card {
+      grid-column: 2;
+    }
+    
+    /* Live Controls */
+    .live-controls {
+      display: none;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    
+    .live-controls.show {
+      display: flex;
+    }
+    
+    /* Viewer Count */
+    .viewer-count {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+    
+    .viewer-count-icon {
+      width: 1.5rem;
+      height: 1.5rem;
+      background: var(--accent-light);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      font-size: 0.75rem;
     }
     .controls-row {
       display: flex;
@@ -499,52 +801,77 @@
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <span class="header-title">Instructor Streaming Control Panel</span>
-      <span class="status-badge status-offline" id="streamStatus">OFFLINE</span>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <div class="header-title">
+        <div class="header-icon">🎥</div>
+        Stream Control Center
+      </div>
+      <div class="status-section">
+        <div class="viewer-count">
+          <div class="viewer-count-icon">👥</div>
+          <span id="viewerCount">0</span> viewers
+        </div>
+        <div class="status-badge status-offline" id="streamStatus">OFFLINE</div>
+      </div>
     </div>
-    <div class="main-panel">
-      <!-- Left: Video and Controls -->
-      <div class="left-panel">
-        <div class="panel-section">
-          <div class="section-title">Class Selection</div>
-          <select id="classSelect" class="class-select">
-            <option value="">Select a class...</option>
-            <option value="Alpha1">Alpha 1</option>
-            <option value="Bravo2">Bravo 2</option>
-            <!-- Dynamically populated from backend -->
-          </select>
-        </div>
-        <div class="panel-section">
-          <div class="section-title">Stream Source</div>
-          <div class="stream-source-tabs">
-            <button class="source-tab active" id="fileTab" onclick="switchToFileMode()">📁 File Upload</button>
-            <button class="source-tab" id="liveTab" onclick="switchToLiveMode()">🔴 Live Camera/Screen</button>
+  </header>
+
+  <!-- Main Container -->
+  <div class="container">
+    <div class="main-layout">
+      <!-- Stream Control Card -->
+      <div class="card stream-control-card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="card-icon">🎬</div>
+            Stream Setup
           </div>
         </div>
-        <div class="panel-section">
-          <div class="section-title">Stream Preview</div>
-          <div class="video-preview" id="videoPreview">
-            <div class="placeholder"></div>
-            <video id="previewVideo" style="display:none;" controls></video>
-            <video id="liveVideo" style="display:none;" autoplay muted playsinline></video>
-            <div class="video-overlay" id="videoOverlay" style="display:none;">
-              <div class="play-button" id="playButton">▶</div>
-            </div>
-            <div class="video-ready" id="videoReady" style="display:none;">Ready to Stream</div>
-            <div class="live-controls" id="liveControls" style="display:none;">
-              <button class="control-btn" id="startCameraBtn">📹 Start Camera</button>
-              <button class="control-btn" id="startScreenBtn">🖥️ Share Screen</button>
-              <button class="control-btn stop" id="stopMediaBtn" style="display:none;">⏹️ Stop Media</button>
-            </div>
+        <div class="card-content">
+          <!-- Class Selection -->
+          <div class="class-selection">
+            <label for="classSelect" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-secondary);">Select Class</label>
+            <select id="classSelect" class="class-select">
+              <option value="">Choose your class...</option>
+              <!-- Dynamically populated -->
+            </select>
           </div>
-        </div>
-        <div class="controls-row">
-          <button class="control-btn" id="goLiveBtn">Go Live</button>
-          <button class="control-btn paused" id="pauseBtn" disabled>Pause</button>
-          <button class="control-btn stop" id="stopBtn" disabled>End Live</button>
-          <span class="viewers-label">Viewers: <span id="viewerCount">0</span></span>
+
+          <!-- Video Preview -->
+          <div class="video-preview-container" id="videoPreview">
+            <div class="video-placeholder">
+              <div class="video-placeholder-icon">📹</div>
+              <div>Upload a video or start live streaming</div>
+            </div>
+            <video id="previewVideo" class="video-preview" style="display:none;" controls></video>
+            <video id="liveVideo" class="video-preview" style="display:none;" autoplay muted playsinline></video>
+            <div class="video-ready-indicator" id="videoReady">✅ Ready to Stream</div>
+          </div>
+
+          <!-- Live Controls -->
+          <div class="live-controls" id="liveControls">
+            <button class="btn btn-secondary" id="startCameraBtn">
+              📹 Camera
+            </button>
+            <button class="btn btn-secondary" id="startScreenBtn">
+              🖥️ Screen Share
+            </button>
+            <button class="btn btn-danger" id="stopMediaBtn" style="display:none;">
+              ⏹️ Stop Media
+            </button>
+          </div>
+
+          <!-- Stream Controls -->
+          <div class="stream-controls">
+            <button class="btn btn-primary btn-full" id="goLiveBtn">
+              🔴 Go Live
+            </button>
+            <button class="btn btn-danger btn-full" id="stopBtn" disabled>
+              ⏹️ End Stream
+            </button>
+          </div>
         </div>
       </div>
       <!-- Right: File Upload and Info -->
@@ -669,17 +996,15 @@
 
     // --- Video Preview controls (stub/demo for now) ---
     const goLiveBtn = document.getElementById('goLiveBtn');
-    const pauseBtn = document.getElementById('pauseBtn');
     const stopBtn = document.getElementById('stopBtn');
     const streamStatus = document.getElementById('streamStatus');
-    let liveState = 'offline'; // 'offline' | 'live' | 'paused'
+    let liveState = 'offline'; // 'offline' | 'live'
     async function setStatus(status) {
       liveState = status;
       streamStatus.className = 'status-badge status-' + status;
-      streamStatus.textContent = status === 'live' ? 'LIVE' : status === 'paused' ? 'PAUSED' : 'OFFLINE';
-      document.getElementById('streamStatusInfo').textContent = status === 'live' ? 'Live' : status === 'paused' ? 'Paused' : 'Offline';
+      streamStatus.textContent = status === 'live' ? 'LIVE' : 'OFFLINE';
+      document.getElementById('streamStatusInfo').textContent = status === 'live' ? 'Live' : 'Offline';
       goLiveBtn.disabled = (status === 'live');
-      pauseBtn.disabled = (status !== 'live');
       stopBtn.disabled = (status === 'offline');
 
       try {
@@ -810,39 +1135,71 @@
         streamStatus.textContent = 'OFFLINE';
         document.getElementById('streamStatusInfo').textContent = 'Offline';
         goLiveBtn.disabled = false;
-        pauseBtn.disabled = true;
         stopBtn.disabled = true;
       }
     }
     goLiveBtn.onclick = () => setStatus('live');
-    pauseBtn.onclick = () => setStatus('paused');
     stopBtn.onclick = () => setStatus('offline');
     setStatus('offline');
     
-    // Video preview controls
-    const playButton = document.getElementById('playButton');
-    const videoOverlay = document.getElementById('videoOverlay');
+    // ===== NATIVE VIDEO EVENT HANDLING FOR LIVE STREAMING =====
     const previewVideo = document.getElementById('previewVideo');
+    let lastPlayState = false;
     
-    playButton.onclick = () => {
-      if (previewVideo.src) {
-        previewVideo.play().then(() => {
-          videoOverlay.style.display = 'none';
-        }).catch(e => console.log('Video play error:', e));
-      }
-    };
-    
-    // Show overlay when video is paused
-    previewVideo.addEventListener('pause', () => {
-      if (window.currentUploadedVideo || window.currentLocalVideo) {
-        videoOverlay.style.display = 'flex';
-      }
-    });
-    
-    // Hide overlay when video is playing
-    previewVideo.addEventListener('play', () => {
-      videoOverlay.style.display = 'none';
-    });
+    function setupVideoEventHandlers() {
+      if (!previewVideo) return;
+      
+      // Play event - broadcast to all students
+      previewVideo.addEventListener('play', () => {
+        console.log('📹 Video play event - broadcasting to students');
+        if (socket && currentClassId) {
+          socket.emit('stream:play', {
+            time: previewVideo.currentTime,
+            timestamp: new Date().toISOString()
+          });
+        }
+      });
+      
+      // Pause event - broadcast to all students
+      previewVideo.addEventListener('pause', () => {
+        console.log('⏸️ Video pause event - broadcasting to students');
+        if (socket && currentClassId) {
+          socket.emit('stream:pause', {
+            time: previewVideo.currentTime,
+            timestamp: new Date().toISOString()
+          });
+        }
+      });
+      
+      // Seek event - broadcast to all students
+      previewVideo.addEventListener('seeked', () => {
+        console.log('⏭️ Video seek event - broadcasting to students');
+        if (socket && currentClassId) {
+          socket.emit('stream:seek', {
+            time: previewVideo.currentTime,
+            timestamp: new Date().toISOString()
+          });
+        }
+      });
+      
+      // Time update - throttled broadcast (every 500ms) - SERVER-SIDE THROTTLED
+      let lastTimeUpdate = 0;
+      previewVideo.addEventListener('timeupdate', () => {
+        const now = Date.now();
+        if (now - lastTimeUpdate > 100) { // Send every 100ms, server will throttle to 500ms
+          if (socket && currentClassId) {
+            socket.emit('stream:time', {
+              time: previewVideo.currentTime,
+              playing: !previewVideo.paused,
+              timestamp: new Date().toISOString()
+            });
+          }
+          lastTimeUpdate = now;
+        }
+      });
+      
+      console.log('✅ Video event handlers set up for live streaming');
+    }
 
 
 
@@ -901,7 +1258,6 @@
       
       const previewVideo = document.getElementById('previewVideo');
       const placeholder = document.querySelector('.video-preview .placeholder');
-      const videoOverlay = document.getElementById('videoOverlay');
       const videoReady = document.getElementById('videoReady');
       
       // Create a local URL for the file
@@ -1114,7 +1470,6 @@
         // Load the uploaded video into the preview (replace local version)
         const previewVideo = document.getElementById('previewVideo');
         const placeholder = document.querySelector('.video-preview .placeholder');
-        const videoOverlay = document.getElementById('videoOverlay');
         const videoReady = document.getElementById('videoReady');
         
         if (result.streamUrl) {
@@ -1255,6 +1610,8 @@
         console.log('🔌 WebRTC Socket connected');
         if (currentClassId) {
           socket.emit('instructor-join-class', { classId: currentClassId });
+          // Join streaming room for real-time sync
+          socket.emit('join-stream', { classId: currentClassId, streamKey: currentStreamKey });
         }
       });
       
@@ -1492,6 +1849,157 @@
       }
     }
     
+    // ===== STREAMING SYNCHRONIZATION FUNCTIONS =====
+    let currentStreamKey = null;
+    let streamSyncInterval = null;
+    let lastTimeUpdate = 0;
+    
+    function initializeStreamSync() {
+      if (!socket || !currentClassId) return;
+      
+      // Use consistent class-based stream key
+      currentStreamKey = `class_${currentClassId}`;
+      
+      // Join streaming room
+      socket.emit('join-stream', { classId: currentClassId, streamKey: currentStreamKey });
+    }
+    
+    // ===== STREAMING SOCKET INITIALIZATION =====
+    function initializeStreamingSocket() {
+      if (!currentClassId) {
+        console.log('❌ No class selected for streaming');
+        return;
+      }
+      
+      if (!socket) {
+        socket = io();
+        console.log('🔌 Initializing streaming socket');
+      }
+      
+      socket.on('connect', () => {
+        console.log('✅ Streaming socket connected');
+        
+        // Join the class streaming room (instructor)
+        socket.emit('instructor-join-class', { classId: currentClassId });
+        
+        console.log(`🏫 Instructor joined class streaming room: ${currentClassId}`);
+      });
+      
+      socket.on('disconnect', () => {
+        console.log('❌ Streaming socket disconnected');
+      });
+      
+      // If already connected, join immediately
+      if (socket.connected) {
+        socket.emit('instructor-join-class', { classId: currentClassId });
+        console.log(`🏫 Instructor joined class streaming room: ${currentClassId}`);
+      }
+    }
+    
+    function startStreamSync(videoElement) {
+      if (streamSyncInterval) clearInterval(streamSyncInterval);
+      
+      // Throttled time updates (every 500ms)
+      streamSyncInterval = setInterval(() => {
+        if (!videoElement || !socket) return;
+        
+        const currentTime = videoElement.currentTime;
+        const isPlaying = !videoElement.paused;
+        
+        // Only send if time changed significantly or play state changed
+        if (Math.abs(currentTime - lastTimeUpdate) > 0.5 || isPlaying !== lastPlayState) {
+          socket.emit('stream:time', {
+            time: currentTime,
+            playing: isPlaying,
+            timestamp: new Date().toISOString()
+          });
+          
+          lastTimeUpdate = currentTime;
+          lastPlayState = isPlaying;
+        }
+      }, 500);
+      
+      // Send initial stream state
+      socket.emit('stream:init', {
+        streamUrl: videoElement.src,
+        startTime: new Date().toISOString(),
+        currentTime: videoElement.currentTime,
+        playing: !videoElement.paused
+      });
+      
+      // Listen for video events and broadcast them
+      videoElement.addEventListener('play', () => {
+        socket.emit('stream:play', {
+          time: videoElement.currentTime,
+          timestamp: new Date().toISOString()
+        });
+      });
+      
+      videoElement.addEventListener('pause', () => {
+        socket.emit('stream:pause', {
+          time: videoElement.currentTime,
+          timestamp: new Date().toISOString()
+        });
+      });
+      
+      videoElement.addEventListener('seeked', () => {
+        socket.emit('stream:seek', {
+          time: videoElement.currentTime,
+          timestamp: new Date().toISOString()
+        });
+      });
+    }
+    
+    function stopStreamSync() {
+      if (streamSyncInterval) {
+        clearInterval(streamSyncInterval);
+        streamSyncInterval = null;
+      }
+    }
+    
+    // ===== ENHANCED STREAMING FUNCTIONS =====
+    async function enhancedToggleStream() {
+      const statusElement = document.getElementById('streamStatus');
+      const currentStatus = statusElement.textContent;
+      
+      if (currentStatus === 'OFFLINE') {
+        // Start streaming
+        const previewVideo = document.getElementById('previewVideo');
+        
+        if (!window.currentUploadedVideo && !window.currentLocalVideo) {
+          alert('Please upload a video file first before going live.');
+          return;
+        }
+        
+        try {
+          // Initialize stream sync
+          initializeStreamSync();
+          
+          // Start the stream
+          await toggleStream();
+          
+          // Set up video event handlers for live streaming
+          setupVideoEventHandlers();
+          
+          // Initialize streaming socket and join room
+          initializeStreamingSocket();
+          
+          // Start synchronization if we have a video
+          if (previewVideo && previewVideo.src) {
+            startStreamSync(previewVideo);
+          }
+          
+        } catch (error) {
+          console.error('Failed to start enhanced stream:', error);
+        }
+        
+      } else {
+        // Stop streaming
+        stopStreamSync();
+        await toggleStream();
+      }
+    }
+
     // --- Event Listeners for WebRTC ---
     document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('startCameraBtn').addEventListener('click', startCamera);
@@ -1701,7 +2209,6 @@
         // Load the file into the video player
         const previewVideo = document.getElementById('previewVideo');
         const placeholder = document.querySelector('.video-preview .placeholder');
-        const videoOverlay = document.getElementById('videoOverlay');
         const videoReady = document.getElementById('videoReady');
         
         previewVideo.src = file.url;

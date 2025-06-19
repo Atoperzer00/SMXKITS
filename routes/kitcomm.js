@@ -4,6 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const KitCommMessage = require('../models/KitCommMessage');
+const KitCommChannel = require('../models/KitCommChannel');
 const auth = require('../middleware/auth');
 
 // In-memory storage for user status
@@ -64,29 +65,35 @@ router.get('/channels/:channel', async (req, res) => {
   }
 });
 
-// Get list of all channels with optional search
+// Get list of all channels
 router.get('/channels', async (req, res) => {
   try {
-    // Get optional search parameter
-    const search = req.query.search ? req.query.search.toLowerCase() : '';
-    // Get optional class parameter
-    const classId = req.query.class || '';
-    
-    // Get all channels
-    let channels = await KitCommMessage.distinct('channel');
-    
-    // Filter by search term if provided
-    if (search) {
-      channels = channels.filter(ch => ch.toLowerCase().includes(search));
-    }
-    
-    // In a real implementation, you would filter channels by class
-    // For now, just return all channels with the search filter
-    
-    res.json(channels);
+    const channels = await KitCommChannel.find({}, 'name').sort('name');
+    res.json(channels.map(c => c.name));
   } catch (error) {
-    console.error('❌ Error fetching KitComm channels:', error);
-    res.status(500).json({ error: 'Server error fetching channels' });
+    console.error('❌ Error fetching channels:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Create a new channel
+router.post('/channels', async (req, res) => {
+  try {
+    const { name, createdBy } = req.body;
+    if (!name) return res.status(400).json({ error: 'Name required' });
+
+    const existing = await KitCommChannel.findOne({ name });
+    if (existing) return res.status(400).json({ error: 'Channel already exists' });
+
+    const channel = await KitCommChannel.create({ name, createdBy });
+    
+    // Notify all clients about the new channel
+    req.app.get('io').emit('kitcomm:channelCreated', { name: channel.name });
+    
+    res.json({ success: true, name: channel.name });
+  } catch (error) {
+    console.error('❌ Error creating channel:', error);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
@@ -190,15 +197,23 @@ router.delete('/channels/:channel/messages', auth, async (req, res) => {
   }
 });
 
-// Delete a channel
+// Delete a channel (Admin only)
 router.delete('/channels/:name', auth, async (req, res) => {
   try {
     const channelName = req.params.name;
     
+    // Check if user is admin
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Only admins can delete channels' });
+    }
+    
     // Don't allow deleting default channels
-    if (channelName === 'Global') {
+    if (['Global', 'Team-1', 'Team-2', 'Instructor'].includes(channelName)) {
       return res.status(403).json({ error: 'Cannot delete default channels' });
     }
+    
+    // Delete the channel from KitCommChannel collection
+    await KitCommChannel.deleteOne({ name: channelName });
     
     // Delete all messages in the channel
     await KitCommMessage.deleteMany({ channel: channelName });

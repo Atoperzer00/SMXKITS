@@ -752,4 +752,90 @@ router.post('/upload', auth(['admin', 'instructor']), tempUpload.single('video')
   }
 });
 
+// Get current stream state for recovery and sync
+router.get('/state/:classId', auth(), async (req, res) => {
+  try {
+    const classObj = await Class.findById(req.params.classId)
+      .populate('currentLesson');
+    
+    if (!classObj) {
+      return res.status(404).json({ error: 'Class not found' });
+    }
+    
+    // Check if user has access to this class
+    if (req.user.role === 'student' && 
+        !classObj.students.includes(req.user.id)) {
+      return res.status(403).json({ error: 'Not authorized for this class' });
+    } else if (req.user.role === 'instructor' && 
+               !classObj.instructors.includes(req.user.id) && 
+               classObj.instructorId?.toString() !== req.user.id) {
+      return res.status(403).json({ error: 'Not authorized for this class' });
+    }
+    
+    // Get active session
+    const session = await StreamSession.findOne({ 
+      classId: classObj._id, 
+      status: { $ne: 'offline' } 
+    }).populate('currentLesson');
+    
+    if (!session || classObj.streamStatus !== 'live') {
+      return res.json({ 
+        success: false, 
+        message: 'No active stream',
+        state: null 
+      });
+    }
+    
+    // Get stream state from memory (if available)
+    const io = req.app.get('io');
+    if (!io.streamStates) {
+      io.streamStates = new Map();
+    }
+    
+    const memoryState = io.streamStates.get(req.params.classId);
+    
+    // Calculate current live time
+    let currentLiveTime = 0;
+    let elapsedSeconds = 0;
+    let isPlaying = false;
+    
+    if (memoryState) {
+      const now = new Date();
+      const lastUpdate = new Date(memoryState.lastUpdate);
+      const timeSinceUpdate = (now - lastUpdate) / 1000;
+      
+      currentLiveTime = memoryState.currentTime;
+      isPlaying = memoryState.playing;
+      
+      // If playing, add elapsed time since last update
+      if (isPlaying) {
+        currentLiveTime += timeSinceUpdate;
+      }
+      
+      const startTime = new Date(memoryState.startTime);
+      elapsedSeconds = (now - startTime) / 1000;
+    }
+    
+    res.json({
+      success: true,
+      state: {
+        streamUrl: classObj.streamStatus === 'live' && classObj.streamKey 
+          ? `${process.env.HLS_SERVER_URL || 'http://localhost:8888'}/live/${classObj.streamKey}/index.m3u8`
+          : null,
+        currentTime: currentLiveTime,
+        playing: isPlaying,
+        startTime: session.startedAt,
+        currentLiveTime,
+        elapsedSeconds,
+        lesson: session.currentLesson,
+        source: session.currentSource
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error getting stream state:', error);
+    res.status(500).json({ error: 'Failed to get stream state' });
+  }
+});
+
 module.exports = router;
