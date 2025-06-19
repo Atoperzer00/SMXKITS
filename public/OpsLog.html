@@ -4,6 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Ops Log - SMXKITS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
     :root {
       --bg: #1e1e1e;
@@ -376,58 +377,9 @@
       position: relative;
     }
     
-    .form-group-with-lock {
-      display: flex;
-      align-items: flex-end;
-      gap: 8px;
-    }
+
     
-    .form-group-with-lock .form-group {
-      flex: 1;
-    }
-    
-    .lock-checkbox {
-      width: 20px;
-      height: 20px;
-      cursor: pointer;
-      appearance: none;
-      -webkit-appearance: none;
-      background: transparent;
-      border: none;
-      border-radius: 4px;
-      transition: all 0.2s;
-      margin-bottom: 1px;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    .lock-checkbox:checked {
-      background: transparent;
-    }
-    
-    .lock-checkbox::after {
-      content: "🔒";
-      font-size: 12px;
-      opacity: 0.3;
-      transition: all 0.2s;
-    }
-    
-    .lock-checkbox:checked::after {
-      color: var(--accent);
-      opacity: 1;
-      filter: drop-shadow(0 0 3px var(--accent));
-    }
-    
-    .lock-checkbox:hover::after {
-      opacity: 0.6;
-    }
-    
-    .lock-checkbox:checked:hover::after {
-      opacity: 1;
-      filter: drop-shadow(0 0 5px var(--accent));
-    }
+
     
     .refresh-btn {
       width: 20px;
@@ -452,13 +404,13 @@
       color: white;
     }
     
-    .form-group-with-refresh-and-lock {
+    .form-group-with-refresh {
       display: flex;
       align-items: flex-end;
       gap: 8px;
     }
     
-    .form-group-with-refresh-and-lock .form-group {
+    .form-group-with-refresh .form-group {
       flex: 1;
     }
     label {
@@ -876,6 +828,42 @@
       0%, 100% { opacity: 1; }
       50% { opacity: 0.7; }
     }
+    /* Modern Callout Card Styling */
+    .callout-card {
+      position: relative;
+      transition: all 0.3s ease;
+      word-break: break-word;
+      white-space: pre-line;
+    }
+    .callout-card:hover {
+      transform: translateY(-2px);
+    }
+    .callout-card.qc-orange { border-color: var(--qc-orange) !important;}
+    .callout-card.qc-yellow { border-color: var(--qc-yellow) !important;}
+    .callout-card.qc-green  { border-color: var(--qc-green) !important;}
+    .callout-card.qc-red    { border-color: var(--qc-red) !important;}
+    
+    /* Approved callout styling for students */
+    .callout-card.qc-green.student-locked {
+      position: relative;
+      opacity: 0.9;
+    }
+    
+    .callout-card.qc-green.student-locked::before {
+      content: "APPROVED";
+      position: absolute;
+      top: -8px;
+      right: 10px;
+      background: var(--qc-green);
+      color: #000;
+      font-size: 0.7em;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 10px;
+      z-index: 5;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
     /* Scrollbars */
     ::-webkit-scrollbar { width: 10px; background: #17181a;}
     ::-webkit-scrollbar-thumb { background: #22262b; border-radius: 6px;}
@@ -894,130 +882,90 @@
         <h3>Edit Callout</h3>
         
         <div class="fields-grid">
-          <div class="form-group-with-lock">
-            <div class="form-group">
-              <label>Classification</label>
-              <select name="classification" required>
-                <option value="">Select</option>
-                <option>No Classification</option>
-              </select>
-            </div>
-            <input type="checkbox" class="lock-checkbox" title="Lock this field">
+          <div class="form-group">
+            <label>Classification</label>
+            <select name="classification" required>
+              <option value="">Select</option>
+              <option>No Classification</option>
+            </select>
           </div>
           
-          <div class="form-group-with-lock">
-            <div class="form-group">
-              <label>Asset Name</label>
-              <input type="text" name="asset" required/>
-            </div>
-            <input type="checkbox" class="lock-checkbox" title="Lock this field">
+          <div class="form-group">
+            <label>Asset Name</label>
+            <input type="text" name="asset" required/>
           </div>
           
-          <div class="form-group-with-lock">
-            <div class="form-group">
-              <label>Sensor</label>
-              <select name="sensor" required>
-                <option value="FMV">FMV</option>
-              </select>
-            </div>
-            <input type="checkbox" class="lock-checkbox" title="Lock this field">
+          <div class="form-group">
+            <label>Sensor</label>
+            <select name="sensor" required>
+              <option value="FMV">FMV</option>
+            </select>
           </div>
           
-          <div class="form-group-with-lock">
-            <div class="form-group">
-              <label>Mission / Operation</label>
-              <input type="text" name="operation" required/>
-            </div>
-            <input type="checkbox" class="lock-checkbox" title="Lock this field">
+          <div class="form-group">
+            <label>Mission / Operation</label>
+            <input type="text" name="operation" required/>
           </div>
           
-          <div class="form-group-with-lock">
-            <div class="form-group">
-              <label>Country Code</label>
-              <input type="text" name="countryCode" maxlength="3"/>
-            </div>
-            <input type="checkbox" class="lock-checkbox" title="Lock this field">
+          <div class="form-group">
+            <label>Country Code</label>
+            <input type="text" name="countryCode" maxlength="3"/>
           </div>
           
-          <div class="form-group-with-lock">
-            <div class="form-group">
-              <label>Team Name</label>
-              <input type="text" name="team"/>
-            </div>
-            <input type="checkbox" class="lock-checkbox" title="Lock this field">
+          <div class="form-group">
+            <label>Team Name</label>
+            <input type="text" name="team"/>
           </div>
           
-          <div class="form-group-with-refresh-and-lock">
+          <div class="form-group-with-refresh">
             <div class="form-group">
               <label>Zulu Time</label>
               <input type="text" name="zulu" required placeholder="HH:MM" pattern="[0-9]{2}:[0-9]{2}" maxlength="5" 
                     oninput="this.value = this.value.replace(/[^0-9:]/g, '');"/>
             </div>
             <button type="button" class="refresh-btn" title="Update to current time" onclick="updateZuluTime(this)">🔄</button>
-            <input type="checkbox" class="lock-checkbox" title="Lock this field">
           </div>
           
-          <div class="form-group-with-lock">
-            <div class="form-group">
-              <label>MGRS</label>
-              <input type="text" name="mgrs"/>
-            </div>
-            <input type="checkbox" class="lock-checkbox" title="Lock this field">
+          <div class="form-group">
+            <label>MGRS</label>
+            <input type="text" name="mgrs"/>
           </div>
           
-          <div class="form-group-with-lock">
-            <div class="form-group">
-              <label>Location</label>
-              <input type="text" name="location"/>
-            </div>
-            <input type="checkbox" class="lock-checkbox" title="Lock this field">
+          <div class="form-group">
+            <label>Location</label>
+            <input type="text" name="location"/>
           </div>
           
-          <div class="form-group-with-lock">
-            <div class="form-group">
-              <label>Activity</label>
-              <input type="text" name="activity"/>
-            </div>
-            <input type="checkbox" class="lock-checkbox" title="Lock this field">
+          <div class="form-group">
+            <label>Activity</label>
+            <input type="text" name="activity"/>
           </div>
           
-          <div class="form-group-with-lock" style="grid-column: 1 / span 2;">
-            <div class="form-group">
-              <label>IA Notes</label>
-              <textarea name="iaNotes" rows="3" oninput="autoGrow(this)"></textarea>
-            </div>
-            <input type="checkbox" class="lock-checkbox" title="Lock this field">
+          <div class="form-group" style="grid-column: 1 / span 2;">
+            <label>IA Notes</label>
+            <textarea name="iaNotes" rows="3" oninput="autoGrow(this)"></textarea>
           </div>
           
           <!-- SLANT and Vehicles row -->
-          <div class="form-group-with-lock">
-            <div class="form-group">
-              <label>SLANT</label>
-              <input type="text" name="slant" placeholder="#/#/#" maxlength="10" 
-                     oninput="formatSlant(this)" title="Format: #/#/# (Size/Activity/Location)"/>
-            </div>
-            <input type="checkbox" class="lock-checkbox" title="Lock this field">
+          <div class="form-group">
+            <label>SLANT</label>
+            <input type="text" name="slant" placeholder="#/#/#" maxlength="10" 
+                   oninput="formatSlant(this)" title="Format: #/#/# (Size/Activity/Location)"/>
           </div>
           
-          <div class="form-group-with-lock">
-            <div class="form-group">
-              <label>Vehicles</label>
-              <input type="number" name="vehicles" min="0" value="0" style="text-align: center;"/>
-            </div>
-            <input type="checkbox" class="lock-checkbox" title="Lock this field">
+          <div class="form-group">
+            <label>Vehicles</label>
+            <input type="number" name="vehicles" min="0" value="0" style="text-align: center;"/>
           </div>
           
           <!-- Target Status field -->
-          <div class="form-group-with-lock">
-            <div class="form-group">
-              <label>Target Status</label>
-              <select name="targetStatus">
-                <option value="">Select Status</option>
-                <option value="ON TARGET">ON TARGET</option>
-                <option value="OFF TARGET">OFF TARGET</option>
-              </select>
-            </div>
-            <input type="checkbox" class="lock-checkbox" title="Lock this field">
+          <div class="form-group">
+            <label>Target Status</label>
+            <select name="targetStatus">
+              <option value="">Select Status</option>
+              <option value="ON TARGET">ON TARGET</option>
+              <option value="OFF TARGET">OFF TARGET</option>
+            </select>
           </div>
         </div>
         
@@ -1045,74 +993,52 @@
             ondrop="handleFormDrop(event)">
         <div class="form-title" style="font-size: 1.1em; margin-bottom: 12px;">Submit New Callout</div>
         
-        <div class="form-group-with-lock" style="margin-bottom: 12px;">
-          <div class="form-group">
-            <label>Classification</label>
-            <select name="classification" required>
-              <option value="">Select</option>
-              <option>No Classification</option>
-            </select>
-          </div>
-          <input type="checkbox" class="lock-checkbox" title="Lock this field">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Classification</label>
+          <select name="classification" required>
+            <option value="">Select</option>
+            <option>No Classification</option>
+          </select>
         </div>
         
-        <div class="form-group-with-lock" style="margin-bottom: 12px;">
-          <div class="form-group">
-            <label>Asset Name</label>
-            <input type="text" name="asset" required oninput="autoGrow(this)"/>
-          </div>
-          <input type="checkbox" class="lock-checkbox" title="Lock this field">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Asset Name</label>
+          <input type="text" name="asset" required oninput="autoGrow(this)"/>
         </div>
         
-        <div class="form-group-with-lock" style="margin-bottom: 12px;">
-          <div class="form-group">
-            <label>Sensor</label>
-            <select name="sensor" required>
-              <option value="FMV">FMV</option>
-            </select>
-          </div>
-          <input type="checkbox" class="lock-checkbox" title="Lock this field">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Sensor</label>
+          <select name="sensor" required>
+            <option value="FMV">FMV</option>
+          </select>
         </div>
         
-        <div class="form-group-with-lock" style="margin-bottom: 12px;">
-          <div class="form-group">
-            <label>Mission / Operation</label>
-            <input type="text" name="operation" value="OBJ" required oninput="autoGrow(this)"/>
-          </div>
-          <input type="checkbox" class="lock-checkbox" title="Lock this field">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Mission / Operation</label>
+          <input type="text" name="operation" value="OBJ" required oninput="autoGrow(this)"/>
         </div>
         
-        <div class="form-group-with-lock" style="margin-bottom: 12px;">
-          <div class="form-group">
-            <label>Country Code</label>
-            <input type="text" name="countryCode" maxlength="3" oninput="autoGrow(this)"/>
-          </div>
-          <input type="checkbox" class="lock-checkbox" title="Lock this field">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Country Code</label>
+          <input type="text" name="countryCode" maxlength="3" oninput="autoGrow(this)"/>
         </div>
         
-        <div class="form-group-with-lock" style="margin-bottom: 12px;">
-          <div class="form-group">
-            <label>Team Name</label>
-            <input type="text" name="team" oninput="autoGrow(this)"/>
-          </div>
-          <input type="checkbox" class="lock-checkbox" title="Lock this field">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Team Name</label>
+          <input type="text" name="team" oninput="autoGrow(this)"/>
         </div>
         
-        <div class="form-group-with-refresh-and-lock" style="margin-bottom: 12px;">
+        <div class="form-group-with-refresh" style="margin-bottom: 12px;">
           <div class="form-group">
             <label>Zulu Time</label>
             <input type="text" name="zulu" required placeholder="HH:MM" pattern="[0-9]{2}:[0-9]{2}" maxlength="5" oninput="this.value = this.value.replace(/[^0-9:]/g, '');"/>
           </div>
           <button type="button" class="refresh-btn" title="Update to current time" onclick="updateZuluTime(this)">🔄</button>
-          <input type="checkbox" class="lock-checkbox" title="Lock this field">
         </div>
         
-        <div class="form-group-with-lock" style="margin-bottom: 12px;">
-          <div class="form-group">
-            <label>MGRS</label>
-            <input type="text" name="mgrs"/>
-          </div>
-          <input type="checkbox" class="lock-checkbox" title="Lock this field">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>MGRS</label>
+          <input type="text" name="mgrs"/>
         </div>
         
         <!-- Follow container moved here -->
@@ -1153,62 +1079,44 @@
           </div>
         </div>
         
-        <div class="form-group-with-lock" style="margin-bottom: 12px;">
-          <div class="form-group">
-            <label>Location Description</label>
-            <input type="text" name="location"/>
-          </div>
-          <input type="checkbox" class="lock-checkbox" title="Lock this field">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Location Description</label>
+          <input type="text" name="location"/>
         </div>
         
-        <div class="form-group-with-lock" style="margin-bottom: 12px;">
-          <div class="form-group">
-            <label>Activity</label>
-            <textarea id="activityTextarea" name="activity" rows="1"></textarea>
-          </div>
-          <input type="checkbox" class="lock-checkbox" title="Lock this field">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Activity</label>
+          <textarea id="activityTextarea" name="activity" rows="1"></textarea>
         </div>
         
         <div class="divider" style="margin: 15px 0;"></div>
         
-        <div class="form-group-with-lock" style="margin-bottom: 12px;">
-          <div class="form-group">
-            <label>IA Notes</label>
-            <textarea name="iaNotes" rows="1" oninput="autoGrow(this)"></textarea>
-          </div>
-          <input type="checkbox" class="lock-checkbox" title="Lock this field">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>IA Notes</label>
+          <textarea name="iaNotes" rows="1" oninput="autoGrow(this)"></textarea>
         </div>
         
         <!-- SLANT field -->
-        <div class="form-group-with-lock" style="margin-bottom: 12px;">
-          <div class="form-group">
-            <label>SLANT</label>
-            <input type="text" name="slant" placeholder="#/#/#" maxlength="10" 
-                   oninput="formatSlant(this)" title="Format: #/#/# (Size/Activity/Location)"/>
-          </div>
-          <input type="checkbox" class="lock-checkbox" title="Lock this field">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>SLANT</label>
+          <input type="text" name="slant" placeholder="#/#/#" maxlength="10" 
+                 oninput="formatSlant(this)" title="Format: #/#/# (Size/Activity/Location)"/>
         </div>
         
         <!-- Vehicles field -->
-        <div class="form-group-with-lock" style="margin-bottom: 12px;">
-          <div class="form-group">
-            <label>Vehicles</label>
-            <input type="number" name="vehicles" min="0" value="0" style="text-align: center;"/>
-          </div>
-          <input type="checkbox" class="lock-checkbox" title="Lock this field">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Vehicles</label>
+          <input type="number" name="vehicles" min="0" value="0" style="text-align: center;"/>
         </div>
         
         <!-- Target Status field -->
-        <div class="form-group-with-lock" style="margin-bottom: 12px;">
-          <div class="form-group">
-            <label>Target Status</label>
-            <select name="targetStatus" required>
-              <option value="">Select Status</option>
-              <option value="ON TARGET">ON TARGET</option>
-              <option value="OFF TARGET">OFF TARGET</option>
-            </select>
-          </div>
-          <input type="checkbox" class="lock-checkbox" title="Lock this field">
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Target Status</label>
+          <select name="targetStatus" required>
+            <option value="">Select Status</option>
+            <option value="ON TARGET">ON TARGET</option>
+            <option value="OFF TARGET">OFF TARGET</option>
+          </select>
         </div>
         
         <button type="submit" class="submit-btn" style="width: 100%;">Submit</button>
@@ -1516,25 +1424,8 @@
     try {
       console.log("Log form submitted");
       
-      // Handle locked fields - preserve their values from the last successful submission
-      const data = Object.fromEntries(new FormData(form));
-      const lockCheckboxes = form.querySelectorAll('.lock-checkbox');
-      
-      // Get stored locked values if they exist
-      const storedLockedValues = JSON.parse(localStorage.getItem('lockedFieldValues') || '{}');
-      
-      lockCheckboxes.forEach((checkbox) => {
-        if (checkbox.checked) {
-          const formGroup = checkbox.closest('.form-group-with-lock, .form-group-with-refresh-and-lock');
-          if (formGroup) {
-            const input = formGroup.querySelector('input:not(.lock-checkbox), select, textarea');
-            if (input && input.name && storedLockedValues[input.name]) {
-              data[input.name] = storedLockedValues[input.name];
-              console.log(`Using locked value for ${input.name}:`, storedLockedValues[input.name]);
-            }
-          }
-        }
-      });
+      const formData = new FormData(form);
+      const data = Object.fromEntries(formData.entries());
       
       let follow = undefined;
       
@@ -1587,41 +1478,7 @@
       callouts[log._id] = log;
       createBubble(log, false);
       
-      // Store locked field values for future use
-      const lockCheckboxes2 = form.querySelectorAll('.lock-checkbox');
-      const lockedValues = {};
-      lockCheckboxes2.forEach((checkbox) => {
-        if (checkbox.checked) {
-          const formGroup = checkbox.closest('.form-group-with-lock, .form-group-with-refresh-and-lock');
-          if (formGroup) {
-            const input = formGroup.querySelector('input:not(.lock-checkbox), select, textarea');
-            if (input && input.name) {
-              lockedValues[input.name] = input.value;
-            }
-          }
-        }
-      });
-      localStorage.setItem('lockedFieldValues', JSON.stringify(lockedValues));
-      
-      // Clear form ONLY on successful submission (but preserve locked fields)
-      const formData = new FormData(form);
-      form.reset();
-      
-      // Restore locked field values after reset
-      lockCheckboxes.forEach((checkbox) => {
-        if (checkbox.checked) {
-          const formGroup = checkbox.closest('.form-group-with-lock, .form-group-with-refresh-and-lock');
-          if (formGroup) {
-            const input = formGroup.querySelector('input:not(.lock-checkbox), select, textarea');
-            if (input && input.name && lockedValues[input.name]) {
-              input.value = lockedValues[input.name];
-            }
-          }
-        }
-      });
-      
-      const textareas = form.querySelectorAll('textarea');
-      textareas.forEach(ta => ta.style.height = 'auto');
+      // DO NOT reset form - keep all field values populated
       
       // Reset follow form if it was used
       if (follow) {
@@ -1651,11 +1508,48 @@
         bubble.offsetHeight; /* trigger reflow */
         bubble.style.animation = 'flash 1.5s';
       }
+      
+      // Show "LOG SUBMITTED" overlay feedback
+      showLogSubmittedOverlay();
     } catch (error) {
       console.error("Error submitting callout:", error);
       alert("Error submitting callout: " + error.message);
       // DO NOT clear form on error - keep user's input
     }
+  }
+  
+  // Show "LOG SUBMITTED" overlay feedback
+  function showLogSubmittedOverlay() {
+    // Create overlay element
+    const overlay = document.createElement('div');
+    overlay.className = 'bg-black/70 fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-300';
+    overlay.style.opacity = '0';
+    
+    // Create text element
+    const text = document.createElement('div');
+    text.className = 'text-white text-3xl font-bold';
+    text.textContent = 'LOG SUBMITTED';
+    
+    overlay.appendChild(text);
+    document.body.appendChild(overlay);
+    
+    // Fade in
+    requestAnimationFrame(() => {
+      overlay.style.opacity = '1';
+    });
+    
+    // Add click handler to dismiss
+    overlay.addEventListener('click', function() {
+      // Fade out
+      overlay.style.opacity = '0';
+      
+      // Remove from DOM after transition
+      setTimeout(() => {
+        if (overlay.parentNode) {
+          overlay.parentNode.removeChild(overlay);
+        }
+      }, 300);
+    });
   }
   
   // ------ Data Loading Functions ------
@@ -1754,7 +1648,7 @@
       const existingBubble = document.getElementById('callout_' + data._id);
       if (existingBubble) {
         // Just update the existing bubble's class for QC status without moving it
-        existingBubble.className = "bubble " + (data.qc || "qc-orange");
+        existingBubble.className = "callout-card " + (data.qc || "qc-orange");
         if (data.follow && data.follow.name) {
           existingBubble.classList.add('has-follow');
         }
@@ -1774,7 +1668,7 @@
       
       // This is a new bubble, create it from scratch
       const div = document.createElement('div');
-      div.className = "bubble " + (data.qc || "qc-orange"); 
+      div.className = "callout-card " + (data.qc || "qc-orange"); 
       div.id = 'callout_' + data._id;
       
       // Add student-locked class for approved callouts when user is student
@@ -1850,7 +1744,7 @@
       
       // Create the rest of the content
       const content = document.createElement('div');
-      content.className = "bubble-flex";
+      content.className = "bg-zinc-800/70 border border-zinc-700 rounded-md shadow-md p-4 mb-4";
       
       // If has follow, add the vertical indicator bar
       if (hasFollow) {
@@ -1867,36 +1761,49 @@
       }
       
       content.innerHTML = `
-        <div class="bubble-left"> 
-          ${data.targetStatus ? `<div style="margin-bottom: 8px; padding: 4px 8px; border-radius: 6px; font-size: 0.9em; font-weight: bold; text-align: center; ${data.targetStatus === 'ON TARGET' ? 'background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3);' : 'background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);'}">${data.targetStatus}</div>` : ''}
-          <div class="bubble-row"> 
-            <span><b>${data.operation || '-'}</b></span> 
-            <span style="margin: 0 9px; color: #444;">|</span> 
-            <span><b>${data.asset || '-'}</b></span> 
-          </div> 
-          <div class="bubble-row">${data.location || '-'}</div> 
-          ${ hasFollow ? `<div class="bubble-row follow-title">
-            <b>${data.follow.name} / ${data.follow.stage}</b>
-            ${data.follow.followId ? `<span class="follow-id">#${data.follow.followId}</span>` : ''}
-          </div>` : '' } 
-          <div class="bubble-row">${data.activity || '-'}</div> 
-          ${data.iaNotes && data.iaNotes.trim() ? '<div class="bubble-row"><b>IA Notes:</b> ' + data.iaNotes.replace(/\n/g,'<br>') + '</div>' : ''}
-        </div> 
-        <div class="bubble-right"> 
-          <div class="bubble-date-time">
-            <span class="bubble-date">${formatDateForBubble(data.createdAt)}</span>
-            <span class="bubble-time">${data.zulu ? data.zulu + 'Z' : '-'}</span>
+        <!-- Top Row Layout -->
+        <div class="flex justify-between items-center">
+          <div class="font-bold text-white">
+            OBJ ${(data.operation || 'UNKNOWN').toUpperCase()} – ${(data.asset || 'UNKNOWN').toUpperCase()}
           </div>
-          <span><b>MGRS:</b> <span style="letter-spacing: 0.5px; font-size: 1.05em;">${data.mgrs || '-'}</span></span> 
-          <span><b>S:</b> ${data.slant || '-'} &nbsp; <b>VIC:</b> ${data.vehicles || '0'}</span>
+          <div class="text-right">
+            <div class="text-sm text-white">${formatDateForBubble(data.createdAt)}</div>
+            <div class="text-green-400 text-lg font-bold">${data.zulu ? data.zulu + 'Z' : '0000Z'}</div>
+          </div>
+        </div>
+        
+        <!-- Separator Line -->
+        <hr class="my-2 border-zinc-600">
+        
+        <!-- Middle Content Block (Details) -->
+        <div class="space-y-1 leading-snug text-sm">
+          <div><span class="font-medium">AOI:</span> ${(data.location || 'Not specified').toUpperCase()}</div>
+          <div><span class="font-medium">MGRS:</span> ${(data.mgrs || 'Not specified').toUpperCase()}</div>
+          <div><span class="font-medium">S:</span> ${(data.slant || 'N/A').toUpperCase()} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="font-medium">VIC:</span> ${data.vehicles || '0'}</div>
+          <div><span class="font-medium">Activity:</span></div>
+          <div class="text-zinc-300 ml-2">${data.activity || 'No activity reported'}</div>
+          ${data.targetStatus ? `<div class="mt-2 text-center"><span class="px-2 py-1 rounded text-xs font-bold ${data.targetStatus === 'ON TARGET' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'}">${data.targetStatus}</span></div>` : ''}
+          ${data.iaNotes && data.iaNotes.trim() ? '<div class="mt-2 text-zinc-400 text-xs"><span class="font-medium">IA Notes:</span> ' + data.iaNotes.replace(/\n/g,'<br>') + '</div>' : ''}
+          ${ hasFollow ? `<div class="mt-2 p-2 bg-blue-500/10 border border-blue-500/30 rounded text-xs">
+            <span class="font-medium text-blue-400">Follow:</span> ${(data.follow.name || '').toUpperCase()} / ${(data.follow.stage || '').toUpperCase()}
+            ${data.follow.followId ? `<span class="text-blue-300 font-mono ml-2">#${data.follow.followId.toUpperCase()}</span>` : ''}
+          </div>` : '' }
         </div>
       `;
       
       const footer = document.createElement('div');
-      footer.style.fontSize = "0.85em";
-      footer.style.color = "#888";
-      footer.style.marginTop = "7px";
-      footer.innerHTML = `By ${data.createdBy} &middot; ${(data.createdAt ? new Date(data.createdAt).toLocaleDateString() : '')} &middot; ${(data.createdAt ? new Date(data.createdAt).toLocaleTimeString() : '')}`;
+      footer.className = "flex justify-between items-center text-xs text-zinc-500 mt-3";
+      
+      // Left side - Last Edit By (if edited)
+      const leftSide = data.editedAt && data.editedBy ? `Last Edit By: ${data.editedBy}` : '';
+      
+      // Right side - Creator signature
+      const rightSide = `By ${data.createdBy} • ${(data.createdAt ? new Date(data.createdAt).toLocaleDateString() : '')} • ${(data.createdAt ? new Date(data.createdAt).toLocaleTimeString() : '')}`;
+      
+      footer.innerHTML = `
+        <div>${leftSide}</div>
+        <div>${rightSide}</div>
+      `;
       
       // Assemble the bubble
       div.appendChild(selectCheckbox);
@@ -1923,7 +1830,7 @@
         
         // Check existing callouts to find the right position
         let inserted = false;
-        const existingBubbles = panel.querySelectorAll('.bubble');
+        const existingBubbles = panel.querySelectorAll('.callout-card');
         
         // Skip the first element if it's the tip div
         for (let i = 0; i < existingBubbles.length; i++) {
@@ -2016,11 +1923,11 @@
     try {
       const hasFollow = data.follow && data.follow.name;
       
-      // Find or create the bubble-flex content div
-      let content = bubble.querySelector('.bubble-flex');
+      // Find or create the content div
+      let content = bubble.querySelector('.bg-zinc-800\\/70, .bubble-flex');
       if (!content) {
         content = document.createElement('div');
-        content.className = "bubble-flex";
+        content.className = "bg-zinc-800/70 border border-zinc-700 rounded-md shadow-md p-4 mb-4";
         bubble.appendChild(content);
       }
       
@@ -2041,41 +1948,54 @@
       
       // Update the content HTML
       content.innerHTML = `
-        <div class="bubble-left"> 
-          ${data.targetStatus ? `<div style="margin-bottom: 8px; padding: 4px 8px; border-radius: 6px; font-size: 0.9em; font-weight: bold; text-align: center; ${data.targetStatus === 'ON TARGET' ? 'background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3);' : 'background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);'}">${data.targetStatus}</div>` : ''}
-          <div class="bubble-row"> 
-            <span><b>${data.operation || '-'}</b></span> 
-            <span style="margin: 0 9px; color: #444;">|</span> 
-            <span><b>${data.asset || '-'}</b></span> 
-          </div> 
-          <div class="bubble-row">${data.location || '-'}</div> 
-          ${ hasFollow ? `<div class="bubble-row follow-title">
-            <b>${data.follow.name} / ${data.follow.stage}</b>
-            ${data.follow.followId ? `<span class="follow-id">#${data.follow.followId}</span>` : ''}
-          </div>` : '' } 
-          <div class="bubble-row">${data.activity || '-'}</div> 
-          ${data.iaNotes && data.iaNotes.trim() ? '<div class="bubble-row"><b>IA Notes:</b> ' + data.iaNotes.replace(/\n/g,'<br>') + '</div>' : ''}
-        </div> 
-        <div class="bubble-right"> 
-          <div class="bubble-date-time">
-            <span class="bubble-date">${formatDateForBubble(data.createdAt)}</span>
-            <span class="bubble-time">${data.zulu ? data.zulu + 'Z' : '-'}</span>
+        <!-- Top Row Layout -->
+        <div class="flex justify-between items-center">
+          <div class="font-bold text-white">
+            OBJ ${(data.operation || 'UNKNOWN').toUpperCase()} – ${(data.asset || 'UNKNOWN').toUpperCase()}
           </div>
-          <span><b>MGRS:</b> <span style="letter-spacing: 0.5px; font-size: 1.05em;">${data.mgrs || '-'}</span></span> 
-          <span><b>S:</b> ${data.slant || '-'} &nbsp; <b>VIC:</b> ${data.vehicles || '0'}</span>
+          <div class="text-right">
+            <div class="text-sm text-white">${formatDateForBubble(data.createdAt)}</div>
+            <div class="text-green-400 text-lg font-bold">${data.zulu ? data.zulu + 'Z' : '0000Z'}</div>
+          </div>
+        </div>
+        
+        <!-- Separator Line -->
+        <hr class="my-2 border-zinc-600">
+        
+        <!-- Middle Content Block (Details) -->
+        <div class="space-y-1 leading-snug text-sm">
+          <div><span class="font-medium">AOI:</span> ${(data.location || 'Not specified').toUpperCase()}</div>
+          <div><span class="font-medium">MGRS:</span> ${(data.mgrs || 'Not specified').toUpperCase()}</div>
+          <div><span class="font-medium">S:</span> ${(data.slant || 'N/A').toUpperCase()} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="font-medium">VIC:</span> ${data.vehicles || '0'}</div>
+          <div><span class="font-medium">Activity:</span></div>
+          <div class="text-zinc-300 ml-2">${data.activity || 'No activity reported'}</div>
+          ${data.targetStatus ? `<div class="mt-2 text-center"><span class="px-2 py-1 rounded text-xs font-bold ${data.targetStatus === 'ON TARGET' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'}">${data.targetStatus}</span></div>` : ''}
+          ${data.iaNotes && data.iaNotes.trim() ? '<div class="mt-2 text-zinc-400 text-xs"><span class="font-medium">IA Notes:</span> ' + data.iaNotes.replace(/\n/g,'<br>') + '</div>' : ''}
+          ${ hasFollow ? `<div class="mt-2 p-2 bg-blue-500/10 border border-blue-500/30 rounded text-xs">
+            <span class="font-medium text-blue-400">Follow:</span> ${(data.follow.name || '').toUpperCase()} / ${(data.follow.stage || '').toUpperCase()}
+            ${data.follow.followId ? `<span class="text-blue-300 font-mono ml-2">#${data.follow.followId.toUpperCase()}</span>` : ''}
+          </div>` : '' }
         </div>
       `;
       
       // Update footer information
-      let footer = bubble.querySelector('div[style*="font-size: 0.85em"]');
+      let footer = bubble.querySelector('.flex.justify-between.items-center.text-xs.text-zinc-500.mt-3');
       if (!footer) {
         footer = document.createElement('div');
-        footer.style.fontSize = "0.85em";
-        footer.style.color = "#888";
-        footer.style.marginTop = "7px";
+        footer.className = "flex justify-between items-center text-xs text-zinc-500 mt-3";
         bubble.appendChild(footer);
       }
-      footer.innerHTML = `By ${data.createdBy} &middot; ${(data.createdAt ? new Date(data.createdAt).toLocaleDateString() : '')} &middot; ${(data.createdAt ? new Date(data.createdAt).toLocaleTimeString() : '')}`;
+      
+      // Left side - Last Edit By (if edited)
+      const leftSide = data.editedAt && data.editedBy ? `Last Edit By: ${data.editedBy}` : '';
+      
+      // Right side - Creator signature
+      const rightSide = `By ${data.createdBy} • ${(data.createdAt ? new Date(data.createdAt).toLocaleDateString() : '')} • ${(data.createdAt ? new Date(data.createdAt).toLocaleTimeString() : '')}`;
+      
+      footer.innerHTML = `
+        <div>${leftSide}</div>
+        <div>${rightSide}</div>
+      `;
       
       // Update the data payload
       bubble.dataset.payload = JSON.stringify(data);
@@ -2533,8 +2453,7 @@
     // Initialize sidebar resize functionality
     initSidebarResize();
     
-    // Initialize lock functionality for form fields
-    initializeLockFunctionality();
+    // Lock functionality removed - all fields are now editable by default
     
     // CONSOLIDATED BUTTON EVENT HANDLERS - Single source of truth
     const buttonHandlers = [
@@ -3270,18 +3189,10 @@
         console.log("No SLANT data in dropped callout");
       }
       
-      // Fill form with callout data - OVERRIDE LOCK BOXES
+      // Fill form with callout data
       const form = document.getElementById('logForm');
       if (form) {
-        // First, unlock all locked fields temporarily for drag and drop override
-        const lockCheckboxes = form.querySelectorAll('.lock-checkbox');
-        const originalLockStates = [];
-        lockCheckboxes.forEach((checkbox, index) => {
-          originalLockStates[index] = checkbox.checked;
-          checkbox.checked = false; // Temporarily unlock
-        });
-        
-        // Fill all fields regardless of previous lock state
+        // Fill all fields
         if (data.classification) form.elements.classification.value = data.classification;
         if (data.asset) form.elements.asset.value = data.asset;
         if (data.sensor) form.elements.sensor.value = data.sensor;
@@ -3304,13 +3215,7 @@
         if (data.vehicles !== undefined && data.vehicles !== null) form.elements.vehicles.value = data.vehicles;
         if (data.targetStatus) form.elements.targetStatus.value = data.targetStatus;
         
-        // Restore original lock states after a brief delay
-        setTimeout(() => {
-          lockCheckboxes.forEach((checkbox, index) => {
-            checkbox.checked = originalLockStates[index];
-          });
-          console.log('Lock states restored after drag and drop override');
-        }, 100);
+        // Form fields populated successfully
         
         // Handle follow information if present
         if (data.follow && data.follow.name) {
@@ -3399,7 +3304,7 @@
   function updateZuluTime(button) {
     try {
       // Get the form group containing this button
-      const formGroup = button.closest('.form-group-with-refresh-and-lock');
+      const formGroup = button.closest('.form-group-with-refresh');
       if (!formGroup) {
         console.error('Could not find form group for refresh button');
         return;
@@ -3409,13 +3314,6 @@
       const zuluInput = formGroup.querySelector('input[name="zulu"]');
       if (!zuluInput) {
         console.error('Could not find zulu time input field');
-        return;
-      }
-      
-      // Check if the field is locked
-      const lockCheckbox = formGroup.querySelector('.lock-checkbox');
-      if (lockCheckbox && lockCheckbox.checked) {
-        console.log('Zulu time field is locked, skipping update');
         return;
       }
       
@@ -3440,50 +3338,14 @@
     }
   }
 
-  // Initialize lock functionality for form fields
-  function initializeLockFunctionality() {
-    console.log("Initializing lock functionality...");
-    
-    const form = document.getElementById('logForm');
-    if (!form) return;
-    
-    // Add event listeners to all lock checkboxes
-    const lockCheckboxes = form.querySelectorAll('.lock-checkbox');
-    lockCheckboxes.forEach((checkbox, index) => {
-      checkbox.addEventListener('change', function() {
-        const formGroup = this.closest('.form-group-with-lock, .form-group-with-refresh-and-lock');
-        if (!formGroup) return;
-        
-        const input = formGroup.querySelector('input:not(.lock-checkbox), select, textarea');
-        if (!input) return;
-        
-        if (this.checked) {
-          // Lock the field
-          input.setAttribute('readonly', true);
-          input.setAttribute('disabled', true);
-          input.style.opacity = '0.6';
-          input.style.cursor = 'not-allowed';
-          console.log('Locked field:', input.name);
-        } else {
-          // Unlock the field
-          input.removeAttribute('readonly');
-          input.removeAttribute('disabled');
-          input.style.opacity = '1';
-          input.style.cursor = '';
-          console.log('Unlocked field:', input.name);
-        }
-      });
-    });
-    
-    console.log("✅ Lock functionality initialized");
-  }
+
 
   // Initialize drag-and-drop functionality for callouts
   function initializeDragAndDrop() {
     console.log("Initializing drag-and-drop functionality...");
     
     // Get all bubble elements (callouts)
-    const calloutElements = document.querySelectorAll('.bubble');
+    const calloutElements = document.querySelectorAll('.callout-card');
     
     if (calloutElements.length > 0) {
       console.log(`Found ${calloutElements.length} callout elements for drag functionality`);
