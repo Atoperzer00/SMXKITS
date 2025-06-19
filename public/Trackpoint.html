@@ -106,12 +106,21 @@
     let citiesVisible = false;
 
     $(function () {
+      console.log('TrackPoint initializing...');
+      console.log('Arma3Map.Maps.altis:', Arma3Map.Maps.altis);
+      
       // Initialize Altis map exactly like the original
-      InitMap(Arma3Map.Maps.altis);
+      try {
+        InitMap(Arma3Map.Maps.altis);
+        console.log('InitMap called successfully');
+      } catch (error) {
+        console.error('Error initializing map:', error);
+      }
       
       // Store map reference globally
       setTimeout(() => {
         map = window.map || L.map('map');
+        console.log('Map reference stored:', map);
       }, 1000);
     });
 
