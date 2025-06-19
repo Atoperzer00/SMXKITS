@@ -28,5 +28,8 @@ function InitMap(mapInfos) {
 				L.marker([city.y, city.x]).addTo(map).bindPopup(city.name);
 			});
 		}
+		
+		// Make map globally accessible
+		window.map = map;
     });
 }

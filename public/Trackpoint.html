@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrackPoint - SMX Altis Mapping System</title>
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" />
+  <link rel="stylesheet" href="mapUtils.css">
+  
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #1a1a1a;
+      color: #ffffff;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #2c3e50, #34495e);
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+      z-index: 1000;
+      position: relative;
+      height: 50px;
+    }
+
+    .header h1 {
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #ecf0f1;
+      margin: 0;
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .btn {
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.3s ease;
+    }
+
+    .btn:hover {
+      background: #2980b9;
+      transform: translateY(-1px);
+    }
+
+    .btn.danger {
+      background: #e74c3c;
+    }
+
+    .btn.danger:hover {
+      background: #c0392b;
+    }
+
+    .btn.cities {
+      background: #27ae60;
+    }
+
+    .btn.cities:hover {
+      background: #229954;
+    }
+
+    .btn.debug {
+      background: #f39c12;
+    }
+
+    .btn.debug:hover {
+      background: #e67e22;
+    }
+
+    .map-container {
+      height: calc(100vh - 50px);
+      position: relative;
+    }
+
+    #map {
+      width: 100vw;
+      height: 100%;
+    }
+
+    /* Override some leaflet styles for better integration */
+    .leaflet-container .leaflet-grid-mouseposition {
+      background-color: rgba(0, 0, 0, 0.8);
+      color: #00ff00;
+      font-family: 'Courier New', monospace;
+      border: 1px solid #444;
+      border-radius: 4px;
+    }
+
+    .leaflet-control-scale-line {
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      border: 1px solid #444;
+    }
+
+    /* Loading overlay */
+    .loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+      color: white;
+      font-size: 1.2rem;
+    }
+
+    .loading-overlay.hidden {
+      display: none;
+    }
+
+    .loading-spinner {
+      border: 3px solid #444;
+      border-top: 3px solid #3498db;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin-right: 15px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Debug Panel */
+    .debug-panel {
+      position: absolute;
+      top: 60px;
+      left: 10px;
+      width: 350px;
+      max-height: calc(100vh - 80px);
+      background: rgba(0, 0, 0, 0.95);
+      border: 1px solid #444;
+      border-radius: 5px;
+      padding: 15px;
+      z-index: 1500;
+      display: none;
+      overflow-y: auto;
+      font-size: 0.85rem;
+    }
+
+    .debug-panel.visible {
+      display: block;
+    }
+
+    .debug-section {
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #333;
+    }
+
+    .debug-section:last-child {
+      border-bottom: none;
+    }
+
+    .debug-section h3 {
+      color: #3498db;
+      margin: 0 0 8px 0;
+      font-size: 0.9rem;
+    }
+
+    .debug-item {
+      margin: 3px 0;
+      padding: 2px 0;
+    }
+
+    .debug-success {
+      color: #27ae60;
+    }
+
+    .debug-error {
+      color: #e74c3c;
+    }
+
+    .debug-warning {
+      color: #f39c12;
+    }
+
+    .debug-info {
+      color: #3498db;
+    }
+
+    .close-debug {
+      position: absolute;
+      top: 5px;
+      right: 10px;
+      background: none;
+      border: none;
+      color: #e74c3c;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🗺️ TrackPoint - Altis Tactical Map</h1>
+    <div class="header-controls">
+      <button class="btn cities" onclick="toggleCities()">Toggle Cities</button>
+      <button class="btn" onclick="centerMap()">Center Map</button>
+      <button class="btn debug" onclick="toggleDebug()">Debug Info</button>
+      <button class="btn danger" onclick="goBack()">← Back to Dashboard</button>
+    </div>
+  </div>
+
+  <div class="map-container">
+    <div id="loading" class="loading-overlay">
+      <div class="loading-spinner"></div>
+      <div>Loading Altis Map System...</div>
+    </div>
+
+    <div id="map"></div>
+
+    <!-- Debug Panel -->
+    <div id="debugPanel" class="debug-panel">
+      <button class="close-debug" onclick="toggleDebug()">&times;</button>
+      <h2 style="color: #f39c12; margin-top: 0;">🔧 TrackPoint Debug Info</h2>
+      
+      <div class="debug-section">
+        <h3>📁 File Structure</h3>
+        <div id="file-status">Checking files...</div>
+      </div>
+      
+      <div class="debug-section">
+        <h3>📜 Script Loading</h3>
+        <div id="script-status">Checking scripts...</div>
+      </div>
+      
+      <div class="debug-section">
+        <h3>🗺️ Map Tiles</h3>
+        <div id="tiles-status">Checking tiles...</div>
+      </div>
+      
+      <div class="debug-section">
+        <h3>⚙️ Map Configuration</h3>
+        <div id="config-status">Checking configuration...</div>
+      </div>
+      
+      <div class="debug-section">
+        <h3>📊 System Status</h3>
+        <div id="system-status">
+          <div class="debug-item">Browser: <span id="browser-info"></span></div>
+          <div class="debug-item">Screen: <span id="screen-info"></span></div>
+          <div class="debug-item">Timestamp: <span id="timestamp"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Required Scripts -->
+  <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="mapUtils.js"></script>
+  <script src="defaultMap.js"></script>
+  <script src="altis.js"></script>
+  
+  <script>
+    // Global variables
+    let map;
+    let citiesVisible = false;
+    let debugVisible = false;
+    let debugResults = {
+      files: {},
+      scripts: {},
+      tiles: {},
+      config: {}
+    };
+
+    // Initialize the Altis map
+    function initializeAltisMap() {
+      try {
+        console.log('Initializing Altis map...');
+        
+        // Initialize the map using the existing system
+        InitMap(Arma3Map.Maps.altis);
+        
+        // Hide loading overlay after a short delay to ensure map is loaded
+        setTimeout(() => {
+          document.getElementById('loading').classList.add('hidden');
+          console.log('Altis map loaded successfully');
+        }, 1000);
+        
+      } catch (error) {
+        console.error('Error initializing Altis map:', error);
+        document.getElementById('loading').innerHTML = `
+          <div style="text-align: center;">
+            <div style="color: #e74c3c; font-size: 1.5rem; margin-bottom: 10px;">⚠️ Map Loading Error</div>
+            <div>Failed to load Altis map tiles</div>
+            <div style="font-size: 0.9rem; margin-top: 10px; color: #bbb;">
+              Make sure all map files are present in the /altis/ directory
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    // Toggle city markers
+    function toggleCities() {
+      citiesVisible = !citiesVisible;
+      const btn = event.target;
+      
+      if (citiesVisible) {
+        // Add #cities to URL to show cities
+        window.location.hash = '#cities';
+        btn.textContent = 'Hide Cities';
+        btn.style.background = '#e67e22';
+        
+        // Reload the map with cities
+        document.getElementById('map').innerHTML = '';
+        InitMap(Arma3Map.Maps.altis);
+        
+      } else {
+        // Remove #cities from URL
+        window.location.hash = '';
+        btn.textContent = 'Toggle Cities';
+        btn.style.background = '#27ae60';
+        
+        // Reload the map without cities
+        document.getElementById('map').innerHTML = '';
+        InitMap(Arma3Map.Maps.altis);
+      }
+    }
+
+    // Center the map on Altis
+    function centerMap() {
+      if (window.map) {
+        // Use the map instance created by InitMap
+        window.map.setView(Arma3Map.Maps.altis.center, Arma3Map.Maps.altis.defaultZoom);
+      }
+    }
+
+    // Go back to dashboard
+    function goBack() {
+      if (confirm('Are you sure you want to leave TrackPoint?')) {
+        window.location.href = '/admin-dashboard.html';
+      }
+    }
+
+    // Toggle debug panel
+    function toggleDebug() {
+      debugVisible = !debugVisible;
+      const panel = document.getElementById('debugPanel');
+      
+      if (debugVisible) {
+        panel.classList.add('visible');
+        runDiagnostics();
+      } else {
+        panel.classList.remove('visible');
+      }
+    }
+
+    // Run comprehensive diagnostics
+    function runDiagnostics() {
+      updateSystemInfo();
+      checkFiles();
+      checkScripts();
+      checkTiles();
+      checkConfiguration();
+    }
+
+    // Update system information
+    function updateSystemInfo() {
+      document.getElementById('browser-info').textContent = navigator.userAgent.split(' ').pop();
+      document.getElementById('screen-info').textContent = `${screen.width}x${screen.height}`;
+      document.getElementById('timestamp').textContent = new Date().toLocaleString();
+    }
+
+    // Check file availability
+    function checkFiles() {
+      const files = [
+        'mapUtils.js',
+        'defaultMap.js', 
+        'altis.js',
+        'mapUtils.css'
+      ];
+      
+      let results = [];
+      let completed = 0;
+      
+      document.getElementById('file-status').innerHTML = '<div class="debug-info">Checking files...</div>';
+      
+      files.forEach(file => {
+        fetch(file)
+          .then(response => {
+            if (response.ok) {
+              results.push(`<div class="debug-item debug-success">✅ ${file} - OK (${response.headers.get('content-length') || 'unknown'} bytes)</div>`);
+              debugResults.files[file] = 'success';
+            } else {
+              results.push(`<div class="debug-item debug-error">❌ ${file} - Not found (${response.status})</div>`);
+              debugResults.files[file] = 'error';
+            }
+          })
+          .catch(error => {
+            results.push(`<div class="debug-item debug-error">❌ ${file} - Error: ${error.message}</div>`);
+            debugResults.files[file] = 'error';
+          })
+          .finally(() => {
+            completed++;
+            if (completed === files.length) {
+              document.getElementById('file-status').innerHTML = results.join('');
+            }
+          });
+      });
+    }
+
+    // Check script loading and functions
+    function checkScripts() {
+      let results = [];
+      
+      document.getElementById('script-status').innerHTML = '<div class="debug-info">Checking scripts...</div>';
+      
+      // Check if functions are available
+      setTimeout(() => {
+        if (typeof InitMap === 'function') {
+          results.push('<div class="debug-item debug-success">✅ InitMap function available</div>');
+          debugResults.scripts.InitMap = 'success';
+        } else {
+          results.push('<div class="debug-item debug-error">❌ InitMap function not available</div>');
+          debugResults.scripts.InitMap = 'error';
+        }
+        
+        if (typeof Arma3Map !== 'undefined' && Arma3Map.Maps && Arma3Map.Maps.altis) {
+          results.push('<div class="debug-item debug-success">✅ Arma3Map.Maps.altis available</div>');
+          debugResults.scripts.Arma3Map = 'success';
+        } else {
+          results.push('<div class="debug-item debug-error">❌ Arma3Map.Maps.altis not available</div>');
+          debugResults.scripts.Arma3Map = 'error';
+        }
+        
+        if (typeof MGRS_CRS === 'function') {
+          results.push('<div class="debug-item debug-success">✅ MGRS_CRS function available</div>');
+          debugResults.scripts.MGRS_CRS = 'success';
+        } else {
+          results.push('<div class="debug-item debug-error">❌ MGRS_CRS function not available</div>');
+          debugResults.scripts.MGRS_CRS = 'error';
+        }
+        
+        if (typeof L !== 'undefined' && L.latlngGraticule) {
+          results.push('<div class="debug-item debug-success">✅ L.latlngGraticule available</div>');
+          debugResults.scripts.latlngGraticule = 'success';
+        } else {
+          results.push('<div class="debug-item debug-error">❌ L.latlngGraticule not available</div>');
+          debugResults.scripts.latlngGraticule = 'error';
+        }
+        
+        if (typeof L !== 'undefined' && L.control && L.control.gridMousePosition) {
+          results.push('<div class="debug-item debug-success">✅ L.control.gridMousePosition available</div>');
+          debugResults.scripts.gridMousePosition = 'success';
+        } else {
+          results.push('<div class="debug-item debug-error">❌ L.control.gridMousePosition not available</div>');
+          debugResults.scripts.gridMousePosition = 'error';
+        }
+        
+        document.getElementById('script-status').innerHTML = results.join('');
+      }, 1000);
+    }
+
+    // Check map tiles
+    function checkTiles() {
+      const testTiles = [
+        'altis/0/0/0.png',
+        'altis/1/0/0.png',
+        'altis/1/1/0.png',
+        'altis/2/0/0.png',
+        'altis/3/0/0.png'
+      ];
+      
+      let results = [];
+      let completed = 0;
+      
+      document.getElementById('tiles-status').innerHTML = '<div class="debug-info">Checking tiles...</div>';
+      
+      testTiles.forEach(tile => {
+        const img = new Image();
+        img.onload = () => {
+          results.push(`<div class="debug-item debug-success">✅ ${tile} - OK (${img.width}x${img.height})</div>`);
+          debugResults.tiles[tile] = 'success';
+          completed++;
+          if (completed === testTiles.length) {
+            document.getElementById('tiles-status').innerHTML = results.join('');
+          }
+        };
+        img.onerror = () => {
+          results.push(`<div class="debug-item debug-error">❌ ${tile} - Not found or invalid</div>`);
+          debugResults.tiles[tile] = 'error';
+          completed++;
+          if (completed === testTiles.length) {
+            document.getElementById('tiles-status').innerHTML = results.join('');
+          }
+        };
+        img.src = tile;
+      });
+    }
+
+    // Check map configuration
+    function checkConfiguration() {
+      let results = [];
+      
+      document.getElementById('config-status').innerHTML = '<div class="debug-info">Checking configuration...</div>';
+      
+      setTimeout(() => {
+        if (typeof Arma3Map !== 'undefined' && Arma3Map.Maps && Arma3Map.Maps.altis) {
+          const config = Arma3Map.Maps.altis;
+          
+          results.push(`<div class="debug-item debug-info">Min Zoom: ${config.minZoom}</div>`);
+          results.push(`<div class="debug-item debug-info">Max Zoom: ${config.maxZoom}</div>`);
+          results.push(`<div class="debug-item debug-info">Tile Pattern: ${config.tilePattern}</div>`);
+          results.push(`<div class="debug-item debug-info">Center: [${config.center[0]}, ${config.center[1]}]</div>`);
+          results.push(`<div class="debug-item debug-info">Default Zoom: ${config.defaultZoom}</div>`);
+          results.push(`<div class="debug-item debug-info">Cities: ${config.cities.length} defined</div>`);
+          
+          if (config.CRS) {
+            results.push('<div class="debug-item debug-success">✅ CRS (Coordinate System) configured</div>');
+          } else {
+            results.push('<div class="debug-item debug-error">❌ CRS not configured</div>');
+          }
+          
+          debugResults.config.status = 'success';
+        } else {
+          results.push('<div class="debug-item debug-error">❌ Configuration not available</div>');
+          debugResults.config.status = 'error';
+        }
+        
+        // Map instance status
+        if (window.map) {
+          results.push('<div class="debug-item debug-success">✅ Map instance created</div>');
+          results.push(`<div class="debug-item debug-info">Current Zoom: ${window.map.getZoom()}</div>`);
+          const center = window.map.getCenter();
+          results.push(`<div class="debug-item debug-info">Current Center: [${center.lat.toFixed(2)}, ${center.lng.toFixed(2)}]</div>`);
+        } else {
+          results.push('<div class="debug-item debug-warning">⚠️ Map instance not yet created</div>');
+        }
+        
+        document.getElementById('config-status').innerHTML = results.join('');
+      }, 1500);
+    }
+
+    // Make map globally accessible
+    window.addEventListener('load', function() {
+      // Wait for all scripts to load
+      setTimeout(() => {
+        if (typeof InitMap === 'function' && typeof Arma3Map !== 'undefined') {
+          initializeAltisMap();
+        } else {
+          console.error('Required map functions not loaded');
+          document.getElementById('loading').innerHTML = `
+            <div style="text-align: center;">
+              <div style="color: #e74c3c; font-size: 1.5rem; margin-bottom: 10px;">⚠️ Script Loading Error</div>
+              <div>Required map scripts failed to load</div>
+            </div>
+          `;
+        }
+      }, 500);
+    });
+
+    // Handle window resize
+    window.addEventListener('resize', function() {
+      if (window.map) {
+        window.map.invalidateSize();
+      }
+    });
+
+    // Check if cities should be shown on load
+    if (window.location.hash === '#cities') {
+      citiesVisible = true;
+    }
+  </script>
+</body>
+</html>
