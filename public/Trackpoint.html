@@ -107,20 +107,59 @@
 
     $(function () {
       console.log('TrackPoint initializing...');
+      
+      // Check if all required objects are loaded
+      if (typeof L === 'undefined') {
+        console.error('❌ Leaflet not loaded');
+        return;
+      }
+      
+      if (typeof Arma3Map === 'undefined') {
+        console.error('❌ Arma3Map not defined');
+        return;
+      }
+      
+      if (typeof InitMap === 'undefined') {
+        console.error('❌ InitMap function not defined');
+        return;
+      }
+      
+      console.log('✅ All dependencies loaded');
       console.log('Arma3Map.Maps.altis:', Arma3Map.Maps.altis);
       
       // Initialize Altis map exactly like the original
       try {
         InitMap(Arma3Map.Maps.altis);
-        console.log('InitMap called successfully');
+        console.log('✅ InitMap called successfully');
       } catch (error) {
-        console.error('Error initializing map:', error);
+        console.error('❌ Error initializing map:', error);
+        
+        // Fallback: try to create a basic map
+        try {
+          console.log('🔄 Attempting fallback map creation...');
+          map = L.map('map').setView([0, 0], 2);
+          L.tileLayer('altis/{z}/{x}/{y}.png', {
+            attribution: 'Altis Map - Arma 3',
+            tileSize: 256,
+            minZoom: 0,
+            maxZoom: 6
+          }).addTo(map);
+          console.log('✅ Fallback map created');
+        } catch (fallbackError) {
+          console.error('❌ Fallback map creation failed:', fallbackError);
+        }
       }
       
       // Store map reference globally
       setTimeout(() => {
-        map = window.map || L.map('map');
+        map = window.map || map;
         console.log('Map reference stored:', map);
+        
+        if (map) {
+          console.log('✅ Map is ready');
+        } else {
+          console.error('❌ Map is still null');
+        }
       }, 1000);
     });
 

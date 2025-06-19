@@ -21,10 +21,26 @@ function InitMap(mapInfos) {
 
         tileLayer.on('tileerror', function(e) {
             console.error('❌ Tile error:', e.url);
+            console.error('Tile coords:', e.coords);
+        });
+
+        tileLayer.on('tileloadstart', function(e) {
+            console.log('🔄 Tile loading started:', e.url);
+        });
+
+        tileLayer.on('loading', function() {
+            console.log('🔄 Map tiles loading...');
+        });
+
+        tileLayer.on('load', function() {
+            console.log('✅ All map tiles loaded');
         });
 
         tileLayer.addTo(map);
         console.log('Tile layer added with pattern:', mapInfos.tilePattern);
+        console.log('Map bounds:', map.getBounds());
+        console.log('Map center:', map.getCenter());
+        console.log('Map zoom:', map.getZoom());
 
         map.setView(mapInfos.center, mapInfos.defaultZoom);
 
