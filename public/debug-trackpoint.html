@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TrackPoint Debug</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" />
+  <style>
+    body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+    #map { height: 500px; width: 100%; border: 2px solid #333; margin: 20px 0; }
+    .debug-panel { background: #f0f0f0; padding: 15px; margin: 10px 0; border-radius: 5px; }
+    .tile-request { margin: 5px 0; padding: 5px; background: #e0e0e0; font-family: monospace; font-size: 12px; }
+    .success { color: green; }
+    .error { color: red; }
+  </style>
+</head>
+<body>
+  <h1>TrackPoint Debug - Tile Loading Analysis</h1>
+  
+  <div class="debug-panel">
+    <h3>Tile Request Monitor</h3>
+    <div id="tile-requests"></div>
+  </div>
+  
+  <div id="map"></div>
+  
+  <div class="debug-panel">
+    <button onclick="loadSimpleMap()">Load Simple Map</button>
+    <button onclick="loadMGRSMap()">Load MGRS Map</button>
+    <button onclick="clearRequests()">Clear Requests</button>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="mapUtils.js"></script>
+  <script src="altis.js"></script>
+  
+  <script>
+    let map;
+    let tileRequests = [];
+    
+    function logTileRequest(url, success) {
+      tileRequests.push({ url, success, time: new Date().toLocaleTimeString() });
+      updateTileRequestDisplay();
+    }
+    
+    function updateTileRequestDisplay() {
+      const container = document.getElementById('tile-requests');
+      container.innerHTML = tileRequests.map(req => 
+        `<div class="tile-request ${req.success ? 'success' : 'error'}">
+          ${req.time}: ${req.url} - ${req.success ? 'SUCCESS' : 'FAILED'}
+        </div>`
+      ).join('');
+    }
+    
+    function clearRequests() {
+      tileRequests = [];
+      updateTileRequestDisplay();
+    }
+    
+    function loadSimpleMap() {
+      if (map) {
+        map.remove();
+      }
+      
+      console.log('Loading simple map...');
+      
+      map = L.map('map', {
+        crs: L.CRS.Simple,
+        minZoom: 0,
+        maxZoom: 6
+      });
+      
+      const tileLayer = L.tileLayer('./altis/{z}/{x}/{y}.png', {
+        attribution: 'Altis Map - Simple CRS',
+        tileSize: 256,
+        noWrap: true
+      });
+      
+      // Monitor tile loading
+      tileLayer.on('tileloadstart', function(e) {
+        console.log('Tile load start:', e.url);
+      });
+      
+      tileLayer.on('tileload', function(e) {
+        console.log('Tile loaded:', e.url);
+        logTileRequest(e.url, true);
+      });
+      
+      tileLayer.on('tileerror', function(e) {
+        console.log('Tile error:', e.url);
+        logTileRequest(e.url, false);
+      });
+      
+      tileLayer.addTo(map);
+      map.setView([128, 128], 2);
+      
+      console.log('Simple map loaded');
+    }
+    
+    function loadMGRSMap() {
+      if (map) {
+        map.remove();
+      }
+      
+      console.log('Loading MGRS map...');
+      
+      if (!Arma3Map || !Arma3Map.Maps.altis) {
+        console.error('Altis config not available');
+        return;
+      }
+      
+      const config = Arma3Map.Maps.altis;
+      console.log('Using config:', config);
+      
+      map = L.map('map', {
+        crs: config.CRS,
+        minZoom: config.minZoom,
+        maxZoom: config.maxZoom
+      });
+      
+      const tileLayer = L.tileLayer(config.tilePattern, {
+        attribution: config.attribution,
+        tileSize: config.tileSize
+      });
+      
+      // Monitor tile loading
+      tileLayer.on('tileloadstart', function(e) {
+        console.log('MGRS Tile load start:', e.url);
+      });
+      
+      tileLayer.on('tileload', function(e) {
+        console.log('MGRS Tile loaded:', e.url);
+        logTileRequest(e.url, true);
+      });
+      
+      tileLayer.on('tileerror', function(e) {
+        console.log('MGRS Tile error:', e.url);
+        logTileRequest(e.url, false);
+      });
+      
+      tileLayer.addTo(map);
+      map.setView(config.center, config.defaultZoom);
+      
+      console.log('MGRS map loaded');
+    }
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('Debug page loaded');
+      
+      // Check if required functions are available
+      if (typeof MGRS_CRS === 'function') {
+        console.log('MGRS_CRS available');
+      } else {
+        console.error('MGRS_CRS not available');
+      }
+      
+      if (Arma3Map && Arma3Map.Maps && Arma3Map.Maps.altis) {
+        console.log('Altis config available');
+      } else {
+        console.error('Altis config not available');
+      }
+    });
+  </script>
+</body>
+</html>
