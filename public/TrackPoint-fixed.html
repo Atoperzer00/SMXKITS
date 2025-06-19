@@ -193,10 +193,20 @@
 
         log('Map created with MGRS CRS');
 
-        // Add tile layer
-        const tileLayer = L.tileLayer(altisConfig.tilePattern, {
+        // Create custom tile layer to ensure proper URL generation
+        const AltisLayer = L.TileLayer.extend({
+          getTileUrl: function (coords) {
+            const url = `altis/${coords.z}/${coords.x}/${coords.y}.png`;
+            log('🔗 Requesting tile: ' + url);
+            return url;
+          }
+        });
+
+        const tileLayer = new AltisLayer('', {
           attribution: altisConfig.attribution,
           tileSize: altisConfig.tileSize,
+          minZoom: altisConfig.minZoom,
+          maxZoom: altisConfig.maxZoom,
           errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
         });
 

@@ -46,11 +46,15 @@
 
       // Add debugging
       tileLayer.on('tileload', function(e) {
-        log('✅ Tile loaded: ' + e.url);
+        log('✅ Tile loaded: ' + (e.url || 'URL undefined') + ' | Coords: ' + JSON.stringify(e.coords || 'no coords'));
       });
 
       tileLayer.on('tileerror', function(e) {
-        log('❌ Tile error: ' + e.url);
+        log('❌ Tile error: ' + (e.url || 'URL undefined') + ' | Coords: ' + JSON.stringify(e.coords || 'no coords'));
+      });
+
+      tileLayer.on('tileloadstart', function(e) {
+        log('🔄 Tile loading: ' + (e.url || 'URL undefined') + ' | Coords: ' + JSON.stringify(e.coords || 'no coords'));
       });
 
       tileLayer.on('loading', function() {

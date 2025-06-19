@@ -8,9 +8,20 @@ function InitMap(mapInfos) {
             crs: mapInfos.CRS
         });
 
-        var tileLayer = L.tileLayer(mapInfos.tilePattern, {
+        // Create custom tile layer to ensure proper URL generation
+        var AltisLayer = L.TileLayer.extend({
+            getTileUrl: function (coords) {
+                var url = mapInfos.tilePattern.replace('{z}', coords.z).replace('{x}', coords.x).replace('{y}', coords.y);
+                console.log('🔗 Requesting tile: ' + url + ' | Coords: z=' + coords.z + ' x=' + coords.x + ' y=' + coords.y);
+                return url;
+            }
+        });
+
+        var tileLayer = new AltisLayer('', {
             attribution: mapInfos.attribution,
             tileSize: mapInfos.tileSize,
+            minZoom: mapInfos.minZoom,
+            maxZoom: mapInfos.maxZoom,
             errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
         });
 

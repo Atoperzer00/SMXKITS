@@ -134,17 +134,39 @@
       } catch (error) {
         console.error('❌ Error initializing map:', error);
         
-        // Fallback: try to create a basic map
+        // Fallback: try to create a basic map with custom tile layer
         try {
           console.log('🔄 Attempting fallback map creation...');
-          map = L.map('map').setView([0, 0], 2);
-          L.tileLayer('altis/{z}/{x}/{y}.png', {
+          
+          // Create custom tile layer to ensure proper URL generation
+          const AltisLayer = L.TileLayer.extend({
+            getTileUrl: function (coords) {
+              const url = `altis/${coords.z}/${coords.x}/${coords.y}.png`;
+              console.log('🔗 Fallback requesting tile: ' + url);
+              return url;
+            }
+          });
+
+          map = L.map('map', {
+            crs: L.CRS.Simple,
+            minZoom: 0,
+            maxZoom: 6
+          });
+
+          const tileLayer = new AltisLayer('', {
             attribution: 'Altis Map - Arma 3',
             tileSize: 256,
             minZoom: 0,
             maxZoom: 6
-          }).addTo(map);
-          console.log('✅ Fallback map created');
+          });
+
+          tileLayer.addTo(map);
+          
+          // Set bounds for the map
+          const bounds = [[0, 0], [30720, 30720]];
+          map.fitBounds(bounds);
+          
+          console.log('✅ Fallback map created with custom tile layer');
         } catch (fallbackError) {
           console.error('❌ Fallback map creation failed:', fallbackError);
         }

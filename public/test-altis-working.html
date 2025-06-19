@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Altis Map - Working Version</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css">
+  <style>
+    body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+    #map { width: 100%; height: 600px; border: 2px solid #333; }
+    .debug { margin: 10px 0; padding: 10px; background: #f0f0f0; }
+  </style>
+</head>
+<body>
+  <h1>Altis Map Test - Working Version</h1>
+  <div class="debug">
+    <h3>Debug Info:</h3>
+    <div id="debug-output"></div>
+  </div>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+  <script>
+    function log(msg) {
+      console.log(msg);
+      document.getElementById('debug-output').innerHTML += '<div>' + msg + '</div>';
+    }
+
+    log('Starting working Altis map test...');
+
+    try {
+      // Create a custom tile layer that properly handles the URLs
+      const AltisLayer = L.TileLayer.extend({
+        getTileUrl: function (coords) {
+          const url = `altis/${coords.z}/${coords.x}/${coords.y}.png`;
+          log('🔗 Requesting tile: ' + url + ' | Coords: z=' + coords.z + ' x=' + coords.x + ' y=' + coords.y);
+          return url;
+        }
+      });
+
+      // Create map with bounds that match our tile structure
+      const map = L.map('map', {
+        crs: L.CRS.Simple,
+        minZoom: 0,
+        maxZoom: 6
+      });
+
+      log('Map created with Simple CRS');
+
+      // Add our custom tile layer
+      const tileLayer = new AltisLayer('', {
+        attribution: 'Altis Map - Arma 3',
+        tileSize: 256,
+        minZoom: 0,
+        maxZoom: 6
+      });
+
+      // Add debugging
+      tileLayer.on('tileload', function(e) {
+        log('✅ Tile loaded successfully: ' + e.url);
+      });
+
+      tileLayer.on('tileerror', function(e) {
+        log('❌ Tile error: ' + e.url);
+      });
+
+      tileLayer.addTo(map);
+      log('Custom tile layer added');
+
+      // Set bounds based on our tile structure
+      // For a 256x256 tile at zoom 0, we need to set appropriate bounds
+      const bounds = [[0, 0], [256, 256]];
+      map.fitBounds(bounds);
+      
+      log('Map bounds set to: ' + JSON.stringify(bounds));
+      log('Current zoom: ' + map.getZoom());
+      log('Current center: ' + JSON.stringify(map.getCenter()));
+
+    } catch (error) {
+      log('❌ Error: ' + error.message);
+      console.error(error);
+    }
+  </script>
+</body>
+</html>
