@@ -19,7 +19,8 @@ Arma3Map.Maps.altis = {
     attribution: 'Altis Map - Arma 3',
     tileSize: 256,
     center: [15360, 15360], // Center of Altis map
-    defaultZoom: 2,
+    defaultZoom: 1, // Start with lower zoom to ensure tiles exist
+    bounds: [[0, 0], [30720, 30720]], // Define map bounds
     cities: [
         // Major cities on Altis
         { name: "Kavala", x: 26800, y: 21300 },

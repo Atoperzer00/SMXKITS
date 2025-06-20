@@ -28,6 +28,8 @@ function InitMap(mapInfos) {
             tileSize: mapInfos.tileSize,
             minZoom: mapInfos.minZoom,
             maxZoom: mapInfos.maxZoom,
+            bounds: mapInfos.bounds || null, // Add bounds if specified
+            noWrap: true, // Prevent tile wrapping
             errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
         });
 
