@@ -87,6 +87,7 @@
     <h1>🗺️ TrackPoint - Altis Tactical Map</h1>
     <div class="header-controls">
       <button class="btn cities" onclick="toggleCities()">Toggle Cities</button>
+      <button class="btn" onclick="toggleBorder()">Toggle Border</button>
       <button class="btn" onclick="centerMap()">Center Map</button>
       <button class="btn danger" onclick="goBack()">← Back to Dashboard</button>
     </div>
@@ -101,6 +102,8 @@
   <script>
     let map;
     let citiesVisible = false;
+    let borderVisible = true;
+    let mapBorder;
 
     // Altis cities data
     const altisCities = [
@@ -116,20 +119,41 @@
 
     let cityMarkers = [];
 
+    // MGRS CRS function for Altis
+    function MGRS_CRS(factorx, factory, tileWidth) {
+      return L.extend({}, L.CRS.Simple, {
+        projection: L.Projection.LonLat,
+        transformation: new L.Transformation(factorx, 0, -factory, tileWidth),
+        scale: function (zoom) {
+          return Math.pow(2, zoom);
+        },
+        zoom: function (scale) {
+          return Math.log(scale) / Math.LN2;
+        },
+        distance: function (latlng1, latlng2) {
+          var dx = latlng2.lng - latlng1.lng,
+              dy = latlng2.lat - latlng1.lat;
+          return Math.sqrt(dx * dx + dy * dy);
+        },
+        infinite: true
+      });
+    }
+
     $(function () {
       console.log('TrackPoint initializing...');
       
       try {
-        // Create map with simple coordinate system (more reliable)
+        // Create map with proper MGRS coordinate system for Altis
         map = L.map('map', {
-          crs: L.CRS.Simple,
+          crs: MGRS_CRS(1/256, 1/256, 30720),
           minZoom: 0,
           maxZoom: 6,
           zoomControl: true,
-          attributionControl: true
+          attributionControl: true,
+          maxBoundsViscosity: 1.0  // Makes the bounds "sticky" - prevents dragging outside
         });
 
-        console.log('✅ Map created with Simple CRS');
+        console.log('✅ Map created with MGRS CRS');
 
         // Create tile layer with multiple URL patterns for better compatibility
         let tileLayer;
@@ -214,12 +238,30 @@
 
         tileLayer.addTo(map);
 
-        // Set bounds for Altis (30720x30720 map)
+        // Set bounds for Altis (30720x30720 map) with MGRS coordinates
         const bounds = [[0, 0], [30720, 30720]];
+        
+        // Set the maximum bounds to prevent panning outside the map
+        map.setMaxBounds(bounds);
+        
+        // Fit the map to the bounds initially
         map.fitBounds(bounds);
         
-        // Set initial view to center of map
+        // Set initial view to center of map with MGRS coordinates
         map.setView([15360, 15360], 2);
+        
+        console.log('🔒 Map bounds set to prevent panning outside [0,0] to [30720,30720]');
+
+        // Add a visual border around the map bounds
+        mapBorder = L.rectangle(bounds, {
+          color: '#ff0000',
+          weight: 3,
+          opacity: 0.8,
+          fillOpacity: 0,
+          dashArray: '10, 10'
+        }).addTo(map);
+        
+        console.log('🔲 Visual map border added');
 
         // Store map reference globally
         window.map = map;
@@ -318,6 +360,20 @@
       if (map) {
         map.setView([15360, 15360], 2);
         console.log('📍 Map centered at [15360, 15360] zoom 2');
+      }
+    }
+
+    function toggleBorder() {
+      if (!mapBorder) return;
+      
+      if (borderVisible) {
+        map.removeLayer(mapBorder);
+        borderVisible = false;
+        console.log('🔲 Map border hidden');
+      } else {
+        mapBorder.addTo(map);
+        borderVisible = true;
+        console.log('🔲 Map border shown');
       }
     }
 
