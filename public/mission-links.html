@@ -412,6 +412,141 @@
       transform: scale(1.02);
     }
 
+    /* Slideshow Viewer Styles */
+    .slideshow-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.95);
+      z-index: 10000;
+      backdrop-filter: blur(10px);
+    }
+
+    .slideshow-modal.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .slideshow-container {
+      position: relative;
+      max-width: 90vw;
+      max-height: 90vh;
+      background: #1a1a1a;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.8);
+      border: 1px solid #333;
+    }
+
+    .slideshow-close {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: rgba(0, 0, 0, 0.7);
+      border: none;
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.2rem;
+      z-index: 10001;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .slideshow-close:hover {
+      background: rgba(255, 107, 53, 0.8);
+      transform: scale(1.1);
+    }
+
+    .slideshow-content {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 400px;
+    }
+
+    .slideshow-loader {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.2rem;
+      gap: 1rem;
+    }
+
+    .slideshow-loader i {
+      font-size: 2rem;
+      color: var(--text-accent);
+    }
+
+    #slideshowImage {
+      max-width: 100%;
+      max-height: 80vh;
+      object-fit: contain;
+      border-radius: 10px;
+      transition: opacity 0.3s ease;
+    }
+
+    .slide-counter {
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .slideshow-controls {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 20px;
+    }
+
+    .slideshow-btn {
+      background: rgba(0, 0, 0, 0.7);
+      border: none;
+      color: white;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.5rem;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .slideshow-btn:hover {
+      background: var(--primary-gradient);
+      transform: scale(1.1);
+      box-shadow: 0 5px 15px rgba(255, 107, 53, 0.4);
+    }
+
+    .slideshow-btn:active {
+      transform: scale(0.95);
+    }
+
     /* Responsive Design */
     @media (max-width: 768px) {
       .admin-layout {
@@ -449,6 +584,28 @@
 
       .file-info {
         width: 100%;
+      }
+
+      .slideshow-container {
+        max-width: 95vw;
+        max-height: 95vh;
+      }
+
+      .slideshow-controls {
+        bottom: 10px;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .slideshow-btn {
+        width: 45px;
+        height: 45px;
+        font-size: 1.3rem;
+      }
+
+      .slide-counter {
+        font-size: 0.8rem;
+        padding: 6px 12px;
       }
     }
   </style>
@@ -506,12 +663,11 @@
             Generate quick reference links for specific training scenarios and operational contexts.
           </div>
           <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-            <select id="referenceDropdown" style="background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 10px; padding: 0.75rem 1rem; color: var(--text-primary); flex: 1; min-width: 200px;">
-              <option value="">Select a reference type...</option>
-              <option value="basic-training">Basic Training Resources</option>
-              <option value="advanced-ops">Advanced Operations</option>
-              <option value="emergency-procedures">Emergency Procedures</option>
-              <option value="communication-protocols">Communication Protocols</option>
+            <select id="referenceDropdown" style="background: #f0f0f0; border: 1px solid #ccc; border-radius: 10px; padding: 0.75rem 1rem; color: #000000; flex: 1; min-width: 200px;">
+              <option value="">Template</option>
+              <option value="mission-reference-1">Mission Reference: 1</option>
+              <option value="mission-reference-2">Mission Reference: 2</option>
+              <option value="mission-reference-3">Mission Reference: 3</option>
             </select>
             <button onclick="generateReference()" style="background: var(--accent-gradient); border: none; color: white; padding: 0.75rem 1.5rem; border-radius: 10px; font-weight: 600; cursor: pointer; transition: var(--transition);" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
               <i class="fas fa-external-link-alt"></i> Generate Link
@@ -619,6 +775,33 @@
     </main>
   </div>
 
+  <!-- Slideshow Viewer Modal -->
+  <div id="slideshowModal" class="slideshow-modal">
+    <div class="slideshow-container">
+      <button class="slideshow-close" onclick="closeSlideshowViewer()">
+        <i class="fas fa-times"></i>
+      </button>
+      <div class="slideshow-content">
+        <div id="slideshowLoader" class="slideshow-loader">
+          <i class="fas fa-spinner fa-spin"></i>
+          <p>Loading images...</p>
+        </div>
+        <img id="slideshowImage" src="" alt="Mission Reference Image" style="display: none;" />
+        <div class="slideshow-controls">
+          <button class="slideshow-btn prev-btn" onclick="previousSlide()">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <div class="slide-counter">
+            <span id="currentSlideNumber">1</span> / <span id="totalSlides">8</span>
+          </div>
+          <button class="slideshow-btn next-btn" onclick="nextSlide()">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     // Global state
     let uploadedFiles = [];
@@ -650,6 +833,10 @@
       }
     }
     
+    // Slideshow variables
+    let currentSlideIndex = 0;
+    let slideImages = [];
+
     function generateReference() {
       const dropdown = document.getElementById('referenceDropdown');
       const selectedValue = dropdown.value;
@@ -659,13 +846,125 @@
         return;
       }
       
-      // Generate a reference link based on selection
-      const baseUrl = 'https://smxkits-references.com/';
-      const referenceUrl = baseUrl + selectedValue;
-      
-      // Open in new tab
-      window.open(referenceUrl, '_blank');
+      // Handle different reference types
+      switch(selectedValue) {
+        case 'mission-reference-1':
+          openSlideshowViewer();
+          break;
+        case 'mission-reference-2':
+          alert('Mission Reference: 2 - Coming Soon');
+          break;
+        case 'mission-reference-3':
+          alert('Mission Reference: 3 - Coming Soon');
+          break;
+        default:
+          alert('Please select a valid reference type.');
+      }
     }
+
+    function openSlideshowViewer() {
+      // Initialize slideshow images for Mission Reference 1
+      slideImages = [
+        'images/Mission 1 Reference Product/1.jpg',
+        'images/Mission 1 Reference Product/2.jpg',
+        'images/Mission 1 Reference Product/3.jpg',
+        'images/Mission 1 Reference Product/4.jpg',
+        'images/Mission 1 Reference Product/5.jpg',
+        'images/Mission 1 Reference Product/6.jpg',
+        'images/Mission 1 Reference Product/7.jpg',
+        'images/Mission 1 Reference Product/8.jpg'
+      ];
+      
+      currentSlideIndex = 0;
+      updateSlideImage();
+      
+      const modal = document.getElementById('slideshowModal');
+      modal.classList.add('active');
+      
+      // Prevent body scrolling when modal is open
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeSlideshowViewer() {
+      const modal = document.getElementById('slideshowModal');
+      modal.classList.remove('active');
+      
+      // Restore body scrolling
+      document.body.style.overflow = 'auto';
+    }
+
+    function updateSlideImage() {
+      const img = document.getElementById('slideshowImage');
+      const loader = document.getElementById('slideshowLoader');
+      const currentSlideSpan = document.getElementById('currentSlideNumber');
+      const totalSlidesSpan = document.getElementById('totalSlides');
+      
+      if (slideImages.length > 0) {
+        // Show loader
+        loader.style.display = 'flex';
+        img.style.display = 'none';
+        
+        // Update slide counter
+        currentSlideSpan.textContent = currentSlideIndex + 1;
+        totalSlidesSpan.textContent = slideImages.length;
+        
+        img.src = slideImages[currentSlideIndex];
+        img.alt = `Mission Reference Image ${currentSlideIndex + 1} of ${slideImages.length}`;
+        
+        // Handle successful image loading
+        img.onload = function() {
+          loader.style.display = 'none';
+          img.style.display = 'block';
+        };
+        
+        // Handle image loading errors
+        img.onerror = function() {
+          console.error('Failed to load image:', slideImages[currentSlideIndex]);
+          loader.style.display = 'none';
+          img.style.display = 'block';
+          img.alt = 'Image failed to load';
+        };
+      }
+    }
+
+    function nextSlide() {
+      if (slideImages.length > 0) {
+        currentSlideIndex = (currentSlideIndex + 1) % slideImages.length;
+        updateSlideImage();
+      }
+    }
+
+    function previousSlide() {
+      if (slideImages.length > 0) {
+        currentSlideIndex = (currentSlideIndex - 1 + slideImages.length) % slideImages.length;
+        updateSlideImage();
+      }
+    }
+
+    // Close slideshow when clicking outside the container
+    document.addEventListener('click', function(event) {
+      const modal = document.getElementById('slideshowModal');
+      const container = document.querySelector('.slideshow-container');
+      
+      if (modal && modal.classList.contains('active') && !container.contains(event.target)) {
+        closeSlideshowViewer();
+      }
+    });
+
+    // Close slideshow with Escape key
+    document.addEventListener('keydown', function(event) {
+      const modal = document.getElementById('slideshowModal');
+      
+      if (modal && modal.classList.contains('active')) {
+        if (event.key === 'Escape') {
+          closeSlideshowViewer();
+        } else if (event.key === 'ArrowLeft') {
+          previousSlide();
+        } else if (event.key === 'ArrowRight') {
+          nextSlide();
+        }
+      }
+    });
     
     function logout() {
       localStorage.removeItem('token');
