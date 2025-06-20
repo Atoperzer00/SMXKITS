@@ -187,7 +187,6 @@
       background: var(--panel);
       overflow: visible;
       min-width: 0; /* Prevents flex item from overflowing */
-      margin-top: 58px; /* Account for fixed top bar */
     }
     
     .top-bar {
@@ -206,26 +205,23 @@
       color: #a9d4c6;
       font-weight: 500;
       z-index: 100;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      width: 100vw;
-      box-sizing: border-box;
+      position: relative;
+      width: calc(100vw - 480px); /* Full viewport width minus sidebar width */
+      margin-left: 0;
     }
 
     .feed-panel {
       flex: 1;
       flex-grow: 1;
-      width: 100%;
+      width: calc(100vw - 480px); /* Full viewport width minus sidebar width */
       overflow-y: auto;
       overflow-x: visible; /* Allow overflow for external elements */
-      padding: 36px 80px 22px 120px; /* Left padding for buttons, right padding for spacing */
+      padding: 36px 0 22px 120px; /* Left padding for buttons, no right padding */
       background: var(--panel);
       display: flex;
       flex-direction: column;
       gap: 28px;
-      min-height: calc(100vh - 58px); /* Account for fixed top bar height */
+      min-height: calc(100vh - 58px); /* Use min-height instead of fixed height */
       scrollbar-width: thin;
       scrollbar-color: var(--inactive) transparent;
     }
