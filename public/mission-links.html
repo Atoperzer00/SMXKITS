@@ -670,7 +670,11 @@
               <option value="mission-reference-3">Mission Reference: 3</option>
             </select>
             <button onclick="generateReference()" style="background: var(--accent-gradient); border: none; color: white; padding: 0.75rem 1.5rem; border-radius: 10px; font-weight: 600; cursor: pointer; transition: var(--transition);" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-              <i class="fas fa-external-link-alt"></i> Generate Link
+              <i class="fas fa-play"></i> Generate
+            </button>
+            <!-- Temporary test button -->
+            <button onclick="testSlideshow()" style="background: #ff0000; border: none; color: white; padding: 0.75rem 1rem; border-radius: 10px; font-weight: 600; cursor: pointer; margin-left: 10px;">
+              Test Slideshow
             </button>
           </div>
         </div>
@@ -706,37 +710,40 @@
             <h3 class="tool-title">TrackPoint</h3>
             <p class="tool-description">Altis tactical mapping system with MGRS coordinates and city markers.</p>
           </div>
-          
-
+        </div>
+      </section>
 
       <!-- File Submission System -->
-      <section class="fade-in stagger-3">
+      <section class="fade-in stagger-3" style="margin-top: 3rem;">
         <h2 class="section-title">
           <i class="fas fa-cloud-upload-alt"></i>
           File Submission System
         </h2>
         
-        <!-- Combined File Drop Zone -->
-        <div id="fileSubmissionCard" class="tool-card" style="border: 2px dashed var(--glass-border); text-align: center; cursor: pointer; transition: var(--transition);">
-          <div class="tool-icon"><i class="fas fa-file-upload"></i></div>
-          <h3 class="tool-title">Drop Files Here</h3>
-          <p class="tool-description">Upload documents, images, videos, and other files for student submission.</p>
-          <div style="margin-top: 1rem; color: var(--text-secondary); font-size: 0.9rem;">
-            Supports: PDF, DOC, DOCX, TXT, JPG, PNG, GIF, MP4, MOV, AVI
+        <!-- File Drop Zone Grid Container -->
+        <div class="tools-grid">
+          <div id="fileSubmissionCard" class="tool-card" style="border: 2px dashed var(--glass-border); text-align: center; cursor: pointer; transition: var(--transition);">
+            <div class="tool-icon"><i class="fas fa-file-upload"></i></div>
+            <h3 class="tool-title">Drop Files Here</h3>
+            <p class="tool-description">Upload documents, images, videos, and other files for student submission.</p>
+            <div style="margin-top: 1rem; color: var(--text-secondary); font-size: 0.9rem;">
+              Supports: PDF, DOC, DOCX, TXT, JPG, PNG, GIF, MP4, MOV, AVI
+            </div>
+            <input type="file" id="fileInput" multiple accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.mp4,.mov,.avi" style="display: none;">
           </div>
-          <input type="file" id="fileInput" multiple accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif,.mp4,.mov,.avi" style="display: none;">
         </div>
 
         <!-- File List View (Hidden initially) -->
-        <div id="fileListView" class="tool-card" style="display: none; text-align: left;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <h3 class="tool-title" style="margin: 0;">
-              <i class="fas fa-list"></i> Files Ready for Submission
-            </h3>
-            <button id="addMoreFiles" style="background: var(--accent-gradient); border: none; color: white; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem;">
-              <i class="fas fa-plus"></i> Add More Files
-            </button>
-          </div>
+        <div class="tools-grid">
+          <div id="fileListView" class="tool-card" style="display: none; text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+              <h3 class="tool-title" style="margin: 0;">
+                <i class="fas fa-list"></i> Files Ready for Submission
+              </h3>
+              <button id="addMoreFiles" style="background: var(--accent-gradient); border: none; color: white; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem;">
+                <i class="fas fa-plus"></i> Add More Files
+              </button>
+            </div>
           
           <div id="filesList" style="margin-bottom: 1.5rem;">
             <!-- Files will be listed here -->
@@ -769,6 +776,7 @@
             <button id="submitFiles" style="background: var(--primary-gradient); border: none; color: white; padding: 0.75rem 2rem; border-radius: 8px; cursor: pointer; font-weight: 600;">
               <i class="fas fa-paper-plane"></i> Submit to Grading
             </button>
+          </div>
           </div>
         </div>
       </section>
@@ -837,9 +845,17 @@
     let currentSlideIndex = 0;
     let slideImages = [];
 
+    // Test function to verify slideshow works
+    function testSlideshow() {
+      console.log('Testing slideshow...');
+      openSlideshowViewer();
+    }
+
     function generateReference() {
       const dropdown = document.getElementById('referenceDropdown');
       const selectedValue = dropdown.value;
+      
+      console.log('Generate Reference called, selected value:', selectedValue);
       
       if (!selectedValue) {
         alert('Please select a reference type first.');
@@ -849,6 +865,7 @@
       // Handle different reference types
       switch(selectedValue) {
         case 'mission-reference-1':
+          console.log('Opening slideshow viewer for Mission Reference 1');
           openSlideshowViewer();
           break;
         case 'mission-reference-2':
@@ -863,6 +880,8 @@
     }
 
     function openSlideshowViewer() {
+      console.log('openSlideshowViewer called');
+      
       // Initialize slideshow images for Mission Reference 1
       slideImages = [
         'images/Mission 1 Reference Product/1.jpg',
@@ -875,14 +894,23 @@
         'images/Mission 1 Reference Product/8.jpg'
       ];
       
+      console.log('Slideshow images initialized:', slideImages);
+      
       currentSlideIndex = 0;
       updateSlideImage();
       
       const modal = document.getElementById('slideshowModal');
-      modal.classList.add('active');
+      console.log('Modal element found:', modal);
       
-      // Prevent body scrolling when modal is open
-      document.body.style.overflow = 'hidden';
+      if (modal) {
+        modal.classList.add('active');
+        console.log('Modal active class added');
+        
+        // Prevent body scrolling when modal is open
+        document.body.style.overflow = 'hidden';
+      } else {
+        console.error('Modal element not found!');
+      }
     }
 
     function closeSlideshowViewer() {
