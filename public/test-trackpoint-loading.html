@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test TrackPoint Loading - Fixed</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+    }
+
+    .test-header {
+      background: #2c3e50;
+      color: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .test-header h1 {
+      margin: 0;
+      font-size: 1.8rem;
+    }
+
+    .test-status {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border-left: 4px solid #3498db;
+    }
+
+    .status-item {
+      margin: 5px 0;
+      padding: 5px 0;
+    }
+
+    .status-ok {
+      color: #27ae60;
+      font-weight: bold;
+    }
+
+    .status-error {
+      color: #e74c3c;
+      font-weight: bold;
+    }
+
+    .status-warning {
+      color: #f39c12;
+      font-weight: bold;
+    }
+
+    #map {
+      width: 100%;
+      height: 500px;
+      border: 2px solid #34495e;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+
+    .controls {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+
+    .btn {
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 5px;
+      font-size: 14px;
+    }
+
+    .btn:hover {
+      background: #2980b9;
+    }
+
+    .btn.success {
+      background: #27ae60;
+    }
+
+    .btn.success:hover {
+      background: #229954;
+    }
+
+    .console-output {
+      background: #2c3e50;
+      color: #ecf0f1;
+      padding: 15px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 300px;
+      overflow-y: auto;
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="test-header">
+    <h1>🧪 TrackPoint Loading Test - Fixed Version</h1>
+    <p>This page tests the fixed TrackPoint implementation with improved error handling and validation.</p>
+  </div>
+
+  <div class="test-status">
+    <h3>📋 System Status</h3>
+    <div id="status-checks"></div>
+  </div>
+
+  <div class="controls">
+    <button class="btn" onclick="runTests()">🔄 Run All Tests</button>
+    <button class="btn success" onclick="initializeMap()">🗺️ Initialize Map</button>
+    <button class="btn" onclick="toggleCities()">🏙️ Toggle Cities</button>
+    <button class="btn" onclick="clearConsole()">🧹 Clear Console</button>
+  </div>
+
+  <div id="map"></div>
+
+  <div class="console-output">
+    <div id="console-log">Console output will appear here...</div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="mapUtils.js"></script>
+  <script src="defaultMap.js"></script>
+  <script src="altis.js"></script>
+  
+  <script>
+    let testMap;
+    let citiesVisible = false;
+    let originalConsoleLog = console.log;
+    let originalConsoleError = console.error;
+    let originalConsoleWarn = console.warn;
+
+    // Override console methods to capture output
+    function logToPage(message, type = 'log') {
+      const logDiv = document.getElementById('console-log');
+      const timestamp = new Date().toLocaleTimeString();
+      const className = type === 'error' ? 'status-error' : type === 'warn' ? 'status-warning' : 'status-ok';
+      logDiv.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    console.log = function(...args) {
+      originalConsoleLog.apply(console, args);
+      logToPage(args.join(' '), 'log');
+    };
+
+    console.error = function(...args) {
+      originalConsoleError.apply(console, args);
+      logToPage('ERROR: ' + args.join(' '), 'error');
+    };
+
+    console.warn = function(...args) {
+      originalConsoleWarn.apply(console, args);
+      logToPage('WARNING: ' + args.join(' '), 'warn');
+    };
+
+    function updateStatus(id, message, status) {
+      const statusDiv = document.getElementById('status-checks');
+      const statusClass = status === 'ok' ? 'status-ok' : status === 'error' ? 'status-error' : 'status-warning';
+      const existingItem = document.getElementById(id);
+      const statusItem = existingItem || document.createElement('div');
+      statusItem.id = id;
+      statusItem.className = `status-item ${statusClass}`;
+      statusItem.innerHTML = message;
+      if (!existingItem) {
+        statusDiv.appendChild(statusItem);
+      }
+    }
+
+    function runTests() {
+      console.log('🚀 Starting TrackPoint loading tests...');
+      
+      // Test 1: Check if required libraries are loaded
+      updateStatus('leaflet-test', 
+        typeof L !== 'undefined' ? '✅ Leaflet library loaded' : '❌ Leaflet library not found',
+        typeof L !== 'undefined' ? 'ok' : 'error'
+      );
+
+      updateStatus('jquery-test',
+        typeof $ !== 'undefined' ? '✅ jQuery library loaded' : '❌ jQuery library not found',
+        typeof $ !== 'undefined' ? 'ok' : 'error'
+      );
+
+      // Test 2: Check if custom functions are available
+      updateStatus('initmap-test',
+        typeof InitMap === 'function' ? '✅ InitMap function available' : '❌ InitMap function not found',
+        typeof InitMap === 'function' ? 'ok' : 'error'
+      );
+
+      updateStatus('mgrs-test',
+        typeof MGRS_CRS === 'function' ? '✅ MGRS_CRS function available' : '❌ MGRS_CRS function not found',
+        typeof MGRS_CRS === 'function' ? 'ok' : 'error'
+      );
+
+      // Test 3: Check if Arma3Map configuration is loaded
+      updateStatus('arma3map-test',
+        (typeof Arma3Map !== 'undefined' && Arma3Map.Maps && Arma3Map.Maps.altis) ? 
+        '✅ Arma3Map.Maps.altis configuration loaded' : 
+        '❌ Arma3Map.Maps.altis configuration not found',
+        (typeof Arma3Map !== 'undefined' && Arma3Map.Maps && Arma3Map.Maps.altis) ? 'ok' : 'error'
+      );
+
+      // Test 4: Check map container
+      updateStatus('container-test',
+        document.getElementById('map') ? '✅ Map container found' : '❌ Map container not found',
+        document.getElementById('map') ? 'ok' : 'error'
+      );
+
+      // Test 5: Check server status (if running on localhost)
+      if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+        updateStatus('server-test', '✅ Running on web server', 'ok');
+      } else {
+        updateStatus('server-test', '⚠️ Running on file:// protocol - tiles may not load', 'warning');
+      }
+
+      console.log('✅ All tests completed');
+    }
+
+    function initializeMap() {
+      console.log('🗺️ Initializing map...');
+      
+      if (typeof Arma3Map === 'undefined' || !Arma3Map.Maps || !Arma3Map.Maps.altis) {
+        console.error('❌ Cannot initialize map: Arma3Map configuration not available');
+        return;
+      }
+
+      if (typeof InitMap !== 'function') {
+        console.error('❌ Cannot initialize map: InitMap function not available');
+        return;
+      }
+
+      try {
+        InitMap(Arma3Map.Maps.altis);
+        console.log('✅ Map initialization called successfully');
+        
+        // Wait a moment then check if map was created
+        setTimeout(() => {
+          if (window.map) {
+            console.log('✅ Map object is available globally');
+            testMap = window.map;
+          } else {
+            console.error('❌ Map object not found after initialization');
+          }
+        }, 1000);
+        
+      } catch (error) {
+        console.error('❌ Error during map initialization:', error);
+      }
+    }
+
+    function toggleCities() {
+      if (!window.map) {
+        console.error('❌ Map not available for city toggle');
+        return;
+      }
+
+      if (citiesVisible) {
+        window.location.hash = '';
+        console.log('🏙️ Cities hidden (reload page to take effect)');
+      } else {
+        window.location.hash = '#cities';
+        console.log('🏙️ Cities shown (reload page to take effect)');
+      }
+      citiesVisible = !citiesVisible;
+    }
+
+    function clearConsole() {
+      document.getElementById('console-log').innerHTML = 'Console cleared...';
+    }
+
+    // Auto-run tests when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('🚀 TrackPoint Loading Test page loaded');
+      console.log('📍 Current URL: ' + window.location.href);
+      runTests();
+      
+      // Auto-initialize map after a short delay
+      setTimeout(() => {
+        console.log('🔄 Auto-initializing map...');
+        initializeMap();
+      }, 2000);
+    });
+  </script>
+</body>
+</html>
