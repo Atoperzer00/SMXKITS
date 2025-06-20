@@ -187,6 +187,7 @@
       background: var(--panel);
       overflow: visible;
       min-width: 0; /* Prevents flex item from overflowing */
+      margin-top: 58px; /* Account for fixed top bar */
     }
     
     .top-bar {
@@ -205,7 +206,12 @@
       color: #a9d4c6;
       font-weight: 500;
       z-index: 100;
-      position: relative;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      width: 100vw;
+      box-sizing: border-box;
     }
 
     .feed-panel {
@@ -214,16 +220,12 @@
       width: 100%;
       overflow-y: auto;
       overflow-x: visible; /* Allow overflow for external elements */
-      padding: 0 !important;
-      margin: 0 auto;
-      width: 100vw;
-      max-width: 100vw;
-      overflow-x: hidden;
+      padding: 36px 80px 22px 120px; /* Left padding for buttons, right padding for spacing */
       background: var(--panel);
       display: flex;
       flex-direction: column;
       gap: 28px;
-      min-height: calc(100vh - 58px); /* Use min-height instead of fixed height */
+      min-height: calc(100vh - 58px); /* Account for fixed top bar height */
       scrollbar-width: thin;
       scrollbar-color: var(--inactive) transparent;
     }
@@ -235,17 +237,17 @@
       -webkit-backdrop-filter: blur(15px);
       color: var(--bubble-text);
       border: 1px solid var(--glass-border);
-      border-radius: 0;
+      border-radius: 16px;
       box-shadow: var(--glass-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.1);
       padding: 24px 34px 19px 24px;
       position: relative;
       transition: all 0.3s ease;
-      width: 100%;
-      max-width: none;
+      min-width: 500px;
+      max-width: 1000px;
+      width: 95%;
       word-break: break-word;
       white-space: pre-line;
       font-size: 1.06em;
-      transform: none !important;
     }
     
     .callout-card {
@@ -312,7 +314,7 @@
     .bubble .menu-btn {
       position: absolute;
       top: 14px;
-      right: -46px;
+      left: -60px;
       background: var(--glass-bg);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
@@ -331,7 +333,7 @@
     .bubble .qc-btn {
       position: absolute;
       top: 60px;
-      right: -46px;
+      left: -60px;
       background: var(--glass-bg);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
@@ -674,18 +676,19 @@
     /* Group selection checkbox */
     .bubble-select-checkbox {
       position: absolute;
-      left: -40px;
-      top: 50%;
-      transform: translateY(-50%);
+      left: -60px;
+      top: 106px;
       width: 22px;
       height: 22px;
       cursor: pointer;
       appearance: none;
       -webkit-appearance: none;
-      background: rgba(35, 39, 46, 0.7);
-      border: 1px solid var(--inactive);
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--glass-border);
       border-radius: 4px;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      box-shadow: var(--glass-shadow);
       transition: all 0.2s;
     }
     
@@ -705,7 +708,8 @@
     }
     
     .bubble-select-checkbox:hover {
-      background: rgba(35, 39, 46, 0.9);
+      background: rgba(34, 197, 94, 0.1);
+      border-color: rgba(34, 197, 94, 0.3);
     }
     
     /* Group actions bar */
@@ -1047,31 +1051,7 @@
       border-color: #777;
     }
 
-    /* Selection Checkbox - positioned outside the card */
-    .bubble-select-checkbox {
-      position: absolute;
-      top: 50%;
-      left: -24px;
-      transform: translateY(-50%);
-      width: 12px;
-      height: 12px;
-      border: 1px solid #555;
-      background: var(--button-bg);
-      border-radius: 2px;
-      z-index: 10;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    
-    .bubble-select-checkbox:hover {
-      border-color: var(--accent);
-      background: rgba(34, 197, 94, 0.1);
-    }
-    
-    .bubble-select-checkbox:checked {
-      background: var(--accent);
-      border-color: var(--accent);
-    }
+    /* Selection Checkbox - REMOVED DUPLICATE STYLING */
 
     /* Follow Indicator - glowing bracket on left inside edge */
     .follow-indicator {
