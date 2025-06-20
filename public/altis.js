@@ -11,25 +11,25 @@ if (typeof Arma3Map === 'undefined') {
 // Altis map configuration
 Arma3Map.Maps.altis = {
     minZoom: 0,
-    maxZoom: 4, // Limited to zoom levels with complete tile coverage
+    maxZoom: 6, // Updated to match available tile structure
     CRS: L.extend({}, L.CRS.Simple, {
-        transformation: new L.Transformation(1/256, 0, -1/256, 30720)
-    }), // Simplified Arma 3 coordinate system
+        transformation: new L.Transformation(1, 0, -1, 64)
+    }), // Fixed coordinate system to match 64x64 tile grid
     tilePattern: 'altis/{z}/{x}/{y}.png',
     attribution: 'Altis Map - Arma 3',
     tileSize: 256,
-    center: [15360, 15360], // Center of Altis map
-    defaultZoom: 1, // Start with lower zoom to ensure tiles exist
-    bounds: [[0, 0], [30720, 30720]], // Define map bounds
+    center: [32, 32], // Center of 64x64 tile grid
+    defaultZoom: 2, // Start with a reasonable zoom level
+    bounds: [[0, 0], [64, 64]], // Define map bounds to match tile structure
     cities: [
-        // Major cities on Altis
-        { name: "Kavala", x: 26800, y: 21300 },
-        { name: "Pyrgos", x: 15200, y: 17000 },
-        { name: "Sofia", x: 25900, y: 21900 },
-        { name: "Athira", x: 13400, y: 19600 },
-        { name: "Paros", x: 23300, y: 16600 },
-        { name: "Zaros", x: 8600, y: 15900 },
-        { name: "Poliakko", x: 12200, y: 14200 },
-        { name: "Galati", x: 20800, y: 13600 }
+        // Major cities on Altis (coordinates adjusted for 64x64 tile grid)
+        { name: "Kavala", x: 55, y: 44 },
+        { name: "Pyrgos", x: 31, y: 35 },
+        { name: "Sofia", x: 53, y: 45 },
+        { name: "Athira", x: 28, y: 40 },
+        { name: "Paros", x: 48, y: 34 },
+        { name: "Zaros", x: 18, y: 33 },
+        { name: "Poliakko", x: 25, y: 29 },
+        { name: "Galati", x: 43, y: 28 }
     ]
 };

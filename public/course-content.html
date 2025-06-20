@@ -4,24 +4,213 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>SMX KITS - Course Content</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --primary-gradient: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+      --secondary-gradient: linear-gradient(135deg, #ff8c42 0%, #ff6b35 100%);
+      --accent-gradient: linear-gradient(135deg, #ffa726 0%, #ff9800 100%);
+      --dark-gradient: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 100%);
+      --card-gradient: linear-gradient(145deg, #2d1810 0%, #1a0f08 100%);
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --text-primary: #ffffff;
+      --text-secondary: #b8c5d6;
+      --text-accent: #ffa726;
+      --shadow-primary: 0 20px 40px rgba(0, 0, 0, 0.3);
+      --shadow-hover: 0 30px 60px rgba(0, 0, 0, 0.4);
+      --border-radius: 20px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--dark-gradient);
+      color: var(--text-primary);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* Animated background particles */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(255, 107, 53, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(247, 147, 30, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(255, 140, 66, 0.1) 0%, transparent 50%);
+      z-index: -1;
+      animation: float 20s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      33% { transform: translateY(-20px) rotate(1deg); }
+      66% { transform: translateY(10px) rotate(-1deg); }
+    }
+
+    .course-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .course-sidebar {
+      width: 280px;
+      background: rgba(15, 20, 25, 0.95);
+      backdrop-filter: blur(20px);
+      border-right: 1px solid var(--glass-border);
+      display: flex;
+      flex-direction: column;
+      padding: 2rem 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .course-sidebar::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, rgba(255, 107, 53, 0.1) 0%, transparent 100%);
+      z-index: -1;
+    }
+
+    .course-logo {
+      width: 200px;
+      margin: 0 auto 3rem;
+      filter: drop-shadow(0 10px 30px rgba(255, 107, 53, 0.3));
+      transition: var(--transition);
+    }
+
+    .course-nav {
+      list-style: none;
+      padding: 0 1rem;
+    }
+
+    .course-nav li {
+      margin-bottom: 0.5rem;
+      padding: 1rem 1.5rem;
+      border-radius: 15px;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .course-nav li::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: var(--primary-gradient);
+      transition: var(--transition);
+      z-index: -1;
+    }
+
+    .course-nav li:hover::before,
+    .course-nav li.active::before {
+      left: 0;
+    }
+
+    .course-nav li:hover,
+    .course-nav li.active {
+      color: white;
+      transform: translateX(5px);
+      box-shadow: 0 10px 25px rgba(255, 107, 53, 0.3);
+    }
+
+    /* Main Content */
+    .course-content {
+      flex: 1;
+      padding: 2rem;
+      background: transparent;
+      overflow-y: auto;
+    }
+
+    .course-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 3rem;
+      padding: 2rem;
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border-radius: var(--border-radius);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+    }
+
+    .course-title {
+      font-size: 3rem;
+      font-weight: 800;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin: 0;
+      letter-spacing: -0.02em;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.5rem;
+      background: var(--glass-bg);
+      border-radius: 50px;
+      border: 1px solid var(--glass-border);
+    }
+
+    .user-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: var(--accent-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+
+    /* Slide Container */
     .slide-container {
       position: relative;
       width: 100%;
       height: 70vh;
-      background-color: #222;
-      border-radius: 1rem;
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
       overflow: hidden;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      box-shadow: var(--shadow-primary);
+      border: 1px solid var(--glass-border);
+      margin-bottom: 2rem;
     }
     
     .slide-image {
       width: 100%;
       height: 100%;
       object-fit: contain;
-      transition: transform 0.3s ease;
+      transition: var(--transition);
     }
     
     .slide-controls {
@@ -29,66 +218,275 @@
       bottom: 0;
       left: 0;
       right: 0;
-      padding: 1rem;
+      padding: 1.5rem;
       display: flex;
       justify-content: space-between;
-      background: rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(10px);
+      align-items: center;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(20px);
     }
     
     .slide-control-btn {
-      background: rgba(255, 255, 255, 0.2);
+      background: var(--primary-gradient);
       color: white;
       border: none;
-      border-radius: 0.5rem;
-      padding: 0.5rem 1.5rem;
-      font-weight: bold;
+      border-radius: 12px;
+      padding: 0.75rem 2rem;
+      font-weight: 600;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
     
     .slide-control-btn:hover {
-      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .slide-control-btn:disabled {
+      background: rgba(255, 255, 255, 0.1);
+      cursor: not-allowed;
+      transform: none;
     }
     
     .slide-counter {
       color: white;
-      font-size: 1rem;
-      font-weight: bold;
+      font-size: 1.1rem;
+      font-weight: 600;
       display: flex;
       align-items: center;
-    }
-    
-    .thumbnail-container {
-      display: flex;
-      overflow-x: auto;
-      padding: 1rem 0;
       gap: 0.5rem;
-      scrollbar-width: thin;
-      scrollbar-color: #444 #222;
+      background: var(--glass-bg);
+      padding: 0.75rem 1.5rem;
+      border-radius: 25px;
+      border: 1px solid var(--glass-border);
     }
-    
-    .thumbnail {
-      width: 120px;
-      height: 80px;
-      object-fit: cover;
-      border-radius: 0.5rem;
-      border: 2px solid transparent;
+
+    /* Module Selector */
+    .module-selector {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      margin-bottom: 2rem;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+    }
+
+    .module-select {
+      background: var(--card-gradient);
+      color: var(--text-primary);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 1rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 500;
+      width: 100%;
+      max-width: 400px;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: var(--transition);
     }
-    
-    .thumbnail.active {
-      border-color: #3b82f6;
-      transform: scale(1.05);
+
+    .module-select:focus {
+      outline: none;
+      border-color: rgba(255, 107, 53, 0.5);
+      box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
     }
-    
-    .thumbnail:hover {
-      transform: translateY(-4px);
+
+    /* Instructor Notes */
+    .instructor-notes {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border-radius: var(--border-radius);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+      margin-bottom: 2rem;
+      overflow: hidden;
+      transition: var(--transition);
+    }
+
+    .notes-header {
+      padding: 1.5rem 2rem;
+      background: var(--card-gradient);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: var(--transition);
+    }
+
+    .notes-header:hover {
+      background: linear-gradient(145deg, #3d2818 0%, #2a1510 100%);
+    }
+
+    .notes-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--text-accent);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .notes-toggle {
+      font-size: 1.2rem;
+      color: var(--text-accent);
+      transition: var(--transition);
+    }
+
+    .notes-content {
+      padding: 0 2rem;
+      max-height: 0;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .notes-content.expanded {
+      padding: 2rem;
+      max-height: 500px;
+    }
+
+    .note-item {
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      border-left: 4px solid var(--accent-gradient);
+    }
+
+    .note-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .note-title {
+      font-weight: 600;
+      color: var(--text-accent);
+      margin-bottom: 0.5rem;
+    }
+
+    .note-text {
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* Additional Resources */
+    .resources-section {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      color: var(--text-accent);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .section-title::before {
+      content: '';
+      width: 4px;
+      height: 30px;
+      background: var(--accent-gradient);
+      border-radius: 2px;
+    }
+
+    .resources-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .resource-card {
+      background: var(--card-gradient);
+      border-radius: 15px;
+      padding: 1.5rem;
+      border: 1px solid var(--glass-border);
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .resource-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-hover);
+      border-color: rgba(255, 107, 53, 0.3);
+    }
+
+    .resource-icon {
+      font-size: 2rem;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--accent-gradient);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--primary-gradient);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .course-layout {
+        flex-direction: column;
+      }
+      
+      .course-sidebar {
+        width: 100%;
+        height: auto;
+      }
+      
+      .course-content {
+        padding: 1rem;
+      }
+      
+      .course-title {
+        font-size: 2rem;
+      }
+      
+      .course-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+      }
+      
+      .slide-container {
+        height: 50vh;
+      }
+
+      .slide-controls {
+        flex-direction: column;
+        gap: 1rem;
+      }
     }
   </style>
 </head>
-<body class="bg-[#0f172a] text-white">
+<body>
   <!-- Authentication Check -->
   <script>
     // Immediate authentication check
@@ -106,113 +504,176 @@
     console.log('✅ Authentication verified - loading course content');
   </script>
 
-  <!-- Main Content -->
-  <div class="min-h-screen flex flex-col font-sans">
-    <!-- Header with Back button -->
-    <header class="bg-black/60 p-4">
-      <div class="container mx-auto flex items-center justify-between">
-        <a href="dashboard.html" class="flex items-center gap-2 text-white hover:text-blue-300 transition">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-          Back to Dashboard
-        </a>
-        <div class="flex items-center gap-3">
-          <span id="studentName" class="text-zinc-300">Student</span>
-          <img src="SE66806_logo_orig.png" alt="SMXKITS Logo" class="h-8 w-8" />
+  <div class="course-layout">
+    <!-- Sidebar -->
+    <aside class="course-sidebar">
+      <img src="SMXKITS.png" alt="SMXKITS Logo" class="course-logo" />
+      <ul class="course-nav">
+        <li onclick="window.location.href='dashboard.html'"><i class="fas fa-tachometer-alt"></i> Dashboard</li>
+        <li class="active"><i class="fas fa-book-open"></i> Course Content</li>
+        <li onclick="window.location.href='mission-links.html'"><i class="fas fa-rocket"></i> Live PED Exercise</li>
+        <li onclick="window.location.href='keyboard-training.html'"><i class="fas fa-keyboard"></i> Keyboard Training</li>
+        <li onclick="window.location.href='Screener Training.html'"><i class="fas fa-user-shield"></i> Screener Training</li>
+        <li onclick="window.location.href='IA Training.html'"><i class="fas fa-satellite-dish"></i> IA Training</li>
+        <li onclick="window.location.href='student-grading.html'"><i class="fas fa-clipboard-list"></i> Grading</li>
+        <li onclick="window.location.href='schedule.html'"><i class="fas fa-calendar-alt"></i> Schedule</li>
+        <li onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</li>
+      </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="course-content">
+      <!-- Header -->
+      <div class="course-header">
+        <h1 class="course-title">mIRC Setup & Overview</h1>
+        <div class="user-info">
+          <div class="user-avatar" id="userAvatar">S</div>
+          <span id="studentName">Student</span>
         </div>
       </div>
-    </header>
 
-    <!-- Course Content Main Area -->
-    <main class="flex-1 container mx-auto p-6">
-      <h1 class="text-3xl font-bold mb-6">Course Content</h1>
-      
-      <!-- Course Module Selector -->
-      <div class="mb-8">
-        <label for="moduleSelect" class="block text-sm font-medium text-zinc-400 mb-2">Select Module:</label>
-        <select id="moduleSelect" class="bg-zinc-800 text-white rounded-lg px-4 py-2 w-full max-w-md">
-          <option value="module1">Module 1: Introduction to ISR</option>
-          <option value="module2">Module 2: PED Fundamentals</option>
-          <option value="module3">Module 3: Advanced Techniques</option>
-          <option value="module4">Module 4: Mission Planning</option>
+      <!-- Module Selector -->
+      <div class="module-selector">
+        <label for="moduleSelect" class="section-title">
+          <i class="fas fa-layer-group"></i>
+          Select Training Module
+        </label>
+        <select id="moduleSelect" class="module-select">
+          <option value="mirc">mIRC Setup and Overview</option>
+          <option value="module2">Advanced mIRC Configuration</option>
+          <option value="module3">Network Operations</option>
+          <option value="module4">Troubleshooting Guide</option>
         </select>
       </div>
       
       <!-- Slide Viewer -->
       <div class="slide-container">
-        <img id="currentSlide" class="slide-image" src="slides/module1/slide1.jpg" alt="Current Slide" />
+        <img id="currentSlide" class="slide-image" src="MIRC PRESENTATION/mIRC SETUP AND OVERVIEW 01.jpg" alt="Current Slide" />
         <div class="slide-controls">
-          <button id="prevSlide" class="slide-control-btn">Previous</button>
+          <button id="prevSlide" class="slide-control-btn">
+            <i class="fas fa-chevron-left"></i>
+            Previous
+          </button>
           <div class="slide-counter">
-            Slide <span id="currentSlideNum">1</span> of <span id="totalSlides">20</span>
+            <i class="fas fa-images"></i>
+            Slide <span id="currentSlideNum">1</span> of <span id="totalSlides">9</span>
           </div>
-          <button id="nextSlide" class="slide-control-btn">Next</button>
+          <button id="nextSlide" class="slide-control-btn">
+            Next
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Instructor Notes -->
+      <div class="instructor-notes">
+        <div class="notes-header" onclick="toggleNotes()">
+          <div class="notes-title">
+            <i class="fas fa-sticky-note"></i>
+            Instructor Notes
+          </div>
+          <i class="fas fa-chevron-down notes-toggle" id="notesToggle"></i>
+        </div>
+        <div class="notes-content" id="notesContent">
+          <div class="note-item">
+            <div class="note-title">Slide 1: Introduction to mIRC</div>
+            <div class="note-text">Emphasize the importance of proper mIRC configuration for secure military communications. Highlight the key features that make mIRC suitable for tactical operations.</div>
+          </div>
+          <div class="note-item">
+            <div class="note-title">Slide 2: Installation Requirements</div>
+            <div class="note-text">Ensure students understand system requirements and security protocols. Mention the importance of using approved versions only in operational environments.</div>
+          </div>
+          <div class="note-item">
+            <div class="note-title">Slide 3: Network Configuration</div>
+            <div class="note-text">Walk through each network setting carefully. Students often struggle with proxy configurations - be prepared to provide additional examples.</div>
+          </div>
+          <div class="note-item">
+            <div class="note-title">Slide 4: Security Settings</div>
+            <div class="note-text">Critical section - emphasize OPSEC considerations. Discuss the importance of encryption settings and secure channel management.</div>
+          </div>
+          <div class="note-item">
+            <div class="note-title">Common Issues & Solutions</div>
+            <div class="note-text">Be prepared to address connection timeouts, authentication failures, and firewall conflicts. Have backup slides ready for troubleshooting scenarios.</div>
+          </div>
         </div>
       </div>
       
-      <!-- Thumbnails -->
-      <div class="thumbnail-container mt-6" id="thumbnailContainer">
-        <!-- Thumbnails will be generated here via JavaScript -->
-      </div>
-      
-      <!-- Additional Materials -->
-      <div class="mt-8 bg-zinc-800/60 rounded-xl p-6">
-        <h2 class="text-xl font-bold mb-4">Additional Resources</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <a href="#" class="bg-zinc-700/60 hover:bg-zinc-600/60 transition rounded-lg p-4 flex items-center gap-3">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-            </svg>
-            <span>Module 1 PDF Handbook</span>
-          </a>
-          <a href="#" class="bg-zinc-700/60 hover:bg-zinc-600/60 transition rounded-lg p-4 flex items-center gap-3">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>Introduction Video</span>
-          </a>
+      <!-- Additional Resources -->
+      <div class="resources-section">
+        <h2 class="section-title">
+          <i class="fas fa-folder-open"></i>
+          Additional Resources
+        </h2>
+        <div class="resources-grid">
+          <div class="resource-card" onclick="window.open('#', '_blank')">
+            <i class="fas fa-file-pdf resource-icon"></i>
+            <span>mIRC Configuration Manual</span>
+          </div>
+          <div class="resource-card" onclick="window.open('#', '_blank')">
+            <i class="fas fa-video resource-icon"></i>
+            <span>Setup Demonstration Video</span>
+          </div>
+          <div class="resource-card" onclick="window.open('#', '_blank')">
+            <i class="fas fa-tools resource-icon"></i>
+            <span>Troubleshooting Guide</span>
+          </div>
+          <div class="resource-card" onclick="window.open('#', '_blank')">
+            <i class="fas fa-shield-alt resource-icon"></i>
+            <span>Security Best Practices</span>
+          </div>
         </div>
       </div>
     </main>
   </div>
 
-  <!-- JavaScript for Slide Viewer -->
+  <!-- JavaScript for Course Content -->
   <script>
     document.addEventListener('DOMContentLoaded', function() {
-      // Set student name if available
-      const studentName = localStorage.getItem('studentName');
-      if (studentName) {
-        document.getElementById('studentName').textContent = studentName;
-      }
+      // Set student name and avatar if available
+      const studentName = localStorage.getItem('studentName') || 'Student';
+      document.getElementById('studentName').textContent = studentName;
+      document.getElementById('userAvatar').textContent = studentName.charAt(0).toUpperCase();
 
-      // Slide configuration - this would typically come from a JSON file or API
+      // Slide configuration for different modules
       const modules = {
-        module1: {
-          title: 'Introduction to ISR',
-          slideCount: 20,
-          basePath: 'slides/module1/'
+        mirc: {
+          title: 'mIRC Setup and Overview',
+          slideCount: 9,
+          basePath: 'MIRC PRESENTATION/',
+          slides: [
+            'mIRC SETUP AND OVERVIEW 01.jpg',
+            'mIRC SETUP AND OVERVIEW 02.jpg',
+            'mIRC SETUP AND OVERVIEW 03.jpg',
+            'mIRC SETUP AND OVERVIEW 04.jpg',
+            'mIRC SETUP AND OVERVIEW 05.jpg',
+            'mIRC SETUP AND OVERVIEW 06.jpg',
+            'mIRC SETUP AND OVERVIEW 07.jpg',
+            'mIRC SETUP AND OVERVIEW 08.jpg',
+            'mIRC SETUP AND OVERVIEW 09.jpg'
+          ]
         },
         module2: {
-          title: 'PED Fundamentals',
-          slideCount: 15,
-          basePath: 'slides/module2/'
+          title: 'Advanced mIRC Configuration',
+          slideCount: 12,
+          basePath: 'slides/module2/',
+          slides: Array.from({length: 12}, (_, i) => `slide${i + 1}.jpg`)
         },
         module3: {
-          title: 'Advanced Techniques',
-          slideCount: 18,
-          basePath: 'slides/module3/'
+          title: 'Network Operations',
+          slideCount: 15,
+          basePath: 'slides/module3/',
+          slides: Array.from({length: 15}, (_, i) => `slide${i + 1}.jpg`)
         },
         module4: {
-          title: 'Mission Planning',
-          slideCount: 12,
-          basePath: 'slides/module4/'
+          title: 'Troubleshooting Guide',
+          slideCount: 8,
+          basePath: 'slides/module4/',
+          slides: Array.from({length: 8}, (_, i) => `slide${i + 1}.jpg`)
         }
       };
 
       // Current state
-      let currentModule = 'module1';
+      let currentModule = 'mirc';
       let currentSlide = 1;
       
       // DOM elements
@@ -222,11 +683,9 @@
       const moduleSelectEl = document.getElementById('moduleSelect');
       const prevBtn = document.getElementById('prevSlide');
       const nextBtn = document.getElementById('nextSlide');
-      const thumbnailContainer = document.getElementById('thumbnailContainer');
       
       // Initialize the viewer
       updateModuleInfo();
-      generateThumbnails();
       updateSlideDisplay();
       
       // Event Listeners
@@ -234,8 +693,8 @@
         currentModule = this.value;
         currentSlide = 1;
         updateModuleInfo();
-        generateThumbnails();
         updateSlideDisplay();
+        updateCourseTitle();
       });
       
       prevBtn.addEventListener('click', function() {
@@ -254,9 +713,9 @@
       
       // Key navigation
       document.addEventListener('keydown', function(e) {
-        if (e.key === 'ArrowLeft') {
+        if (e.key === 'ArrowLeft' && currentSlide > 1) {
           prevBtn.click();
-        } else if (e.key === 'ArrowRight') {
+        } else if (e.key === 'ArrowRight' && currentSlide < modules[currentModule].slideCount) {
           nextBtn.click();
         }
       });
@@ -267,49 +726,51 @@
         totalSlidesEl.textContent = module.slideCount;
         currentSlideNumEl.textContent = currentSlide;
       }
+
+      function updateCourseTitle() {
+        const module = modules[currentModule];
+        document.querySelector('.course-title').textContent = module.title;
+      }
       
       function updateSlideDisplay() {
         const module = modules[currentModule];
-        currentSlideEl.src = `${module.basePath}slide${currentSlide}.jpg`;
+        const slideFileName = module.slides[currentSlide - 1];
+        currentSlideEl.src = `${module.basePath}${slideFileName}`;
         currentSlideNumEl.textContent = currentSlide;
         
-        // Update thumbnails active state
-        const thumbnails = thumbnailContainer.querySelectorAll('.thumbnail');
-        thumbnails.forEach((thumb, index) => {
-          if (index + 1 === currentSlide) {
-            thumb.classList.add('active');
-          } else {
-            thumb.classList.remove('active');
-          }
-        });
+        // Update button states
+        prevBtn.disabled = currentSlide === 1;
+        nextBtn.disabled = currentSlide === module.slideCount;
         
-        // Scroll active thumbnail into view
-        const activeThumb = thumbnailContainer.querySelector('.thumbnail.active');
-        if (activeThumb) {
-          activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-        }
-      }
-      
-      function generateThumbnails() {
-        const module = modules[currentModule];
-        thumbnailContainer.innerHTML = '';
-        
-        for (let i = 1; i <= module.slideCount; i++) {
-          const thumb = document.createElement('img');
-          thumb.classList.add('thumbnail');
-          if (i === currentSlide) {
-            thumb.classList.add('active');
-          }
-          thumb.src = `${module.basePath}slide${i}.jpg`;
-          thumb.alt = `Slide ${i} thumbnail`;
-          thumb.addEventListener('click', function() {
-            currentSlide = i;
-            updateSlideDisplay();
-          });
-          thumbnailContainer.appendChild(thumb);
-        }
+        // Add loading state
+        currentSlideEl.style.opacity = '0.5';
+        currentSlideEl.onload = function() {
+          this.style.opacity = '1';
+        };
       }
     });
+
+    // Instructor Notes Toggle
+    function toggleNotes() {
+      const notesContent = document.getElementById('notesContent');
+      const notesToggle = document.getElementById('notesToggle');
+      
+      if (notesContent.classList.contains('expanded')) {
+        notesContent.classList.remove('expanded');
+        notesToggle.style.transform = 'rotate(0deg)';
+      } else {
+        notesContent.classList.add('expanded');
+        notesToggle.style.transform = 'rotate(180deg)';
+      }
+    }
+
+    // Logout function
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      localStorage.removeItem('studentName');
+      window.location.replace('/login.html');
+    }
   </script>
 </body>
 </html>

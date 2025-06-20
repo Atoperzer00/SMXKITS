@@ -5,7 +5,9 @@ function InitMap(mapInfos) {
         var map = L.map('map', {
             minZoom: mapInfos.minZoom,
             maxZoom: mapInfos.maxZoom,
-            crs: mapInfos.CRS
+            crs: mapInfos.CRS,
+            maxBounds: mapInfos.bounds, // Restrict panning to tile bounds
+            maxBoundsViscosity: 1.0 // Make bounds strict
         });
 
         var tileLayer = L.tileLayer(mapInfos.tilePattern, {
@@ -16,9 +18,16 @@ function InitMap(mapInfos) {
         });
         
         // Add error handling for missing tiles
+        let tileErrorCount = 0;
         tileLayer.on('tileerror', function(error) {
-            // Silently handle missing tiles to reduce console spam
-            console.debug('Tile not found:', error.tile.src);
+            tileErrorCount++;
+            // Only log first few errors to avoid console spam
+            if (tileErrorCount <= 5) {
+                console.warn(`Tile not found (${tileErrorCount}):`, error.tile.src);
+                if (tileErrorCount === 5) {
+                    console.warn('Further tile errors will be suppressed to avoid console spam.');
+                }
+            }
         });
         
         tileLayer.addTo(map);

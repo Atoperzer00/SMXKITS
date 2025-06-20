@@ -227,6 +227,7 @@
       width: 100%; /* Ensure feed panel takes full available width */
       scrollbar-width: thin;
       scrollbar-color: var(--inactive) transparent;
+      scroll-behavior: smooth; /* Enable smooth scrolling */
     }
 
     /* Log Bubbles */
@@ -388,6 +389,8 @@
       margin-right: -8px;
       scrollbar-width: thin;
       scrollbar-color: var(--accent) transparent;
+      scroll-behavior: smooth;
+      max-height: calc(100vh - 200px); /* Ensure container doesn't exceed viewport */
     }
     
     .sidebar-form-container::-webkit-scrollbar {
@@ -1575,6 +1578,9 @@
     if (el.tagName.toLowerCase() === 'textarea') {
       el.style.height = '38px';
       el.style.height = (el.scrollHeight)+'px';
+      
+      // Ensure the textarea stays visible in the sidebar
+      ensureElementVisible(el);
     } else if (el.tagName.toLowerCase() === 'input' && el.type === 'text') {
       // For text inputs, expand width based on content
       const tempSpan = document.createElement('span');
@@ -1592,6 +1598,34 @@
       
       el.style.width = Math.min(Math.max(contentWidth, minWidth), maxWidth) + 'px';
       document.body.removeChild(tempSpan);
+    }
+  }
+  
+  // Helper function to ensure form elements stay visible when focused or modified
+  function ensureElementVisible(element) {
+    const sidebarContainer = document.querySelector('.sidebar-form-container');
+    if (!sidebarContainer || !element) return;
+    
+    // Get element position relative to the scrollable container
+    const elementRect = element.getBoundingClientRect();
+    const containerRect = sidebarContainer.getBoundingClientRect();
+    
+    // Check if element is outside the visible area
+    const isAbove = elementRect.top < containerRect.top;
+    const isBelow = elementRect.bottom > containerRect.bottom;
+    
+    if (isAbove || isBelow) {
+      // Calculate the scroll position to center the element
+      const elementTop = element.offsetTop;
+      const containerHeight = sidebarContainer.clientHeight;
+      const elementHeight = element.offsetHeight;
+      
+      const scrollTop = elementTop - (containerHeight / 2) + (elementHeight / 2);
+      
+      sidebarContainer.scrollTo({
+        top: Math.max(0, scrollTop),
+        behavior: 'smooth'
+      });
     }
   }
   
@@ -1770,6 +1804,20 @@
       callouts[log._id] = log;
       createBubble(log, false);
       
+      // Scroll to the new callout after a brief delay to ensure it's rendered
+      setTimeout(() => {
+        const newBubble = document.getElementById('callout_' + log._id);
+        const feedPanel = document.getElementById('feedPanel');
+        if (newBubble && feedPanel) {
+          // Scroll the feed panel to show the new callout
+          newBubble.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center',
+            inline: 'nearest'
+          });
+        }
+      }, 200);
+      
       // DO NOT reset form - keep all field values populated
       
       // Reset follow form if it was used
@@ -1793,12 +1841,18 @@
         console.log('Follow form reset after successful submission');
       }
       
-      // Flash animation
+      // Flash animation and highlight the new bubble
       const bubble = document.getElementById('callout_' + log._id);
       if (bubble) {
         bubble.style.animation = 'none';
         bubble.offsetHeight; /* trigger reflow */
         bubble.style.animation = 'flash 1.5s';
+        
+        // Add a temporary highlight border to make it more visible
+        bubble.style.boxShadow = '0 0 20px rgba(34, 197, 94, 0.6), 0 0 40px rgba(34, 197, 94, 0.3)';
+        setTimeout(() => {
+          bubble.style.boxShadow = '';
+        }, 2000);
       }
       
       // Show "LOG SUBMITTED" overlay feedback
@@ -2190,6 +2244,35 @@
       
       // Update sidebar button states after adding a new bubble
       updateSidebarButtonStates();
+      
+      // Auto-scroll to show the new bubble if it was just created (not during initial load)
+      if (!append) {
+        setTimeout(() => {
+          const feedPanel = document.getElementById('feedPanel');
+          const newBubble = document.getElementById('callout_' + data._id);
+          if (newBubble && feedPanel) {
+            // Scroll the new bubble into view smoothly
+            newBubble.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center',
+              inline: 'nearest'
+            });
+            
+            // Also ensure the feed panel scrolls to show the content
+            const bubbleRect = newBubble.getBoundingClientRect();
+            const feedRect = feedPanel.getBoundingClientRect();
+            
+            // If bubble is not fully visible, scroll to it
+            if (bubbleRect.top < feedRect.top || bubbleRect.bottom > feedRect.bottom) {
+              const scrollTop = feedPanel.scrollTop + (bubbleRect.top - feedRect.top) - (feedRect.height / 2) + (bubbleRect.height / 2);
+              feedPanel.scrollTo({
+                top: scrollTop,
+                behavior: 'smooth'
+              });
+            }
+          }
+        }, 100); // Small delay to ensure DOM is updated
+      }
     } catch (error) {
       console.error("Error creating bubble:", error);
     }
@@ -2681,6 +2764,31 @@
   
   // Follow functionality has been moved to the end of the script
   
+  // Set up form element focus handlers for automatic scrolling
+  function setupFormScrollHandlers() {
+    const sidebarContainer = document.querySelector('.sidebar-form-container');
+    if (!sidebarContainer) return;
+    
+    // Add focus event listeners to all form elements in the sidebar
+    const formElements = sidebarContainer.querySelectorAll('input, textarea, select');
+    
+    formElements.forEach(element => {
+      // Scroll into view when focused
+      element.addEventListener('focus', function() {
+        setTimeout(() => ensureElementVisible(this), 100);
+      });
+      
+      // Also scroll when typing in textareas (for auto-grow)
+      if (element.tagName.toLowerCase() === 'textarea') {
+        element.addEventListener('input', function() {
+          setTimeout(() => ensureElementVisible(this), 100);
+        });
+      }
+    });
+    
+    console.log('✅ Form scroll handlers set up for', formElements.length, 'elements');
+  }
+
   // ------ CONSOLIDATED EVENT HANDLER INITIALIZATION ------
   document.addEventListener('DOMContentLoaded', function() {
     console.log("🚀 DOM loaded - initializing ALL event handlers");
@@ -2936,7 +3044,8 @@
     // Initialize drag-and-drop functionality for callouts
     initializeDragAndDrop();
     
-
+    // Set up form element focus handlers for better scrolling
+    setupFormScrollHandlers();
     
     console.log("🎉 All event handlers attached, socket initialized, drag-drop ready, page ready!");
     console.log("🔍 If buttons don't work, check console for ❌ Missing element messages above.");
