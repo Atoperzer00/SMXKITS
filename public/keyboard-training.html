@@ -604,6 +604,8 @@
       <!-- Admin Controls (hidden by default) -->
       <div id="admin-controls" class="admin-controls hidden">
         <h3>Admin Controls</h3>
+        <button type="button" class="btn btn-primary" onclick="window.open('edit-typing-tests.html', '_blank')">Edit Typing Tests</button>
+        <button type="button" class="btn btn-secondary" onclick="refreshTypingData()">Refresh Data</button>
         <button type="button" class="btn btn-secondary" onclick="clearAllProgress()">Clear All Progress</button>
         <button type="button" class="btn btn-secondary" onclick="exportProgress()">Export Progress</button>
         <button type="button" class="btn btn-secondary" onclick="resetToDefaults()">Reset to Defaults</button>
@@ -1318,11 +1320,55 @@
       }
     }
 
+    /**
+     * Refresh typing data from localStorage
+     * Manually reloads the typing modules and updates the display
+     */
+    function refreshTypingData() {
+      console.log('Manually refreshing typing data...');
+      const existingData = localStorage.getItem('smx_typing_tests');
+      
+      if (existingData) {
+        const data = JSON.parse(existingData);
+        
+        // Handle new format with module names
+        if (data.modules && data.moduleNames) {
+          typingModules = data.modules;
+          moduleNames = data.moduleNames;
+          console.log('Loaded', data.modules.length, 'modules with names');
+        } else {
+          // Fallback for old format
+          typingModules = data;
+          console.log('Loaded', data.length, 'modules (old format)');
+        }
+        
+        renderModules();
+        updateProgressDisplay();
+        
+        alert('Typing data refreshed successfully!');
+      } else {
+        alert('No typing data found in localStorage. Initializing defaults...');
+        initializeTypingModules();
+        renderModules();
+        updateProgressDisplay();
+      }
+    }
+
     // Listen for storage changes from other tabs (like edit-typing-tests.html)
     window.addEventListener('storage', function(e) {
       if (e.key === 'smx_typing_tests') {
         console.log('Typing tests updated from another tab, refreshing...');
-        typingModules = JSON.parse(e.newValue || '[]');
+        const data = JSON.parse(e.newValue || '{}');
+        
+        // Handle new format with module names
+        if (data.modules && data.moduleNames) {
+          typingModules = data.modules;
+          moduleNames = data.moduleNames;
+        } else {
+          // Fallback for old format
+          typingModules = data;
+        }
+        
         renderModules();
         updateProgressDisplay();
       }
