@@ -713,11 +713,48 @@ io.on('connection', socket => {
   });
   
   // Legacy support for old join-stream method
-  socket.on('join-stream', (data) => {
-    const { classId, streamKey } = data;
-    // Convert to new class-based system
+  socket.on('join-stream', async (data) => {
+    console.log('🔌 Legacy join-stream called with data:', data);
+    
+    // Handle both string and object formats
+    let streamKey, classId;
+    
+    if (typeof data === 'string') {
+      streamKey = data;
+    } else if (typeof data === 'object' && data !== null) {
+      streamKey = data.streamKey;
+      classId = data.classId;
+    }
+    
+    console.log('📋 Extracted streamKey:', streamKey, 'classId:', classId);
+    
+    // Convert to new class-based system if classId is available
     if (classId) {
+      console.log('🔄 Redirecting to class-based system for classId:', classId);
       socket.emit('student-join-class', { classId });
+      return;
+    }
+    
+    // Handle streamKey-based joining (legacy)
+    if (streamKey) {
+      try {
+        const Class = require('./models/Class');
+        const classObj = await Class.findOne({ streamKey });
+        
+        if (classObj) {
+          console.log('🔄 Found class by streamKey, redirecting to class-based system');
+          socket.emit('student-join-class', { classId: classObj._id.toString() });
+        } else {
+          console.log('❌ No class found for streamKey:', streamKey);
+          socket.emit('error', { message: 'Stream not found' });
+        }
+      } catch (error) {
+        console.error('❌ Error in legacy join-stream handler:', error);
+        socket.emit('error', { message: 'Failed to join stream' });
+      }
+    } else {
+      console.log('❌ No valid streamKey or classId provided');
+      socket.emit('error', { message: 'Invalid stream data' });
     }
   });
   
@@ -860,46 +897,7 @@ io.on('connection', socket => {
   
 
   
-  // Join stream room (legacy support)
-  socket.on('join-stream', async (streamKey) => {
-    console.log('🔌 Student attempting to join stream with key:', streamKey);
-    
-    if (!streamKey) {
-      console.log('❌ No stream key provided');
-      return;
-    }
-    
-    const roomName = `stream:${streamKey}`;
-    socket.join(roomName);
-    activeStreamRooms.add(roomName);
-    
-    console.log(`✅ User joined stream room: ${roomName}`);
-    
-    try {
-      // Find class by stream key
-      const Class = require('./models/Class');
-      const classObj = await Class.findOne({ streamKey }).populate('currentLesson');
-      
-      if (classObj) {
-        // Emit current stream status
-        socket.emit('streamStatus', {
-          status: classObj.streamStatus,
-          source: classObj.currentStreamSource,
-          lesson: classObj.currentLesson
-        });
-        
-        // Broadcast updated viewer count
-        const roomMembers = io.sockets.adapter.rooms.get(roomName);
-        const viewerCount = roomMembers ? roomMembers.size : 0;
-        io.to(roomName).emit('viewerCount', { count: viewerCount });
-        
-        // Load bookmarks
-        socket.emit('bookmarks', classObj.bookmarks);
-      }
-    } catch (error) {
-      console.error('❌ Error handling joinStream:', error);
-    }
-  });
+
   
   // Leave stream room
   socket.on('leaveStream', (streamKey) => {
