@@ -171,11 +171,6 @@ router.post('/upload', auth(['admin', 'instructor']), upload.single('video'), as
       console.log(`📊 Room statistics:`);
       console.log(`  - ${classRoom}: ${classRoomClients ? classRoomClients.size : 0} clients`);
       console.log(`  - ${streamRoom}: ${streamRoomClients ? streamRoomClients.size : 0} clients`);
-      const streamRoomClients = io.sockets.adapter.rooms.get(streamRoom);
-      
-      console.log(`📊 Room statistics:`);
-      console.log(`  - ${classRoom}: ${classRoomClients ? classRoomClients.size : 0} clients`);
-      console.log(`  - ${streamRoom}: ${streamRoomClients ? streamRoomClients.size : 0} clients`);
       
       io.to(classRoom).emit('streamStatus', streamData);
       if (classObj.streamKey) {

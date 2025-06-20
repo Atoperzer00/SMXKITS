@@ -1,6 +1,7 @@
 const express = require('express');
 const http = require('http');
 const path = require('path');
+const fs = require('fs');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const socketio = require('socket.io');
@@ -490,43 +491,6 @@ io.on('connection', socket => {
     socket.join('mission-links');
   });
   
-  // ===== FILE SUBMISSION HANDLERS =====
-  // Handle file submissions from mission-links to instructor grading
-  socket.on('file-submission', (data) => {
-    console.log('📁 File submission received:', data.fileName);
-    
-    // Create submission object
-    const submission = {
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-      studentName: data.studentName || 'Unknown Student',
-      fileName: data.fileName,
-      fileSize: data.fileSize,
-      fileType: data.fileType,
-      fileData: data.fileData,
-      submittedAt: new Date().toISOString(),
-      status: 'pending',
-      vaultType: data.vaultType // 'slideVault' or 'sheetVault'
-    };
-    
-    // Broadcast to all instructor grading pages
-    io.emit('new-file-submission', submission);
-    
-    console.log(`📤 File submission broadcasted: ${data.fileName} from ${data.vaultType}`);
-  });
-  
-  // Handle instructor joining grading room
-  socket.on('join-instructor-grading', () => {
-    console.log('👨‍🏫 Instructor joined grading room');
-    socket.join('instructor-grading');
-  });
-  
-  // Handle student joining mission links
-  socket.on('join-mission-links', (studentData) => {
-    console.log('👤 Student joined mission links:', studentData.name);
-    socket.studentName = studentData.name;
-    socket.join('mission-links');
-  });
-  
   // ===== STREAMING HANDLERS =====
   // Track connected viewers
   const activeStreamRooms = new Set();
@@ -676,50 +640,38 @@ io.on('connection', socket => {
   
   // ===== LIVE STREAMING SYNCHRONIZATION HANDLERS =====
   
-  // Instructor joins class for streaming
-  socket.on('instructor-join-class', (data) => {
-    const { classId } = data;
+  // Combined instructor/student join class handler for streaming
+  socket.on('join-class-stream', (data) => {
+    const { classId, role } = data;
     const roomName = `class:${classId}`;
     
-    console.log(`👨‍🏫 Instructor joined class room: ${roomName}`);
+    console.log(`${role === 'instructor' ? '👨‍🏫' : '🎓'} ${role} joined class room: ${roomName}`);
     socket.join(roomName);
     socket.currentStreamRoom = roomName;
     socket.classId = classId;
-    socket.isInstructor = true;
+    socket.isInstructor = role === 'instructor';
     
-    // Send confirmation to instructor
-    socket.emit('stream:instructor-ready', {
-      message: 'Ready to broadcast to class',
-      classId: classId,
-      timestamp: new Date().toISOString()
-    });
-  });
-  
-  // Student joins class for streaming
-  socket.on('student-join-class', (data) => {
-    const { classId } = data;
-    const roomName = `class:${classId}`;
-    
-    console.log(`🎓 Student (${socket.id}) joined class room: ${roomName}`);
-    console.log(`🔍 Room data:`, { classId, roomName, socketId: socket.id });
-    
-    socket.join(roomName);
-    socket.currentStreamRoom = roomName;
-    socket.classId = classId;
-    socket.isInstructor = false;
-    
-    // Send current stream state to new student
-    const streamState = io.streamStates?.get(classId);
-    if (streamState) {
-      socket.emit('stream:current-state', streamState);
+    if (role === 'instructor') {
+      // Send confirmation to instructor
+      socket.emit('stream:instructor-ready', {
+        message: 'Ready to broadcast to class',
+        classId: classId,
+        timestamp: new Date().toISOString()
+      });
     } else {
-      socket.emit('stream:no-state', { message: 'No active stream' });
+      // Send current stream state to new student
+      const streamState = io.streamStates?.get(classId);
+      if (streamState) {
+        socket.emit('stream:current-state', streamState);
+      } else {
+        socket.emit('stream:no-state', { message: 'No active stream' });
+      }
+      
+      // Update viewer count for the class
+      const roomMembers = io.sockets.adapter.rooms.get(roomName);
+      const viewerCount = roomMembers ? roomMembers.size - 1 : 0; // Subtract instructor
+      io.to(roomName).emit('viewerCount', { count: viewerCount });
     }
-    
-    // Update viewer count for the class
-    const roomMembers = io.sockets.adapter.rooms.get(roomName);
-    const viewerCount = roomMembers ? roomMembers.size - 1 : 0; // Subtract instructor
-    io.to(roomName).emit('viewerCount', { count: viewerCount });
   });
   
   // Legacy support for old join-stream method
@@ -849,16 +801,7 @@ io.on('connection', socket => {
     });
   });
   
-  socket.on('stream:time', (data) => {
-    if (!socket.currentStreamRoom) return;
-    
-    // Broadcast instructor's current time to all students (throttled)
-    socket.to(socket.currentStreamRoom).emit('stream:time', {
-      time: data.time,
-      playing: data.playing,
-      timestamp: new Date().toISOString()
-    });
-  });
+
   
   // Join stream room (legacy support)
   socket.on('join-stream', async (streamKey) => {
@@ -1159,13 +1102,15 @@ io.on('connection', socket => {
   });
   
   // ===== STREAM STATE MANAGEMENT =====
-  const streamStates = new Map(); // classId -> { currentTime, playing, streamUrl, startTime }
+  // Use the global io.streamStates instead of local streamStates
   
   // Store stream state for late-joining students
   socket.on('stream:state-update', (data) => {
     const { classId, currentTime, playing, streamUrl, startTime } = data;
     
-    streamStates.set(classId, {
+    if (!io.streamStates) io.streamStates = new Map();
+    
+    io.streamStates.set(classId, {
       currentTime,
       playing,
       streamUrl,
@@ -1179,7 +1124,7 @@ io.on('connection', socket => {
   // Send current stream state to new joiners
   socket.on('request-stream-state', (data) => {
     const { classId } = data;
-    const state = streamStates.get(classId);
+    const state = io.streamStates?.get(classId);
     
     if (state) {
       socket.emit('stream:current-state', {
