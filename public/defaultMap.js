@@ -1,12 +1,18 @@
 
 function InitMap(mapInfos) {
+    console.log('🚀 InitMap called with:', mapInfos);
+    
     $(function () {
+        console.log('📋 jQuery ready, creating map...');
+        console.log('🎯 Map container exists:', document.getElementById('map') !== null);
 
         var map = L.map('map', {
             minZoom: mapInfos.minZoom,
             maxZoom: mapInfos.maxZoom,
             crs: mapInfos.CRS
         });
+        
+        console.log('✅ Map object created:', map);
 
         // Create custom tile layer to ensure proper URL generation
         var AltisLayer = L.TileLayer.extend({
@@ -55,11 +61,25 @@ function InitMap(mapInfos) {
 
         map.setView(mapInfos.center, mapInfos.defaultZoom);
 
-        L.latlngGraticule().addTo(map);
+        // Add graticule if available
+        if (typeof L.latlngGraticule === 'function') {
+            L.latlngGraticule().addTo(map);
+            console.log('✅ Graticule added');
+        } else {
+            console.log('⚠️ Graticule not available');
+        }
 
+        // Add scale control
         L.control.scale({ maxWidth: 200, imperial: false }).addTo(map);
+        console.log('✅ Scale control added');
 
-		L.control.gridMousePosition().addTo(map);
+        // Add grid mouse position if available
+        if (typeof L.control.gridMousePosition === 'function') {
+            L.control.gridMousePosition().addTo(map);
+            console.log('✅ Grid mouse position added');
+        } else {
+            console.log('⚠️ Grid mouse position not available');
+        }
 		
 		if (window.location.hash == '#cities' ) 
 		{

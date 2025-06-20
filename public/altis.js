@@ -12,7 +12,9 @@ if (typeof Arma3Map === 'undefined') {
 Arma3Map.Maps.altis = {
     minZoom: 0,
     maxZoom: 6,
-    CRS: (typeof MGRS_CRS === 'function') ? MGRS_CRS(1/256, 1/256, 30720) : L.CRS.Simple, // Arma 3 coordinate system
+    CRS: L.extend({}, L.CRS.Simple, {
+        transformation: new L.Transformation(1/256, 0, -1/256, 30720)
+    }), // Simplified Arma 3 coordinate system
     tilePattern: 'altis/{z}/{x}/{y}.png',
     attribution: 'Altis Map - Arma 3',
     tileSize: 256,

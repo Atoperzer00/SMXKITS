@@ -111,16 +111,35 @@
     // Initialize the map using the loaded configuration
     $(function () {
       console.log('🚀 TrackPoint initializing with proper JS files...');
+      console.log('📍 Current URL:', window.location.href);
+      console.log('🔍 Leaflet version:', L.version);
+      console.log('💰 jQuery version:', $.fn.jquery);
+      
+      // Check if required functions are loaded
+      console.log('🔧 InitMap function available:', typeof InitMap === 'function');
+      console.log('🔧 MGRS_CRS function available:', typeof MGRS_CRS === 'function');
+      console.log('🔧 Arma3Map available:', typeof Arma3Map !== 'undefined');
       
       // Check if Arma3Map is loaded
       if (typeof Arma3Map === 'undefined' || !Arma3Map.Maps.altis) {
         console.error('❌ Arma3Map.Maps.altis not found! Check if altis.js loaded correctly.');
+        console.error('   Arma3Map type:', typeof Arma3Map);
+        if (typeof Arma3Map !== 'undefined') {
+          console.error('   Arma3Map.Maps:', Arma3Map.Maps);
+        }
         return;
       }
       
       console.log('✅ Arma3Map configuration loaded:', Arma3Map.Maps.altis);
       
+      // Check if InitMap function exists
+      if (typeof InitMap !== 'function') {
+        console.error('❌ InitMap function not found! Check if defaultMap.js loaded correctly.');
+        return;
+      }
+      
       // Initialize map using the proper configuration
+      console.log('🎯 Calling InitMap with configuration...');
       InitMap(Arma3Map.Maps.altis);
       
       console.log('✅ Map initialization called');
