@@ -1373,6 +1373,32 @@
         updateProgressDisplay();
       }
     });
+    
+    // Listen for custom event from same tab (edit-typing-tests.html)
+    window.addEventListener('typingTestsUpdated', function(e) {
+      console.log('Typing tests updated in same tab, refreshing...');
+      const data = e.detail.data;
+      
+      // Handle new format with module names
+      if (data.modules && data.moduleNames) {
+        typingModules = data.modules;
+        moduleNames = data.moduleNames;
+      } else {
+        // Fallback for old format
+        typingModules = data;
+      }
+      
+      renderModules();
+      updateProgressDisplay();
+    });
+    
+    // Test function to check current typing data
+    window.checkTypingData = function() {
+      console.log('=== Current Typing Data ===');
+      console.log('typingModules:', typingModules);
+      console.log('moduleNames:', moduleNames);
+      console.log('localStorage data:', JSON.parse(localStorage.getItem('smx_typing_tests') || '{}'));
+    };
 
   </script>
 </body>

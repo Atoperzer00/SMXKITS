@@ -49,9 +49,9 @@
 
     /* Sidebar */
     .sidebar {
-      width: 480px;
-      min-width: 300px;
-      max-width: 800px;
+      width: 600px;
+      min-width: 400px;
+      max-width: 1000px;
       flex-shrink: 0; /* Prevent sidebar from shrinking */
       background: var(--sidebar);
       padding: 28px 18px;
@@ -63,6 +63,8 @@
       z-index: 5;
       pointer-events: auto;
       min-height: 100vh; /* Ensure sidebar takes full height */
+      display: flex;
+      flex-direction: column;
     }
     
     /* Resize handle */
@@ -216,7 +218,7 @@
       flex-grow: 1;
       overflow-y: auto;
       overflow-x: visible; /* Allow overflow for external elements */
-      padding: 36px 40px 22px 120px; /* Left padding for buttons, right padding for space */
+      padding: 36px 40px 22px 80px; /* Reduced left padding since sidebar is wider */
       background: var(--panel);
       display: flex;
       flex-direction: column;
@@ -375,6 +377,50 @@
       flex-direction: column;
       gap: 17px;
       z-index: 3;
+    }
+    
+    /* Sidebar form container */
+    .sidebar-form-container {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-right: 8px;
+      margin-right: -8px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--accent) transparent;
+    }
+    
+    .sidebar-form-container::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    .sidebar-form-container::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    .sidebar-form-container::-webkit-scrollbar-thumb {
+      background: var(--accent);
+      border-radius: 4px;
+    }
+    
+    .sidebar-form-container::-webkit-scrollbar-thumb:hover {
+      background: #28dd6c;
+    }
+    
+    /* Ensure form elements use full width in expanded sidebar */
+    .sidebar form {
+      width: 100%;
+    }
+    
+    .sidebar .form-group {
+      width: 100%;
+    }
+    
+    .sidebar input, 
+    .sidebar select, 
+    .sidebar textarea {
+      width: 100%;
+      box-sizing: border-box;
     }
     .form-title {
       font-size: 1.2em;
@@ -1210,10 +1256,12 @@
       
       <div class="divider"></div>
 
-      <!-- Callout Form moved to sidebar -->
-      <form id="logForm" autocomplete="off" style="margin-top: 10px;" 
-            ondragover="event.preventDefault();" 
-            ondrop="handleFormDrop(event)">
+      <!-- Scrollable form container -->
+      <div class="sidebar-form-container">
+        <!-- Callout Form moved to sidebar -->
+        <form id="logForm" autocomplete="off" style="margin-top: 10px;" 
+              ondragover="event.preventDefault();" 
+              ondrop="handleFormDrop(event)">
         <div class="form-title" style="font-size: 1.1em; margin-bottom: 12px;">Submit New Callout</div>
         
         <div class="form-group" style="margin-bottom: 12px;">
@@ -1342,8 +1390,9 @@
           </select>
         </div>
         
-        <button type="submit" class="submit-btn" style="width: 100%;">Submit</button>
-      </form>
+          <button type="submit" class="submit-btn" style="width: 100%;">Submit</button>
+        </form>
+      </div>
       
       <button type="button" id="logoutBtn" class="logout-btn" style="margin-top: 20px;">Logout</button>
     </aside>

@@ -11,7 +11,7 @@ if (typeof Arma3Map === 'undefined') {
 // Altis map configuration
 Arma3Map.Maps.altis = {
     minZoom: 0,
-    maxZoom: 6,
+    maxZoom: 4, // Limited to zoom levels with complete tile coverage
     CRS: L.extend({}, L.CRS.Simple, {
         transformation: new L.Transformation(1/256, 0, -1/256, 30720)
     }), // Simplified Arma 3 coordinate system

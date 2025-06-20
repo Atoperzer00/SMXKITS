@@ -816,6 +816,42 @@
     let selectedStudents = [];
     let classStudents = [];
     
+    // Slideshow global variables
+    let slideImages = [];
+    let currentSlideIndex = 0;
+    
+    // Test function to verify image accessibility
+    window.testImageAccess = function() {
+      console.log('=== Testing image accessibility ===');
+      const testPaths = [
+        './images/Mission 1 Reference Product/1.jpg',
+        './images/Mission 1 Reference Product/2.jpg',
+        './images/Mission 1 Reference Product/3.jpg'
+      ];
+      
+      testPaths.forEach((path, index) => {
+        const img = new Image();
+        img.onload = function() {
+          console.log(`✅ Image ${index + 1} loaded successfully:`, path);
+          console.log(`   Dimensions: ${img.naturalWidth}x${img.naturalHeight}`);
+        };
+        img.onerror = function() {
+          console.error(`❌ Image ${index + 1} failed to load:`, path);
+        };
+        img.src = path;
+      });
+    };
+    
+    // Manual slideshow trigger for testing
+    window.testSlideshow = function() {
+      console.log('=== Manual slideshow test ===');
+      try {
+        openSlideshowViewer();
+      } catch (error) {
+        console.error('Error in manual slideshow test:', error);
+      }
+    };
+    
     // Debug function for testing slideshow
     window.debugSlideshow = function() {
       console.log('=== Debug Slideshow Function ===');

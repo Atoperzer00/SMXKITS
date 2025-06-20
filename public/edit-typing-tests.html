@@ -518,11 +518,19 @@
     }
     function saveTypingTests(data) {
       localStorage.setItem('smx_typing_tests', JSON.stringify(data));
+      
       // Trigger storage event for other tabs/windows
       window.dispatchEvent(new StorageEvent('storage', {
         key: 'smx_typing_tests',
         newValue: JSON.stringify(data)
       }));
+      
+      // Also trigger a custom event for same-tab updates
+      window.dispatchEvent(new CustomEvent('typingTestsUpdated', {
+        detail: { data: data }
+      }));
+      
+      console.log('Typing tests saved and events dispatched');
     }
     // Render accordion
     function renderEditor() {
@@ -668,12 +676,23 @@
     
     // Save changes
     document.getElementById('saveBubble').addEventListener('click', function() {
-      if (!currentEditing) return;
+      console.log('Save button clicked');
+      if (!currentEditing) {
+        console.log('No current editing element found');
+        return;
+      }
+      
       const mod = parseInt(currentEditing.dataset.module);
       const prac = parseInt(currentEditing.dataset.practice);
+      console.log(`Saving Module ${mod}, Practice ${prac}`);
+      console.log('Current text:', currentEditing.value);
+      
       let data = getTypingTests();
       data.modules[mod][prac] = currentEditing.value;
       saveTypingTests(data);
+      
+      console.log('Data saved to localStorage');
+      
       // Animate "Saved!" msg
       const rect = currentEditing.getBoundingClientRect();
       const msg = document.getElementById('savedMsg');
@@ -731,6 +750,20 @@
         }
       }
     }
+    
+    // Test function to verify data sync
+    window.testDataSync = function() {
+      console.log('=== Testing Data Sync ===');
+      const data = getTypingTests();
+      console.log('Current data in localStorage:', data);
+      
+      // Trigger the custom event manually
+      window.dispatchEvent(new CustomEvent('typingTestsUpdated', {
+        detail: { data: data }
+      }));
+      
+      console.log('Custom event dispatched');
+    };
     
     // Initial render
     renderEditor();

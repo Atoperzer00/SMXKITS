@@ -140,6 +140,14 @@
       
       // Initialize map using the proper configuration
       console.log('🎯 Calling InitMap with configuration...');
+      console.log('📊 Map config details:', {
+        minZoom: Arma3Map.Maps.altis.minZoom,
+        maxZoom: Arma3Map.Maps.altis.maxZoom,
+        defaultZoom: Arma3Map.Maps.altis.defaultZoom,
+        tilePattern: Arma3Map.Maps.altis.tilePattern,
+        center: Arma3Map.Maps.altis.center
+      });
+      
       InitMap(Arma3Map.Maps.altis);
       
       console.log('✅ Map initialization called');
