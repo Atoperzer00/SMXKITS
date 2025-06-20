@@ -214,11 +214,15 @@
       width: 100%;
       overflow-y: auto;
       overflow-x: visible; /* Allow overflow for external elements */
-      padding: 36px 120px 22px 120px; /* Increased padding for larger bubbles and external elements */
+      padding: 0 !important;
+      margin: 0 auto;
+      width: 100vw;
+      max-width: 100vw;
+      overflow-x: hidden;
       background: var(--panel);
       display: flex;
       flex-direction: column;
-      gap: 45px;
+      gap: 28px;
       min-height: calc(100vh - 58px); /* Use min-height instead of fixed height */
       scrollbar-width: thin;
       scrollbar-color: var(--inactive) transparent;
@@ -231,20 +235,24 @@
       -webkit-backdrop-filter: blur(15px);
       color: var(--bubble-text);
       border: 1px solid var(--glass-border);
-      border-radius: 20px;
+      border-radius: 0;
       box-shadow: var(--glass-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      padding: 32px 45px 26px 32px;
+      padding: 24px 34px 19px 24px;
       position: relative;
       transition: all 0.3s ease;
-      min-width: 650px;
-      max-width: 1300px;
-      width: 95%;
+      width: 100%;
+      max-width: none;
       word-break: break-word;
       white-space: pre-line;
-      font-size: 1.35em;
-      transform: scale(1.2);
-      transform-origin: left center;
-      margin: 20px 0;
+      font-size: 1.06em;
+      transform: none !important;
+    }
+    
+    .callout-card {
+      width: 100%;
+      max-width: none;
+      transform: none !important;
+      border-radius: 0;
     }
     .bubble:hover {
       box-shadow: var(--glass-shadow), 0 8px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15);
@@ -276,66 +284,66 @@
       z-index: 5;
       box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
-    .bubble-flex { display: flex; justify-content: space-between; align-items: flex-start; gap: 48px; } 
-    .bubble-left, .bubble-right { display: flex; flex-direction: column; gap: 10px; } 
+    .bubble-flex { display: flex; justify-content: space-between; align-items: flex-start; gap: 40px; } 
+    .bubble-left, .bubble-right { display: flex; flex-direction: column; gap: 8px; } 
     .bubble-left { flex: 1; width: 70%; } /* Increased width for left section */
-    .bubble-row { margin-bottom: 4px; } 
+    .bubble-row { margin-bottom: 3px; } 
     .bubble-right { 
       align-items: flex-end; 
-      min-width: 280px; 
+      min-width: 220px; 
       font-family: 'Consolas', 'Menlo', 'Monaco', monospace; 
       background: rgba(20, 20, 20, 0.3);
-      padding: 13px 19px;
-      border-radius: 10px;
+      padding: 10px 15px;
+      border-radius: 8px;
     } /* Increased min-width and added styling */
-    .bubble-right .bubble-time { font-weight: bold; font-size: 1.68em; color: var(--logo-color); }
+    .bubble-right .bubble-time { font-weight: bold; font-size: 1.4em; color: var(--logo-color); }
     .bubble-right .bubble-date-time { 
       display: flex; 
       align-items: center; 
       justify-content: flex-end; 
-      gap: 18px;
+      gap: 15px;
     }
     .bubble-right .bubble-date { 
       color: white; 
-      font-size: 1.26em;
-      letter-spacing: 0.6px;
+      font-size: 1.05em;
+      letter-spacing: 0.5px;
     }
-    .bubble-right span { margin-bottom: 4px; }
+    .bubble-right span { margin-bottom: 3px; }
     .bubble .menu-btn {
       position: absolute;
       top: 14px;
-      right: -60px;
+      right: -46px;
       background: var(--glass-bg);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
       border: 1px solid var(--glass-border);
       cursor: pointer;
       color: #a7a7a7;
-      font-size: 1.87em;
+      font-size: 1.56em;
       z-index: 10;
       padding: 0;
       border-radius: 50%;
-      width: 48px; height: 48px;
+      width: 40px; height: 40px;
       display: flex; align-items: center; justify-content: center;
       transition: all 0.3s ease;
       box-shadow: var(--glass-shadow);
     }
     .bubble .qc-btn {
       position: absolute;
-      top: 72px;
-      right: -60px;
+      top: 60px;
+      right: -46px;
       background: var(--glass-bg);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
       border: 1px solid var(--glass-border);
       cursor: pointer;
       color: #a7a7a7;
-      font-size: 1.08em;
+      font-size: 0.9em;
       font-weight: bold;
       z-index: 10;
       padding: 0;
       border-radius: 50%;
-      width: 48px; height: 48px;
+      width: 40px; height: 40px;
       display: flex; align-items: center; justify-content: center;
       transition: all 0.3s ease;
       box-shadow: var(--glass-shadow);
@@ -353,9 +361,9 @@
       border-color: rgba(34, 197, 94, 0.3);
     }
     .bubble .callout-meta {
-      font-size: 1.18em;
+      font-size: 0.98em;
       color: #b9c6c7;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
 
     /* Form - Form is now in sidebar, so this style is kept for reference but not actively used */
@@ -666,19 +674,18 @@
     /* Group selection checkbox */
     .bubble-select-checkbox {
       position: absolute;
-      right: -60px;
-      top: 130px;
-      width: 26px;
-      height: 26px;
+      left: -40px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 22px;
+      height: 22px;
       cursor: pointer;
       appearance: none;
       -webkit-appearance: none;
-      background: var(--glass-bg);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border: 1px solid var(--glass-border);
-      border-radius: 6px;
-      box-shadow: var(--glass-shadow);
+      background: rgba(35, 39, 46, 0.7);
+      border: 1px solid var(--inactive);
+      border-radius: 4px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
       transition: all 0.2s;
     }
     
@@ -692,14 +699,13 @@
       position: absolute;
       color: white;
       font-weight: bold;
-      top: 1px;
-      left: 7px;
-      font-size: 16px;
+      top: 0;
+      left: 6px;
+      font-size: 14px;
     }
     
     .bubble-select-checkbox:hover {
-      background: rgba(34, 197, 94, 0.1);
-      border-color: rgba(34, 197, 94, 0.3);
+      background: rgba(35, 39, 46, 0.9);
     }
     
     /* Group actions bar */
@@ -1041,7 +1047,31 @@
       border-color: #777;
     }
 
-    /* Selection Checkbox - positioned outside the card - REMOVED DUPLICATE */
+    /* Selection Checkbox - positioned outside the card */
+    .bubble-select-checkbox {
+      position: absolute;
+      top: 50%;
+      left: -24px;
+      transform: translateY(-50%);
+      width: 12px;
+      height: 12px;
+      border: 1px solid #555;
+      background: var(--button-bg);
+      border-radius: 2px;
+      z-index: 10;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .bubble-select-checkbox:hover {
+      border-color: var(--accent);
+      background: rgba(34, 197, 94, 0.1);
+    }
+    
+    .bubble-select-checkbox:checked {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
 
     /* Follow Indicator - glowing bracket on left inside edge */
     .follow-indicator {
