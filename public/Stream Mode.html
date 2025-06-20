@@ -908,6 +908,12 @@
     let currentClassId = null;
     let authToken = localStorage.getItem('token');
     
+    // Debug initialization
+    console.log('🔧 Stream Mode initialized');
+    console.log('API Base URL:', apiBaseUrl);
+    console.log('Auth token:', authToken ? 'Present' : 'Missing');
+    console.log('Current class ID:', currentClassId);
+    
     // --- WebRTC Variables ---
     let localStream = null;
     let socket = null;
@@ -915,6 +921,13 @@
     let isLiveMode = false;
     let isStreaming = false;
     let streamingMode = 'file'; // 'file' or 'webrtc'
+    
+    // --- Initialize page when DOM is ready ---
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('📄 DOM Content Loaded');
+      loadClasses();
+      setupEventListeners();
+    });
     
     // --- Load classes on page load ---
     async function loadClasses() {
@@ -1370,14 +1383,44 @@
       }
     });
     
-    // Upload button handler
-    document.getElementById('uploadBtn').addEventListener('click', () => {
-      if (window.currentLocalVideo && window.currentLocalVideo.file) {
-        handleFileUpload(window.currentLocalVideo.file);
+    // Setup event listeners
+    function setupEventListeners() {
+      console.log('🔧 Setting up event listeners');
+      
+      // Upload button handler
+      const uploadBtn = document.getElementById('uploadBtn');
+      if (!uploadBtn) {
+        console.error('❌ Upload button not found in DOM');
+        return;
       }
-    });
+      
+      console.log('✅ Upload button found, attaching event listener');
+      uploadBtn.addEventListener('click', () => {
+        console.log('🔄 Upload button clicked');
+        console.log('Current local video:', window.currentLocalVideo);
+        
+        if (window.currentLocalVideo && window.currentLocalVideo.file) {
+          console.log('✅ File found, starting upload:', window.currentLocalVideo.file.name);
+          handleFileUpload(window.currentLocalVideo.file);
+        } else {
+          console.error('❌ No file found to upload');
+          const uploadStatus = document.getElementById('uploadStatus');
+          uploadStatus.textContent = 'No file selected for upload. Please select a video file first.';
+          uploadStatus.className = 'upload-status error';
+          
+          // Clear error after 3 seconds
+          setTimeout(() => {
+            uploadStatus.textContent = '';
+            uploadStatus.className = 'upload-status';
+          }, 3000);
+        }
+      });
+    }
     async function handleFileUpload(file) {
+      console.log('🚀 Starting file upload process for:', file?.name);
+      
       if (!file || !file.name.endsWith('.mp4')) {
+        console.error('❌ Invalid file type:', file?.name);
         uploadStatus.textContent = 'Please select an MP4 file only';
         uploadStatus.className = 'upload-status error';
         hideFileInfo();
@@ -1394,13 +1437,19 @@
         return;
       }
       
+      console.log('🔍 Checking prerequisites...');
+      console.log('Current class ID:', currentClassId);
+      console.log('Auth token:', authToken ? 'Present' : 'Missing');
+      
       if (!currentClassId) {
+        console.error('❌ No class selected');
         uploadStatus.textContent = 'Please select a class first';
         uploadStatus.className = 'upload-status error';
         return;
       }
       
       if (!authToken) {
+        console.error('❌ No auth token');
         uploadStatus.textContent = 'Authentication required. Please login.';
         uploadStatus.className = 'upload-status error';
         return;
@@ -1418,23 +1467,38 @@
         // Use local server endpoint if apiBaseUrl is not defined
         const uploadUrl = (typeof apiBaseUrl !== 'undefined' && apiBaseUrl) 
           ? `${apiBaseUrl}/stream/upload` 
-          : '/stream/upload';
+          : '/api/stream/upload';
         
         console.log('🚀 Uploading to:', uploadUrl);
+        console.log('📦 Form data contains:', {
+          video: file.name,
+          classId: currentClassId,
+          fileSize: file.size
+        });
         
         const headers = {};
         if (typeof authToken !== 'undefined' && authToken) {
           headers['Authorization'] = `Bearer ${authToken}`;
         }
         
+        console.log('📡 Making upload request...');
         const response = await fetch(uploadUrl, {
           method: 'POST',
           headers: headers,
           body: formData
         });
 
+        console.log('📨 Upload response status:', response.status);
+        
         if (!response.ok) {
-          const errorData = await response.json();
+          const errorText = await response.text();
+          console.error('❌ Upload failed with response:', errorText);
+          let errorData;
+          try {
+            errorData = JSON.parse(errorText);
+          } catch (e) {
+            errorData = { error: errorText || 'Failed to upload file' };
+          }
           throw new Error(errorData.error || 'Failed to upload file');
         }
 
@@ -1500,7 +1564,12 @@
           // Don't hide file info - keep it visible for user reference
         }, 8000);
       } catch (error) {
-        console.error('Error uploading file:', error);
+        console.error('❌ Error uploading file:', error);
+        console.error('❌ Error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        });
         uploadStatus.textContent = `Upload failed: ${error.message}`;
         uploadStatus.className = 'upload-status error';
         progressFill.style.width = '0';
