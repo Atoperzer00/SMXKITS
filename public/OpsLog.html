@@ -213,10 +213,9 @@
     .feed-panel {
       flex: 1;
       flex-grow: 1;
-      width: calc(100vw - 480px); /* Full viewport width minus sidebar width */
       overflow-y: auto;
       overflow-x: visible; /* Allow overflow for external elements */
-      padding: 36px 0 22px 120px; /* Left padding for buttons, no right padding */
+      padding: 36px 40px 22px 120px; /* Left padding for buttons, right padding for space */
       background: var(--panel);
       display: flex;
       flex-direction: column;
@@ -672,10 +671,10 @@
     /* Group selection checkbox */
     .bubble-select-checkbox {
       position: absolute;
-      left: -60px;
-      top: 106px;
-      width: 22px;
-      height: 22px;
+      left: -38px;
+      top: 62px;
+      width: 24px;
+      height: 24px;
       cursor: pointer;
       appearance: none;
       -webkit-appearance: none;
@@ -686,6 +685,7 @@
       border-radius: 4px;
       box-shadow: var(--glass-shadow);
       transition: all 0.2s;
+      font-size: 0.9em;
     }
     
     .bubble-select-checkbox:checked {
@@ -895,17 +895,18 @@
       background: var(--bubble-bg);
       border: 2px solid var(--qc-orange);
       border-radius: 8px;
-      padding: 6px 12px;
+      padding: 16px 24px;
       margin-bottom: 8px;
       margin-left: 30px; /* Make room for external checkbox */
-      font-size: 11px;
+      margin-right: 40px;
+      font-size: 1.2em;
       line-height: 1.4;
       color: var(--bubble-text);
       word-break: break-word;
       white-space: pre-line;
       min-height: auto;
       width: 100%;
-      max-width: 95vw;
+      max-width: 100%;
       box-sizing: border-box;
     }
     
@@ -952,12 +953,12 @@
     
     .follow-name {
       color: var(--follow-blue);
-      font-size: 12px;
+      font-size: 15px;
     }
     
     .follow-stage {
       color: var(--accent);
-      font-size: 10px;
+      font-size: 13px;
       background: rgba(34, 197, 94, 0.1);
       padding: 2px 6px;
       border-radius: 3px;
@@ -966,7 +967,7 @@
     
     .follow-id-row {
       font-family: 'Consolas', 'Menlo', 'Monaco', monospace;
-      font-size: 10px;
+      font-size: 13px;
       color: #888;
       margin-top: 2px;
     }
@@ -978,7 +979,7 @@
 
     /* Improved spacing for callout content sections */
     .callout-card .callout-section {
-      margin-bottom: 8px;
+      margin-bottom: 10px;
       line-height: 1.5;
     }
     
@@ -1012,14 +1013,13 @@
     /* Classic Menu and QC Buttons */
     .menu-btn, .qc-btn {
       position: absolute;
-      top: 4px;
-      width: 18px;
-      height: 18px;
+      width: 24px;
+      height: 24px;
       background: var(--button-bg);
       border: 1px solid #555;
-      border-radius: 3px;
+      border-radius: 4px;
       color: #ccc;
-      font-size: 10px;
+      font-size: 0.9em;
       font-weight: bold;
       cursor: pointer;
       display: flex;
@@ -1030,16 +1030,14 @@
     }
     
     .menu-btn {
-      left: -46px;
-      top: 4px;
-      font-size: 12px;
+      left: -38px;
+      top: 6px;
       line-height: 1;
     }
     
     .qc-btn {
-      left: -46px;
-      top: 26px;
-      font-size: 8px;
+      left: -38px;
+      top: 34px;
     }
     
     .menu-btn:hover, .qc-btn:hover {
