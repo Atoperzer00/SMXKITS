@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>SMX KITS - Mission Links</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -621,6 +624,54 @@
       // No authentication found, redirect to login
       window.location.replace('/login.html');
     }
+    
+    // Define essential functions immediately to prevent "not defined" errors
+    console.log('🔧 Defining early function stubs...');
+    
+    window.openLink = function(url, name) {
+      console.log('🔗 Early openLink called:', name, 'URL:', url);
+      try {
+        const newWindow = window.open(url, '_blank');
+        if (!newWindow) {
+          console.error('Popup blocked or failed to open:', url);
+          alert('Unable to open ' + name + '. Please check if popups are blocked.');
+        } else {
+          console.log('Successfully opened:', name);
+        }
+      } catch (error) {
+        console.error('Error opening link:', error);
+        alert('Error opening ' + name + ': ' + error.message);
+      }
+    };
+    
+    window.generateReference = function() {
+      console.log('🎯 Early generateReference called');
+      const dropdown = document.getElementById('referenceDropdown');
+      if (dropdown && dropdown.value) {
+        alert('Generate Reference: ' + dropdown.value + ' (Early implementation)');
+      } else {
+        alert('Please select a reference type first.');
+      }
+    };
+    
+    window.testSlideshow = function() {
+      console.log('🎬 Early testSlideshow called');
+      alert('Test Slideshow function called (Early implementation)');
+    };
+    
+    window.logout = function() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      window.location.href = 'login.html';
+    };
+    
+    console.log('✅ Essential functions defined early');
+    console.log('📋 Early functions available:', {
+      openLink: typeof window.openLink,
+      generateReference: typeof window.generateReference,
+      testSlideshow: typeof window.testSlideshow,
+      logout: typeof window.logout
+    });
   </script>
 
   <div class="admin-layout">
@@ -811,8 +862,10 @@
   </div>
 
   <script>
+    // VERSION: 2024-12-19-v2 - Fixed duplicate declarations and function accessibility
     // CRITICAL: Define functions FIRST before any other code
-    console.log('=== Defining critical functions ===');
+    console.log('=== Script started - Defining critical functions v2 ===');
+    console.log('Document ready state:', document.readyState);
     
     // Define openLink function immediately
     function openLink(url, name) {
@@ -830,6 +883,10 @@
         alert('Error opening ' + name + ': ' + error.message);
       }
     }
+    
+    // Override early stub with full implementation
+    console.log('🔄 Overriding openLink with full implementation');
+    window.openLink = openLink;
 
     // Define generateReference function immediately
     function generateReference() {
@@ -871,6 +928,10 @@
           alert('Please select a valid reference type.');
       }
     }
+    
+    // Override early stub with full implementation
+    console.log('🔄 Overriding generateReference with full implementation');
+    window.generateReference = generateReference;
 
     // Define slideshow functions immediately
     function openSlideshowViewer() {
@@ -1007,6 +1068,12 @@
     window.previousSlide = previousSlide;
     
     console.log('=== All critical functions defined and made global ===');
+    console.log('✅ Functions available on window object:', {
+      openLink: typeof window.openLink,
+      generateReference: typeof window.generateReference,
+      openSlideshowViewer: typeof window.openSlideshowViewer,
+      testSlideshow: typeof window.testSlideshow
+    });
     console.log('Function types:', {
       openLink: typeof openLink,
       generateReference: typeof generateReference,
@@ -1131,21 +1198,7 @@
       console.log('Loader display:', loader ? window.getComputedStyle(loader).display : 'N/A');
     };
 
-    function openLink(url, name) {
-      console.log('Opening link:', name, 'URL:', url);
-      try {
-        const newWindow = window.open(url, '_blank');
-        if (!newWindow) {
-          console.error('Popup blocked or failed to open:', url);
-          alert('Unable to open ' + name + '. Please check if popups are blocked.');
-        } else {
-          console.log('Successfully opened:', name);
-        }
-      } catch (error) {
-        console.error('Error opening link:', error);
-        alert('Error opening ' + name + ': ' + error.message);
-      }
-    }
+    // openLink function already defined above, removing duplicate
     
     function openInstructorGrading() {
       const role = localStorage.getItem('role');
@@ -1156,9 +1209,7 @@
       }
     }
     
-    // Slideshow variables
-    let currentSlideIndex = 0;
-    let slideImages = [];
+    // Slideshow variables (already declared above, removing duplicate)
 
     // Test function for slideshow
     function testSlideshow() {
@@ -1194,6 +1245,10 @@
       console.log('Modal should now be visible');
       console.log('Modal display after change:', window.getComputedStyle(modal).display);
     }
+    
+    // Override early stub with full implementation
+    console.log('🔄 Overriding testSlideshow with full implementation');
+    window.testSlideshow = testSlideshow;
 
 
 
@@ -1544,7 +1599,8 @@
     console.log('Functions check:', {
       openLink: typeof window.openLink,
       generateReference: typeof window.generateReference,
-      openSlideshowViewer: typeof window.openSlideshowViewer
+      openSlideshowViewer: typeof window.openSlideshowViewer,
+      testSlideshow: typeof window.testSlideshow
     });
   </script>
 </body>

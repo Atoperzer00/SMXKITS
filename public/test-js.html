@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Test</title>
+</head>
+<body>
+    <h1>JavaScript Function Test</h1>
+    <button onclick="testOpenLink()">Test openLink</button>
+    <button onclick="testGenerateReference()">Test generateReference</button>
+    <button onclick="testSlideshow()">Test testSlideshow</button>
+    
+    <div id="output"></div>
+    
+    <script>
+        function testOpenLink() {
+            if (typeof window.openLink === 'function') {
+                document.getElementById('output').innerHTML += '<p>✅ openLink function is available</p>';
+                console.log('openLink function is available');
+            } else {
+                document.getElementById('output').innerHTML += '<p>❌ openLink function is NOT available</p>';
+                console.error('openLink function is NOT available');
+            }
+        }
+        
+        function testGenerateReference() {
+            if (typeof window.generateReference === 'function') {
+                document.getElementById('output').innerHTML += '<p>✅ generateReference function is available</p>';
+                console.log('generateReference function is available');
+            } else {
+                document.getElementById('output').innerHTML += '<p>❌ generateReference function is NOT available</p>';
+                console.error('generateReference function is NOT available');
+            }
+        }
+        
+        function testSlideshow() {
+            if (typeof window.testSlideshow === 'function') {
+                document.getElementById('output').innerHTML += '<p>✅ testSlideshow function is available</p>';
+                console.log('testSlideshow function is available');
+            } else {
+                document.getElementById('output').innerHTML += '<p>❌ testSlideshow function is NOT available</p>';
+                console.error('testSlideshow function is NOT available');
+            }
+        }
+        
+        // Test on page load
+        window.addEventListener('load', function() {
+            console.log('Page loaded, testing functions...');
+            testOpenLink();
+            testGenerateReference();
+            testSlideshow();
+        });
+    </script>
+</body>
+</html>
+</html>
