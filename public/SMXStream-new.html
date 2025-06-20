@@ -1332,6 +1332,7 @@
         console.log('🔌 Connected to server');
         if (classId) {
           // Join class as student - automatic streaming
+          console.log('🔌 Emitting student-join-class for classId:', classId);
           socket.emit('student-join-class', { classId });
           console.log(`🎓 Joined class: ${classId}`);
           
@@ -1439,7 +1440,11 @@
       });
       
       socket.on('streamStatus', (data) => {
-        console.log('📡 Stream status update:', data);
+        console.log('📡 Stream status update received:', data);
+        console.log('📡 Current video elements state:', {
+          video: document.getElementById('video')?.style.display,
+          webrtcVideo: document.getElementById('webrtcVideo')?.style.display
+        });
         handleStreamStatusUpdate(data);
       });
       
@@ -1514,24 +1519,47 @@
     }
     
     function handleStreamStatusUpdate(data) {
+      console.log('🎬 handleStreamStatusUpdate called with:', data);
+      
       if (data.status === 'live' && data.streamUrl) {
+        console.log('✅ Switching to uploaded video stream:', data.streamUrl);
+        
         const video = document.getElementById('video');
         const webrtcVideo = document.getElementById('webrtcVideo');
         
+        console.log('🔍 Video elements found:', {
+          video: !!video,
+          webrtcVideo: !!webrtcVideo
+        });
+        
         // Switch to uploaded video stream
-        if (webrtcVideo) webrtcVideo.style.display = 'none';
-        video.style.display = 'block';
-        video.src = data.streamUrl;
-        video.load();
+        if (webrtcVideo) {
+          webrtcVideo.style.display = 'none';
+          console.log('🔄 Hidden WebRTC video');
+        }
+        
+        if (video) {
+          video.style.display = 'block';
+          video.src = data.streamUrl;
+          video.load();
+          console.log('🔄 Set video source and loaded:', data.streamUrl);
+        }
         
         updateStreamTypeIndicator('Live Stream');
+        hideWaitingMessage();
         
         // Auto-play if instructor is playing
         video.addEventListener('loadeddata', () => {
+          console.log('📺 Video loaded, attempting to play...');
           if (instructorPlaying) {
             video.play().catch(e => console.log('Autoplay prevented:', e));
           }
         }, { once: true });
+      } else {
+        console.log('❌ Stream status update ignored:', {
+          status: data.status,
+          hasStreamUrl: !!data.streamUrl
+        });
       }
     }
     

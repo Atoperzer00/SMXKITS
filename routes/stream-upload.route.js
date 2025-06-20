@@ -149,13 +149,23 @@ router.post('/upload', auth(['admin', 'instructor']), upload.single('video'), as
 
     // Notify connected clients via Socket.IO
     const io = req.app.get('io');
-    if (io && classObj.streamKey) {
-      io.to(`stream:${classObj.streamKey}`).emit('streamStatus', { 
+    if (io) {
+      // Emit to both room naming conventions for compatibility
+      const classRoom = `class:${classObj._id}`;
+      const streamRoom = `stream:${classObj.streamKey}`;
+      
+      const streamData = { 
         status: 'live',
         source: 'upload',
         streamUrl: streamUrl,
         filename: req.file.originalname
-      });
+      };
+      
+      console.log(`📡 Emitting streamStatus to rooms: ${classRoom}, ${streamRoom}`);
+      io.to(classRoom).emit('streamStatus', streamData);
+      if (classObj.streamKey) {
+        io.to(streamRoom).emit('streamStatus', streamData);
+      }
     }
 
     console.log(`✅ Video uploaded for streaming: ${req.file.originalname} -> ${filename}`);
