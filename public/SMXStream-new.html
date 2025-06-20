@@ -1155,6 +1155,16 @@
           <div class="behind-live-indicator" id="behindLiveIndicator" style="display:none;">
             📡 You are <span id="behindLiveSeconds">0</span> seconds behind live
           </div>
+          
+          <!-- Debug Panel (hidden by default) -->
+          <div id="debugPanel" style="display: none; position: absolute; top: 60px; right: 20px; background: rgba(0,0,0,0.9); color: white; padding: 15px; border-radius: 10px; font-family: monospace; font-size: 11px; max-width: 350px; z-index: 100; border: 1px solid #333;">
+            <div style="font-weight: bold; margin-bottom: 10px; color: #4CAF50;">🐛 Stream Debug Info</div>
+            <div id="debugInfo"></div>
+            <button onclick="toggleDebugPanel()" style="margin-top: 10px; padding: 5px 10px; background: #333; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 11px;">Hide Debug</button>
+          </div>
+          
+          <!-- Debug Toggle Button -->
+          <button id="debugToggle" onclick="toggleDebugPanel()" style="position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.7); color: white; border: none; padding: 6px 10px; border-radius: 5px; cursor: pointer; font-size: 11px; z-index: 50; backdrop-filter: blur(5px);">🐛</button>
         </div>
         
 
@@ -1337,10 +1347,11 @@
           socket.emit('student-join-class', { classId });
           console.log(`🎓 Joined class: ${classId}`);
           
-          // Recover stream state for late joiners
-          recoverStreamState();
+          // Show waiting message initially
+          showWaitingMessage();
         } else {
           console.error('❌ No classId available for joining room');
+          showStreamStatusOverlay('No class ID provided');
         }
       });
       
@@ -1489,23 +1500,62 @@
     
     // ===== STREAM SYNCHRONIZATION HANDLERS =====
     function handleStreamInit(data) {
+      console.log('🎬 Handling stream initialization:', data);
+      
       const video = document.getElementById('video');
       const webrtcVideo = document.getElementById('webrtcVideo');
       
       if (data.streamUrl) {
+        console.log('📺 Setting up video stream:', data.streamUrl);
+        
         // Hide WebRTC video and show regular video
-        if (webrtcVideo) webrtcVideo.style.display = 'none';
+        if (webrtcVideo) {
+          webrtcVideo.style.display = 'none';
+          console.log('🔄 Hidden WebRTC video');
+        }
+        
         video.style.display = 'block';
         video.src = data.streamUrl;
+        
+        // Set up video event handlers
+        video.addEventListener('loadeddata', () => {
+          console.log('📺 Video loaded, syncing to instructor state');
+          
+          // Sync to instructor's current position
+          if (data.currentTime) {
+            video.currentTime = data.currentTime;
+          }
+          
+          // Play if instructor is playing
+          if (data.playing) {
+            video.play().catch(e => {
+              console.log('Autoplay prevented, showing play button:', e);
+              showStreamStatusOverlay('Click to start watching');
+            });
+          }
+          
+          console.log('✅ Video synchronized with instructor');
+        }, { once: true });
+        
+        video.addEventListener('error', (e) => {
+          console.error('❌ Video loading error:', e);
+          showStreamStatusOverlay('Error loading video stream');
+        });
+        
         video.load();
+        console.log('🔄 Video loading started');
       }
       
+      // Update stream state
       streamStartTime = new Date(data.startTime);
       instructorTime = data.currentTime || 0;
       instructorPlaying = data.playing || false;
+      isStreamActive = true;
       
       updateStreamTypeIndicator('Live Stream');
       updateClockDisplay();
+      
+      console.log('✅ Stream initialization complete');
     }
     
     function handleInstructorPlay(data) {
@@ -1548,46 +1598,104 @@
     function handleStreamStatusUpdate(data) {
       console.log('🎬 handleStreamStatusUpdate called with:', data);
       
-      if (data.status === 'live' && data.streamUrl) {
-        console.log('✅ Switching to uploaded video stream:', data.streamUrl);
-        
-        const video = document.getElementById('video');
+    const video = document.getElementById('video');
         const webrtcVideo = document.getElementById('webrtcVideo');
+      const streamStatusText = document.getElementById('streamStatusText');
+      
+      if (data.status === 'live') {
+        console.log('✅ Stream is now live');
         
-        console.log('🔍 Video elements found:', {
-          video: !!video,
-          webrtcVideo: !!webrtcVideo
-        });
-        
-        // Switch to uploaded video stream
-        if (webrtcVideo) {
-          webrtcVideo.style.display = 'none';
-          console.log('🔄 Hidden WebRTC video');
+        if (data.streamUrl) {
+          console.log('📺 Switching to uploaded video stream:', data.streamUrl);
+          
+          // Switch to uploaded video stream
+          if (webrtcVideo) {
+            webrtcVideo.style.display = 'none';
+            console.log('🔄 Hidden WebRTC video');
+          }
+          
+          if (video) {
+            video.style.display = 'block';
+            video.src = data.streamUrl;
+            video.load();
+            console.log('🔄 Set video source and loaded:', data.streamUrl);
+            
+            // Update stream state
+            isStreamActive = true;
+            updateStreamTypeIndicator('Live Stream');
+            hideStreamStatusOverlay();
+            
+            // Auto-play when loaded
+            video.addEventListener('loadeddata', () => {
+              console.log('📺 Video loaded, ready to sync with instructor');
+              video.play().catch(e => {
+                console.log('Autoplay prevented, waiting for user interaction:', e);
+                showStreamStatusOverlay('Click to start watching');
+              });
+            }, { once: true });
+          }
+        } else {
+          console.log('📡 Live stream without specific URL - waiting for WebRTC or stream init');
+          showStreamStatusOverlay('Instructor is starting stream...');
         }
+      } else if (data.status === 'offline') {
+        console.log('⏹️ Stream is now offline');
+        isStreamActive = false;
         
         if (video) {
-          video.style.display = 'block';
-          video.src = data.streamUrl;
-          video.load();
-          console.log('🔄 Set video source and loaded:', data.streamUrl);
+          video.pause();
+          video.src = '';
+        }
+        if (webrtcVideo) {
+          webrtcVideo.style.display = 'none';
         }
         
-        updateStreamTypeIndicator('Live Stream');
-        hideWaitingMessage();
-        
-        // Auto-play if instructor is playing
-        video.addEventListener('loadeddata', () => {
-          console.log('📺 Video loaded, attempting to play...');
-          if (instructorPlaying) {
-            video.play().catch(e => console.log('Autoplay prevented:', e));
-          }
-        }, { once: true });
+        showStreamStatusOverlay('Stream ended');
+        updateStreamTypeIndicator('Offline');
+      } else if (data.status === 'paused') {
+        console.log('⏸️ Stream is paused');
+        if (video) {
+          video.pause();
+        }
+        showStreamStatusOverlay('Stream paused by instructor');
       } else {
-        console.log('❌ Stream status update ignored:', {
-          status: data.status,
-          hasStreamUrl: !!data.streamUrl
-        });
+        console.log('❓ Unknown stream status:', data.status);
       }
+    }
+    
+    // ===== STREAM STATUS OVERLAY HELPERS =====
+    function showStreamStatusOverlay(message) {
+      const overlay = document.getElementById('streamStatusText');
+      if (overlay) {
+        overlay.textContent = message;
+        overlay.classList.remove('hidden');
+        console.log('📺 Showing stream status:', message);
+      }
+    }
+    
+    function hideStreamStatusOverlay() {
+      const overlay = document.getElementById('streamStatusText');
+      if (overlay) {
+        overlay.classList.add('hidden');
+        console.log('📺 Hiding stream status overlay');
+      }
+    }
+    
+    function updateStreamTypeIndicator(type) {
+      const indicator = document.getElementById('streamTypeIndicator');
+      if (indicator) {
+        indicator.textContent = type;
+        console.log('📡 Updated stream type indicator:', type);
+      }
+    }
+    
+    function showWaitingMessage() {
+      showStreamStatusOverlay('Waiting for instructor to start stream...');
+      updateStreamTypeIndicator('Waiting');
+    }
+    
+    function hideWaitingMessage() {
+      hideStreamStatusOverlay();
     }
     
     function handleCurrentStreamState(data) {
@@ -1688,6 +1796,70 @@
         isInstructor = false;
       }
     }
+    
+    // ===== DEBUG SYSTEM =====
+    let debugPanelVisible = false;
+    let debugUpdateInterval = null;
+    
+    function toggleDebugPanel() {
+      const panel = document.getElementById('debugPanel');
+      const toggle = document.getElementById('debugToggle');
+      
+      debugPanelVisible = !debugPanelVisible;
+      
+      if (debugPanelVisible) {
+        panel.style.display = 'block';
+        toggle.style.display = 'none';
+        startDebugUpdates();
+      } else {
+        panel.style.display = 'none';
+        toggle.style.display = 'block';
+        stopDebugUpdates();
+      }
+    }
+    
+    function startDebugUpdates() {
+      updateDebugInfo();
+      debugUpdateInterval = setInterval(updateDebugInfo, 1000);
+    }
+    
+    function stopDebugUpdates() {
+      if (debugUpdateInterval) {
+        clearInterval(debugUpdateInterval);
+        debugUpdateInterval = null;
+      }
+    }
+    
+    function updateDebugInfo() {
+      const debugInfo = document.getElementById('debugInfo');
+      const video = document.getElementById('video');
+      const webrtcVideo = document.getElementById('webrtcVideo');
+      
+      const info = {
+        'Socket Connected': socket?.connected ? '✅ Yes' : '❌ No',
+        'Socket ID': socket?.id || 'N/A',
+        'Class ID': classId || 'N/A',
+        'Stream Active': isStreamActive ? '✅ Yes' : '❌ No',
+        'Video Element': video ? '✅ Present' : '❌ Missing',
+        'Video Source': video?.src ? '✅ Set' : '❌ Empty',
+        'Video Ready State': video ? video.readyState : 'N/A',
+        'Video Current Time': video ? video.currentTime.toFixed(2) + 's' : 'N/A',
+        'Video Paused': video ? (video.paused ? '⏸️ Yes' : '▶️ No') : 'N/A',
+        'Instructor Time': instructorTime.toFixed(2) + 's',
+        'Instructor Playing': instructorPlaying ? '▶️ Yes' : '⏸️ No',
+        'Stream Start Time': streamStartTime ? streamStartTime.toLocaleTimeString() : 'N/A',
+        'Live Synced': isLiveSynced ? '✅ Yes' : '⚠️ No',
+        'Behind Live': behindLiveSeconds + 's',
+        'WebRTC Video': webrtcVideo?.style.display !== 'none' ? '📹 Visible' : '🔇 Hidden'
+      };
+      
+      debugInfo.innerHTML = Object.entries(info)
+        .map(([key, value]) => `<div style="margin: 2px 0;"><strong>${key}:</strong> ${value}</div>`)
+        .join('');
+    }
+    
+    // Make debug functions global
+    window.toggleDebugPanel = toggleDebugPanel;
     
     // ===== LIVE EDGE ENFORCEMENT INITIALIZATION =====
     function initializeLiveEdgeEnforcement() {

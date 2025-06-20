@@ -739,6 +739,25 @@ io.on('connection', socket => {
     io.streamStates = new Map();
   }
   
+  // Handle stream state updates from instructor
+  socket.on('stream:state-update', (data) => {
+    const { classId, ...stateData } = data;
+    if (!classId) return;
+    
+    console.log('📊 Stream state update for class:', classId, stateData);
+    
+    // Store the current state
+    io.streamStates.set(classId, {
+      ...stateData,
+      lastUpdate: new Date().toISOString(),
+      timeSinceStart: Date.now() - new Date(stateData.startTime).getTime()
+    });
+    
+    // Broadcast to students in the class
+    const classRoom = `class:${classId}`;
+    socket.to(classRoom).emit('stream:state-sync', stateData);
+  });
+  
   // Initialize throttle tracking
   if (!socket.lastTimeUpdate) {
     socket.lastTimeUpdate = 0;

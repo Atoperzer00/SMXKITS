@@ -1126,8 +1126,7 @@
         stopBtn.disabled = true;
       }
     }
-    goLiveBtn.onclick = () => setStatus('live');
-    stopBtn.onclick = () => setStatus('offline');
+    // Initialize button states - handlers will be set up later
     setStatus('offline');
     
     // ===== NATIVE VIDEO EVENT HANDLING FOR LIVE STREAMING =====
@@ -1973,13 +1972,34 @@
     let lastTimeUpdate = 0;
     
     function initializeStreamSync() {
-      if (!socket || !currentClassId) return;
+      if (!socket || !currentClassId) {
+        console.warn('⚠️ Cannot initialize stream sync: missing socket or classId');
+        return;
+      }
       
-      // Use consistent class-based stream key
-      currentStreamKey = `class_${currentClassId}`;
+      console.log('🔄 Initializing stream synchronization for class:', currentClassId);
       
-      // Join streaming room
-      socket.emit('join-stream', { classId: currentClassId, streamKey: currentStreamKey });
+      // Initialize stream states if not exists
+      if (!io.streamStates) {
+        io.streamStates = new Map();
+      }
+      
+      // Set up stream state for this class
+      const initialState = {
+        currentTime: 0,
+        playing: false,
+        streamUrl: null,
+        startTime: new Date().toISOString(),
+        lastUpdate: new Date().toISOString()
+      };
+      
+      // Store initial state
+      socket.emit('stream:state-update', {
+        classId: currentClassId,
+        ...initialState
+      });
+      
+      console.log('✅ Stream synchronization initialized');
     }
     
     // ===== STREAMING SOCKET INITIALIZATION =====
@@ -2128,49 +2148,284 @@
       }
     }
 
-    // --- Event Listeners for WebRTC ---
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('startCameraBtn').addEventListener('click', startCamera);
-      document.getElementById('startScreenBtn').addEventListener('click', startScreen);
-      document.getElementById('stopMediaBtn').addEventListener('click', stopLiveMedia);
+    // --- Unified Event Listeners Setup ---
+    function setupUnifiedEventListeners() {
+      console.log('🔧 Setting up unified event listeners');
       
-      // Modify existing Go Live button to handle both modes
       const goLiveBtn = document.getElementById('goLiveBtn');
-      const originalGoLive = goLiveBtn.onclick;
-      
-      goLiveBtn.onclick = function() {
-        if (streamingMode === 'webrtc') {
-          startLiveStream();
-        } else {
-          // Call original file-based streaming function
-          if (originalGoLive) originalGoLive();
-        }
-      };
-      
-      // Modify existing Stop button to handle both modes
       const stopBtn = document.getElementById('stopBtn');
-      const originalStop = stopBtn.onclick;
+      const startCameraBtn = document.getElementById('startCameraBtn');
+      const startScreenBtn = document.getElementById('startScreenBtn');
+      const stopMediaBtn = document.getElementById('stopMediaBtn');
       
-      stopBtn.onclick = function() {
-        if (streamingMode === 'webrtc') {
-          stopLiveStream();
-        } else {
-          // Call original file-based stop function
-          if (originalStop) originalStop();
+      // Clear any existing event listeners by cloning elements
+      if (goLiveBtn) {
+        const newGoLiveBtn = goLiveBtn.cloneNode(true);
+        goLiveBtn.parentNode.replaceChild(newGoLiveBtn, goLiveBtn);
+        
+        newGoLiveBtn.addEventListener('click', async () => {
+          console.log('🔴 Go Live button clicked, mode:', streamingMode);
+          
+          if (!currentClassId) {
+            alert('Please select a class first');
+            return;
+          }
+          
+          try {
+            if (streamingMode === 'webrtc') {
+              await startLiveStream();
+            } else {
+              await startFileStream();
+            }
+          } catch (error) {
+            console.error('❌ Error starting stream:', error);
+            alert('Failed to start stream: ' + error.message);
+          }
+        });
+      }
+      
+      if (stopBtn) {
+        const newStopBtn = stopBtn.cloneNode(true);
+        stopBtn.parentNode.replaceChild(newStopBtn, stopBtn);
+        
+        newStopBtn.addEventListener('click', async () => {
+          console.log('⏹️ Stop button clicked, mode:', streamingMode);
+          
+          try {
+            if (streamingMode === 'webrtc') {
+              stopLiveStream();
+            } else {
+              await stopFileStream();
+            }
+          } catch (error) {
+            console.error('❌ Error stopping stream:', error);
+            alert('Failed to stop stream: ' + error.message);
+          }
+        });
+      }
+      
+      // WebRTC control buttons
+      if (startCameraBtn) {
+        startCameraBtn.addEventListener('click', startCamera);
+      }
+      if (startScreenBtn) {
+        startScreenBtn.addEventListener('click', startScreen);
+      }
+      if (stopMediaBtn) {
+        stopMediaBtn.addEventListener('click', stopLiveMedia);
+      }
+      
+      // File upload handling
+      const fileDrop = document.getElementById('fileDrop');
+      const fileInput = document.getElementById('fileInput');
+      const fileBrowse = document.getElementById('fileBrowse');
+      const uploadBtn = document.getElementById('uploadBtn');
+      
+      if (fileDrop && fileInput) {
+        // Clear existing listeners by cloning
+        const newFileDrop = fileDrop.cloneNode(true);
+        const newFileInput = fileInput.cloneNode(true);
+        
+        fileDrop.parentNode.replaceChild(newFileDrop, fileDrop);
+        fileInput.parentNode.replaceChild(newFileInput, fileInput);
+        
+        // Add unified file handling
+        newFileDrop.addEventListener('click', () => newFileInput.click());
+        newFileDrop.addEventListener('dragover', e => { 
+          e.preventDefault(); 
+          newFileDrop.classList.add('dragover'); 
+        });
+        newFileDrop.addEventListener('dragleave', e => newFileDrop.classList.remove('dragover'));
+        newFileDrop.addEventListener('drop', e => {
+          e.preventDefault();
+          newFileDrop.classList.remove('dragover');
+          const file = e.dataTransfer.files[0];
+          if (file && file.type === 'video/mp4') {
+            showFileInfo(file);
+          } else {
+            alert('Please select an MP4 video file');
+          }
+        });
+        
+        newFileInput.addEventListener('change', e => {
+          const file = newFileInput.files[0];
+          if (file && file.type === 'video/mp4') {
+            showFileInfo(file);
+          } else {
+            alert('Please select an MP4 video file');
+          }
+        });
+      }
+      
+      if (fileBrowse) {
+        fileBrowse.addEventListener('click', e => { 
+          e.stopPropagation(); 
+          document.getElementById('fileInput').click(); 
+        });
+      }
+      
+      if (uploadBtn) {
+        uploadBtn.addEventListener('click', () => {
+          if (window.currentLocalVideo && window.currentLocalVideo.file) {
+            handleFileUpload(window.currentLocalVideo.file);
+          } else {
+            alert('Please select a video file first');
+          }
+        });
+      }
+    }
+
+    // --- File Streaming Functions ---
+    async function startFileStream() {
+      console.log('🎬 Starting file stream...');
+      
+      if (!currentClassId) {
+        throw new Error('No class selected');
+      }
+      
+      const previewVideo = document.getElementById('previewVideo');
+      if (!previewVideo || !previewVideo.src) {
+        throw new Error('No video file loaded. Please upload a video first.');
+      }
+      
+      // Ensure video is loaded before streaming
+      if (previewVideo.readyState < 2) {
+        console.log('⏳ Waiting for video to load...');
+        await new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            reject(new Error('Video loading timeout'));
+          }, 10000);
+          
+          previewVideo.addEventListener('loadeddata', () => {
+            clearTimeout(timeout);
+            resolve();
+          }, { once: true });
+          
+          if (previewVideo.readyState >= 2) {
+            clearTimeout(timeout);
+            resolve();
+          }
+        });
+      }
+      
+      try {
+        // Update stream status via API
+        const response = await fetch(`/api/streams/start/${currentClassId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            source: 'upload',
+            streamUrl: previewVideo.src,
+            filename: window.currentLocalVideo?.file?.name || 'uploaded-video.mp4',
+            originalName: window.currentLocalVideo?.file?.name || 'uploaded-video.mp4'
+          })
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to start stream');
         }
-      };
-    });
+        
+        const result = await response.json();
+        console.log('✅ File stream started:', result);
+        
+        // Update UI
+        setStatus('live');
+        
+        // Join class room for instructor first
+        if (socket) {
+          socket.emit('instructor-join-class', { 
+            classId: currentClassId, 
+            mode: 'file' 
+          });
+        }
+        
+        // Initialize stream synchronization
+        initializeStreamSync();
+        
+        // Send initial stream state to students
+        if (socket) {
+          socket.emit('stream:init', {
+            streamUrl: previewVideo.src,
+            startTime: new Date().toISOString(),
+            currentTime: previewVideo.currentTime || 0,
+            playing: !previewVideo.paused,
+            filename: window.currentUploadedVideo?.originalName || 'uploaded-video.mp4'
+          });
+        }
+        
+        // Start stream synchronization
+        startStreamSync(previewVideo);
+        
+        console.log('✅ File streaming started successfully');
+        
+      } catch (error) {
+        console.error('❌ Error starting file stream:', error);
+        throw error;
+      }
+    }
+    
+    async function stopFileStream() {
+      console.log('⏹️ Stopping file stream...');
+      
+      if (!currentClassId) {
+        throw new Error('No class selected');
+      }
+      
+      try {
+        // Stop stream synchronization
+        stopStreamSync();
+        
+        // Update stream status via API
+        const response = await fetch(`/api/streams/stop/${currentClassId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Failed to stop stream');
+        }
+        
+        // Update UI
+        setStatus('offline');
+        
+        console.log('✅ File streaming stopped successfully');
+        
+      } catch (error) {
+        console.error('❌ Error stopping file stream:', error);
+        throw error;
+      }
+    }
 
     // --- Initialize page ---
     document.addEventListener('DOMContentLoaded', () => {
+      console.log('🚀 DOM Content Loaded - Initializing Stream Mode');
       loadClasses();
+      setupUnifiedEventListeners();
+      setupEventListeners(); // File upload listeners
+      initializeWebRTCSocket();
     });
     
     // Load classes immediately if DOM is already ready
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', loadClasses);
+      document.addEventListener('DOMContentLoaded', () => {
+        loadClasses();
+        setupUnifiedEventListeners();
+        setupEventListeners();
+        initializeWebRTCSocket();
+      });
     } else {
       loadClasses();
+      setupUnifiedEventListeners();
+      setupEventListeners();
+      initializeWebRTCSocket();
     }
 
     // --- Server Uploads ---
@@ -2532,69 +2787,7 @@
     window.viewSubmittedFile = viewSubmittedFile;
     window.streamSubmittedFile = streamSubmittedFile;
 
-    // Initialize on page load
-    document.addEventListener('DOMContentLoaded', () => {
-      // Override the original Go Live button
-      const goLiveBtn = document.getElementById('goLiveBtn');
-      if (goLiveBtn) {
-        // Store original onclick handler
-        const originalOnClick = goLiveBtn.onclick;
-        
-        // Replace with enhanced functionality
-        goLiveBtn.onclick = function() {
-          if (streamingMode === 'webrtc') {
-            // Use original WebRTC functionality
-            startLiveStream();
-          } else {
-            // Use enhanced file-based functionality
-            enhancedGoLive();
-          }
-        };
-      }
-
-      // Override file input handlers to use enhanced functionality
-      const fileDrop = document.getElementById('fileDrop');
-      const fileInput = document.getElementById('fileInput');
-      
-      if (fileDrop) {
-        // Remove existing event listeners by cloning the element
-        const newFileDrop = fileDrop.cloneNode(true);
-        fileDrop.parentNode.replaceChild(newFileDrop, fileDrop);
-        
-        // Add enhanced event listeners
-        newFileDrop.addEventListener('click', () => fileInput.click());
-        newFileDrop.addEventListener('dragover', e => { 
-          e.preventDefault(); 
-          newFileDrop.classList.add('dragover'); 
-        });
-        newFileDrop.addEventListener('dragleave', e => newFileDrop.classList.remove('dragover'));
-        newFileDrop.addEventListener('drop', e => {
-          e.preventDefault();
-          newFileDrop.classList.remove('dragover');
-          const file = e.dataTransfer.files[0];
-          if (file) {
-            enhancedShowFileInfo(file);
-          }
-        });
-      }
-      
-      if (fileInput) {
-        // Remove existing event listeners by cloning the element
-        const newFileInput = fileInput.cloneNode(true);
-        fileInput.parentNode.replaceChild(newFileInput, fileInput);
-        
-        // Add enhanced event listener
-        newFileInput.addEventListener('change', e => {
-          const file = newFileInput.files[0];
-          if (file) {
-            enhancedShowFileInfo(file);
-          }
-        });
-      }
-      
-      // Load submitted files on page load
-      loadSubmittedFiles();
-    });
+    // Enhanced file handling is now integrated into setupUnifiedEventListeners()
 
     // Load submitted files immediately if DOM is already ready
     if (document.readyState === 'loading') {

@@ -215,6 +215,44 @@ router.post('/upload', auth(['admin', 'instructor']), upload.single('video'), as
   }
 });
 
+// GET /api/stream/state/:classId - Get current stream state for late joiners
+router.get('/state/:classId', auth(), async (req, res) => {
+  try {
+    const classObj = await Class.findById(req.params.classId);
+    
+    if (!classObj) {
+      return res.status(404).json({ error: 'Class not found' });
+    }
+    
+    // Check if user has access to this class
+    if (req.user.role === 'student' && 
+        !classObj.students.includes(req.user.id)) {
+      return res.status(403).json({ error: 'Not authorized for this class' });
+    }
+    
+    // Get current stream state from memory
+    const io = req.app.get('io');
+    const streamState = io.streamStates?.get(req.params.classId);
+    
+    if (streamState && classObj.streamStatus === 'live') {
+      res.json({
+        ...streamState,
+        status: 'live',
+        classId: req.params.classId
+      });
+    } else {
+      res.json({
+        status: classObj.streamStatus || 'offline',
+        classId: req.params.classId,
+        message: 'No active stream state'
+      });
+    }
+  } catch (error) {
+    console.error('❌ Error getting stream state:', error);
+    res.status(500).json({ error: 'Server error getting stream state' });
+  }
+});
+
 // GET /api/stream/status/:classId - Get current stream status
 router.get('/status/:classId', auth(), async (req, res) => {
   try {
