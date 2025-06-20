@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Mission Links Functions</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #1a1a2e;
+      color: white;
+    }
+    button {
+      background: #ff6b35;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 10px;
+      font-size: 16px;
+    }
+    button:hover {
+      background: #f7931e;
+    }
+    .test-result {
+      background: #333;
+      padding: 10px;
+      border-radius: 5px;
+      margin: 10px 0;
+      font-family: monospace;
+    }
+    .success { color: #22c55e; }
+    .error { color: #ef4444; }
+  </style>
+</head>
+<body>
+  <h1>Mission Links Function Test</h1>
+  <p>This page tests if the functions from mission-links.html are working correctly.</p>
+  
+  <div>
+    <h3>Function Tests</h3>
+    <button onclick="testOpenLink()">Test openLink Function</button>
+    <button onclick="testGenerateReference()">Test generateReference Function</button>
+    <button onclick="testAllFunctions()">Test All Functions</button>
+  </div>
+  
+  <div id="testResults"></div>
+
+  <script>
+    // Define the same functions as in mission-links.html
+    function openLink(url, name) {
+      console.log('Opening link:', name, 'URL:', url);
+      try {
+        const newWindow = window.open(url, '_blank');
+        if (!newWindow) {
+          console.error('Popup blocked or failed to open:', url);
+          alert('Unable to open ' + name + '. Please check if popups are blocked.');
+        } else {
+          console.log('Successfully opened:', name);
+        }
+      } catch (error) {
+        console.error('Error opening link:', error);
+        alert('Error opening ' + name + ': ' + error.message);
+      }
+    }
+
+    function generateReference() {
+      console.log('=== generateReference function called ===');
+      alert('generateReference function is working! (This is a test)');
+    }
+
+    // Make functions globally accessible
+    window.openLink = openLink;
+    window.generateReference = generateReference;
+
+    function addTestResult(message, isSuccess = true) {
+      const resultsDiv = document.getElementById('testResults');
+      const resultDiv = document.createElement('div');
+      resultDiv.className = `test-result ${isSuccess ? 'success' : 'error'}`;
+      resultDiv.textContent = message;
+      resultsDiv.appendChild(resultDiv);
+    }
+
+    function testOpenLink() {
+      try {
+        console.log('Testing openLink function...');
+        if (typeof openLink === 'function') {
+          addTestResult('✅ openLink function is defined and accessible');
+          // Test with a safe URL
+          openLink('https://www.google.com', 'Google (Test)');
+          addTestResult('✅ openLink function executed without errors');
+        } else {
+          addTestResult('❌ openLink function is not defined', false);
+        }
+      } catch (error) {
+        addTestResult('❌ Error testing openLink: ' + error.message, false);
+      }
+    }
+
+    function testGenerateReference() {
+      try {
+        console.log('Testing generateReference function...');
+        if (typeof generateReference === 'function') {
+          addTestResult('✅ generateReference function is defined and accessible');
+          generateReference();
+          addTestResult('✅ generateReference function executed without errors');
+        } else {
+          addTestResult('❌ generateReference function is not defined', false);
+        }
+      } catch (error) {
+        addTestResult('❌ Error testing generateReference: ' + error.message, false);
+      }
+    }
+
+    function testAllFunctions() {
+      document.getElementById('testResults').innerHTML = '';
+      addTestResult('=== Starting Function Tests ===');
+      
+      const functions = ['openLink', 'generateReference'];
+      
+      functions.forEach(funcName => {
+        if (typeof window[funcName] === 'function') {
+          addTestResult(`✅ ${funcName} is accessible globally`);
+        } else {
+          addTestResult(`❌ ${funcName} is NOT accessible globally`, false);
+        }
+      });
+      
+      addTestResult('=== Test Complete ===');
+    }
+
+    // Run initial test
+    window.addEventListener('load', function() {
+      addTestResult('Page loaded, functions initialized');
+      testAllFunctions();
+    });
+  </script>
+</body>
+</html>

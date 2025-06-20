@@ -148,7 +148,15 @@
 
     .page-header {
       margin-bottom: 3rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      text-align: left;
+    }
+
+    .page-header > div:first-child {
       text-align: center;
+      flex: 1;
     }
 
     .page-title {
@@ -558,8 +566,18 @@
     <main class="admin-main">
       <!-- Page Header -->
       <div class="page-header">
-        <h1 class="page-title">Keyboard Training</h1>
-        <p class="page-subtitle">Welcome back, <span id="studentName">Student</span>! Continue your typing journey.</p>
+        <div>
+          <h1 class="page-title">Keyboard Training</h1>
+          <p class="page-subtitle">Welcome back, <span id="studentName">Student</span>! Continue your typing journey.</p>
+        </div>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+          <button onclick="window.forceReloadTypingData()" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+            <i class="fas fa-sync-alt" style="margin-right: 0.5rem;"></i>Refresh Content
+          </button>
+          <button onclick="window.compareTypingData()" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+            <i class="fas fa-search" style="margin-right: 0.5rem;"></i>Debug
+          </button>
+        </div>
       </div>
 
       <!-- Progress Section -->
@@ -1354,23 +1372,41 @@
       }
     }
 
+    // Function to reload typing data from localStorage
+    function reloadTypingData() {
+      console.log('Reloading typing data from localStorage...');
+      const data = JSON.parse(localStorage.getItem('smx_typing_tests') || '{}');
+      
+      // Handle new format with module names
+      if (data.modules && data.moduleNames) {
+        typingModules = data.modules;
+        moduleNames = data.moduleNames;
+      } else if (data.length) {
+        // Fallback for old format (array)
+        typingModules = data;
+        moduleNames = [
+          'Module 1: Basic Typing',
+          'Module 2: Numbers and Symbols',
+          'Module 3: Military Terminology',
+          'Module 4: POL Basic Descriptors',
+          'Module 5: POL SITREP Format'
+        ];
+      } else {
+        console.log('No valid data found, initializing defaults...');
+        initializeTypingModules();
+        return;
+      }
+      
+      renderModules();
+      updateProgressDisplay();
+      console.log('Typing data reloaded successfully');
+    }
+
     // Listen for storage changes from other tabs (like edit-typing-tests.html)
     window.addEventListener('storage', function(e) {
-      if (e.key === 'smx_typing_tests') {
+      if (e.key === 'smx_typing_tests' || e.key === 'smx_typing_tests_update_trigger') {
         console.log('Typing tests updated from another tab, refreshing...');
-        const data = JSON.parse(e.newValue || '{}');
-        
-        // Handle new format with module names
-        if (data.modules && data.moduleNames) {
-          typingModules = data.modules;
-          moduleNames = data.moduleNames;
-        } else {
-          // Fallback for old format
-          typingModules = data;
-        }
-        
-        renderModules();
-        updateProgressDisplay();
+        reloadTypingData();
       }
     });
     
@@ -1391,6 +1427,28 @@
       renderModules();
       updateProgressDisplay();
     });
+
+    // Listen for BroadcastChannel messages (modern browsers)
+    if (typeof BroadcastChannel !== 'undefined') {
+      const channel = new BroadcastChannel('smx_typing_updates');
+      channel.addEventListener('message', function(e) {
+        if (e.data.type === 'typing_tests_updated') {
+          console.log('Typing tests updated via BroadcastChannel, refreshing...');
+          reloadTypingData();
+        }
+      });
+    }
+
+    // Polling fallback for older browsers or edge cases
+    let lastUpdateTimestamp = localStorage.getItem('smx_typing_tests_timestamp') || '0';
+    setInterval(function() {
+      const currentTimestamp = localStorage.getItem('smx_typing_tests_timestamp') || '0';
+      if (currentTimestamp !== lastUpdateTimestamp) {
+        console.log('Typing tests updated detected via polling, refreshing...');
+        lastUpdateTimestamp = currentTimestamp;
+        reloadTypingData();
+      }
+    }, 1000); // Check every second
     
     // Test function to check current typing data
     window.checkTypingData = function() {
@@ -1398,6 +1456,44 @@
       console.log('typingModules:', typingModules);
       console.log('moduleNames:', moduleNames);
       console.log('localStorage data:', JSON.parse(localStorage.getItem('smx_typing_tests') || '{}'));
+      console.log('Last update timestamp:', localStorage.getItem('smx_typing_tests_timestamp'));
+    };
+
+    // Force reload function for testing
+    window.forceReloadTypingData = function() {
+      console.log('=== Force Reloading Typing Data ===');
+      reloadTypingData();
+    };
+
+    // Test function to compare current display with localStorage
+    window.compareTypingData = function() {
+      console.log('=== Comparing Current Display vs localStorage ===');
+      const storedData = JSON.parse(localStorage.getItem('smx_typing_tests') || '{}');
+      
+      if (storedData.modules && typingModules) {
+        let differences = [];
+        for (let m = 0; m < Math.max(storedData.modules.length, typingModules.length); m++) {
+          if (!storedData.modules[m] || !typingModules[m]) {
+            differences.push(`Module ${m}: One version missing`);
+            continue;
+          }
+          for (let p = 0; p < Math.max(storedData.modules[m].length, typingModules[m].length); p++) {
+            if (storedData.modules[m][p] !== typingModules[m][p]) {
+              differences.push(`Module ${m}, Practice ${p}: Different content`);
+              console.log(`  Stored: "${storedData.modules[m][p]}"`);
+              console.log(`  Display: "${typingModules[m][p]}"`);
+            }
+          }
+        }
+        
+        if (differences.length === 0) {
+          console.log('✓ All data matches between localStorage and display');
+        } else {
+          console.log('✗ Found differences:', differences);
+        }
+      } else {
+        console.log('✗ Data format mismatch or missing data');
+      }
     };
 
   </script>

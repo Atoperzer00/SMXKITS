@@ -519,16 +519,27 @@
     function saveTypingTests(data) {
       localStorage.setItem('smx_typing_tests', JSON.stringify(data));
       
-      // Trigger storage event for other tabs/windows
-      window.dispatchEvent(new StorageEvent('storage', {
-        key: 'smx_typing_tests',
-        newValue: JSON.stringify(data)
-      }));
+      // Set a timestamp to help detect changes
+      localStorage.setItem('smx_typing_tests_timestamp', Date.now().toString());
       
-      // Also trigger a custom event for same-tab updates
+      // Trigger a custom event for same-tab updates
       window.dispatchEvent(new CustomEvent('typingTestsUpdated', {
         detail: { data: data }
       }));
+      
+      // Use BroadcastChannel for cross-tab communication (modern browsers)
+      if (typeof BroadcastChannel !== 'undefined') {
+        const channel = new BroadcastChannel('smx_typing_updates');
+        channel.postMessage({
+          type: 'typing_tests_updated',
+          data: data,
+          timestamp: Date.now()
+        });
+        channel.close();
+      }
+      
+      // Fallback: Use a polling mechanism trigger
+      localStorage.setItem('smx_typing_tests_update_trigger', Date.now().toString());
       
       console.log('Typing tests saved and events dispatched');
     }
@@ -684,14 +695,45 @@
       
       const mod = parseInt(currentEditing.dataset.module);
       const prac = parseInt(currentEditing.dataset.practice);
+      
+      if (isNaN(mod) || isNaN(prac)) {
+        console.error('Invalid module or practice index:', { mod, prac });
+        alert('Error: Invalid module or practice index');
+        return;
+      }
+      
       console.log(`Saving Module ${mod}, Practice ${prac}`);
       console.log('Current text:', currentEditing.value);
       
       let data = getTypingTests();
+      
+      if (!data.modules || !data.modules[mod] || data.modules[mod][prac] === undefined) {
+        console.error('Invalid data structure or indices:', { 
+          hasModules: !!data.modules, 
+          moduleExists: !!(data.modules && data.modules[mod]),
+          practiceExists: !!(data.modules && data.modules[mod] && data.modules[mod][prac] !== undefined)
+        });
+        alert('Error: Invalid data structure. Please refresh the page.');
+        return;
+      }
+      
       data.modules[mod][prac] = currentEditing.value;
       saveTypingTests(data);
       
       console.log('Data saved to localStorage');
+      console.log('Saved data:', data);
+      
+      // Verify the save worked
+      setTimeout(() => {
+        const verifyData = getTypingTests();
+        if (verifyData.modules[mod][prac] === currentEditing.value) {
+          console.log('✓ Save verification successful');
+        } else {
+          console.error('✗ Save verification failed!');
+          console.error('Expected:', currentEditing.value);
+          console.error('Got:', verifyData.modules[mod][prac]);
+        }
+      }, 100);
       
       // Animate "Saved!" msg
       const rect = currentEditing.getBoundingClientRect();
