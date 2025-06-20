@@ -162,6 +162,21 @@ router.post('/upload', auth(['admin', 'instructor']), upload.single('video'), as
       };
       
       console.log(`📡 Emitting streamStatus to rooms: ${classRoom}, ${streamRoom}`);
+      console.log(`📡 Stream data:`, streamData);
+      
+      // Check how many clients are in each room
+      const classRoomClients = io.sockets.adapter.rooms.get(classRoom);
+      const streamRoomClients = io.sockets.adapter.rooms.get(streamRoom);
+      
+      console.log(`📊 Room statistics:`);
+      console.log(`  - ${classRoom}: ${classRoomClients ? classRoomClients.size : 0} clients`);
+      console.log(`  - ${streamRoom}: ${streamRoomClients ? streamRoomClients.size : 0} clients`);
+      const streamRoomClients = io.sockets.adapter.rooms.get(streamRoom);
+      
+      console.log(`📊 Room statistics:`);
+      console.log(`  - ${classRoom}: ${classRoomClients ? classRoomClients.size : 0} clients`);
+      console.log(`  - ${streamRoom}: ${streamRoomClients ? streamRoomClients.size : 0} clients`);
+      
       io.to(classRoom).emit('streamStatus', streamData);
       if (classObj.streamKey) {
         io.to(streamRoom).emit('streamStatus', streamData);

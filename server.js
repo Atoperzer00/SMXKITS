@@ -700,7 +700,9 @@ io.on('connection', socket => {
     const { classId } = data;
     const roomName = `class:${classId}`;
     
-    console.log(`🎓 Student joined class room: ${roomName}`);
+    console.log(`🎓 Student (${socket.id}) joined class room: ${roomName}`);
+    console.log(`🔍 Room data:`, { classId, roomName, socketId: socket.id });
+    
     socket.join(roomName);
     socket.currentStreamRoom = roomName;
     socket.classId = classId;

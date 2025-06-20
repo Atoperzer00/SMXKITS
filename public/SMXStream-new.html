@@ -1329,7 +1329,8 @@
       socket = io();
       
       socket.on('connect', () => {
-        console.log('🔌 Connected to server');
+        console.log('🔌 Connected to server with socket ID:', socket.id);
+        console.log('🔍 Current classId:', classId);
         if (classId) {
           // Join class as student - automatic streaming
           console.log('🔌 Emitting student-join-class for classId:', classId);
@@ -1338,6 +1339,8 @@
           
           // Recover stream state for late joiners
           recoverStreamState();
+        } else {
+          console.error('❌ No classId available for joining room');
         }
       });
       
@@ -1345,6 +1348,10 @@
         console.log('🔌 Disconnected from server');
         showStreamStatusOverlay('Connection lost - Reconnecting...');
         isStreamActive = false;
+      });
+      
+      socket.on('connect_error', (error) => {
+        console.error('❌ Socket.IO connection error:', error);
       });
       
       // Stream synchronization events
@@ -1439,6 +1446,16 @@
         updateLiveStatus();
       });
       
+      // Test event to verify Socket.IO is working
+      socket.on('test-event', (data) => {
+        console.log('🧪 Test event received:', data);
+      });
+      
+      // Listen for any events (debugging)
+      socket.onAny((eventName, ...args) => {
+        console.log('📨 Socket.IO event received:', eventName, args);
+      });
+      
       socket.on('streamStatus', (data) => {
         console.log('📡 Stream status update received:', data);
         console.log('📡 Current video elements state:', {
@@ -1446,6 +1463,16 @@
           webrtcVideo: document.getElementById('webrtcVideo')?.style.display
         });
         handleStreamStatusUpdate(data);
+      });
+      
+      // Test event to verify Socket.IO is working
+      socket.on('test-event', (data) => {
+        console.log('🧪 Test event received:', data);
+      });
+      
+      // Listen for any events (debugging)
+      socket.onAny((eventName, ...args) => {
+        console.log('📨 Socket.IO event received:', eventName, args);
       });
       
       // Handle current stream state for late joiners
@@ -2821,6 +2848,13 @@
       // Get class ID from URL or localStorage
       const urlParams = new URLSearchParams(window.location.search);
       classId = urlParams.get('classId') || localStorage.getItem('currentClassId');
+      
+      console.log('🔍 Class ID detection:', {
+        fromURL: urlParams.get('classId'),
+        fromStorage: localStorage.getItem('currentClassId'),
+        final: classId,
+        currentURL: window.location.href
+      });
       
       if (!classId) {
         console.error('❌ No class ID available');
