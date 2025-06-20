@@ -100,6 +100,7 @@
   <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
   <script src="https://unpkg.com/jquery@3.5.1/dist/jquery.min.js"></script>
   <script src="mapUtils.js"></script>
+  <script src="tileDetector.js"></script>
   <script src="defaultMap.js"></script>
   <script src="altis.js"></script>
   <script>
@@ -109,8 +110,8 @@
     let cityMarkers = [];
 
     // Initialize the map using the loaded configuration
-    $(function () {
-      console.log('🚀 TrackPoint initializing with proper JS files...');
+    $(async function () {
+      console.log('🚀 TrackPoint initializing with enhanced tile detection...');
       console.log('📍 Current URL:', window.location.href);
       console.log('🔍 Leaflet version:', L.version);
       console.log('💰 jQuery version:', $.fn.jquery);
@@ -119,6 +120,7 @@
       console.log('🔧 InitMap function available:', typeof InitMap === 'function');
       console.log('🔧 MGRS_CRS function available:', typeof MGRS_CRS === 'function');
       console.log('🔧 Arma3Map available:', typeof Arma3Map !== 'undefined');
+      console.log('🔧 TileDetector available:', typeof TileDetector !== 'undefined');
       
       // Check if Arma3Map is loaded
       if (typeof Arma3Map === 'undefined' || !Arma3Map.Maps.altis) {
@@ -138,41 +140,73 @@
         return;
       }
       
-      // Initialize map using the proper configuration
-      console.log('🎯 Calling InitMap with configuration...');
-      console.log('📊 Map config details:', {
+      // Initialize map using the proper configuration with tile detection
+      console.log('🎯 Calling InitMap with configuration and tile detection...');
+      console.log('📊 Initial map config details:', {
         minZoom: Arma3Map.Maps.altis.minZoom,
         maxZoom: Arma3Map.Maps.altis.maxZoom,
         defaultZoom: Arma3Map.Maps.altis.defaultZoom,
         tilePattern: Arma3Map.Maps.altis.tilePattern,
-        center: Arma3Map.Maps.altis.center
+        center: Arma3Map.Maps.altis.center,
+        bounds: Arma3Map.Maps.altis.bounds
       });
       
-      InitMap(Arma3Map.Maps.altis);
-      
-      console.log('✅ Map initialization called');
-      
-      // Wait for map to be ready, then add border
-      setTimeout(() => {
-        if (window.map) {
-          console.log('✅ Map is ready, adding border...');
+      try {
+        // Initialize map with async tile detection
+        await InitMap(Arma3Map.Maps.altis);
+        console.log('✅ Map initialization completed');
+        
+        // Listen for map ready event
+        $(document).on('mapReady', function(event, data) {
+          console.log('🎉 Map ready event received:', data);
           
-          // Add a visual border around the map bounds
-          const bounds = window.map.getBounds();
-          mapBorder = L.rectangle(bounds, {
-            color: '#ff0000',
-            weight: 3,
-            opacity: 0.8,
-            fillOpacity: 0,
-            dashArray: '10, 10'
-          }).addTo(window.map);
-          
-          console.log('🔲 Visual map border added');
-        } else {
-          console.error('❌ Map not found after initialization');
-        }
-      }, 1000);
+          // Add border after map is fully initialized
+          setTimeout(() => {
+            addMapBorder();
+          }, 500);
+        });
+        
+      } catch (error) {
+        console.error('❌ Map initialization failed:', error);
+      }
     });
+
+    function addMapBorder() {
+      if (!window.map) {
+        console.warn('⚠️ Map not available for adding border');
+        return;
+      }
+    
+      try {
+        // Use detected bounds if available, otherwise use map bounds
+        let bounds;
+        if (window.detectedTileInfo && window.detectedTileInfo.detectedBounds) {
+          bounds = L.latLngBounds(window.detectedTileInfo.detectedBounds);
+          console.log('🔲 Using detected tile bounds for border:', window.detectedTileInfo.detectedBounds);
+        } else {
+          bounds = window.map.getBounds();
+          console.log('🔲 Using current map bounds for border:', bounds);
+        }
+        
+        // Remove existing border if present
+        if (mapBorder) {
+          window.map.removeLayer(mapBorder);
+        }
+        
+        // Add a visual border around the map bounds
+          mapBorder = L.rectangle(bounds, {
+          color: '#ff0000',
+          weight: 3,
+          opacity: 0.8,
+          fillOpacity: 0,
+          dashArray: '10, 10'
+        }).addTo(window.map);
+        
+        console.log('✅ Visual map border added');
+      } catch (error) {
+        console.error('❌ Failed to add map border:', error);
+      }
+    }
 
     function addCities() {
       if (!window.map) {
@@ -220,9 +254,37 @@
     }
 
     function centerMap() {
-      if (window.map && Arma3Map && Arma3Map.Maps.altis) {
-        window.map.setView(Arma3Map.Maps.altis.center, Arma3Map.Maps.altis.defaultZoom);
-        console.log('📍 Map centered at', Arma3Map.Maps.altis.center, 'zoom', Arma3Map.Maps.altis.defaultZoom);
+      if (!window.map) {
+        console.warn('⚠️ Map not available for centering');
+        return;
+      }
+      
+      // Use detected center and zoom if available
+      let center, zoom;
+      
+      if (window.detectedTileInfo) {
+        center = window.detectedTileInfo.recommendedCenter || window.mapInfos.center;
+        zoom = window.detectedTileInfo.recommendedZoom || window.mapInfos.defaultZoom;
+        console.log('📍 Using detected center and zoom:', center, zoom);
+      } else if (window.mapInfos) {
+        center = window.mapInfos.center;
+        zoom = window.mapInfos.defaultZoom;
+        console.log('📍 Using configured center and zoom:', center, zoom);
+      } else if (Arma3Map && Arma3Map.Maps.altis) {
+        center = Arma3Map.Maps.altis.center;
+        zoom = Arma3Map.Maps.altis.defaultZoom;
+        console.log('📍 Using fallback center and zoom:', center, zoom);
+      } else {
+        center = [32, 32];
+        zoom = 2;
+        console.log('📍 Using default center and zoom:', center, zoom);
+      }
+      
+      try {
+        window.map.setView(center, zoom);
+        console.log('✅ Map centered successfully');
+      } catch (error) {
+        console.error('❌ Failed to center map:', error);
       }
     }
 
