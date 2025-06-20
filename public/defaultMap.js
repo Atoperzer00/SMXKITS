@@ -12,28 +12,12 @@ async function InitMap(mapInfos) {
             detectedTileInfo = await detector.detectAvailableTiles(mapInfos.maxZoom);
             console.log('✅ Tile detection completed:', detectedTileInfo);
             
-            // Update map configuration with detected bounds and zoom levels
-            if (detectedTileInfo.detectedBounds) {
-                mapInfos.bounds = detectedTileInfo.detectedBounds;
-                console.log('📐 Updated bounds to:', mapInfos.bounds);
-            }
-            
-            if (detectedTileInfo.recommendedCenter) {
-                mapInfos.center = detectedTileInfo.recommendedCenter;
-                console.log('📍 Updated center to:', mapInfos.center);
-            }
-            
-            if (detectedTileInfo.recommendedZoom) {
-                mapInfos.defaultZoom = detectedTileInfo.recommendedZoom;
-                console.log('🔍 Updated default zoom to:', mapInfos.defaultZoom);
-            }
-            
-            // Constrain zoom levels to detected ones
-            if (detectedTileInfo.detectedZoomLevels.length > 0) {
-                mapInfos.minZoom = Math.min(...detectedTileInfo.detectedZoomLevels);
-                mapInfos.maxZoom = Math.max(...detectedTileInfo.detectedZoomLevels);
-                console.log('📊 Updated zoom range to:', mapInfos.minZoom, '-', mapInfos.maxZoom);
-            }
+            // Tile detection completed but constraints disabled for free navigation
+            console.log('📐 Detected bounds (not applied):', detectedTileInfo.detectedBounds);
+            console.log('📍 Recommended center (not applied):', detectedTileInfo.recommendedCenter);
+            console.log('🔍 Recommended zoom (not applied):', detectedTileInfo.recommendedZoom);
+            console.log('📊 Detected zoom levels (not constraining):', detectedTileInfo.detectedZoomLevels);
+            console.log('🗺️ Map configured for free navigation - no bounds or zoom constraints applied');
             
         } catch (error) {
             console.warn('⚠️ Tile detection failed, using default configuration:', error);
@@ -48,11 +32,8 @@ async function InitMap(mapInfos) {
         var map = L.map('map', {
             minZoom: mapInfos.minZoom,
             maxZoom: mapInfos.maxZoom,
-            crs: mapInfos.CRS,
-            maxBounds: mapInfos.bounds, // Restrict panning to tile bounds
-            maxBoundsViscosity: 1.0, // Make bounds strict
-            noWrap: true, // Prevent world wrapping
-            bounceAtZoomLimits: false // Prevent bouncing at zoom limits
+            crs: mapInfos.CRS
+            // Removed maxBounds, maxBoundsViscosity, noWrap, and bounceAtZoomLimits for free navigation
         });
 
         // Enhanced tile layer with better error handling
@@ -60,7 +41,7 @@ async function InitMap(mapInfos) {
             attribution: mapInfos.attribution,
             tileSize: mapInfos.tileSize,
             errorTileUrl: generateErrorTile(), // Generate dynamic error tile
-            bounds: mapInfos.bounds, // Limit tile loading to defined bounds
+            // Removed bounds constraint for free navigation
             keepBuffer: 2, // Keep tiles in buffer for smoother panning
             updateWhenZooming: false, // Reduce tile requests during zoom
             updateInterval: 200 // Throttle tile updates
@@ -130,11 +111,11 @@ async function InitMap(mapInfos) {
             }
         });
         
-        // Add bounds constraint handler
+        // Map movement handler (no constraints)
         map.on('moveend', function() {
             const center = map.getCenter();
             const bounds = map.getBounds();
-            console.log('📍 Map moved - Center:', [center.lat, center.lng], 'Bounds:', bounds);
+            console.log('📍 Map moved freely - Center:', [center.lat, center.lng], 'Bounds:', bounds);
         });
         
         // Add cities if requested

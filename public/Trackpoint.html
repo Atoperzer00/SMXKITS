@@ -105,8 +105,6 @@
   <script src="altis.js"></script>
   <script>
     let citiesVisible = false;
-    let borderVisible = true;
-    let mapBorder;
     let cityMarkers = [];
 
     // Initialize the map using the loaded configuration
@@ -159,11 +157,7 @@
         // Listen for map ready event
         $(document).on('mapReady', function(event, data) {
           console.log('🎉 Map ready event received:', data);
-          
-          // Add border after map is fully initialized
-          setTimeout(() => {
-            addMapBorder();
-          }, 500);
+          console.log('🗺️ Map is ready for free navigation - no borders or constraints');
         });
         
       } catch (error) {
@@ -171,42 +165,7 @@
       }
     });
 
-    function addMapBorder() {
-      if (!window.map) {
-        console.warn('⚠️ Map not available for adding border');
-        return;
-      }
-    
-      try {
-        // Use detected bounds if available, otherwise use map bounds
-        let bounds;
-        if (window.detectedTileInfo && window.detectedTileInfo.detectedBounds) {
-          bounds = L.latLngBounds(window.detectedTileInfo.detectedBounds);
-          console.log('🔲 Using detected tile bounds for border:', window.detectedTileInfo.detectedBounds);
-        } else {
-          bounds = window.map.getBounds();
-          console.log('🔲 Using current map bounds for border:', bounds);
-        }
-        
-        // Remove existing border if present
-        if (mapBorder) {
-          window.map.removeLayer(mapBorder);
-        }
-        
-        // Add a visual border around the map bounds
-          mapBorder = L.rectangle(bounds, {
-          color: '#ff0000',
-          weight: 3,
-          opacity: 0.8,
-          fillOpacity: 0,
-          dashArray: '10, 10'
-        }).addTo(window.map);
-        
-        console.log('✅ Visual map border added');
-      } catch (error) {
-        console.error('❌ Failed to add map border:', error);
-      }
-    }
+
 
     function addCities() {
       if (!window.map) {
@@ -307,6 +266,11 @@
       if (confirm('Are you sure you want to leave TrackPoint?')) {
         window.location.href = '/admin-dashboard.html';
       }
+    }
+
+    function toggleBorder() {
+      console.log('🗺️ Map borders have been disabled for free navigation');
+      alert('Map borders have been disabled. You can now scroll and zoom freely anywhere on the map!');
     }
 
     // Check if cities should be visible on load
