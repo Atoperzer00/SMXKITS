@@ -1415,11 +1415,21 @@
       formData.append('classId', currentClassId);
 
       try {
-        const response = await fetch(`${apiBaseUrl}/stream/upload`, {
+        // Use local server endpoint if apiBaseUrl is not defined
+        const uploadUrl = (typeof apiBaseUrl !== 'undefined' && apiBaseUrl) 
+          ? `${apiBaseUrl}/stream/upload` 
+          : '/stream/upload';
+        
+        console.log('🚀 Uploading to:', uploadUrl);
+        
+        const headers = {};
+        if (typeof authToken !== 'undefined' && authToken) {
+          headers['Authorization'] = `Bearer ${authToken}`;
+        }
+        
+        const response = await fetch(uploadUrl, {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${authToken}`
-          },
+          headers: headers,
           body: formData
         });
 
@@ -2025,17 +2035,24 @@
     // --- Server Uploads ---
     async function fetchServerUploads() {
       try {
-        const response = await fetch('/api/stream/uploads');
+        const response = await fetch('/uploads');
         if (!response.ok) throw new Error('Failed to fetch uploads');
 
-        const uploads = await response.json();
+        const data = await response.json();
+        const uploads = data.files || [];
         const container = document.getElementById('serverUploads');
-        container.innerHTML = uploads.map(upload => `
-          <div class="upload-item">
-            <span>${upload.filename}</span>
-            <button onclick="deleteUpload('${upload.filename}')">Delete</button>
-          </div>
-        `).join('');
+        
+        if (uploads.length === 0) {
+          container.innerHTML = '<div class="upload-item">No uploaded files found</div>';
+        } else {
+          container.innerHTML = uploads.map(upload => `
+            <div class="upload-item">
+              <span>${upload.filename}</span>
+              <small>(${(upload.size / (1024 * 1024)).toFixed(2)} MB)</small>
+              <button onclick="deleteUpload('${upload.filename}')">Delete</button>
+            </div>
+          `).join('');
+        }
       } catch (error) {
         console.error('Error fetching uploads:', error);
       }
@@ -2043,7 +2060,7 @@
 
     async function deleteUpload(filename) {
       try {
-        const response = await fetch(`/api/stream/uploads/${filename}`, { method: 'DELETE' });
+        const response = await fetch(`/uploads/${filename}`, { method: 'DELETE' });
         if (!response.ok) throw new Error('Failed to delete upload');
 
         alert('Upload deleted successfully');

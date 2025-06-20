@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Test - SMX KITS</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .drop-zone {
+            border: 3px dashed #ccc;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: #007bff;
+            background: #f8f9fa;
+        }
+        .upload-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .upload-btn:hover {
+            background: #0056b3;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .file-list {
+            margin-top: 20px;
+        }
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin: 5px 0;
+        }
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .delete-btn:hover {
+            background: #c82333;
+        }
+        video {
+            width: 100%;
+            max-width: 600px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎥 SMX KITS Upload Test</h1>
+        <p>Test the file upload functionality for Stream Mode</p>
+
+        <!-- Upload Area -->
+        <div class="drop-zone" id="dropZone">
+            <p>📁 Drop video files here or click to browse</p>
+            <input type="file" id="fileInput" accept="video/*" style="display: none;">
+            <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                Choose File
+            </button>
+        </div>
+
+        <!-- Status Display -->
+        <div id="status"></div>
+
+        <!-- Video Preview -->
+        <video id="videoPreview" controls style="display: none;"></video>
+
+        <!-- Server Info -->
+        <div style="margin: 20px 0; padding: 15px; background: #e9ecef; border-radius: 5px;">
+            <h3>🔧 Server Endpoints</h3>
+            <ul>
+                <li><strong>Upload:</strong> <code>POST /upload</code></li>
+                <li><strong>Stream Upload:</strong> <code>POST /stream/upload</code></li>
+                <li><strong>List Files:</strong> <code>GET /uploads</code></li>
+                <li><strong>Delete File:</strong> <code>DELETE /uploads/{filename}</code></li>
+            </ul>
+        </div>
+
+        <!-- Uploaded Files List -->
+        <div>
+            <h3>📂 Uploaded Files</h3>
+            <button class="upload-btn" onclick="loadFileList()">Refresh List</button>
+            <div id="fileList" class="file-list"></div>
+        </div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const status = document.getElementById('status');
+        const videoPreview = document.getElementById('videoPreview');
+        const fileList = document.getElementById('fileList');
+
+        // Setup drag and drop
+        dropZone.addEventListener('click', () => fileInput.click());
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        async function handleFile(file) {
+            showStatus(`Uploading ${file.name}...`, 'info');
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showStatus(`✅ Upload successful: ${result.filename}`, 'success');
+                    
+                    // Show video preview
+                    videoPreview.src = result.url;
+                    videoPreview.style.display = 'block';
+                    
+                    // Refresh file list
+                    loadFileList();
+                } else {
+                    showStatus(`❌ Upload failed: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Upload error: ${error.message}`, 'error');
+            }
+        }
+
+        function showStatus(message, type) {
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+        }
+
+        async function loadFileList() {
+            try {
+                const response = await fetch('/uploads');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    displayFileList(data.files || []);
+                } else {
+                    showStatus('❌ Failed to load file list', 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Error loading files: ${error.message}`, 'error');
+            }
+        }
+
+        function displayFileList(files) {
+            if (files.length === 0) {
+                fileList.innerHTML = '<p>No files uploaded yet</p>';
+                return;
+            }
+            
+            fileList.innerHTML = files.map(file => `
+                <div class="file-item">
+                    <div>
+                        <strong>${file.filename}</strong><br>
+                        <small>${(file.size / (1024 * 1024)).toFixed(2)} MB • ${new Date(file.uploadTime).toLocaleString()}</small>
+                    </div>
+                    <div>
+                        <button onclick="playVideo('${file.url}')" class="upload-btn" style="margin-right: 10px;">Play</button>
+                        <button onclick="deleteFile('${file.filename}')" class="delete-btn">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function playVideo(url) {
+            videoPreview.src = url;
+            videoPreview.style.display = 'block';
+            videoPreview.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function deleteFile(filename) {
+            if (!confirm(`Delete ${filename}?`)) return;
+            
+            try {
+                const response = await fetch(`/uploads/${filename}`, {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showStatus(`✅ File deleted: ${filename}`, 'success');
+                    loadFileList();
+                } else {
+                    showStatus(`❌ Delete failed: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Delete error: ${error.message}`, 'error');
+            }
+        }
+
+        // Load file list on page load
+        loadFileList();
+    </script>
+</body>
+</html>

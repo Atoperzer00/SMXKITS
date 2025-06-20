@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrackPoint Tile Diagnostics</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+    .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+    .success { color: green; font-weight: bold; }
+    .error { color: red; font-weight: bold; }
+    .warning { color: orange; font-weight: bold; }
+    .info { color: blue; }
+    .tile-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 10px 0; }
+    .tile-test { border: 2px solid #ccc; padding: 10px; text-align: center; border-radius: 5px; }
+    .tile-test img { width: 100px; height: 100px; border: 1px solid #999; }
+    .tile-test.success { border-color: green; background: #f0fff0; }
+    .tile-test.error { border-color: red; background: #fff0f0; }
+    button { background: #007cba; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+    button:hover { background: #005a8b; }
+    .log { background: #000; color: #0f0; padding: 10px; border-radius: 5px; font-family: monospace; max-height: 300px; overflow-y: auto; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 TrackPoint Tile Diagnostics</h1>
+    
+    <div class="section">
+      <h3>📋 System Information</h3>
+      <div id="systemInfo">Loading...</div>
+    </div>
+
+    <div class="section">
+      <h3>🌐 URL and Path Analysis</h3>
+      <div id="urlInfo">Loading...</div>
+    </div>
+
+    <div class="section">
+      <h3>🖼️ Direct Tile Access Tests</h3>
+      <button onclick="runTileTests()">Run Tile Tests</button>
+      <button onclick="clearResults()">Clear Results</button>
+      <div class="tile-grid" id="tileGrid"></div>
+    </div>
+
+    <div class="section">
+      <h3>🔗 Server Connectivity Tests</h3>
+      <button onclick="runServerTests()">Test Server Connectivity</button>
+      <div id="serverResults"></div>
+    </div>
+
+    <div class="section">
+      <h3>📊 Test Results Summary</h3>
+      <div id="summary"></div>
+    </div>
+
+    <div class="section">
+      <h3>📝 Diagnostic Log</h3>
+      <div class="log" id="diagnosticLog">🔄 Diagnostic tool ready...<br></div>
+    </div>
+
+    <div class="section">
+      <h3>🛠️ Recommended Actions</h3>
+      <div id="recommendations">
+        <p><strong>Before running tests:</strong></p>
+        <ol>
+          <li>Make sure you're accessing this page through a web server (URL should start with http://)</li>
+          <li>If URL starts with "file://", run <code>START-TRACKPOINT-SERVER.bat</code> first</li>
+          <li>Verify the altis folder exists in the same directory as this HTML file</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function log(msg) {
+      console.log(msg);
+      const logDiv = document.getElementById('diagnosticLog');
+      logDiv.innerHTML += new Date().toLocaleTimeString() + ': ' + msg + '<br>';
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    function updateSystemInfo() {
+      const systemInfo = document.getElementById('systemInfo');
+      systemInfo.innerHTML = `
+        <strong>User Agent:</strong> ${navigator.userAgent}<br>
+        <strong>Platform:</strong> ${navigator.platform}<br>
+        <strong>Language:</strong> ${navigator.language}<br>
+        <strong>Online:</strong> ${navigator.onLine ? '✅ Yes' : '❌ No'}<br>
+        <strong>Cookies Enabled:</strong> ${navigator.cookieEnabled ? '✅ Yes' : '❌ No'}
+      `;
+    }
+
+    function updateUrlInfo() {
+      const urlInfo = document.getElementById('urlInfo');
+      const isFileProtocol = window.location.protocol === 'file:';
+      const isHttpProtocol = window.location.protocol.startsWith('http');
+      
+      urlInfo.innerHTML = `
+        <strong>Current URL:</strong> ${window.location.href}<br>
+        <strong>Protocol:</strong> ${window.location.protocol} ${isHttpProtocol ? '<span class="success">✅ Good</span>' : '<span class="error">❌ Need HTTP server</span>'}<br>
+        <strong>Host:</strong> ${window.location.host || 'N/A'}<br>
+        <strong>Pathname:</strong> ${window.location.pathname}<br>
+        <strong>Base Directory:</strong> ${window.location.pathname.replace(/\/[^\/]*$/, '/')}<br>
+        ${isFileProtocol ? '<div class="error">⚠️ WARNING: You are accessing this file directly. Tiles will NOT load without a web server!</div>' : ''}
+      `;
+    }
+
+    function runTileTests() {
+      log('🧪 Starting tile access tests...');
+      
+      const tileGrid = document.getElementById('tileGrid');
+      tileGrid.innerHTML = '';
+      
+      const testTiles = [
+        { path: 'altis/2/0/0.png', name: 'Low Zoom (2/0/0)' },
+        { path: 'altis/6/0/0.png', name: 'High Zoom (6/0/0)' },
+        { path: 'altis/4/1/2.png', name: 'Mid Zoom (4/1/2)' },
+        { path: 'altis/3/2/3.png', name: 'Test Tile (3/2/3)' },
+        { path: 'altis/5/10/15.png', name: 'Random Tile (5/10/15)' },
+        { path: 'altis/1/0/0.png', name: 'Min Zoom (1/0/0)' }
+      ];
+
+      testTiles.forEach((tile, index) => {
+        const tileDiv = document.createElement('div');
+        tileDiv.className = 'tile-test';
+        tileDiv.innerHTML = `
+          <div><strong>${tile.name}</strong></div>
+          <img id="tile-${index}" src="${tile.path}" alt="${tile.name}">
+          <div id="result-${index}">Testing...</div>
+        `;
+        tileGrid.appendChild(tileDiv);
+
+        const img = document.getElementById(`tile-${index}`);
+        const result = document.getElementById(`result-${index}`);
+
+        img.onload = function() {
+          tileDiv.className = 'tile-test success';
+          result.innerHTML = `<span class="success">✅ SUCCESS</span><br>${this.naturalWidth}x${this.naturalHeight}px`;
+          log('✅ Tile loaded: ' + tile.path);
+        };
+
+        img.onerror = function() {
+          tileDiv.className = 'tile-test error';
+          result.innerHTML = '<span class="error">❌ FAILED</span><br>Could not load';
+          log('❌ Tile failed: ' + tile.path);
+        };
+      });
+    }
+
+    function runServerTests() {
+      log('🔗 Testing server connectivity...');
+      
+      const serverResults = document.getElementById('serverResults');
+      serverResults.innerHTML = '<div>🔄 Testing server responses...</div>';
+      
+      const testUrls = [
+        'altis/2/0/0.png',
+        'altis/6/0/0.png',
+        'mapUtils.css',
+        'server.js'
+      ];
+
+      let results = [];
+
+      testUrls.forEach(url => {
+        fetch(url, { method: 'HEAD' })
+          .then(response => {
+            const status = response.ok ? 
+              `<span class="success">✅ ${response.status}</span>` : 
+              `<span class="error">❌ ${response.status}</span>`;
+            results.push(`<strong>${url}:</strong> ${status}`);
+            log(`Server test: ${url} - Status ${response.status}`);
+          })
+          .catch(error => {
+            results.push(`<strong>${url}:</strong> <span class="error">❌ ${error.message}</span>`);
+            log(`Server test failed: ${url} - ${error.message}`);
+          })
+          .finally(() => {
+            serverResults.innerHTML = results.join('<br>');
+          });
+      });
+    }
+
+    function clearResults() {
+      document.getElementById('tileGrid').innerHTML = '';
+      document.getElementById('serverResults').innerHTML = '';
+      document.getElementById('diagnosticLog').innerHTML = '🔄 Log cleared...<br>';
+      log('🧹 Results cleared');
+    }
+
+    function updateSummary() {
+      const summary = document.getElementById('summary');
+      const isHttpProtocol = window.location.protocol.startsWith('http');
+      
+      let recommendations = [];
+      
+      if (!isHttpProtocol) {
+        recommendations.push('❌ <strong>CRITICAL:</strong> You must use a web server. Run START-TRACKPOINT-SERVER.bat');
+      } else {
+        recommendations.push('✅ Using web server - Good!');
+      }
+      
+      if (window.location.host === 'localhost:8080' || window.location.host.includes('127.0.0.1')) {
+        recommendations.push('✅ Using local server - Good!');
+      }
+      
+      summary.innerHTML = recommendations.join('<br>');
+    }
+
+    // Initialize diagnostics
+    document.addEventListener('DOMContentLoaded', function() {
+      log('🚀 TrackPoint Tile Diagnostics initialized');
+      updateSystemInfo();
+      updateUrlInfo();
+      updateSummary();
+      
+      // Auto-run basic tests
+      setTimeout(() => {
+        log('🔄 Running automatic tile tests...');
+        runTileTests();
+      }, 1000);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Map Test</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css">
+  <style>
+    body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+    .info { background: #e8f4fd; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
+    #map { width: 100%; height: 500px; border: 2px solid #ccc; }
+    .debug { background: #000; color: #0f0; padding: 10px; margin-top: 20px; font-family: monospace; max-height: 200px; overflow-y: auto; }
+    .test-links { margin: 10px 0; }
+    .test-links a { display: inline-block; margin: 5px; padding: 5px 10px; background: #007cba; color: white; text-decoration: none; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <div class="info">
+    <h2>🗺️ Simple Map Test</h2>
+    <p>Testing basic tile loading without complex coordinate systems.</p>
+    
+    <div class="test-links">
+      <strong>Direct tile tests:</strong>
+      <a href="altis/6/0/0.png" target="_blank">Test altis/6/0/0.png</a>
+      <a href="altis/4/1/2.png" target="_blank">Test altis/4/1/2.png</a>
+      <a href="altis/2/0/0.png" target="_blank">Test altis/2/0/0.png</a>
+    </div>
+  </div>
+
+  <div id="map"></div>
+  <div class="debug" id="debug">🔄 Initializing...</div>
+
+  <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+  <script>
+    function log(msg) {
+      console.log(msg);
+      const debug = document.getElementById('debug');
+      debug.innerHTML += '<div>' + new Date().toLocaleTimeString() + ': ' + msg + '</div>';
+      debug.scrollTop = debug.scrollHeight;
+    }
+
+    // Test 1: Simple CRS with basic tile loading
+    log('🚀 Starting simple map test...');
+    
+    try {
+      // Create map with simple coordinate system
+      const map = L.map('map', {
+        crs: L.CRS.Simple,
+        minZoom: 0,
+        maxZoom: 6
+      });
+
+      log('✅ Map created with Simple CRS');
+
+      // Create basic tile layer
+      const tileLayer = L.tileLayer('altis/{z}/{x}/{y}.png', {
+        attribution: 'Altis Map Test',
+        tileSize: 256,
+        minZoom: 0,
+        maxZoom: 6,
+        noWrap: true,
+        continuousWorld: false
+      });
+
+      // Add tile loading events
+      tileLayer.on('tileloadstart', function(e) {
+        log('🔄 Loading: ' + e.url);
+      });
+
+      tileLayer.on('tileload', function(e) {
+        log('✅ Loaded: ' + e.url);
+      });
+
+      tileLayer.on('tileerror', function(e) {
+        log('❌ Error loading: ' + e.url);
+        log('   Error details: ' + (e.error ? e.error.message : 'Unknown error'));
+      });
+
+      tileLayer.addTo(map);
+
+      // Set bounds and view for Altis
+      const bounds = [[0, 0], [30720, 30720]];
+      map.fitBounds(bounds);
+      
+      log('✅ Map bounds set to: [[0,0], [30720,30720]]');
+      log('📍 Current view: ' + JSON.stringify(map.getCenter()) + ' at zoom ' + map.getZoom());
+
+      // Test specific tile URLs
+      setTimeout(() => {
+        log('🧪 Testing specific tile URLs...');
+        
+        const testTiles = [
+          'altis/6/0/0.png',
+          'altis/4/1/2.png', 
+          'altis/2/0/0.png'
+        ];
+        
+        testTiles.forEach(tileUrl => {
+          const img = new Image();
+          img.onload = () => log('✅ Direct test passed: ' + tileUrl);
+          img.onerror = () => log('❌ Direct test failed: ' + tileUrl);
+          img.src = tileUrl;
+        });
+      }, 2000);
+
+    } catch (error) {
+      log('❌ CRITICAL ERROR: ' + error.message);
+      console.error('Full error:', error);
+    }
+  </script>
+</body>
+</html>

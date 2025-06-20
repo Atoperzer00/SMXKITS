@@ -669,12 +669,8 @@
               <option value="mission-reference-2">Mission Reference: 2</option>
               <option value="mission-reference-3">Mission Reference: 3</option>
             </select>
-            <button onclick="generateReference()" style="background: var(--accent-gradient); border: none; color: white; padding: 0.75rem 1.5rem; border-radius: 10px; font-weight: 600; cursor: pointer; transition: var(--transition);" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+            <button id="generateBtn" onclick="generateReference()" style="background: var(--accent-gradient); border: none; color: white; padding: 0.75rem 1.5rem; border-radius: 10px; font-weight: 600; cursor: pointer; transition: var(--transition); position: relative; z-index: 1;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
               <i class="fas fa-play"></i> Generate
-            </button>
-            <!-- Temporary test button -->
-            <button onclick="testSlideshow()" style="background: #ff0000; border: none; color: white; padding: 0.75rem 1rem; border-radius: 10px; font-weight: 600; cursor: pointer; margin-left: 10px;">
-              Test Slideshow
             </button>
           </div>
         </div>
@@ -845,16 +841,19 @@
     let currentSlideIndex = 0;
     let slideImages = [];
 
-    // Test function to verify slideshow works
-    function testSlideshow() {
-      console.log('Testing slideshow...');
-      openSlideshowViewer();
-    }
+
 
     function generateReference() {
-      const dropdown = document.getElementById('referenceDropdown');
-      const selectedValue = dropdown.value;
+      console.log('generateReference function called');
       
+      const dropdown = document.getElementById('referenceDropdown');
+      if (!dropdown) {
+        console.error('Dropdown element not found!');
+        alert('Error: Reference dropdown not found.');
+        return;
+      }
+      
+      const selectedValue = dropdown.value;
       console.log('Generate Reference called, selected value:', selectedValue);
       
       if (!selectedValue) {
@@ -866,7 +865,12 @@
       switch(selectedValue) {
         case 'mission-reference-1':
           console.log('Opening slideshow viewer for Mission Reference 1');
-          openSlideshowViewer();
+          try {
+            openSlideshowViewer();
+          } catch (error) {
+            console.error('Error opening slideshow:', error);
+            alert('Error opening slideshow viewer. Please check the console for details.');
+          }
           break;
         case 'mission-reference-2':
           alert('Mission Reference: 2 - Coming Soon');
@@ -882,34 +886,45 @@
     function openSlideshowViewer() {
       console.log('openSlideshowViewer called');
       
-      // Initialize slideshow images for Mission Reference 1
-      slideImages = [
-        'images/Mission 1 Reference Product/1.jpg',
-        'images/Mission 1 Reference Product/2.jpg',
-        'images/Mission 1 Reference Product/3.jpg',
-        'images/Mission 1 Reference Product/4.jpg',
-        'images/Mission 1 Reference Product/5.jpg',
-        'images/Mission 1 Reference Product/6.jpg',
-        'images/Mission 1 Reference Product/7.jpg',
-        'images/Mission 1 Reference Product/8.jpg'
-      ];
-      
-      console.log('Slideshow images initialized:', slideImages);
-      
-      currentSlideIndex = 0;
-      updateSlideImage();
-      
-      const modal = document.getElementById('slideshowModal');
-      console.log('Modal element found:', modal);
-      
-      if (modal) {
+      try {
+        // Initialize slideshow images for Mission Reference 1
+        slideImages = [
+          'images/Mission 1 Reference Product/1.jpg',
+          'images/Mission 1 Reference Product/2.jpg',
+          'images/Mission 1 Reference Product/3.jpg',
+          'images/Mission 1 Reference Product/4.jpg',
+          'images/Mission 1 Reference Product/5.jpg',
+          'images/Mission 1 Reference Product/6.jpg',
+          'images/Mission 1 Reference Product/7.jpg',
+          'images/Mission 1 Reference Product/8.jpg'
+        ];
+        
+        console.log('Slideshow images initialized:', slideImages);
+        
+        currentSlideIndex = 0;
+        
+        const modal = document.getElementById('slideshowModal');
+        console.log('Modal element found:', modal);
+        
+        if (!modal) {
+          console.error('Modal element not found!');
+          alert('Error: Slideshow modal not found.');
+          return;
+        }
+        
+        // Show modal first
         modal.classList.add('active');
         console.log('Modal active class added');
         
         // Prevent body scrolling when modal is open
         document.body.style.overflow = 'hidden';
-      } else {
-        console.error('Modal element not found!');
+        
+        // Update slide image after modal is shown
+        updateSlideImage();
+        
+      } catch (error) {
+        console.error('Error in openSlideshowViewer:', error);
+        alert('Error opening slideshow viewer: ' + error.message);
       }
     }
 
@@ -922,10 +937,22 @@
     }
 
     function updateSlideImage() {
+      console.log('updateSlideImage called, currentSlideIndex:', currentSlideIndex);
+      
       const img = document.getElementById('slideshowImage');
       const loader = document.getElementById('slideshowLoader');
       const currentSlideSpan = document.getElementById('currentSlideNumber');
       const totalSlidesSpan = document.getElementById('totalSlides');
+      
+      if (!img || !loader || !currentSlideSpan || !totalSlidesSpan) {
+        console.error('One or more slideshow elements not found:', {
+          img: !!img,
+          loader: !!loader,
+          currentSlideSpan: !!currentSlideSpan,
+          totalSlidesSpan: !!totalSlidesSpan
+        });
+        return;
+      }
       
       if (slideImages.length > 0) {
         // Show loader
@@ -936,22 +963,29 @@
         currentSlideSpan.textContent = currentSlideIndex + 1;
         totalSlidesSpan.textContent = slideImages.length;
         
-        img.src = slideImages[currentSlideIndex];
+        const imagePath = slideImages[currentSlideIndex];
+        console.log('Loading image:', imagePath);
+        
+        img.src = imagePath;
         img.alt = `Mission Reference Image ${currentSlideIndex + 1} of ${slideImages.length}`;
         
         // Handle successful image loading
         img.onload = function() {
+          console.log('Image loaded successfully:', imagePath);
           loader.style.display = 'none';
           img.style.display = 'block';
         };
         
         // Handle image loading errors
         img.onerror = function() {
-          console.error('Failed to load image:', slideImages[currentSlideIndex]);
+          console.error('Failed to load image:', imagePath);
           loader.style.display = 'none';
           img.style.display = 'block';
-          img.alt = 'Image failed to load';
+          img.alt = 'Image failed to load: ' + imagePath;
+          img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlIG5vdCBmb3VuZDwvdGV4dD48L3N2Zz4=';
         };
+      } else {
+        console.error('No slideshow images available');
       }
     }
 
@@ -991,6 +1025,12 @@
         } else if (event.key === 'ArrowRight') {
           nextSlide();
         }
+      } else {
+        // Test shortcut: Press 'T' to test slideshow
+        if (event.key === 'T' || event.key === 't') {
+          console.log('Test shortcut pressed - opening slideshow');
+          openSlideshowViewer();
+        }
       }
     });
     
@@ -1001,6 +1041,31 @@
       localStorage.removeItem('classId');
       window.location.replace('/login.html');
     }
+
+    // Additional event listener setup for the generate button
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('DOM Content Loaded - Setting up event listeners');
+      
+      const generateBtn = document.getElementById('generateBtn');
+      if (generateBtn) {
+        console.log('Generate button found, adding click listener');
+        generateBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          console.log('Generate button clicked via event listener');
+          generateReference();
+        });
+      } else {
+        console.error('Generate button not found!');
+      }
+      
+      // Test if slideshow modal exists
+      const modal = document.getElementById('slideshowModal');
+      if (modal) {
+        console.log('Slideshow modal found');
+      } else {
+        console.error('Slideshow modal not found!');
+      }
+    });
 
     // File handling functions
     function formatFileSize(bytes) {

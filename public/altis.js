@@ -1,4 +1,4 @@
-/**
+ /**
  * Altis Map Configuration for SMX Track Point
  * Based on Arma 3 Altis map tiles
  */
@@ -12,7 +12,7 @@ if (typeof Arma3Map === 'undefined') {
 Arma3Map.Maps.altis = {
     minZoom: 0,
     maxZoom: 6,
-    CRS: MGRS_CRS(1/256, 1/256, 30720), // Arma 3 coordinate system
+    CRS: (typeof MGRS_CRS === 'function') ? MGRS_CRS(1/256, 1/256, 30720) : L.CRS.Simple, // Arma 3 coordinate system
     tilePattern: 'altis/{z}/{x}/{y}.png',
     attribution: 'Altis Map - Arma 3',
     tileSize: 256,

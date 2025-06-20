@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instructor-Student Workflow Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .workflow-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .role-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .instructor {
+            border-left: 5px solid #dc3545;
+        }
+        .student {
+            border-left: 5px solid #007bff;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            width: 100%;
+        }
+        .btn.instructor-btn {
+            background: #dc3545;
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .workflow-steps {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .step {
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 3px solid #ccc;
+            background: #f8f9fa;
+        }
+        .step.active {
+            border-left-color: #007bff;
+            background: #e3f2fd;
+        }
+        .step.completed {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+        .localStorage-display {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎓 SMX KITS: Instructor-Student Streaming Workflow Test</h1>
+    
+    <div class="workflow-steps">
+        <h3>📋 Complete Workflow Steps</h3>
+        <div class="step" id="step1">1. Instructor uploads video in Stream Mode</div>
+        <div class="step" id="step2">2. Video is stored on server (/uploads/)</div>
+        <div class="step" id="step3">3. Stream URL is saved to localStorage</div>
+        <div class="step" id="step4">4. Instructor opens SMXStream-new for students</div>
+        <div class="step" id="step5">5. Students access SMXStream-new and see the video</div>
+    </div>
+
+    <div class="workflow-container">
+        <!-- Instructor Side -->
+        <div class="role-section instructor">
+            <h2>👨‍🏫 Instructor Interface</h2>
+            <p>Upload and control streaming</p>
+            
+            <button class="btn instructor-btn" onclick="openStreamMode()">
+                📤 Open Stream Mode (Upload Interface)
+            </button>
+            
+            <button class="btn instructor-btn" onclick="simulateUpload()">
+                🎬 Simulate Video Upload
+            </button>
+            
+            <button class="btn instructor-btn" onclick="openInstructorViewer()">
+                📺 Open Stream Viewer (Instructor View)
+            </button>
+            
+            <div id="instructorStatus"></div>
+        </div>
+
+        <!-- Student Side -->
+        <div class="role-section student">
+            <h2>🎓 Student Interface</h2>
+            <p>View instructor's stream</p>
+            
+            <button class="btn" onclick="openStudentViewer()">
+                📺 Open Stream Viewer (Student View)
+            </button>
+            
+            <button class="btn" onclick="checkStudentAccess()">
+                🔍 Check Stream Access
+            </button>
+            
+            <button class="btn" onclick="simulateStudentJoin()">
+                👥 Simulate Student Join Class
+            </button>
+            
+            <div id="studentStatus"></div>
+        </div>
+    </div>
+
+    <!-- localStorage Monitor -->
+    <div class="role-section">
+        <h3>💾 localStorage Monitor</h3>
+        <p>Real-time view of streaming data</p>
+        <button class="btn" onclick="refreshLocalStorage()">🔄 Refresh Data</button>
+        <button class="btn" onclick="clearAllData()" style="background: #dc3545;">🗑️ Clear All Data</button>
+        <div class="localStorage-display" id="localStorageDisplay"></div>
+    </div>
+
+    <!-- Server Status -->
+    <div class="role-section">
+        <h3>🖥️ Server Status</h3>
+        <button class="btn" onclick="checkServerStatus()">🔍 Check Server</button>
+        <div id="serverStatus"></div>
+    </div>
+
+    <script>
+        // Instructor Functions
+        function openStreamMode() {
+            window.open('/Stream Mode.html', '_blank');
+            updateStatus('instructorStatus', 'Stream Mode opened for instructor', 'info');
+            setStepActive(1);
+        }
+
+        function simulateUpload() {
+            // Simulate what Stream Mode does when uploading
+            const mockVideoData = {
+                filename: 'test-video_' + Date.now() + '.mp4',
+                url: '/uploads/test-video.mp4',
+                size: 50 * 1024 * 1024, // 50MB
+                uploadTime: new Date().toISOString()
+            };
+
+            localStorage.setItem('currentStreamUrl', mockVideoData.url);
+            localStorage.setItem('currentStreamType', 'uploaded');
+            localStorage.setItem('currentClassId', 'test-class-123');
+            localStorage.setItem('streamStartTime', mockVideoData.uploadTime);
+
+            updateStatus('instructorStatus', 'Video upload simulated successfully!', 'success');
+            setStepCompleted(1);
+            setStepCompleted(2);
+            setStepCompleted(3);
+            refreshLocalStorage();
+        }
+
+        function openInstructorViewer() {
+            window.open('/SMXStream-new.html?classId=test-class-123', '_blank');
+            updateStatus('instructorStatus', 'Instructor viewer opened', 'info');
+            setStepActive(4);
+        }
+
+        // Student Functions
+        function openStudentViewer() {
+            window.open('/SMXStream-new.html?classId=test-class-123', '_blank');
+            updateStatus('studentStatus', 'Student viewer opened', 'info');
+            setStepActive(5);
+        }
+
+        function checkStudentAccess() {
+            const streamUrl = localStorage.getItem('currentStreamUrl');
+            const classId = localStorage.getItem('currentClassId');
+            
+            if (streamUrl && classId) {
+                updateStatus('studentStatus', `✅ Stream available: ${streamUrl}`, 'success');
+                setStepCompleted(5);
+            } else {
+                updateStatus('studentStatus', '❌ No stream available. Instructor needs to upload first.', 'error');
+            }
+        }
+
+        function simulateStudentJoin() {
+            // Simulate student joining the class
+            const classId = localStorage.getItem('currentClassId') || 'test-class-123';
+            localStorage.setItem('studentClassId', classId);
+            localStorage.setItem('studentJoinTime', new Date().toISOString());
+            
+            updateStatus('studentStatus', `Student joined class: ${classId}`, 'success');
+            refreshLocalStorage();
+        }
+
+        // Utility Functions
+        function updateStatus(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function setStepActive(stepNumber) {
+            const step = document.getElementById(`step${stepNumber}`);
+            step.classList.add('active');
+            step.classList.remove('completed');
+        }
+
+        function setStepCompleted(stepNumber) {
+            const step = document.getElementById(`step${stepNumber}`);
+            step.classList.add('completed');
+            step.classList.remove('active');
+        }
+
+        function refreshLocalStorage() {
+            const data = {
+                // Stream data
+                currentStreamUrl: localStorage.getItem('currentStreamUrl'),
+                currentStreamType: localStorage.getItem('currentStreamType'),
+                currentClassId: localStorage.getItem('currentClassId'),
+                streamStartTime: localStorage.getItem('streamStartTime'),
+                
+                // Student data
+                studentClassId: localStorage.getItem('studentClassId'),
+                studentJoinTime: localStorage.getItem('studentJoinTime'),
+                
+                // Other data
+                token: localStorage.getItem('token') ? '[TOKEN EXISTS]' : null,
+                role: localStorage.getItem('role')
+            };
+
+            document.getElementById('localStorageDisplay').innerHTML = 
+                JSON.stringify(data, null, 2);
+        }
+
+        function clearAllData() {
+            if (confirm('Clear all localStorage data?')) {
+                localStorage.clear();
+                refreshLocalStorage();
+                updateStatus('instructorStatus', 'All data cleared', 'info');
+                updateStatus('studentStatus', 'All data cleared', 'info');
+                
+                // Reset steps
+                document.querySelectorAll('.step').forEach(step => {
+                    step.classList.remove('active', 'completed');
+                });
+            }
+        }
+
+        async function checkServerStatus() {
+            const statusDiv = document.getElementById('serverStatus');
+            statusDiv.innerHTML = '<div class="status info">Checking server...</div>';
+            
+            try {
+                const response = await fetch('/health');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    statusDiv.innerHTML = `
+                        <div class="status success">
+                            ✅ Server is running!<br>
+                            Port: ${data.port}<br>
+                            Uploads Dir: ${data.uploadsDir}<br>
+                            Time: ${new Date(data.timestamp).toLocaleString()}
+                        </div>
+                    `;
+                } else {
+                    throw new Error('Server error');
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <div class="status error">
+                        ❌ Server not responding<br>
+                        Make sure to run: node server-with-upload.js
+                    </div>
+                `;
+            }
+        }
+
+        // Auto-refresh localStorage display
+        setInterval(refreshLocalStorage, 3000);
+
+        // Initialize
+        window.addEventListener('load', () => {
+            refreshLocalStorage();
+            checkServerStatus();
+        });
+    </script>
+</body>
+</html>

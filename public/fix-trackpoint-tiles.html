@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrackPoint - Fixed Tile Loading</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      font-family: Arial, sans-serif;
+    }
+
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0, 0, 0, 0.9);
+      color: white;
+      padding: 10px 20px;
+      z-index: 1000;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #3498db;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background 0.3s;
+    }
+
+    .btn:hover {
+      background: #2980b9;
+    }
+
+    .btn.cities {
+      background: #27ae60;
+    }
+
+    .btn.cities:hover {
+      background: #229954;
+    }
+
+    .btn.danger {
+      background: #e74c3c;
+    }
+
+    .btn.danger:hover {
+      background: #c0392b;
+    }
+
+    .map-container {
+      width: 100%;
+      height: 100vh;
+      padding-top: 60px;
+    }
+
+    #map {
+      width: 100%;
+      height: calc(100vh - 60px);
+    }
+
+    .debug-panel {
+      position: fixed;
+      top: 70px;
+      right: 10px;
+      width: 350px;
+      max-height: 300px;
+      background: rgba(0, 0, 0, 0.9);
+      color: #0f0;
+      padding: 10px;
+      border-radius: 5px;
+      font-family: monospace;
+      font-size: 0.75rem;
+      overflow-y: auto;
+      z-index: 999;
+      display: none;
+    }
+
+    .tile-test {
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 0.8rem;
+    }
+
+    .tile-test img {
+      width: 64px;
+      height: 64px;
+      border: 1px solid #ccc;
+      margin: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🗺️ TrackPoint - Tile Fix</h1>
+    <div class="header-controls">
+      <button class="btn cities" onclick="toggleCities()">Toggle Cities</button>
+      <button class="btn" onclick="centerMap()">Center Map</button>
+      <button class="btn" onclick="toggleDebug()">Debug</button>
+      <button class="btn" onclick="testTiles()">Test Tiles</button>
+      <button class="btn danger" onclick="goBack()">← Back</button>
+    </div>
+  </div>
+
+  <div class="debug-panel" id="debugPanel">
+    <div id="debugOutput">🔄 Debug ready...</div>
+  </div>
+
+  <div class="tile-test" id="tileTest" style="display: none;">
+    <div>Direct Tile Tests:</div>
+    <img id="testImg1" src="" alt="Test 1">
+    <img id="testImg2" src="" alt="Test 2">
+    <img id="testImg3" src="" alt="Test 3">
+    <div id="testResults"></div>
+  </div>
+
+  <div class="map-container">
+    <div id="map"></div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+  <script>
+    let map;
+    let citiesVisible = false;
+    let debugVisible = false;
+    let cityMarkers = [];
+
+    function log(msg) {
+      console.log(msg);
+      const debugOutput = document.getElementById('debugOutput');
+      if (debugOutput) {
+        debugOutput.innerHTML += '<div>' + new Date().toLocaleTimeString() + ': ' + msg + '</div>';
+        debugOutput.scrollTop = debugOutput.scrollHeight;
+      }
+    }
+
+    function toggleDebug() {
+      debugVisible = !debugVisible;
+      document.getElementById('debugPanel').style.display = debugVisible ? 'block' : 'none';
+    }
+
+    function testTiles() {
+      const tileTest = document.getElementById('tileTest');
+      tileTest.style.display = tileTest.style.display === 'none' ? 'block' : 'none';
+      
+      if (tileTest.style.display === 'block') {
+        runTileTests();
+      }
+    }
+
+    function runTileTests() {
+      log('🧪 Running direct tile tests...');
+      
+      const testTiles = [
+        'altis/2/0/0.png',
+        'altis/6/0/0.png', 
+        'altis/4/1/2.png'
+      ];
+      
+      const testResults = document.getElementById('testResults');
+      testResults.innerHTML = '';
+      
+      testTiles.forEach((tileUrl, index) => {
+        const img = document.getElementById('testImg' + (index + 1));
+        img.src = tileUrl;
+        
+        img.onload = function() {
+          log('✅ Direct tile test PASSED: ' + tileUrl);
+          testResults.innerHTML += '<div style="color: green;">✅ ' + tileUrl + '</div>';
+        };
+        
+        img.onerror = function() {
+          log('❌ Direct tile test FAILED: ' + tileUrl);
+          testResults.innerHTML += '<div style="color: red;">❌ ' + tileUrl + '</div>';
+        };
+      });
+    }
+
+    // Altis cities data
+    const altisCities = [
+      { name: "Kavala", x: 26800, y: 21300 },
+      { name: "Pyrgos", x: 15200, y: 17000 },
+      { name: "Sofia", x: 25900, y: 21900 },
+      { name: "Athira", x: 13400, y: 19600 },
+      { name: "Paros", x: 23300, y: 16600 },
+      { name: "Zaros", x: 8600, y: 15900 },
+      { name: "Poliakko", x: 12200, y: 14200 },
+      { name: "Galati", x: 20800, y: 13600 }
+    ];
+
+    // Initialize map
+    document.addEventListener('DOMContentLoaded', function() {
+      log('🚀 TrackPoint Tile Fix initializing...');
+      log('📍 Current URL: ' + window.location.href);
+      
+      try {
+        // Create map with simple coordinate system
+        map = L.map('map', {
+          crs: L.CRS.Simple,
+          minZoom: 0,
+          maxZoom: 6,
+          zoomControl: true,
+          attributionControl: true
+        });
+
+        log('✅ Map created with Simple CRS');
+
+        // Create tile layer with absolute URL testing
+        const baseUrl = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '/');
+        log('🔗 Base URL: ' + baseUrl);
+        
+        // Try different tile URL patterns
+        const tileUrlPatterns = [
+          'altis/{z}/{x}/{y}.png',                    // Relative path
+          './altis/{z}/{x}/{y}.png',                  // Explicit relative path
+          baseUrl + 'altis/{z}/{x}/{y}.png'          // Absolute path
+        ];
+        
+        let currentPatternIndex = 0;
+        
+        function createTileLayer(pattern) {
+          log('🔄 Trying tile pattern: ' + pattern);
+          
+          const tileLayer = L.tileLayer(pattern, {
+            attribution: 'Altis Map - Arma 3',
+            tileSize: 256,
+            minZoom: 0,
+            maxZoom: 6,
+            noWrap: true,
+            continuousWorld: false,
+            errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
+          });
+
+          let tilesLoaded = 0;
+          let tilesErrored = 0;
+
+          tileLayer.on('tileloadstart', function(e) {
+            log('🔄 Loading: ' + e.url);
+          });
+
+          tileLayer.on('tileload', function(e) {
+            tilesLoaded++;
+            log('✅ Loaded (' + tilesLoaded + '): ' + e.url);
+          });
+
+          tileLayer.on('tileerror', function(e) {
+            tilesErrored++;
+            log('❌ Error (' + tilesErrored + '): ' + e.url);
+            
+            // If too many errors, try next pattern
+            if (tilesErrored > 5 && currentPatternIndex < tileUrlPatterns.length - 1) {
+              log('🔄 Too many errors, trying next pattern...');
+              map.removeLayer(tileLayer);
+              currentPatternIndex++;
+              setTimeout(() => {
+                const nextLayer = createTileLayer(tileUrlPatterns[currentPatternIndex]);
+                nextLayer.addTo(map);
+              }, 1000);
+            }
+          });
+
+          return tileLayer;
+        }
+
+        // Start with first pattern
+        const tileLayer = createTileLayer(tileUrlPatterns[currentPatternIndex]);
+        tileLayer.addTo(map);
+
+        // Set bounds for Altis (30720x30720 map)
+        const bounds = [[0, 0], [30720, 30720]];
+        map.fitBounds(bounds);
+        
+        // Set initial view to center of map
+        map.setView([15360, 15360], 2);
+
+        log('✅ Map initialized successfully');
+        log('📍 Map centered at [15360, 15360] zoom 2');
+        
+        // Auto-run tile tests after initialization
+        setTimeout(() => {
+          runTileTests();
+        }, 3000);
+        
+      } catch (error) {
+        log('❌ CRITICAL ERROR: ' + error.message);
+        console.error('Full error:', error);
+      }
+    });
+
+    function addCities() {
+      if (!map) return;
+      
+      cityMarkers.forEach(marker => map.removeLayer(marker));
+      cityMarkers = [];
+      
+      altisCities.forEach(city => {
+        const marker = L.marker([city.x, city.y]).addTo(map);
+        marker.bindPopup(`<b>${city.name}</b><br>Coords: [${city.x}, ${city.y}]`);
+        cityMarkers.push(marker);
+      });
+      
+      log('✅ Added ' + altisCities.length + ' city markers');
+    }
+
+    function removeCities() {
+      cityMarkers.forEach(marker => map.removeLayer(marker));
+      cityMarkers = [];
+      log('🗑️ Removed all city markers');
+    }
+
+    function toggleCities() {
+      if (citiesVisible) {
+        removeCities();
+        citiesVisible = false;
+        log('🏙️ Cities hidden');
+      } else {
+        addCities();
+        citiesVisible = true;
+        log('🏙️ Cities shown');
+      }
+    }
+
+    function centerMap() {
+      if (map) {
+        map.setView([15360, 15360], 2);
+        log('📍 Map centered at [15360, 15360] zoom 2');
+      }
+    }
+
+    function goBack() {
+      if (confirm('Are you sure you want to leave TrackPoint?')) {
+        window.location.href = '/admin-dashboard.html';
+      }
+    }
+  </script>
+</body>
+</html>

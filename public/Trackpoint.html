@@ -98,108 +98,226 @@
 
   <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
   <script src="https://unpkg.com/jquery@3.5.1/dist/jquery.min.js"></script>
-  <script src="mapUtils.js"></script>
-  <script src="defaultMap.js"></script>
-  <script src="altis.js"></script>
   <script>
     let map;
     let citiesVisible = false;
 
+    // Altis cities data
+    const altisCities = [
+      { name: "Kavala", x: 26800, y: 21300 },
+      { name: "Pyrgos", x: 15200, y: 17000 },
+      { name: "Sofia", x: 25900, y: 21900 },
+      { name: "Athira", x: 13400, y: 19600 },
+      { name: "Paros", x: 23300, y: 16600 },
+      { name: "Zaros", x: 8600, y: 15900 },
+      { name: "Poliakko", x: 12200, y: 14200 },
+      { name: "Galati", x: 20800, y: 13600 }
+    ];
+
+    let cityMarkers = [];
+
     $(function () {
       console.log('TrackPoint initializing...');
       
-      // Check if all required objects are loaded
-      if (typeof L === 'undefined') {
-        console.error('❌ Leaflet not loaded');
-        return;
-      }
-      
-      if (typeof Arma3Map === 'undefined') {
-        console.error('❌ Arma3Map not defined');
-        return;
-      }
-      
-      if (typeof InitMap === 'undefined') {
-        console.error('❌ InitMap function not defined');
-        return;
-      }
-      
-      console.log('✅ All dependencies loaded');
-      console.log('Arma3Map.Maps.altis:', Arma3Map.Maps.altis);
-      
-      // Initialize Altis map exactly like the original
       try {
-        InitMap(Arma3Map.Maps.altis);
-        console.log('✅ InitMap called successfully');
-      } catch (error) {
-        console.error('❌ Error initializing map:', error);
+        // Create map with simple coordinate system (more reliable)
+        map = L.map('map', {
+          crs: L.CRS.Simple,
+          minZoom: 0,
+          maxZoom: 6,
+          zoomControl: true,
+          attributionControl: true
+        });
+
+        console.log('✅ Map created with Simple CRS');
+
+        // Create tile layer with multiple URL patterns for better compatibility
+        let tileLayer;
+        const baseUrl = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '/');
         
-        // Fallback: try to create a basic map with custom tile layer
-        try {
-          console.log('🔄 Attempting fallback map creation...');
-          
-          // Create custom tile layer to ensure proper URL generation
-          const AltisLayer = L.TileLayer.extend({
-            getTileUrl: function (coords) {
-              const url = `altis/${coords.z}/${coords.x}/${coords.y}.png`;
-              console.log('🔗 Fallback requesting tile: ' + url);
-              return url;
+        // Try different tile URL patterns
+        const tileUrlPatterns = [
+          'altis/{z}/{x}/{y}.png',                    // Relative path
+          './altis/{z}/{x}/{y}.png',                  // Explicit relative path
+          baseUrl + 'altis/{z}/{x}/{y}.png'          // Absolute path
+        ];
+        
+        console.log('🔗 Base URL detected: ' + baseUrl);
+        console.log('🔗 Trying tile patterns:', tileUrlPatterns);
+        
+        // Start with the first pattern
+        tileLayer = L.tileLayer(tileUrlPatterns[0], {
+          attribution: 'Altis Map - Arma 3',
+          tileSize: 256,
+          minZoom: 0,
+          maxZoom: 6,
+          noWrap: true,
+          continuousWorld: false,
+          errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
+        });
+
+        // Add debugging for tile loading with fallback mechanism
+        let tilesLoaded = 0;
+        let tilesErrored = 0;
+        let currentPatternIndex = 0;
+        
+        function setupTileEvents(layer) {
+          layer.on('tileloadstart', function(e) {
+            console.log('🔄 Loading tile:', e.url);
+          });
+
+          layer.on('tileload', function(e) {
+            tilesLoaded++;
+            console.log('✅ Tile loaded (' + tilesLoaded + '):', e.url);
+          });
+
+          layer.on('tileerror', function(e) {
+            tilesErrored++;
+            console.error('❌ Tile error (' + tilesErrored + '):', e.url);
+            console.error('   Coords: z=' + e.coords.z + ' x=' + e.coords.x + ' y=' + e.coords.y);
+            
+            // If too many errors and we have more patterns to try
+            if (tilesErrored > 3 && currentPatternIndex < tileUrlPatterns.length - 1) {
+              console.log('🔄 Too many tile errors, trying next URL pattern...');
+              map.removeLayer(layer);
+              currentPatternIndex++;
+              
+              setTimeout(() => {
+                console.log('🔄 Switching to pattern: ' + tileUrlPatterns[currentPatternIndex]);
+                const newLayer = L.tileLayer(tileUrlPatterns[currentPatternIndex], {
+                  attribution: 'Altis Map - Arma 3',
+                  tileSize: 256,
+                  minZoom: 0,
+                  maxZoom: 6,
+                  noWrap: true,
+                  continuousWorld: false,
+                  errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
+                });
+                setupTileEvents(newLayer);
+                newLayer.addTo(map);
+                tileLayer = newLayer;
+                tilesErrored = 0; // Reset error count
+              }, 2000);
             }
           });
 
-          map = L.map('map', {
-            crs: L.CRS.Simple,
-            minZoom: 0,
-            maxZoom: 6
+          layer.on('loading', function() {
+            console.log('🔄 Map tiles loading...');
           });
 
-          const tileLayer = new AltisLayer('', {
-            attribution: 'Altis Map - Arma 3',
-            tileSize: 256,
-            minZoom: 0,
-            maxZoom: 6
+          layer.on('load', function() {
+            console.log('✅ All map tiles loaded successfully');
           });
-
-          tileLayer.addTo(map);
-          
-          // Set bounds for the map
-          const bounds = [[0, 0], [30720, 30720]];
-          map.fitBounds(bounds);
-          
-          console.log('✅ Fallback map created with custom tile layer');
-        } catch (fallbackError) {
-          console.error('❌ Fallback map creation failed:', fallbackError);
         }
-      }
-      
-      // Store map reference globally
-      setTimeout(() => {
-        map = window.map || map;
-        console.log('Map reference stored:', map);
         
-        if (map) {
-          console.log('✅ Map is ready');
-        } else {
-          console.error('❌ Map is still null');
+        setupTileEvents(tileLayer);
+
+        tileLayer.addTo(map);
+
+        // Set bounds for Altis (30720x30720 map)
+        const bounds = [[0, 0], [30720, 30720]];
+        map.fitBounds(bounds);
+        
+        // Set initial view to center of map
+        map.setView([15360, 15360], 2);
+
+        // Store map reference globally
+        window.map = map;
+        
+        console.log('✅ Map initialized successfully');
+        console.log('📍 Map centered at [15360, 15360] zoom 2');
+        
+        // Add cities if hash is set
+        if (window.location.hash === '#cities') {
+          addCities();
         }
-      }, 1000);
+        
+        // Test direct tile access after initialization
+        setTimeout(() => {
+          testDirectTileAccess();
+        }, 3000);
+        
+      } catch (error) {
+        console.error('❌ Error initializing map:', error);
+      }
     });
+
+    function testDirectTileAccess() {
+      console.log('🧪 Testing direct tile access...');
+      
+      const testTiles = [
+        'altis/2/0/0.png',
+        'altis/6/0/0.png',
+        'altis/4/1/2.png'
+      ];
+      
+      testTiles.forEach(tileUrl => {
+        const img = new Image();
+        img.onload = function() {
+          console.log('✅ Direct tile test PASSED: ' + tileUrl + ' (' + this.naturalWidth + 'x' + this.naturalHeight + ')');
+        };
+        img.onerror = function() {
+          console.error('❌ Direct tile test FAILED: ' + tileUrl);
+          console.error('   This indicates a server/routing issue');
+        };
+        img.src = tileUrl;
+      });
+      
+      // Also test with absolute URLs
+      const baseUrl = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '/');
+      testTiles.forEach(tileUrl => {
+        const absoluteUrl = baseUrl + tileUrl;
+        const img = new Image();
+        img.onload = function() {
+          console.log('✅ Absolute tile test PASSED: ' + absoluteUrl);
+        };
+        img.onerror = function() {
+          console.error('❌ Absolute tile test FAILED: ' + absoluteUrl);
+        };
+        img.src = absoluteUrl;
+      });
+    }
+
+    function addCities() {
+      if (!map) return;
+      
+      // Clear existing city markers
+      cityMarkers.forEach(marker => map.removeLayer(marker));
+      cityMarkers = [];
+      
+      altisCities.forEach(city => {
+        const marker = L.marker([city.x, city.y]).addTo(map);
+        marker.bindPopup(`<b>${city.name}</b><br>Coords: [${city.x}, ${city.y}]`);
+        cityMarkers.push(marker);
+      });
+      
+      console.log('✅ Added ' + altisCities.length + ' city markers');
+    }
+
+    function removeCities() {
+      cityMarkers.forEach(marker => map.removeLayer(marker));
+      cityMarkers = [];
+      console.log('🗑️ Removed all city markers');
+    }
 
     function toggleCities() {
       if (citiesVisible) {
-        // Remove cities by reloading without hash
+        removeCities();
         window.location.hash = '';
-        location.reload();
+        citiesVisible = false;
+        console.log('🏙️ Cities hidden');
       } else {
-        // Add cities by setting hash and reloading
+        addCities();
         window.location.hash = '#cities';
-        location.reload();
+        citiesVisible = true;
+        console.log('🏙️ Cities shown');
       }
     }
 
     function centerMap() {
-      if (map && Arma3Map.Maps.altis) {
-        map.setView(Arma3Map.Maps.altis.center, Arma3Map.Maps.altis.defaultZoom);
+      if (map) {
+        map.setView([15360, 15360], 2);
+        console.log('📍 Map centered at [15360, 15360] zoom 2');
       }
     }
 
