@@ -511,9 +511,23 @@ io.on('connection', socket => {
     const room = webrtcRooms.get(classId);
     room.instructor = socket.id;
     
+    // Join both WebRTC room and streaming room
     socket.join(`webrtc:${classId}`);
+    const streamRoomName = `class:${classId}`;
+    socket.join(streamRoomName);
+    
     socket.classId = classId;
     socket.role = 'instructor';
+    socket.currentStreamRoom = streamRoomName;
+    socket.isInstructor = true;
+    
+    console.log(`👨‍🏫 Instructor also joined streaming room: ${streamRoomName}`);
+    
+    // Initialize viewer count for instructor
+    const roomMembers = io.sockets.adapter.rooms.get(streamRoomName);
+    const viewerCount = roomMembers ? roomMembers.size - 1 : 0; // Subtract instructor
+    console.log(`👥 Initial viewer count for ${streamRoomName}: ${viewerCount}`);
+    socket.emit('viewerCount', { count: viewerCount });
   });
   
   // Student joins class for WebRTC streaming
@@ -528,9 +542,17 @@ io.on('connection', socket => {
     const room = webrtcRooms.get(classId);
     room.students.add(socket.id);
     
+    // Join both WebRTC room and streaming room
     socket.join(`webrtc:${classId}`);
+    const streamRoomName = `class:${classId}`;
+    socket.join(streamRoomName);
+    
     socket.classId = classId;
     socket.role = 'student';
+    socket.currentStreamRoom = streamRoomName;
+    socket.isInstructor = false;
+    
+    console.log(`🎓 Student also joined streaming room: ${streamRoomName}`);
     
     // Notify instructor that a student joined
     if (room.instructor) {
@@ -539,6 +561,22 @@ io.on('connection', socket => {
         classId: classId 
       });
     }
+    
+    // Send current stream state to late joiner
+    if (io.streamStates && io.streamStates.has(classId)) {
+      const currentState = io.streamStates.get(classId);
+      console.log(`📥 Sending current stream state to late joiner:`, currentState);
+      socket.emit('stream:current-state', currentState);
+    } else {
+      console.log(`ℹ️ No active stream state for class: ${classId}`);
+      socket.emit('stream:no-state', { classId });
+    }
+    
+    // Update viewer count for the instructor
+    const roomMembers = io.sockets.adapter.rooms.get(streamRoomName);
+    const viewerCount = roomMembers ? roomMembers.size - 1 : 0; // Subtract instructor
+    console.log(`👥 Updated viewer count for ${streamRoomName}: ${viewerCount}`);
+    io.to(streamRoomName).emit('viewerCount', { count: viewerCount });
   });
   
   // Instructor starts WebRTC streaming
@@ -1067,6 +1105,14 @@ io.on('connection', socket => {
         if (!room.instructor && room.students.size === 0) {
           webrtcRooms.delete(classId);
           console.log(`🧹 Cleaned up empty WebRTC room: ${classId}`);
+        }
+        
+        // Update viewer count for streaming room
+        if (socket.currentStreamRoom) {
+          const roomMembers = io.sockets.adapter.rooms.get(socket.currentStreamRoom);
+          const viewerCount = roomMembers ? roomMembers.size - 1 : 0; // Subtract instructor if present
+          console.log(`👥 Updated viewer count after disconnect for ${socket.currentStreamRoom}: ${viewerCount}`);
+          io.to(socket.currentStreamRoom).emit('viewerCount', { count: viewerCount });
         }
       }
     }

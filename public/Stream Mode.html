@@ -2007,6 +2007,16 @@
         console.log('❌ Streaming socket disconnected');
       });
       
+      // Listen for viewer count updates
+      socket.on('viewerCount', (data) => {
+        console.log('👥 Viewer count update:', data.count);
+        document.getElementById('viewerCount').textContent = data.count || 0;
+        const viewerCountInfo = document.getElementById('viewerCountInfo');
+        if (viewerCountInfo) {
+          viewerCountInfo.textContent = data.count || 0;
+        }
+      });
+      
       // If already connected, join immediately
       if (socket.connected) {
         socket.emit('instructor-join-class', { classId: currentClassId });
