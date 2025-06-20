@@ -1092,20 +1092,23 @@
               // Start playing the video when going live
               if (previewVideo && previewVideo.src) {
                 previewVideo.play().catch(e => console.log('Video autoplay prevented:', e));
-                videoOverlay.style.display = 'none';
+                const videoOverlay = document.getElementById('videoOverlay');
+                if (videoOverlay) videoOverlay.style.display = 'none';
               }
             } else if (status === 'paused') {
               // Pause the video
               if (previewVideo && !previewVideo.paused) {
                 previewVideo.pause();
-                videoOverlay.style.display = 'flex';
+                const videoOverlay = document.getElementById('videoOverlay');
+                if (videoOverlay) videoOverlay.style.display = 'flex';
               }
             } else if (status === 'offline') {
               // Stop the video and reset
               if (previewVideo) {
                 previewVideo.pause();
                 previewVideo.currentTime = 0;
-                videoOverlay.style.display = 'flex';
+                const videoOverlay = document.getElementById('videoOverlay');
+                if (videoOverlay) videoOverlay.style.display = 'flex';
               }
             }
           }
@@ -1199,6 +1202,8 @@
     const fileInfoDetails = document.getElementById('fileInfoDetails');
     
     function showFileInfo(file) {
+      console.log('📁 showFileInfo called with file:', file?.name);
+      
       const sizeGB = (file.size / 1024 / 1024 / 1024).toFixed(2);
       const sizeMB = (file.size / 1024 / 1024).toFixed(1);
       const displaySize = file.size > 1024 * 1024 * 1024 ? sizeGB + 'GB' : sizeMB + 'MB';
@@ -1236,14 +1241,22 @@
     }
     
     function loadFileIntoPlayer(file) {
+      console.log('🎬 loadFileIntoPlayer called with file:', file?.name);
+      
       if (!file || !file.type.startsWith('video/')) {
-        console.warn('Invalid file type for video preview');
+        console.warn('❌ Invalid file type for video preview:', file?.type);
         return;
       }
       
       const previewVideo = document.getElementById('previewVideo');
-      const placeholder = document.querySelector('.video-preview .placeholder');
+      const placeholder = document.querySelector('.video-placeholder');
       const videoReady = document.getElementById('videoReady');
+      
+      console.log('🔍 DOM elements found:', {
+        previewVideo: !!previewVideo,
+        placeholder: !!placeholder,
+        videoReady: !!videoReady
+      });
       
       // Create a local URL for the file
       const fileURL = URL.createObjectURL(file);
@@ -1251,10 +1264,18 @@
       // Load the video
       previewVideo.src = fileURL;
       previewVideo.style.display = 'block';
-      placeholder.style.display = 'none';
-      videoOverlay.style.display = 'flex';
-      videoReady.style.display = 'block';
-      videoReady.textContent = '⚠️ Upload Required';
+      if (placeholder) placeholder.style.display = 'none';
+      
+      // Check if videoOverlay exists before using it
+      const videoOverlay = document.getElementById('videoOverlay');
+      if (videoOverlay) {
+        videoOverlay.style.display = 'flex';
+      }
+      
+      if (videoReady) {
+        videoReady.style.display = 'block';
+        videoReady.textContent = '⚠️ Upload Required';
+      }
       
       // Store the local file info
       window.currentLocalVideo = {
@@ -1262,6 +1283,8 @@
         url: fileURL,
         name: file.name
       };
+      
+      console.log('✅ window.currentLocalVideo set:', window.currentLocalVideo);
       
       uploadStatus.textContent = `"${file.name}" loaded in player! You can preview it now or upload to stream.`;
       uploadStatus.className = 'upload-status success';
@@ -1360,35 +1383,71 @@
       fileInfo.classList.remove('show');
     }
     
-    fileDrop.addEventListener('click', () => fileInput.click());
-    fileBrowse.addEventListener('click', e => { e.stopPropagation(); fileInput.click(); });
-    fileDrop.addEventListener('dragover', e => { e.preventDefault(); fileDrop.classList.add('dragover'); });
-    fileDrop.addEventListener('dragleave', e => fileDrop.classList.remove('dragover'));
-    fileDrop.addEventListener('drop', e => {
-      e.preventDefault();
-      fileDrop.classList.remove('dragover');
-      const file = e.dataTransfer.files[0];
-      if (file) {
-        showFileInfo(file);
-        // Don't auto-upload, just load for preview
-        // User can manually upload later if needed
-      }
-    });
-    fileInput.addEventListener('change', e => {
-      const file = fileInput.files[0];
-      if (file) {
-        showFileInfo(file);
-        // Don't auto-upload, just load for preview
-        // User can manually upload later if needed
-      }
-    });
+    // File input and drag/drop event listeners will be set up in setupEventListeners()
     
     // Setup event listeners
     function setupEventListeners() {
       console.log('🔧 Setting up event listeners');
       
-      // Upload button handler
+      // Get DOM elements
+      const fileDrop = document.getElementById('fileDrop');
+      const fileInput = document.getElementById('fileInput');
+      const fileBrowse = document.getElementById('fileBrowse');
       const uploadBtn = document.getElementById('uploadBtn');
+      
+      console.log('🔍 DOM elements check:', {
+        fileDrop: !!fileDrop,
+        fileInput: !!fileInput,
+        fileBrowse: !!fileBrowse,
+        uploadBtn: !!uploadBtn
+      });
+      
+      // File input and drag/drop event listeners
+      if (fileDrop && fileInput && fileBrowse) {
+        fileDrop.addEventListener('click', () => {
+          console.log('📁 File drop area clicked');
+          fileInput.click();
+        });
+        
+        fileBrowse.addEventListener('click', e => { 
+          console.log('📁 Browse button clicked');
+          e.stopPropagation(); 
+          fileInput.click(); 
+        });
+        
+        fileDrop.addEventListener('dragover', e => { 
+          e.preventDefault(); 
+          fileDrop.classList.add('dragover'); 
+        });
+        
+        fileDrop.addEventListener('dragleave', e => fileDrop.classList.remove('dragover'));
+        
+        fileDrop.addEventListener('drop', e => {
+          console.log('📁 File dropped');
+          e.preventDefault();
+          fileDrop.classList.remove('dragover');
+          const file = e.dataTransfer.files[0];
+          if (file) {
+            console.log('📁 Dropped file:', file.name);
+            showFileInfo(file);
+          }
+        });
+        
+        fileInput.addEventListener('change', e => {
+          console.log('📁 File input changed');
+          const file = fileInput.files[0];
+          if (file) {
+            console.log('📁 Selected file:', file.name);
+            showFileInfo(file);
+          }
+        });
+        
+        console.log('✅ File input event listeners attached');
+      } else {
+        console.error('❌ File input elements not found');
+      }
+      
+      // Upload button handler
       if (!uploadBtn) {
         console.error('❌ Upload button not found in DOM');
         return;
@@ -1515,7 +1574,7 @@
         
         // Load the uploaded video into the preview (replace local version)
         const previewVideo = document.getElementById('previewVideo');
-        const placeholder = document.querySelector('.video-preview .placeholder');
+        const placeholder = document.querySelector('.video-placeholder');
         const videoReady = document.getElementById('videoReady');
         
         if (result.streamUrl) {
@@ -1526,10 +1585,13 @@
           
           previewVideo.src = result.streamUrl;
           previewVideo.style.display = 'block';
-          placeholder.style.display = 'none';
-          videoOverlay.style.display = 'flex';
-          videoReady.style.display = 'block';
-          videoReady.textContent = '✅ Ready to Stream';
+          if (placeholder) placeholder.style.display = 'none';
+          const videoOverlay = document.getElementById('videoOverlay');
+          if (videoOverlay) videoOverlay.style.display = 'flex';
+          if (videoReady) {
+            videoReady.style.display = 'block';
+            videoReady.textContent = '✅ Ready to Stream';
+          }
           
           // Store the stream info for when user clicks "Go Live"
           window.currentUploadedVideo = {
@@ -1620,7 +1682,7 @@
       
       // Show file preview if a file is loaded, otherwise show placeholder
       const previewVideo = document.getElementById('previewVideo');
-      const placeholder = document.querySelector('.video-preview .placeholder');
+      const placeholder = document.querySelector('.video-placeholder');
       
       if (window.currentLocalVideo && window.currentLocalVideo.url) {
         previewVideo.style.display = 'block';
@@ -2271,14 +2333,15 @@
         
         // Load the file into the video player
         const previewVideo = document.getElementById('previewVideo');
-        const placeholder = document.querySelector('.video-preview .placeholder');
+        const placeholder = document.querySelector('.video-placeholder');
         const videoReady = document.getElementById('videoReady');
         
         previewVideo.src = file.url;
         previewVideo.style.display = 'block';
-        placeholder.style.display = 'none';
-        videoOverlay.style.display = 'flex';
-        videoReady.style.display = 'block';
+        if (placeholder) placeholder.style.display = 'none';
+        const videoOverlay = document.getElementById('videoOverlay');
+        if (videoOverlay) videoOverlay.style.display = 'flex';
+        if (videoReady) videoReady.style.display = 'block';
         
         // Update current video reference based on whether it's uploaded or local
         if (file.uploaded) {
