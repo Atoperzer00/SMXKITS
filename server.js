@@ -579,6 +579,13 @@ io.on('connection', socket => {
       socket.emit('stream:no-state', { classId });
     }
     
+    // Send confirmation to student
+    socket.emit('stream:student-ready', {
+      message: 'Ready to receive stream',
+      classId: classId,
+      timestamp: new Date().toISOString()
+    });
+    
     // Update viewer count for the instructor
     const roomMembers = io.sockets.adapter.rooms.get(streamRoomName);
     const viewerCount = roomMembers ? roomMembers.size - 1 : 0; // Subtract instructor
@@ -650,17 +657,18 @@ io.on('connection', socket => {
   
   // WebRTC Signaling - Answer from student to instructor
   socket.on('webrtc-answer', (data) => {
-    const { to, answer } = data;
+    const { to, answer, room } = data;
     console.log(`📡 Forwarding WebRTC answer from ${socket.id} to instructor`);
     
     // Find instructor in the same class
     const classId = socket.classId;
     if (classId && webrtcRooms.has(classId)) {
-      const room = webrtcRooms.get(classId);
-      if (room.instructor) {
-        io.to(room.instructor).emit('webrtc-answer', {
-          from: socket.id,
-          answer: answer
+      const webrtcRoom = webrtcRooms.get(classId);
+      if (webrtcRoom.instructor) {
+        io.to(webrtcRoom.instructor).emit('webrtc-answer', {
+          fromStudent: socket.id,
+          answer: answer,
+          room: room
         });
       }
     }
@@ -668,27 +676,94 @@ io.on('connection', socket => {
   
   // WebRTC Signaling - ICE Candidates
   socket.on('webrtc-ice-candidate', (data) => {
-    const { to, candidate } = data;
+    const { to, candidate, targetStudent, room } = data;
     
-    if (to === 'instructor') {
+    if (to === 'instructor' || !targetStudent) {
       // Student sending to instructor
       const classId = socket.classId;
       if (classId && webrtcRooms.has(classId)) {
-        const room = webrtcRooms.get(classId);
-        if (room.instructor) {
-          io.to(room.instructor).emit('webrtc-ice-candidate', {
-            from: socket.id,
-            candidate: candidate
+        const webrtcRoom = webrtcRooms.get(classId);
+        if (webrtcRoom.instructor) {
+          io.to(webrtcRoom.instructor).emit('webrtc-ice-candidate', {
+            fromStudent: socket.id,
+            candidate: candidate,
+            room: room
           });
         }
       }
     } else {
       // Instructor sending to specific student
-      io.to(to).emit('webrtc-ice-candidate', {
-        from: socket.id,
-        candidate: candidate
+      io.to(targetStudent).emit('webrtc-ice-candidate', {
+        fromInstructor: socket.id,
+        candidate: candidate,
+        room: room
       });
     }
+  });
+  
+  // Stream started by instructor
+  socket.on('stream:started', (data) => {
+    const { room } = data;
+    console.log(`🔴 Instructor started stream in room: ${room}`);
+    
+    // Notify all students in the room
+    socket.to(room).emit('stream:started', {
+      instructor: socket.id,
+      room: room
+    });
+    
+    // Update viewer count
+    const roomSockets = io.sockets.adapter.rooms.get(room);
+    const viewerCount = roomSockets ? roomSockets.size - 1 : 0; // Exclude instructor
+    io.to(room).emit('viewer:count', { count: viewerCount });
+  });
+  
+  // Stream stopped by instructor
+  socket.on('stream:stopped', (data) => {
+    const { room } = data;
+    console.log(`⏹️ Instructor stopped stream in room: ${room}`);
+    
+    // Notify all students in the room
+    socket.to(room).emit('stream:stopped', {
+      instructor: socket.id,
+      room: room
+    });
+  });
+  
+  // Get viewer count
+  socket.on('get:viewer-count', (data) => {
+    const { room } = data;
+    const roomSockets = io.sockets.adapter.rooms.get(room);
+    const viewerCount = roomSockets ? roomSockets.size - 1 : 0; // Exclude instructor
+    socket.emit('viewer:count', { count: viewerCount });
+  });
+  
+  // Get room members (for instructor to create WebRTC connections)
+  socket.on('get:room-members', (data) => {
+    const { room } = data;
+    const roomSockets = io.sockets.adapter.rooms.get(room);
+    
+    if (roomSockets) {
+      const members = Array.from(roomSockets).filter(socketId => socketId !== socket.id);
+      console.log(`📋 Room ${room} has ${members.length} students:`, members);
+      
+      // Send each student ID to instructor for WebRTC connection
+      members.forEach(studentId => {
+        socket.emit('student:joined', { studentId });
+      });
+    }
+  });
+  
+  // WebRTC Offer from instructor to student
+  socket.on('webrtc-offer', (data) => {
+    const { room, offer, targetStudent } = data;
+    console.log(`📤 Forwarding WebRTC offer to student: ${targetStudent}`);
+    
+    io.to(targetStudent).emit('webrtc-offer', {
+      offer: offer,
+      fromInstructor: socket.id,
+      room: room
+    });
   });
   
   // WebRTC Stream Control - Instructor started streaming

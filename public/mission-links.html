@@ -424,28 +424,15 @@
       width: 100vw;
       height: 100vh;
       background: rgba(0, 0, 0, 0.95);
-      z-index: 99999;
+      z-index: 999999;
       backdrop-filter: blur(10px);
-    }
-
-    .slideshow-modal.active {
-      display: flex !important;
       align-items: center;
       justify-content: center;
     }
 
-    /* Force display when active - override any conflicting styles */
+    /* When active, show the modal */
     .slideshow-modal.active {
       display: flex !important;
-      position: fixed !important;
-      top: 0 !important;
-      left: 0 !important;
-      width: 100vw !important;
-      height: 100vh !important;
-      background: rgba(0, 0, 0, 0.95) !important;
-      z-index: 99999 !important;
-      align-items: center !important;
-      justify-content: center !important;
     }
 
     .slideshow-container {
@@ -710,22 +697,7 @@
           <p style="color: var(--text-secondary); font-size: 1.1rem; margin-top: 0.5rem;">
             Access essential mission resources and external links for training operations.
           </p>
-          <!-- Debug test button -->
-          <button onclick="alert('JavaScript is working!')" style="background: var(--accent-gradient); border: none; color: white; padding: 0.5rem 1rem; border-radius: 5px; margin-top: 1rem; cursor: pointer;">
-            Test JavaScript
-          </button>
-          <!-- Test slideshow button -->
-          <button onclick="testSlideshow()" style="background: var(--primary-gradient); border: none; color: white; padding: 0.5rem 1rem; border-radius: 5px; margin-top: 1rem; margin-left: 1rem; cursor: pointer;">
-            Test Slideshow
-          </button>
-          <!-- Debug slideshow button -->
-          <button onclick="debugSlideshow()" style="background: #6366f1; border: none; color: white; padding: 0.5rem 1rem; border-radius: 5px; margin-top: 1rem; margin-left: 1rem; cursor: pointer;">
-            Debug Slideshow
-          </button>
-          <!-- Force show modal button -->
-          <button onclick="forceShowModal()" style="background: #dc2626; border: none; color: white; padding: 0.5rem 1rem; border-radius: 5px; margin-top: 1rem; margin-left: 1rem; cursor: pointer;">
-            Force Show Modal
-          </button>
+
         </div>
       </header>
 
@@ -959,6 +931,18 @@
     function openSlideshowViewer() {
       console.log('=== openSlideshowViewer called ===');
       
+      // First, test if modal can be shown at all
+      const testModal = document.getElementById('slideshowModal');
+      if (!testModal) {
+        console.error('❌ Modal element not found in DOM!');
+        alert('Error: Modal element not found. Please refresh the page.');
+        return;
+      }
+      
+      console.log('✅ Modal element found:', testModal);
+      console.log('Modal current display:', window.getComputedStyle(testModal).display);
+      console.log('Modal current visibility:', window.getComputedStyle(testModal).visibility);
+      
       try {
         // Initialize slideshow images for Mission Reference 1
         slideImages = [
@@ -985,22 +969,35 @@
           return;
         }
         
-        // Force show modal with explicit styles
-        modal.style.display = 'flex';
-        modal.style.position = 'fixed';
-        modal.style.top = '0';
-        modal.style.left = '0';
-        modal.style.width = '100vw';
-        modal.style.height = '100vh';
-        modal.style.backgroundColor = 'rgba(0, 0, 0, 0.95)';
-        modal.style.zIndex = '99999';
-        modal.style.alignItems = 'center';
-        modal.style.justifyContent = 'center';
+        // Force show modal with explicit styles and higher z-index
+        modal.style.cssText = `
+          display: flex !important;
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100vw !important;
+          height: 100vh !important;
+          background: rgba(0, 0, 0, 0.95) !important;
+          z-index: 999999 !important;
+          align-items: center !important;
+          justify-content: center !important;
+          backdrop-filter: blur(10px) !important;
+        `;
         modal.classList.add('active');
         console.log('Modal styles applied and active class added');
         
         // Prevent body scrolling when modal is open
         document.body.style.overflow = 'hidden';
+        
+        // Force modal to be visible by removing any hidden classes
+        modal.classList.remove('hidden');
+        modal.removeAttribute('hidden');
+        
+        // Debug modal visibility
+        console.log('Modal computed styles:', window.getComputedStyle(modal));
+        console.log('Modal display:', modal.style.display);
+        console.log('Modal visibility:', modal.style.visibility);
+        console.log('Modal z-index:', modal.style.zIndex);
         
         // Update slide image after modal is shown
         setTimeout(() => {
@@ -1099,6 +1096,51 @@
     window.previousSlide = previousSlide;
     
     console.log('=== All critical functions defined and made global ===');
+    
+    // Add a simple test to verify modal can be shown
+    window.testModalVisibility = function() {
+      console.log('=== Testing Modal Visibility ===');
+      const modal = document.getElementById('slideshowModal');
+      if (modal) {
+        console.log('Modal found, forcing display...');
+        modal.style.cssText = `
+          display: flex !important;
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100vw !important;
+          height: 100vh !important;
+          background: rgba(255, 0, 0, 0.8) !important;
+          z-index: 999999 !important;
+          align-items: center !important;
+          justify-content: center !important;
+        `;
+        console.log('Modal should now be visible with red background');
+        
+        // Auto-hide after 3 seconds
+        setTimeout(() => {
+          modal.style.display = 'none';
+          console.log('Modal hidden');
+        }, 3000);
+      } else {
+        console.error('Modal not found!');
+      }
+    };
+    
+    // Test modal immediately on page load
+    setTimeout(() => {
+      console.log('=== Testing modal on page load ===');
+      const modal = document.getElementById('slideshowModal');
+      if (modal) {
+        console.log('✅ Modal found on page load');
+        console.log('Modal classes:', modal.className);
+        console.log('Modal style display:', modal.style.display);
+        console.log('Modal computed display:', window.getComputedStyle(modal).display);
+      } else {
+        console.error('❌ Modal NOT found on page load');
+      }
+    }, 1000);
+    
     console.log('✅ Functions available on window object:', {
       openLink: typeof window.openLink,
       generateReference: typeof window.generateReference,
@@ -1381,10 +1423,13 @@
           nextSlide();
         }
       } else {
-        // Test shortcut: Press 'T' to test slideshow
+        // Test shortcuts
         if (event.key === 'T' || event.key === 't') {
           console.log('Test shortcut pressed - opening slideshow');
           openSlideshowViewer();
+        } else if (event.key === 'M' || event.key === 'm') {
+          console.log('Modal test shortcut pressed');
+          testModalVisibility();
         }
       }
     });

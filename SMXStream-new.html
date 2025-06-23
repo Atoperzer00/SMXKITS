@@ -282,6 +282,64 @@
       background: rgba(255, 255, 255, 0.1);
       border-color: rgba(255, 255, 255, 0.4);
     }
+    
+    /* Instructor Controls */
+    .instructor-controls {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      z-index: 100;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 10px 15px;
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .instructor-btn {
+      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .instructor-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(34, 197, 94, 0.3);
+    }
+    
+    .instructor-btn:active {
+      transform: translateY(0);
+    }
+    
+    #stopStreamBtn {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    }
+    
+    #stopStreamBtn:hover {
+      box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3);
+    }
+    
+    .viewer-count {
+      color: white;
+      font-size: 14px;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
 
     /* Video Overlay Controls - Bottom Center */
     .video-controls-overlay {
@@ -1252,6 +1310,19 @@
           <div class="behind-live-indicator" id="behindLiveIndicator" style="display:none;">
             📡 You are <span id="behindLiveSeconds">0</span> seconds behind live
           </div>
+          
+          <!-- Instructor Controls - Top Left -->
+          <div class="instructor-controls" id="instructorControls" style="display:none;">
+            <button class="instructor-btn" id="startStreamBtn" onclick="startScreenShare()">
+              📺 Go Live
+            </button>
+            <button class="instructor-btn" id="stopStreamBtn" onclick="stopScreenShare()" style="display:none;">
+              ⏹️ Stop Stream
+            </button>
+            <div class="viewer-count">
+              👥 <span id="viewerCount">0</span> viewers
+            </div>
+          </div>
         </div>
         
 
@@ -1517,6 +1588,65 @@
         if (instructorPlaying) {
           captureThumbnailAtTime(instructorTime);
         }
+      });
+      
+      // ===== INSTRUCTOR WEBRTC EVENTS =====
+      socket.on('student:joined', (data) => {
+        console.log('👨‍🎓 Student joined room:', data.studentId);
+        if (isInstructor && localStream) {
+          handleStudentJoined(data.studentId);
+        }
+        // Update viewer count
+        updateViewerCount();
+      });
+      
+      socket.on('student:left', (data) => {
+        console.log('👋 Student left room:', data.studentId);
+        if (isInstructor) {
+          const peerConnection = peerConnections.get(data.studentId);
+          if (peerConnection) {
+            peerConnection.close();
+            peerConnections.delete(data.studentId);
+          }
+        }
+        // Update viewer count
+        updateViewerCount();
+      });
+      
+      socket.on('webrtc-answer', (data) => {
+        if (isInstructor) {
+          handleWebRTCAnswer(data);
+        }
+      });
+      
+      socket.on('webrtc-ice-candidate', (data) => {
+        if (isInstructor) {
+          handleICECandidate(data);
+        }
+      });
+      
+      socket.on('viewer:count', (data) => {
+        updateViewerCount(data.count);
+      });
+      
+      // ===== ROOM JOINING EVENTS =====
+      socket.on('stream:instructor-ready', (data) => {
+        console.log('✅ Instructor ready to broadcast:', data);
+        isInstructor = true;
+        checkInstructorRole();
+        currentRoom = `class:${data.classId}`;
+      });
+      
+      socket.on('viewerCount', (data) => {
+        console.log('👥 Viewer count update:', data.count);
+        updateViewerCount(data.count);
+      });
+      
+      socket.on('stream:student-ready', (data) => {
+        console.log('✅ Student ready to receive stream:', data);
+        isInstructor = false;
+        currentRoom = `class:${data.classId}`;
+      });
         
         // Check if student is still in sync with live stream
         const video = document.getElementById('video');
@@ -1720,6 +1850,52 @@
       updateClockDisplay();
       
       console.log('✅ Stream initialization completed');
+    }
+    
+    // ===== VIEWER COUNT AND UI UPDATES =====
+    function updateViewerCount(count) {
+      const viewerCountElement = document.getElementById('viewerCount');
+      if (viewerCountElement) {
+        if (count !== undefined) {
+          viewerCountElement.textContent = count;
+        } else {
+          // Request current viewer count from server
+          socket.emit('get:viewer-count', { room: currentRoom });
+        }
+      }
+    }
+    
+    // Check if user is instructor and show controls
+    function checkInstructorRole() {
+      // This will be called after authentication
+      if (isInstructor) {
+        document.getElementById('instructorControls').style.display = 'flex';
+        updateViewerCount();
+        console.log('🎛️ Instructor controls enabled');
+      }
+    }
+    
+    // Join the streaming room based on user role
+    function joinStreamingRoom() {
+      // Get class ID from URL or use default
+      const urlParams = new URLSearchParams(window.location.search);
+      const classId = urlParams.get('class') || 'default-class';
+      
+      // Determine user role (this should be set from authentication)
+      // For now, we'll check if user has instructor privileges
+      const userRole = isInstructor ? 'instructor' : 'student';
+      
+      console.log(`🚪 Joining streaming room as ${userRole} for class: ${classId}`);
+      
+      if (userRole === 'instructor') {
+        socket.emit('instructor-join-class', { classId });
+        currentRoom = `class:${classId}`;
+        console.log('👨‍🏫 Instructor joining class:', classId);
+      } else {
+        socket.emit('student-join-class', { classId });
+        currentRoom = `class:${classId}`;
+        console.log('👨‍🎓 Student joining class:', classId);
+      }
     }
     
     function handleInstructorPlay(data) {
@@ -3644,6 +3820,172 @@
       }
     }
     
+    // ===== INSTRUCTOR SCREEN SHARING =====
+    let localStream = null;
+    let peerConnections = new Map(); // Map of student socket IDs to peer connections
+    
+    async function startScreenShare() {
+      try {
+        console.log('🎥 Starting screen share...');
+        
+        // Get screen share stream
+        localStream = await navigator.mediaDevices.getDisplayMedia({
+          video: {
+            mediaSource: 'screen',
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+            frameRate: { ideal: 30 }
+          },
+          audio: true
+        });
+        
+        console.log('✅ Screen capture started');
+        
+        // Update UI
+        document.getElementById('startStreamBtn').style.display = 'none';
+        document.getElementById('stopStreamBtn').style.display = 'block';
+        
+        // Show local preview
+        const video = document.getElementById('video');
+        video.srcObject = localStream;
+        video.play();
+        
+        // Notify server that stream started
+        socket.emit('stream:started', {
+          room: currentRoom
+        });
+        
+        // Also notify via the existing WebRTC system
+        const urlParams = new URLSearchParams(window.location.search);
+        const classId = urlParams.get('class') || 'default-class';
+        
+        socket.emit('instructor-start-webrtc', {
+          classId: classId,
+          mediaType: 'Screen Share'
+        });
+        
+        // Handle stream end (user clicks stop sharing in browser)
+        localStream.getVideoTracks()[0].addEventListener('ended', () => {
+          console.log('📺 Screen sharing ended by user');
+          stopScreenShare();
+        });
+        
+        // Request list of current students to create connections
+        socket.emit('get:room-members', { room: currentRoom });
+        
+        console.log('🚀 Stream is now live!');
+        
+      } catch (error) {
+        console.error('❌ Error starting screen share:', error);
+        showNotification('Failed to start screen sharing. Please allow screen access.', 'error');
+      }
+    }
+    
+    function stopScreenShare() {
+      console.log('⏹️ Stopping screen share...');
+      
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+      }
+      
+      // Close all peer connections
+      peerConnections.forEach(pc => pc.close());
+      peerConnections.clear();
+      
+      // Update UI
+      document.getElementById('startStreamBtn').style.display = 'block';
+      document.getElementById('stopStreamBtn').style.display = 'none';
+      
+      // Clear video
+      const video = document.getElementById('video');
+      video.srcObject = null;
+      
+      // Notify server that stream stopped
+      socket.emit('stream:stopped', {
+        room: currentRoom
+      });
+      
+      console.log('✅ Stream stopped');
+    }
+    
+    // Handle new student joining (create peer connection)
+    async function handleStudentJoined(studentSocketId) {
+      if (!localStream || !isInstructor) return;
+      
+      console.log('👨‍🎓 New student joined:', studentSocketId);
+      
+      try {
+        // Create peer connection for this student
+        const peerConnection = new RTCPeerConnection({
+          iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' }
+          ]
+        });
+        
+        // Add local stream to peer connection
+        localStream.getTracks().forEach(track => {
+          peerConnection.addTrack(track, localStream);
+        });
+        
+        // Handle ICE candidates
+        peerConnection.onicecandidate = (event) => {
+          if (event.candidate) {
+            socket.emit('webrtc-ice-candidate', {
+              room: currentRoom,
+              candidate: event.candidate,
+              targetStudent: studentSocketId
+            });
+          }
+        };
+        
+        // Create offer for student
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+        
+        // Store peer connection
+        peerConnections.set(studentSocketId, peerConnection);
+        
+        // Send offer to student
+        socket.emit('webrtc-offer', {
+          room: currentRoom,
+          offer: offer,
+          targetStudent: studentSocketId
+        });
+        
+        console.log('📤 Sent WebRTC offer to student:', studentSocketId);
+        
+      } catch (error) {
+        console.error('❌ Error creating peer connection for student:', error);
+      }
+    }
+    
+    // Handle WebRTC answer from student
+    async function handleWebRTCAnswer(data) {
+      const peerConnection = peerConnections.get(data.fromStudent);
+      if (peerConnection) {
+        try {
+          await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+          console.log('✅ WebRTC connection established with student:', data.fromStudent);
+        } catch (error) {
+          console.error('❌ Error handling WebRTC answer:', error);
+        }
+      }
+    }
+    
+    // Handle ICE candidate from student
+    async function handleICECandidate(data) {
+      const peerConnection = peerConnections.get(data.fromStudent);
+      if (peerConnection) {
+        try {
+          await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+        } catch (error) {
+          console.error('❌ Error adding ICE candidate:', error);
+        }
+      }
+    }
+    
     // ===== INITIALIZATION =====
     function initializeStreamViewer() {
       console.log('📚 Initializing stream viewer for class:', classId);
@@ -3679,6 +4021,9 @@
       } catch (error) {
         console.warn('⚠️ Timeline initialization failed:', error);
       }
+      
+      // Join the appropriate room based on role
+      joinStreamingRoom();
       
       // Start regular updates
       setInterval(updateLiveStatus, 1000);
