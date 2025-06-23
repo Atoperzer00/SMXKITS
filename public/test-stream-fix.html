@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stream Communication Test</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #1a1a1a; color: white; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .section { margin: 20px 0; padding: 20px; border: 1px solid #333; border-radius: 8px; }
+        .instructor { background: #2a1a1a; border-color: #dc2626; }
+        .student { background: #1a2a1a; border-color: #10b981; }
+        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-primary { background: #dc2626; color: white; }
+        .btn-secondary { background: #10b981; color: white; }
+        .log { background: #000; padding: 10px; border-radius: 4px; height: 200px; overflow-y: auto; font-family: monospace; font-size: 12px; }
+        input { padding: 8px; margin: 5px; border: 1px solid #333; background: #2a2a2a; color: white; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Stream Communication Test</h1>
+        
+        <div class="section instructor">
+            <h2>👨‍🏫 Instructor (Stream Mode)</h2>
+            <input type="text" id="classId" placeholder="Class ID" value="507f1f77bcf86cd799439011">
+            <input type="text" id="streamUrl" placeholder="Stream URL" value="/uploads/test-video.mp4">
+            <br>
+            <button class="btn-primary" onclick="connectInstructor()">Connect Instructor</button>
+            <button class="btn-primary" onclick="joinClass('instructor')">Join Class</button>
+            <button class="btn-primary" onclick="goLive()">Go Live</button>
+            <button class="btn-primary" onclick="stopStream()">Stop Stream</button>
+            <div id="instructorLog" class="log"></div>
+        </div>
+        
+        <div class="section student">
+            <h2>🎓 Student (SMXStream-new)</h2>
+            <button class="btn-secondary" onclick="connectStudent()">Connect Student</button>
+            <button class="btn-secondary" onclick="joinClass('student')">Join Class</button>
+            <div id="studentLog" class="log"></div>
+        </div>
+    </div>
+
+    <script>
+        let instructorSocket = null;
+        let studentSocket = null;
+        
+        function log(type, message) {
+            const logElement = document.getElementById(type + 'Log');
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.innerHTML += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        function connectInstructor() {
+            if (instructorSocket) {
+                instructorSocket.disconnect();
+            }
+            
+            instructorSocket = io();
+            
+            instructorSocket.on('connect', () => {
+                log('instructor', '✅ Instructor connected');
+            });
+            
+            instructorSocket.on('stream:instructor-ready', (data) => {
+                log('instructor', `🏫 Joined class: ${data.classId}`);
+            });
+            
+            instructorSocket.on('disconnect', () => {
+                log('instructor', '❌ Instructor disconnected');
+            });
+        }
+        
+        function connectStudent() {
+            if (studentSocket) {
+                studentSocket.disconnect();
+            }
+            
+            studentSocket = io();
+            
+            studentSocket.on('connect', () => {
+                log('student', '✅ Student connected');
+            });
+            
+            studentSocket.on('stream:init', (data) => {
+                log('student', `🎬 Received stream:init - URL: ${data.streamUrl}`);
+            });
+            
+            studentSocket.on('streamStatus', (data) => {
+                log('student', `📡 Received streamStatus - Status: ${data.status}, URL: ${data.streamUrl || 'none'}`);
+            });
+            
+            studentSocket.on('stream:current-state', (data) => {
+                log('student', `📥 Received current stream state`);
+            });
+            
+            studentSocket.on('stream:no-state', (data) => {
+                log('student', `ℹ️ No active stream state`);
+            });
+            
+            studentSocket.on('disconnect', () => {
+                log('student', '❌ Student disconnected');
+            });
+        }
+        
+        function joinClass(role) {
+            const classId = document.getElementById('classId').value;
+            
+            if (role === 'instructor' && instructorSocket) {
+                instructorSocket.emit('instructor-join-class', { classId });
+                log('instructor', `🏫 Joining class: ${classId}`);
+            } else if (role === 'student' && studentSocket) {
+                studentSocket.emit('student-join-class', { classId });
+                log('student', `🎓 Joining class: ${classId}`);
+            }
+        }
+        
+        function goLive() {
+            if (!instructorSocket) {
+                alert('Connect instructor first');
+                return;
+            }
+            
+            const streamUrl = document.getElementById('streamUrl').value;
+            const classId = document.getElementById('classId').value;
+            
+            log('instructor', '🔴 Going live...');
+            
+            // Send stream:init
+            instructorSocket.emit('stream:init', {
+                streamUrl: streamUrl,
+                startTime: new Date().toISOString(),
+                currentTime: 0,
+                playing: true,
+                filename: 'test-video.mp4'
+            });
+            
+            // Also send streamStatus for compatibility
+            setTimeout(() => {
+                instructorSocket.emit('streamStatus', {
+                    status: 'live',
+                    source: 'upload',
+                    streamUrl: streamUrl,
+                    filename: 'test-video.mp4'
+                });
+            }, 100);
+        }
+        
+        function stopStream() {
+            if (!instructorSocket) {
+                alert('Connect instructor first');
+                return;
+            }
+            
+            log('instructor', '⏹️ Stopping stream...');
+            
+            instructorSocket.emit('streamStatus', {
+                status: 'offline'
+            });
+        }
+    </script>
+</body>
+</html>

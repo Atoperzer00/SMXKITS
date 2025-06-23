@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpsLog Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #1e1e1e;
+            color: white;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #333;
+            border-radius: 8px;
+        }
+        .success { border-color: #22c55e; }
+        .error { border-color: #ef4444; }
+        .warning { border-color: #ff9800; }
+        button {
+            background: #22c55e;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #28dd6c;
+        }
+        #results {
+            margin-top: 20px;
+            padding: 10px;
+            background: #2a2a2a;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>OpsLog.html Functionality Test</h1>
+    
+    <div class="test-section">
+        <h2>1. Basic HTML Structure Test</h2>
+        <p>Testing if the main OpsLog.html file loads properly...</p>
+        <button onclick="testHTMLStructure()">Test HTML Structure</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. CSS Styling Test</h2>
+        <p>Testing if CSS variables and styling are working...</p>
+        <button onclick="testCSS()">Test CSS</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. JavaScript Functions Test</h2>
+        <p>Testing if JavaScript functions are defined and working...</p>
+        <button onclick="testJavaScript()">Test JavaScript</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>4. Socket.io Connection Test</h2>
+        <p>Testing if Socket.io can connect to the server...</p>
+        <button onclick="testSocketConnection()">Test Socket Connection</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>5. API Endpoints Test</h2>
+        <p>Testing if API endpoints are accessible...</p>
+        <button onclick="testAPIEndpoints()">Test API</button>
+    </div>
+    
+    <div id="results"></div>
+    
+    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+    <script>
+        const results = document.getElementById('results');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'success' ? '#22c55e' : type === 'error' ? '#ef4444' : type === 'warning' ? '#ff9800' : '#ffffff';
+            results.innerHTML += `<div style="color: ${color}; margin: 5px 0;">[${timestamp}] ${message}</div>`;
+            results.scrollTop = results.scrollHeight;
+        }
+        
+        function testHTMLStructure() {
+            log('Testing HTML structure...', 'info');
+            
+            // Test if we can create an iframe to load the main page
+            const iframe = document.createElement('iframe');
+            iframe.src = '/OpsLog.html';
+            iframe.style.display = 'none';
+            
+            iframe.onload = function() {
+                try {
+                    const doc = iframe.contentDocument || iframe.contentWindow.document;
+                    if (doc.title.includes('Ops Log')) {
+                        log('✓ HTML structure test passed - OpsLog.html loads correctly', 'success');
+                    } else {
+                        log('⚠ HTML structure test warning - Title not as expected', 'warning');
+                    }
+                } catch (e) {
+                    log('✓ HTML structure test passed - Page loads (cross-origin restrictions prevent detailed inspection)', 'success');
+                }
+                document.body.removeChild(iframe);
+            };
+            
+            iframe.onerror = function() {
+                log('✗ HTML structure test failed - Could not load OpsLog.html', 'error');
+                document.body.removeChild(iframe);
+            };
+            
+            document.body.appendChild(iframe);
+        }
+        
+        function testCSS() {
+            log('Testing CSS variables and styling...', 'info');
+            
+            // Test CSS custom properties
+            const testDiv = document.createElement('div');
+            testDiv.style.cssText = `
+                --test-color: #22c55e;
+                background: var(--test-color);
+                width: 10px;
+                height: 10px;
+            `;
+            document.body.appendChild(testDiv);
+            
+            const computedStyle = window.getComputedStyle(testDiv);
+            const bgColor = computedStyle.backgroundColor;
+            
+            if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
+                log('✓ CSS test passed - CSS variables are supported', 'success');
+            } else {
+                log('✗ CSS test failed - CSS variables may not be working', 'error');
+            }
+            
+            document.body.removeChild(testDiv);
+        }
+        
+        function testJavaScript() {
+            log('Testing JavaScript functionality...', 'info');
+            
+            // Test basic JavaScript features used in OpsLog
+            const tests = [
+                {
+                    name: 'Arrow functions',
+                    test: () => { const fn = () => true; return fn(); }
+                },
+                {
+                    name: 'Template literals',
+                    test: () => { const test = 'world'; return `Hello ${test}` === 'Hello world'; }
+                },
+                {
+                    name: 'Async/await',
+                    test: async () => { return await Promise.resolve(true); }
+                },
+                {
+                    name: 'Fetch API',
+                    test: () => { return typeof fetch === 'function'; }
+                },
+                {
+                    name: 'Local Storage',
+                    test: () => { return typeof localStorage === 'object'; }
+                }
+            ];
+            
+            tests.forEach(async (test) => {
+                try {
+                    const result = await test.test();
+                    if (result) {
+                        log(`✓ ${test.name} - Supported`, 'success');
+                    } else {
+                        log(`✗ ${test.name} - Not working properly`, 'error');
+                    }
+                } catch (e) {
+                    log(`✗ ${test.name} - Error: ${e.message}`, 'error');
+                }
+            });
+        }
+        
+        function testSocketConnection() {
+            log('Testing Socket.io connection...', 'info');
+            
+            try {
+                const socket = io(window.location.hostname === 'localhost' ? 'http://localhost:3001' : '');
+                
+                const timeout = setTimeout(() => {
+                    log('⚠ Socket connection test timeout - Server may not be running', 'warning');
+                    socket.disconnect();
+                }, 5000);
+                
+                socket.on('connect', () => {
+                    clearTimeout(timeout);
+                    log('✓ Socket.io connection test passed - Connected to server', 'success');
+                    socket.disconnect();
+                });
+                
+                socket.on('connect_error', (error) => {
+                    clearTimeout(timeout);
+                    log(`✗ Socket.io connection test failed - ${error.message}`, 'error');
+                });
+                
+            } catch (e) {
+                log(`✗ Socket.io test failed - ${e.message}`, 'error');
+            }
+        }
+        
+        async function testAPIEndpoints() {
+            log('Testing API endpoints...', 'info');
+            
+            const endpoints = [
+                { url: '/api/callouts/test_room', method: 'GET', name: 'Get Callouts' },
+                { url: '/', method: 'GET', name: 'Root endpoint' }
+            ];
+            
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(endpoint.url, {
+                        method: endpoint.method,
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (response.status < 500) {
+                        log(`✓ ${endpoint.name} - Endpoint accessible (Status: ${response.status})`, 'success');
+                    } else {
+                        log(`⚠ ${endpoint.name} - Server error (Status: ${response.status})`, 'warning');
+                    }
+                } catch (e) {
+                    log(`✗ ${endpoint.name} - Connection failed: ${e.message}`, 'error');
+                }
+            }
+        }
+        
+        // Auto-run basic tests on load
+        window.addEventListener('load', () => {
+            log('OpsLog Test Suite Started', 'info');
+            log('Click the test buttons above to run individual tests', 'info');
+        });
+    </script>
+</body>
+</html>

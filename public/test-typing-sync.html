@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Typing Sync</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #1a1a1a;
+      color: #fff;
+    }
+    .test-section {
+      background: #2a2a2a;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 10px;
+      border: 1px solid #444;
+    }
+    button {
+      background: #ff6b35;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      background: #ff8c42;
+    }
+    .log {
+      background: #000;
+      color: #0f0;
+      padding: 10px;
+      border-radius: 5px;
+      font-family: monospace;
+      font-size: 12px;
+      max-height: 300px;
+      overflow-y: auto;
+      margin: 10px 0;
+    }
+    .status {
+      padding: 10px;
+      border-radius: 5px;
+      margin: 10px 0;
+    }
+    .status.success { background: #22c55e; color: white; }
+    .status.error { background: #ef4444; color: white; }
+    .status.warning { background: #f59e0b; color: white; }
+  </style>
+</head>
+<body>
+  <h1>Typing Test Sync Diagnostic Tool</h1>
+  
+  <div class="test-section">
+    <h2>Current Status</h2>
+    <div id="status" class="status">Checking...</div>
+    <button onclick="checkStatus()">Refresh Status</button>
+  </div>
+  
+  <div class="test-section">
+    <h2>Test Actions</h2>
+    <button onclick="testSave()">Test Save Function</button>
+    <button onclick="testLoad()">Test Load Function</button>
+    <button onclick="testSync()">Test Sync Mechanisms</button>
+    <button onclick="clearData()">Clear All Data</button>
+    <button onclick="resetDefaults()">Reset to Defaults</button>
+  </div>
+  
+  <div class="test-section">
+    <h2>Quick Links</h2>
+    <button onclick="window.open('edit-typing-tests.html', '_blank')">Open Edit Page</button>
+    <button onclick="window.open('keyboard-training.html', '_blank')">Open Training Page</button>
+  </div>
+  
+  <div class="test-section">
+    <h2>Console Log</h2>
+    <div id="log" class="log"></div>
+    <button onclick="clearLog()">Clear Log</button>
+  </div>
+
+  <script>
+    // Capture console logs
+    const originalLog = console.log;
+    const originalError = console.error;
+    const logDiv = document.getElementById('log');
+    
+    function addToLog(message, type = 'log') {
+      const timestamp = new Date().toLocaleTimeString();
+      const logEntry = document.createElement('div');
+      logEntry.style.color = type === 'error' ? '#ff6b6b' : '#0f0';
+      logEntry.textContent = `[${timestamp}] ${message}`;
+      logDiv.appendChild(logEntry);
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+    
+    console.log = function(...args) {
+      originalLog.apply(console, args);
+      addToLog(args.join(' '), 'log');
+    };
+    
+    console.error = function(...args) {
+      originalError.apply(console, args);
+      addToLog(args.join(' '), 'error');
+    };
+    
+    function checkStatus() {
+      const statusDiv = document.getElementById('status');
+      
+      try {
+        const rawData = localStorage.getItem('smx_typing_tests');
+        const timestamp = localStorage.getItem('smx_typing_tests_timestamp');
+        const trigger = localStorage.getItem('smx_typing_tests_update_trigger');
+        
+        if (!rawData) {
+          statusDiv.className = 'status warning';
+          statusDiv.innerHTML = '⚠️ No typing test data found in localStorage';
+          return;
+        }
+        
+        const data = JSON.parse(rawData);
+        
+        if (!data.modules || !data.moduleNames) {
+          statusDiv.className = 'status error';
+          statusDiv.innerHTML = '❌ Invalid data structure (missing modules or moduleNames)';
+          return;
+        }
+        
+        statusDiv.className = 'status success';
+        statusDiv.innerHTML = `
+          ✅ Data structure valid<br>
+          📊 Modules: ${data.modules.length}<br>
+          📝 Module Names: ${data.moduleNames.length}<br>
+          🕒 Last Update: ${timestamp ? new Date(parseInt(timestamp)).toLocaleString() : 'Unknown'}<br>
+          🔄 Trigger: ${trigger || 'Not set'}
+        `;
+        
+        console.log('Status check completed successfully');
+        
+      } catch (error) {
+        statusDiv.className = 'status error';
+        statusDiv.innerHTML = `❌ Error checking status: ${error.message}`;
+        console.error('Status check failed:', error);
+      }
+    }
+    
+    function testSave() {
+      console.log('=== Testing Save Function ===');
+      
+      const testData = {
+        modules: [
+          ['Test Module 1 Practice 1', 'Test Module 1 Practice 2'],
+          ['Test Module 2 Practice 1', 'Test Module 2 Practice 2']
+        ],
+        moduleNames: ['Test Module 1', 'Test Module 2']
+      };
+      
+      try {
+        localStorage.setItem('smx_typing_tests', JSON.stringify(testData));
+        localStorage.setItem('smx_typing_tests_timestamp', Date.now().toString());
+        
+        // Trigger events
+        window.dispatchEvent(new CustomEvent('typingTestsUpdated', {
+          detail: { data: testData }
+        }));
+        
+        if (typeof BroadcastChannel !== 'undefined') {
+          const channel = new BroadcastChannel('smx_typing_updates');
+          channel.postMessage({
+            type: 'typing_tests_updated',
+            data: testData,
+            timestamp: Date.now()
+          });
+          channel.close();
+        }
+        
+        console.log('✅ Test save completed successfully');
+        checkStatus();
+        
+      } catch (error) {
+        console.error('❌ Test save failed:', error);
+      }
+    }
+    
+    function testLoad() {
+      console.log('=== Testing Load Function ===');
+      
+      try {
+        const rawData = localStorage.getItem('smx_typing_tests');
+        if (!rawData) {
+          console.log('⚠️ No data to load');
+          return;
+        }
+        
+        const data = JSON.parse(rawData);
+        console.log('✅ Data loaded successfully:', data);
+        
+        if (data.modules && data.moduleNames) {
+          console.log(`📊 Found ${data.modules.length} modules with ${data.moduleNames.length} names`);
+        } else {
+          console.log('⚠️ Data structure may be invalid');
+        }
+        
+      } catch (error) {
+        console.error('❌ Test load failed:', error);
+      }
+    }
+    
+    function testSync() {
+      console.log('=== Testing Sync Mechanisms ===');
+      
+      // Test custom event
+      console.log('Testing custom event...');
+      window.dispatchEvent(new CustomEvent('typingTestsUpdated', {
+        detail: { data: { test: 'custom event' } }
+      }));
+      
+      // Test BroadcastChannel
+      if (typeof BroadcastChannel !== 'undefined') {
+        console.log('Testing BroadcastChannel...');
+        const channel = new BroadcastChannel('smx_typing_updates');
+        channel.postMessage({
+          type: 'typing_tests_updated',
+          data: { test: 'broadcast channel' },
+          timestamp: Date.now()
+        });
+        channel.close();
+      } else {
+        console.log('⚠️ BroadcastChannel not supported');
+      }
+      
+      // Test storage event (won't fire in same tab, but we can simulate)
+      console.log('Testing storage trigger...');
+      localStorage.setItem('smx_typing_tests_update_trigger', Date.now().toString());
+      
+      console.log('✅ Sync test completed');
+    }
+    
+    function clearData() {
+      if (confirm('Are you sure you want to clear all typing test data?')) {
+        localStorage.removeItem('smx_typing_tests');
+        localStorage.removeItem('smx_typing_tests_timestamp');
+        localStorage.removeItem('smx_typing_tests_update_trigger');
+        console.log('✅ All typing test data cleared');
+        checkStatus();
+      }
+    }
+    
+    function resetDefaults() {
+      console.log('=== Resetting to Default Data ===');
+      
+      const defaultData = {
+        modules: [
+          Array.from({length: 20}, (_, i) => `Module 1 Practice ${i+1}: Default typing text for basic training.`),
+          Array.from({length: 20}, (_, i) => `Module 2 Practice ${i+1}: Numbers and symbols practice text.`),
+          Array.from({length: 20}, (_, i) => `Module 3 Practice ${i+1}: Military terminology practice text.`),
+          Array.from({length: 20}, (_, i) => `Module 4 Practice ${i+1}: POL basic descriptors practice text.`),
+          Array.from({length: 20}, (_, i) => `Module 5 Practice ${i+1}: POL SITREP format practice text.`)
+        ],
+        moduleNames: [
+          'Module 1: Basic Typing',
+          'Module 2: Numbers and Symbols',
+          'Module 3: Military Terminology',
+          'Module 4: POL Basic Descriptors',
+          'Module 5: POL SITREP Format'
+        ]
+      };
+      
+      try {
+        localStorage.setItem('smx_typing_tests', JSON.stringify(defaultData));
+        localStorage.setItem('smx_typing_tests_timestamp', Date.now().toString());
+        
+        // Trigger sync
+        window.dispatchEvent(new CustomEvent('typingTestsUpdated', {
+          detail: { data: defaultData }
+        }));
+        
+        console.log('✅ Default data restored');
+        checkStatus();
+        
+      } catch (error) {
+        console.error('❌ Failed to reset defaults:', error);
+      }
+    }
+    
+    function clearLog() {
+      logDiv.innerHTML = '';
+    }
+    
+    // Initial status check
+    checkStatus();
+    
+    // Listen for events to test sync
+    window.addEventListener('typingTestsUpdated', function(e) {
+      console.log('🔄 Received typingTestsUpdated event:', e.detail);
+    });
+    
+    if (typeof BroadcastChannel !== 'undefined') {
+      const channel = new BroadcastChannel('smx_typing_updates');
+      channel.addEventListener('message', function(e) {
+        console.log('🔄 Received BroadcastChannel message:', e.data);
+      });
+    }
+    
+    window.addEventListener('storage', function(e) {
+      if (e.key && e.key.includes('smx_typing_tests')) {
+        console.log('🔄 Received storage event:', e.key, e.newValue);
+      }
+    });
+    
+  </script>
+</body>
+</html>

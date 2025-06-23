@@ -1,0 +1,3798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ops Log - SMXKITS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --bg: #1e1e1e;
+      --panel: #23272e;
+      --sidebar: #20232a;
+      --accent: #22c55e;
+      --inactive: #3b3b3b;
+      --hover: #262a32;
+      --qc-orange: #ff9800;
+      --qc-yellow: #ffe066;
+      --qc-green: #22c55e;
+      --qc-red: #ef4444;
+      --bubble-bg: #141414;
+      --bubble-text: #fafafa;
+      --button-bg: #2a2f36;
+      --button-hover: #343a42;
+      --input-bg: #252a33;
+      --input-border: #333c48;
+      --logo-color: #22c55e;
+      --follow-blue: #3b82f6;
+      --follow-blue-dark: #2563eb;
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      
+      /* Enhanced admin-dashboard inspired variables */
+      --dark-gradient: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 100%);
+      --card-gradient: linear-gradient(145deg, #16213e 0%, #0f1419 100%);
+      --shadow-primary: 0 20px 40px rgba(0, 0, 0, 0.3);
+      --shadow-hover: 0 30px 60px rgba(0, 0, 0, 0.4);
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: var(--dark-gradient);
+      color: var(--bubble-text);
+      min-height: 100vh;
+      overflow: auto;
+    }
+
+    /* Animated background particles */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(34, 197, 94, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(34, 197, 94, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(34, 197, 94, 0.05) 0%, transparent 50%);
+      z-index: -1;
+      animation: float 20s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      33% { transform: translateY(-20px) rotate(1deg); }
+      66% { transform: translateY(10px) rotate(-1deg); }
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 1200px) {
+      .bubble {
+        min-width: 300px;
+        max-width: calc(100vw - 500px);
+      }
+      .main-panel {
+        max-width: calc(100vw - 400px);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        min-width: 100%;
+        max-width: 100%;
+        height: auto;
+        min-height: auto;
+      }
+      .main-panel {
+        max-width: 100%;
+        height: auto;
+      }
+      .bubble {
+        min-width: 200px;
+        max-width: calc(100vw - 40px);
+      }
+    }
+
+    .container {
+      display: flex;
+      min-height: 100vh;
+      width: 100%;
+      overflow: hidden; /* Prevent horizontal overflow */
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 600px;
+      min-width: 400px;
+      max-width: 1000px;
+      flex-shrink: 0; /* Prevent sidebar from shrinking */
+      background: rgba(15, 20, 25, 0.95);
+      backdrop-filter: blur(20px);
+      padding: 28px 18px;
+      border-right: 1px solid var(--glass-border);
+      overflow-y: auto;
+      overflow-x: hidden;
+      position: relative;
+      resize: horizontal;
+      z-index: 5;
+      pointer-events: auto;
+      min-height: 100vh; /* Ensure sidebar takes full height */
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, rgba(34, 197, 94, 0.08) 0%, transparent 100%);
+      z-index: -1;
+    }
+    
+    /* Resize handle */
+    .resize-handle {
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 8px;
+      cursor: ew-resize;
+      background: transparent;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+    }
+    
+    .resize-handle::after {
+      content: "";
+      height: 40px;
+      width: 4px;
+      background: rgba(34, 197, 94, 0.2);
+      border-radius: 2px;
+    }
+    
+    .resize-handle:hover {
+      background: rgba(34, 197, 94, 0.1);
+    }
+    
+    .resize-handle:hover::after {
+      background: rgba(34, 197, 94, 0.7);
+    }
+    .logo {
+      font-size: 1.8em;
+      font-weight: bold;
+      letter-spacing: 2px;
+      color: var(--logo-color);
+      margin-bottom: 12px;
+    }
+    .nav {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .nav-btn {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      color: #fafafa;
+      font-size: 1.07em;
+      padding: 12px 18px;
+      margin: 0;
+      text-align: left;
+      border-radius: 15px;
+      cursor: pointer;
+      transition: var(--transition);
+      outline: none;
+      position: relative;
+      z-index: 10;
+      font-weight: 500;
+      pointer-events: auto;
+      backdrop-filter: blur(10px);
+    }
+    .nav-btn:hover, .nav-btn.active {
+      background: var(--card-gradient);
+      border-color: var(--accent);
+      transform: translateY(-2px) translateX(5px);
+      box-shadow: var(--shadow-primary);
+    }
+    .nav-btn:active {
+      transform: translateY(0);
+    }
+    .divider {
+      height: 1px;
+      background: var(--inactive);
+      margin: 16px 0 12px 0;
+      border-radius: 2px;
+    }
+    .room-status {
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--glass-border);
+      border-radius: 15px;
+      padding: 15px 14px;
+      font-size: 0.98em;
+      margin-bottom: 12px;
+      color: #e5e7eb;
+      line-height: 1.5;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    }
+    .logout-btn {
+      margin-top: auto;
+      background: linear-gradient(135deg, var(--qc-red), #be2121);
+      color: #fff;
+      border: none;
+      font-size: 1.06em;
+      padding: 14px 0;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+      position: relative;
+      z-index: 10;
+      pointer-events: auto;
+    }
+    .logout-btn:hover { 
+      background: linear-gradient(135deg, #be2121, #dc2626);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+    }
+    .logout-btn:active {
+      transform: translateY(0);
+    }
+
+    /* Main */
+    .main-panel {
+      flex: 1;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      background: transparent;
+      overflow: hidden; /* Prevent overflow */
+      min-width: 0; /* Prevents flex item from overflowing */
+      height: 100vh; /* Ensure main panel takes full viewport height */
+      max-width: calc(100vw - 600px); /* Ensure it doesn't exceed available space */
+    }
+    
+    .top-bar {
+      height: 58px;
+      flex-shrink: 0; /* Prevent top bar from shrinking */
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 30px;
+      border-bottom: 1px solid var(--glass-border);
+      font-size: 1.1em;
+      letter-spacing: 1px;
+      color: #a9d4c6;
+      font-weight: 500;
+      z-index: 100;
+      position: relative;
+      width: 100%; /* Allow top bar to extend full width */
+      margin-left: 0;
+      box-shadow: var(--shadow-primary);
+    }
+
+    .feed-panel {
+      flex: 1;
+      flex-grow: 1;
+      overflow-y: auto;
+      overflow-x: hidden; /* Prevent horizontal overflow */
+      padding: 36px 40px 22px 80px; /* Reduced left padding since sidebar is wider */
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+      min-height: calc(100vh - 58px); /* Use min-height instead of fixed height */
+      max-width: 100%; /* Ensure feed panel doesn't exceed container */
+      scrollbar-width: thin;
+      scrollbar-color: var(--accent) transparent;
+      scroll-behavior: smooth; /* Enable smooth scrolling */
+    }
+
+    /* Log Bubbles */
+    .bubble {
+      background: var(--card-gradient);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      color: var(--bubble-text);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      box-shadow: var(--shadow-primary), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      padding: 24px 34px 19px 24px;
+      position: relative;
+      transition: var(--transition);
+      min-width: 500px;
+      max-width: calc(100vw - 700px); /* Ensure bubbles fit within available space */
+      width: 95%;
+      word-break: break-word;
+      white-space: pre-line;
+      font-size: 1.06em;
+    }
+    
+    .callout-card {
+      width: 100%;
+      max-width: none;
+      transform: none !important;
+      border-radius: 0;
+    }
+    .bubble:hover {
+      box-shadow: var(--shadow-hover), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      transform: translateY(-3px);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+    .bubble.qc-orange { border-color: var(--qc-orange);}
+    .bubble.qc-yellow { border-color: var(--qc-yellow);}
+    .bubble.qc-green  { border-color: var(--qc-green);}
+    .bubble.qc-red    { border-color: var(--qc-red);}
+    
+    /* Approved callout styling for students */
+    .bubble.qc-green.student-locked {
+      position: relative;
+      opacity: 0.9;
+    }
+    
+    .bubble.qc-green.student-locked::before {
+      content: "APPROVED";
+      position: absolute;
+      top: -8px;
+      right: 10px;
+      background: var(--qc-green);
+      color: #000;
+      font-size: 0.7em;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 10px;
+      z-index: 5;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    .bubble-flex { display: flex; justify-content: space-between; align-items: flex-start; gap: 40px; } 
+    .bubble-left, .bubble-right { display: flex; flex-direction: column; gap: 8px; } 
+    .bubble-left { flex: 1; width: 70%; } /* Increased width for left section */
+    .bubble-row { margin-bottom: 3px; } 
+    .bubble-right { 
+      align-items: flex-end; 
+      min-width: 220px; 
+      font-family: 'Consolas', 'Menlo', 'Monaco', monospace; 
+      background: rgba(20, 20, 20, 0.3);
+      padding: 10px 15px;
+      border-radius: 8px;
+    } /* Increased min-width and added styling */
+    .bubble-right .bubble-time { font-weight: bold; font-size: 1.4em; color: var(--logo-color); }
+    .bubble-right .bubble-date-time { 
+      display: flex; 
+      align-items: center; 
+      justify-content: flex-end; 
+      gap: 15px;
+    }
+    .bubble-right .bubble-date { 
+      color: white; 
+      font-size: 1.05em;
+      letter-spacing: 0.5px;
+    }
+    .bubble-right span { margin-bottom: 3px; }
+    .bubble .menu-btn {
+      position: absolute;
+      top: 14px;
+      left: -60px;
+      background: var(--card-gradient);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border: 1px solid var(--glass-border);
+      cursor: pointer;
+      color: #a7a7a7;
+      font-size: 1.56em;
+      z-index: 10;
+      padding: 0;
+      border-radius: 50%;
+      width: 40px; height: 40px;
+      display: flex; align-items: center; justify-content: center;
+      transition: var(--transition);
+      box-shadow: var(--shadow-primary);
+    }
+    .bubble .qc-btn {
+      position: absolute;
+      top: 60px;
+      left: -60px;
+      background: var(--card-gradient);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border: 1px solid var(--glass-border);
+      cursor: pointer;
+      color: #a7a7a7;
+      font-size: 0.9em;
+      font-weight: bold;
+      z-index: 10;
+      padding: 0;
+      border-radius: 50%;
+      width: 40px; height: 40px;
+      display: flex; align-items: center; justify-content: center;
+      transition: var(--transition);
+      box-shadow: var(--shadow-primary);
+    }
+    .bubble .menu-btn:hover { 
+      background: rgba(34, 197, 94, 0.2); 
+      color: var(--logo-color); 
+      transform: scale(1.15) translateY(-2px);
+      border-color: var(--accent);
+      box-shadow: var(--shadow-hover);
+    }
+    .bubble .qc-btn:hover { 
+      background: rgba(34, 197, 94, 0.2); 
+      color: var(--logo-color); 
+      transform: scale(1.15) translateY(-2px);
+      border-color: var(--accent);
+      box-shadow: var(--shadow-hover);
+    }
+    .bubble .callout-meta {
+      font-size: 0.98em;
+      color: #b9c6c7;
+      margin-bottom: 6px;
+    }
+
+    /* Form - Form is now in sidebar, so this style is kept for reference but not actively used */
+    .form-panel {
+      width: 100%;
+      background: var(--sidebar);
+      border-top: 2px solid var(--inactive);
+      padding: 25px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 17px;
+      z-index: 3;
+    }
+    
+    /* Sidebar form container */
+    .sidebar-form-container {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-right: 8px;
+      margin-right: -8px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--accent) transparent;
+      scroll-behavior: smooth;
+      max-height: calc(100vh - 200px); /* Ensure container doesn't exceed viewport */
+    }
+    
+    .sidebar-form-container::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    .sidebar-form-container::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    .sidebar-form-container::-webkit-scrollbar-thumb {
+      background: var(--accent);
+      border-radius: 4px;
+    }
+    
+    .sidebar-form-container::-webkit-scrollbar-thumb:hover {
+      background: #28dd6c;
+    }
+    
+    /* Ensure form elements use full width in expanded sidebar */
+    .sidebar form {
+      width: 100%;
+    }
+    
+    .sidebar .form-group {
+      width: 100%;
+    }
+    
+    .sidebar input, 
+    .sidebar select, 
+    .sidebar textarea {
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .form-title {
+      font-size: 1.2em;
+      font-weight: 600;
+      color: var(--logo-color);
+      letter-spacing: 1px;
+      margin-bottom: 7px;
+    }
+    .fields-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px 24px;
+      align-items: flex-start;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      position: relative;
+    }
+    
+
+    
+
+    
+    .refresh-btn {
+      width: 20px;
+      height: 20px;
+      background: rgba(35, 39, 46, 0.7);
+      border: 1px solid var(--inactive);
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: var(--text);
+      transition: all 0.2s, transform 0.2s ease;
+      margin-bottom: 1px;
+      flex-shrink: 0;
+    }
+    
+    .refresh-btn:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+    
+    .form-group-with-refresh {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+    }
+    
+    .form-group-with-refresh .form-group {
+      flex: 1;
+    }
+    label {
+      font-size: 0.97em;
+      color: #c2cbd1;
+      font-weight: 500;
+    }
+    input, select, textarea {
+      background: var(--card-gradient);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      color: #f5f6f7;
+      border: 1px solid var(--glass-border);
+      border-radius: 15px;
+      font-size: 1.08em;
+      padding: 14px 18px;
+      outline: none;
+      box-shadow: var(--shadow-primary), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      transition: var(--transition);
+      min-height: 44px;
+      font-family: inherit;
+      margin-bottom: 1px;
+      width: 100%;
+      resize: none;
+      box-sizing: border-box;
+      position: relative;
+    }
+    
+    /* Ensure dropdown options have black text */
+    select option {
+      background: #ffffff;
+      color: #000000;
+      padding: 8px;
+    }
+    
+    /* Additional styling for better dropdown visibility */
+    select {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 16px;
+      padding-right: 40px;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+      background: rgba(34, 197, 94, 0.05);
+      box-shadow: var(--shadow-hover), 0 0 0 2px rgba(34, 197, 94, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+    input[readonly], textarea[readonly] {
+      background: #23272e70;
+      color: #9fa8ac;
+      cursor: not-allowed;
+    }
+    textarea {
+      min-height: 70px;
+      max-height: 350px;
+      overflow: auto;
+      resize: vertical;
+      line-height: 1.6;
+      font-family: 'Segoe UI', Arial, sans-serif;
+    }
+    ::placeholder {
+      color: #9fa8ac;
+      opacity: 0.85;
+      font-size: 0.98em;
+    }
+    select {
+      background: var(--input-bg);
+      color: var(--bubble-text);
+      border: 2px solid var(--input-border);
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 1em;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fafafa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 16px;
+      padding-right: 40px;
+    }
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent);
+    }
+    
+    /* Ensure all dropdown options have black text and light grey highlight */
+    select option {
+      background: #ffffff;
+      color: #000000;
+      padding: 8px 12px;
+    }
+    
+    select option:hover,
+    select option:focus,
+    select option:checked {
+      background: #e5e5e5;
+      color: #000000;
+    }
+    .submit-btn {
+      background: linear-gradient(135deg, var(--accent), #28dd6c);
+      color: #fff;
+      font-weight: 600;
+      border: none;
+      border-radius: 15px;
+      font-size: 1.13em;
+      padding: 16px 24px;
+      margin-top: 10px;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: var(--shadow-primary);
+      position: relative;
+      z-index: 10;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      pointer-events: auto;
+      backdrop-filter: blur(10px);
+    }
+    .submit-btn:hover { 
+      background: linear-gradient(135deg, #28dd6c, #22c55e);
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-hover);
+    }
+    .submit-btn:active {
+      transform: translateY(-1px);
+    }
+    /* Custom hover for Create Follow button to maintain orange theme */
+    #createFollowBtn:hover { background: #ffb03b !important; }
+
+    /* Follow Section */
+    .follow-section {
+      background: var(--panel);
+      border: 1.5px solid var(--input-border);
+      border-radius: 10px;
+      margin-top: 7px;
+      padding: 18px 18px 13px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+      animation: fadeIn 0.25s;
+    }
+    .follow-row {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    /* Removed unused follow action styling */
+
+    /* Overlay/Modal */
+    .modal {
+      position: fixed;
+      z-index: 30;
+      left: 0; top: 0; right: 0; bottom: 0;
+      background: #181e22e9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.22s;
+    }
+    .modal-content {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      color: #f5f6f7;
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      width: 700px;
+      height: 80vh;
+      max-width: 95vw;
+      max-height: 90vh;
+      box-shadow: var(--glass-shadow), 0 20px 80px rgba(0, 0, 0, 0.5);
+      position: relative;
+      font-size: 1.08em;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--inactive) transparent;
+    }
+    
+    .modal-content h3 {
+      margin: 0 0 20px 0;
+      padding: 20px 30px 0 30px;
+      color: var(--logo-color);
+      letter-spacing: 1px;
+      flex-shrink: 0;
+    }
+    
+    .modal-content .fields-grid {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 30px 20px 30px;
+      margin: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px 24px;
+      align-items: flex-start;
+    }
+    
+    .modal-content .submit-btn {
+      margin: 0 30px 30px 30px;
+      flex-shrink: 0;
+    }
+    
+    .modal-content .fields-grid::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    .modal-content .fields-grid::-webkit-scrollbar-track {
+      background: var(--input-bg);
+      border-radius: 4px;
+    }
+    
+    .modal-content .fields-grid::-webkit-scrollbar-thumb {
+      background: var(--accent);
+      border-radius: 4px;
+    }
+    
+    .modal-content .fields-grid::-webkit-scrollbar-thumb:hover {
+      background: #28dd6c;
+    }
+    .modal-close {
+      position: absolute;
+      top: 12px; right: 18px;
+      background: none;
+      color: #ccc;
+      border: none;
+      font-size: 1.4em;
+      cursor: pointer;
+      transition: color 0.16s;
+      z-index: 1002;
+      pointer-events: auto;
+    }
+    .modal-close:hover { color: var(--qc-red); }
+
+    /* Group selection checkbox */
+    .bubble-select-checkbox {
+      position: absolute;
+      left: -38px;
+      top: 62px;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--glass-border);
+      border-radius: 4px;
+      box-shadow: var(--glass-shadow);
+      transition: all 0.2s;
+      font-size: 0.9em;
+    }
+    
+    .bubble-select-checkbox:checked {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    
+    .bubble-select-checkbox:checked::after {
+      content: "✓";
+      position: absolute;
+      color: white;
+      font-weight: bold;
+      top: 0;
+      left: 6px;
+      font-size: 14px;
+    }
+    
+    .bubble-select-checkbox:hover {
+      background: rgba(34, 197, 94, 0.1);
+      border-color: rgba(34, 197, 94, 0.3);
+    }
+    
+    /* Group actions bar */
+    .group-actions-bar {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--glass-bg);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 12px 24px;
+      box-shadow: var(--glass-shadow), 0 8px 32px rgba(0, 0, 0, 0.4);
+      display: flex;
+      gap: 15px;
+      z-index: 500;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      pointer-events: auto;
+    }
+    
+    .group-actions-bar.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .group-action-btn {
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      color: white;
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 10px 18px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: var(--glass-shadow);
+      position: relative;
+      z-index: 10;
+      pointer-events: auto;
+    }
+    
+    .group-action-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateY(-1px);
+      box-shadow: var(--glass-shadow), 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+    
+    .group-action-count {
+      background: var(--accent);
+      color: white;
+      border-radius: 15px;
+      padding: 2px 8px;
+      font-size: 0.85em;
+      margin-left: 8px;
+    }
+    
+    /* Follow Indicator Styles */
+    .bubble.has-follow {
+      position: relative;
+      padding-left: 30px; /* Make room for the indicator */
+    }
+    
+    .follow-indicator {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 20px;
+      background: var(--follow-blue);
+      border-top-left-radius: 18px;
+      border-bottom-left-radius: 18px;
+      opacity: 0.85;
+      transition: background-color 0.2s;
+    }
+    
+    .follow-indicator.follow-ended {
+      background: var(--follow-blue-dark);
+      opacity: 0.5;
+    }
+    
+    .follow-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .follow-id {
+      font-size: 0.85em;
+      color: var(--follow-blue);
+      font-family: 'Consolas', 'Menlo', 'Monaco', monospace;
+    }
+    
+    /* Stage buttons */
+    .stage-btn:hover {
+      background: rgba(255, 255, 255, 0.1) !important;
+      transform: translateY(-1px) !important;
+      box-shadow: var(--glass-shadow) !important;
+    }
+    
+    .stage-btn:active {
+      transform: translateY(0) !important;
+    }
+    
+    /* Ensure all buttons are clickable */
+    button {
+      position: relative;
+      z-index: 10;
+      pointer-events: auto;
+    }
+    
+    /* Fix sidebar z-index issues */
+    .sidebar {
+      position: relative;
+      z-index: 5;
+    }
+    
+    /* Fix modal z-index */
+    .modal {
+      z-index: 1000;
+    }
+    
+    .modal-content {
+      z-index: 1001;
+    }
+    
+    /* Professional styling improvements */
+    .logo {
+      font-size: 1.8em;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--logo-color);
+      margin-bottom: 12px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    
+    .top-bar {
+      height: 58px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 0 30px;
+      border-bottom: 1px solid var(--glass-border);
+      font-size: 1.1em;
+      letter-spacing: 1px;
+      color: #a9d4c6;
+      font-weight: 500;
+      z-index: 2;
+      box-shadow: var(--glass-shadow);
+    }
+    
+    /* Remove AI-like rounded corners and make more professional */
+    .room-status {
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 15px 14px;
+      font-size: 0.98em;
+      margin-bottom: 12px;
+      color: #e5e7eb;
+      line-height: 1.5;
+      box-shadow: var(--glass-shadow);
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    
+    @keyframes flash {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    /* Classic Callout Bubble Styling */
+    .callout-card {
+      position: relative;
+      background: var(--bubble-bg);
+      border: 2px solid var(--qc-orange);
+      border-radius: 8px;
+      padding: 16px 24px;
+      margin-bottom: 8px;
+      margin-left: 30px; /* Make room for external checkbox */
+      margin-right: 40px;
+      font-size: 1.2em;
+      line-height: 1.4;
+      color: var(--bubble-text);
+      word-break: break-word;
+      white-space: pre-line;
+      min-height: auto;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+    
+    .callout-card.qc-orange { border-color: var(--qc-orange); }
+    .callout-card.qc-yellow { border-color: var(--qc-yellow); }
+    .callout-card.qc-green  { border-color: var(--qc-green); }
+    .callout-card.qc-red    { border-color: var(--qc-red); }
+    
+    /* Approved callout styling for students */
+    .callout-card.qc-green.student-locked {
+      position: relative;
+      opacity: 0.9;
+    }
+    
+    .callout-card.qc-green.student-locked::before {
+      content: "APPROVED";
+      position: absolute;
+      top: -8px;
+      right: 10px;
+      background: var(--qc-green);
+      color: #000;
+      font-size: 0.7em;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 10px;
+      z-index: 5;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    /* Follow display styling inside callout cards */
+    .follow-display {
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .follow-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+      font-weight: bold;
+    }
+    
+    .follow-name {
+      color: var(--follow-blue);
+      font-size: 15px;
+    }
+    
+    .follow-stage {
+      color: var(--accent);
+      font-size: 13px;
+      background: rgba(34, 197, 94, 0.1);
+      padding: 2px 6px;
+      border-radius: 3px;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+    
+    .follow-id-row {
+      font-family: 'Consolas', 'Menlo', 'Monaco', monospace;
+      font-size: 13px;
+      color: #888;
+      margin-top: 2px;
+    }
+    
+    .follow-id-row .follow-id {
+      color: var(--follow-blue);
+      font-weight: bold;
+    }
+
+    /* Improved spacing for callout content sections */
+    .callout-card .callout-section {
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+    
+    .callout-card .callout-section:last-child {
+      margin-bottom: 0;
+    }
+    
+    .callout-card .callout-meta {
+      font-size: 10px;
+      color: #888;
+      margin-bottom: 4px;
+    }
+    
+    .callout-card .callout-content {
+      margin-bottom: 6px;
+    }
+
+    /* Callout wrapper to handle external elements */
+    .callout-wrapper {
+      position: relative;
+      width: 100%;
+      margin-bottom: 8px;
+    }
+    
+    /* Ensure proper positioning context for external elements */
+    .callout-wrapper .callout-card {
+      margin-left: 30px; /* Space for checkbox */
+      margin-right: 0;
+    }
+
+    /* Classic Menu and QC Buttons */
+    .menu-btn, .qc-btn {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      background: var(--button-bg);
+      border: 1px solid #555;
+      border-radius: 4px;
+      color: #ccc;
+      font-size: 0.9em;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      transition: all 0.2s;
+    }
+    
+    .menu-btn {
+      left: -38px;
+      top: 6px;
+      line-height: 1;
+    }
+    
+    .qc-btn {
+      left: -38px;
+      top: 34px;
+    }
+    
+    .menu-btn:hover, .qc-btn:hover {
+      background: var(--button-hover);
+      border-color: #777;
+    }
+
+    /* Selection Checkbox - REMOVED DUPLICATE STYLING */
+
+    /* Follow Indicator - glowing bracket on left inside edge */
+    .follow-indicator {
+      position: absolute;
+      left: -10px;
+      top: 8px;
+      width: 6px;
+      height: calc(100% - 16px);
+      background: var(--follow-blue);
+      border-radius: 3px;
+      z-index: 1;
+      box-shadow: 0 0 8px rgba(59, 130, 246, 0.6), 0 0 16px rgba(59, 130, 246, 0.3);
+      transition: all 0.3s ease;
+    }
+    
+    .follow-indicator.follow-ended {
+      background: #666;
+      box-shadow: 0 0 8px rgba(102, 102, 102, 0.4), 0 0 16px rgba(102, 102, 102, 0.2);
+    }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar { width: 10px; background: #17181a;}
+    ::-webkit-scrollbar-thumb { background: #22262b; border-radius: 6px;}
+    ::-webkit-scrollbar-thumb:hover { background: #363b40;}
+
+    /* Additional layout fixes */
+    html {
+      height: 100%;
+      overflow: hidden;
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+    
+    /* Ensure proper flex behavior */
+    .container > * {
+      flex-shrink: 0;
+    }
+    
+    .main-panel {
+      flex-shrink: 1 !important; /* Allow main panel to shrink if needed */
+    }
+  </style>
+</head>
+<body>
+  <!-- Edit Callout Overlay -->
+  <div id="editCalloutOverlay" class="modal" style="display: none;">
+    <div class="modal-content">
+      <button type="button" class="modal-close" onclick="closeEditCallout()">&times;</button>
+      
+      <form id="editCalloutForm" autocomplete="off">
+        <input type="hidden" name="calloutId" id="editCalloutId">
+        
+        <h3>Edit Callout</h3>
+        
+        <div class="fields-grid">
+          <div class="form-group">
+            <label>Classification</label>
+            <select name="classification" required>
+              <option value="">Select</option>
+              <option>No Classification</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label>Asset Name</label>
+            <input type="text" name="asset" required/>
+          </div>
+          
+          <div class="form-group">
+            <label>Sensor</label>
+            <select name="sensor" required>
+              <option value="FMV">FMV</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label>Mission / Operation</label>
+            <input type="text" name="operation" required/>
+          </div>
+          
+          <div class="form-group">
+            <label>Country Code</label>
+            <input type="text" name="countryCode" maxlength="3"/>
+          </div>
+          
+          <div class="form-group">
+            <label>Team Name</label>
+            <input type="text" name="team"/>
+          </div>
+          
+          <div class="form-group-with-refresh">
+            <div class="form-group">
+              <label>Zulu Time</label>
+              <input type="text" name="zulu" required placeholder="HH:MM" pattern="[0-9]{2}:[0-9]{2}" maxlength="5" 
+                    oninput="this.value = this.value.replace(/[^0-9:]/g, '');"/>
+            </div>
+            <button type="button" class="refresh-btn" title="Update to current time" onclick="updateZuluTime(this)">🔄</button>
+          </div>
+          
+          <div class="form-group">
+            <label>MGRS</label>
+            <input type="text" name="mgrs"/>
+          </div>
+          
+          <div class="form-group">
+            <label>Location</label>
+            <input type="text" name="location"/>
+          </div>
+          
+          <div class="form-group">
+            <label>Activity</label>
+            <input type="text" name="activity"/>
+          </div>
+          
+          <div class="form-group" style="grid-column: 1 / span 2;">
+            <label>IA Notes</label>
+            <textarea name="iaNotes" rows="3" oninput="autoGrow(this)"></textarea>
+          </div>
+          
+          <!-- SLANT and Vehicles row -->
+          <div class="form-group">
+            <label>SLANT</label>
+            <input type="text" name="slant" placeholder="#/#/#" maxlength="10" 
+                   oninput="formatSlant(this)" title="Format: #/#/# (Size/Activity/Location)"/>
+          </div>
+          
+          <div class="form-group">
+            <label>Vehicles</label>
+            <input type="number" name="vehicles" min="0" value="0" style="text-align: center;"/>
+          </div>
+          
+          <!-- Target Status field -->
+          <div class="form-group">
+            <label>Target Status</label>
+            <select name="targetStatus">
+              <option value="">Select Status</option>
+              <option value="ON TARGET">ON TARGET</option>
+              <option value="OFF TARGET">OFF TARGET</option>
+            </select>
+          </div>
+        </div>
+        
+        <button type="submit" class="submit-btn">Save Changes</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Sidebar with form -->
+    <aside class="sidebar">
+      <div class="resize-handle" id="sidebar-resize-handle"></div>
+      <div class="logo">DRIFT</div>
+      
+      <!-- Navigation buttons -->
+      <div class="nav">
+        <button type="button" id="editCalloutBtn" class="nav-btn" disabled>Edit Recent Callout</button>
+      </div>
+      
+      <div class="divider"></div>
+
+      <!-- Scrollable form container -->
+      <div class="sidebar-form-container">
+        <!-- Callout Form moved to sidebar -->
+        <form id="logForm" autocomplete="off" style="margin-top: 10px;" 
+              ondragover="event.preventDefault();" 
+              ondrop="handleFormDrop(event)">
+        <div class="form-title" style="font-size: 1.1em; margin-bottom: 12px;">Submit New Callout</div>
+        
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Classification</label>
+          <select name="classification" required>
+            <option value="">Select</option>
+            <option>No Classification</option>
+          </select>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Asset Name</label>
+          <input type="text" name="asset" required oninput="autoGrow(this)"/>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Sensor</label>
+          <select name="sensor" required>
+            <option value="FMV">FMV</option>
+          </select>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Mission / Operation</label>
+          <input type="text" name="operation" value="OBJ" required oninput="autoGrow(this)"/>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Country Code</label>
+          <input type="text" name="countryCode" maxlength="3" oninput="autoGrow(this)"/>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Team Name</label>
+          <input type="text" name="team" oninput="autoGrow(this)"/>
+        </div>
+        
+        <div class="form-group-with-refresh" style="margin-bottom: 12px;">
+          <div class="form-group">
+            <label>Zulu Time</label>
+            <input type="text" name="zulu" required placeholder="HH:MM" pattern="[0-9]{2}:[0-9]{2}" maxlength="5" oninput="this.value = this.value.replace(/[^0-9:]/g, '');"/>
+          </div>
+          <button type="button" class="refresh-btn" title="Update to current time" onclick="updateZuluTime(this)">🔄</button>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>MGRS</label>
+          <input type="text" name="mgrs"/>
+        </div>
+        
+        <!-- Follow container moved here -->
+        <div id="followContainer" style="margin-bottom: 12px;">
+          <button type="button" id="createFollowBtn" class="submit-btn" style="margin-bottom: 0; background:var(--qc-orange); color:#181c1c; font-weight:600; width: 100%;">Create Follow</button>
+          
+          <!-- Follow Form (initially hidden) -->
+          <div id="followForm" style="display: none; margin-top: 15px; background: var(--panel); border-radius: 8px; padding: 15px;">
+            <div style="margin-bottom: 12px;">
+              <label>Follow Name</label>
+              <input type="text" id="followNameInput" placeholder="Enter follow name"/>
+            </div>
+            
+            <div style="margin-bottom: 12px; display: flex; align-items: center;">
+              <label style="margin-right: 10px;">Follow ID:</label>
+              <span id="followIdDisplay" style="font-family: monospace; font-weight: bold; cursor: pointer; padding: 2px 4px; border-radius: 3px; transition: background 0.2s;" 
+                    title="Double-click to edit"></span>
+              <input type="hidden" id="followIdHidden" />
+              <input type="text" id="followIdEdit" style="font-family: monospace; font-weight: bold; display: none; width: 80px; padding: 2px 4px; border: 1px solid var(--accent); border-radius: 3px; background: var(--input-bg); color: #f5f6f7;" />
+            </div>
+            
+            <div style="margin-bottom: 12px;">
+              <label>Follow Stage:</label>
+              
+              <!-- Stage display moved above the buttons -->
+              <div style="margin: 8px 0; text-align: center;">
+                <div id="followStageLabel" style="font-size: 1.2em; font-weight: bold; padding: 10px; background: var(--input-bg); border-radius: 5px;">START</div>
+                <input type="hidden" id="followStageSelected" value="START" />
+                <input type="hidden" id="followStopNumber" value="0" />
+              </div>
+              
+              <div style="display: flex; gap: 10px;">
+                <button type="button" class="stage-btn" data-stage="ADV." style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--glass-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #fafafa; cursor: pointer; font-weight: 500; transition: all 0.3s ease; position: relative; z-index: 1;">ADVANCE</button>
+                <button type="button" class="stage-btn" data-stage="CONT." style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--glass-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #fafafa; cursor: pointer; font-weight: 500; transition: all 0.3s ease; position: relative; z-index: 1;">CONT.</button>
+                <button type="button" class="stage-btn" data-stage="END" style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--glass-border); background: var(--glass-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: #fafafa; cursor: pointer; font-weight: 500; transition: all 0.3s ease; position: relative; z-index: 1;">END</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Location Description</label>
+          <input type="text" name="location"/>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Activity</label>
+          <textarea id="activityTextarea" name="activity" rows="1"></textarea>
+        </div>
+        
+        <div class="divider" style="margin: 15px 0;"></div>
+        
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>IA Notes</label>
+          <textarea name="iaNotes" rows="1" oninput="autoGrow(this)"></textarea>
+        </div>
+        
+        <!-- SLANT field -->
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>SLANT</label>
+          <input type="text" name="slant" placeholder="#/#/#" maxlength="10" 
+                 oninput="formatSlant(this)" title="Format: #/#/# (Size/Activity/Location)"/>
+        </div>
+        
+        <!-- Vehicles field -->
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Vehicles</label>
+          <input type="number" name="vehicles" min="0" value="0" style="text-align: center;"/>
+        </div>
+        
+        <!-- Target Status field -->
+        <div class="form-group" style="margin-bottom: 12px;">
+          <label>Target Status</label>
+          <select name="targetStatus">
+            <option value="">Select Status</option>
+            <option value="ON TARGET">ON TARGET</option>
+            <option value="OFF TARGET">OFF TARGET</option>
+          </select>
+        </div>
+        
+          <button type="submit" class="submit-btn" style="width: 100%;">Submit</button>
+        </form>
+      </div>
+      
+    </aside>
+
+    <!-- Main -->
+    <main class="main-panel">
+      <div class="top-bar" id="mainTopBar">
+        <!-- Room information and navigation buttons in top bar -->
+        <div style="flex: 1; display: flex; align-items: center;">
+          <span style="font-weight: bold; margin-right: 15px;">OPS LOG</span>
+          <button id="joinRoomBtn" class="nav-btn" style="margin:0 20px;">Join Room</button>
+          &mdash; 
+          <div style="margin-left: 10px; display: flex; align-items: center;">
+            <span>Class: <span id="currentClass" style="font-weight: 500; color: #a9d4c6;">-</span></span>
+            <span style="margin: 0 10px;">|</span>
+            <span>Team: <span id="currentTeam" style="font-weight: 500; color: #a9d4c6;">-</span></span>
+            <span style="margin: 0 10px;">|</span>
+            <span>Mission: <span id="currentMission" style="font-weight: 500; color: #a9d4c6;">-</span></span>
+          </div>
+        </div>
+        <button id="dashboardBtn" class="nav-btn" style="margin-left:24px;">Dashboard</button>
+      </div>
+
+      <section class="feed-panel" id="feedPanel">
+        <!-- Generated log/chat bubbles will appear here -->
+      </section>
+    </main>
+  </div>
+
+  <!-- Group Actions Bar -->
+  <div id="groupActionsBar" class="group-actions-bar">
+    <span id="selectedCount" style="color: #a9d4c6;">0 selected</span>
+    <button id="groupEditBtn" class="group-action-btn">Edit <span id="editCount" class="group-action-count">0</span></button>
+    <button id="groupQCBtn" class="group-action-btn">QC <span id="qcCount" class="group-action-count">0</span></button>
+    <button id="groupCancelBtn" class="group-action-btn" style="background: var(--qc-red);">Cancel</button>
+  </div>
+
+  <!-- Room Modal -->
+  <div id="roomModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <button type="button" id="closeRoomModalBtn" class="modal-close">&times;</button>
+      <div style="font-weight:600; color:var(--logo-color); font-size:1.3em; margin-bottom:24px; text-align:center; letter-spacing:1px;">Join a Room</div>
+      <form id="joinRoomForm" style="text-align:center;">
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display:block; text-align:center; margin-bottom:8px;">Team</label>
+          <select name="team" id="modalTeam" required style="text-align:center;">
+            <option value="">Select Team</option>
+            <option>Alpha Team</option><option>Bravo Team</option><option>Charlie Team</option>
+            <option>Delta Team</option><option>Echo Team</option><option>Foxtrot Team</option>
+            <option>Golf Team</option><option>Hotel Team</option><option>India Team</option>
+            <option>Juliett Team</option><option>Kilo Team</option><option>Lima Team</option>
+            <option>Mike Team</option><option>November Team</option><option>Oscar Team</option>
+            <option>Papa Team</option><option>Quebec Team</option><option>Romeo Team</option>
+            <option>Sierra Team</option><option>Tango Team</option><option>Uniform Team</option>
+            <option>Victor Team</option><option>Whiskey Team</option><option>X-ray Team</option>
+            <option>Yankee Team</option><option>Zulu Team</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display:block; text-align:center; margin-bottom:8px;">Mission</label>
+          <select name="mission" id="modalMission" required style="text-align:center;">
+            <option value="">Select Mission</option>
+            <!-- Populate 30 missions -->
+            <option>Mission 1</option><option>Mission 2</option><option>Mission 3</option>
+            <option>Mission 4</option><option>Mission 5</option><option>Mission 6</option>
+            <option>Mission 7</option><option>Mission 8</option><option>Mission 9</option>
+            <option>Mission 10</option><option>Mission 11</option><option>Mission 12</option>
+            <option>Mission 13</option><option>Mission 14</option><option>Mission 15</option>
+            <option>Mission 16</option><option>Mission 17</option><option>Mission 18</option>
+            <option>Mission 19</option><option>Mission 20</option><option>Mission 21</option>
+            <option>Mission 22</option><option>Mission 23</option><option>Mission 24</option>
+            <option>Mission 25</option><option>Mission 26</option><option>Mission 27</option>
+            <option>Mission 28</option><option>Mission 29</option><option>Mission 30</option>
+          </select>
+        </div>
+        <button type="submit" id="joinRoomButton" class="submit-btn" style="margin-top:24px; width:200px;">Join Room</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Callout Menu Modal -->
+  <div id="calloutMenuModal" class="modal" style="display:none;">
+    <div class="modal-content" id="calloutMenuContent">
+      <!-- Content filled by JS -->
+    </div>
+  </div>
+
+  <!-- Change History Overlay -->
+  <div id="historyOverlay" class="modal" style="display:none;">
+    <div class="modal-content">
+      <button type="button" class="modal-close" onclick="closeHistoryOverlay()">&times;</button>
+      <div style="font-weight:600; color:var(--logo-color); font-size:1.2em; margin-bottom:10px;">Change History</div>
+      <div id="historyLogContainer" style="max-height:60vh; overflow:auto; font-size:0.95em;"></div>
+    </div>
+  </div>
+
+<script src="/auth-check.js"></script>
+<script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+<script>
+  // ------ Global State ------
+  let currentRoom = { classId: null, team: null, mission: null };
+  // Connect to socket.io server with improved error handling
+  let socket;
+  let callouts = {}; // id -> callout
+  
+  // Initialize socket connection
+  function initializeSocket() {
+    try {
+      const socketUrl = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
+      socket = io(socketUrl, {
+        transports: ['websocket', 'polling'],
+        timeout: 20000,
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000
+      });
+      
+      socket.on('connect', () => {
+        console.log('✅ Socket.IO connected successfully');
+      });
+      
+      socket.on('disconnect', (reason) => {
+        console.warn('⚠️ Socket.IO disconnected:', reason);
+      });
+      
+      socket.on('connect_error', (error) => {
+        console.error('❌ Socket.IO connection error:', error);
+      });
+      
+      // Set up socket event listeners
+      setupSocketListeners();
+      
+    } catch (error) {
+      console.error('❌ Failed to initialize socket:', error);
+    }
+  }
+  
+  // Setup socket event listeners
+  function setupSocketListeners() {
+    if (!socket) return;
+    
+    socket.on('new_callout', function(log) {
+      console.log("New callout received:", log);
+      callouts[log._id] = log;
+      createBubble(log);
+      updateSidebarButtonStates();
+    });
+    
+    socket.on('update_callout', function(log) {
+      console.log("Update callout received:", log);
+      callouts[log._id] = log;
+      createBubble(log, false);
+    });
+    
+    socket.on('delete_callout', function(id) {
+      console.log("Delete callout received:", id);
+      let old = document.getElementById('callout_'+id);
+      if (old) old.remove();
+      delete callouts[id];
+      updateSidebarButtonStates();
+    });
+  }
+  
+  // Initialize updateSidebarButtonStates function early
+  function updateSidebarButtonStates() {
+    const editCalloutBtn = document.getElementById('editCalloutBtn');
+    
+    const hasCallouts = callouts && Object.keys(callouts).length > 0;
+    
+    if (editCalloutBtn) {
+      editCalloutBtn.disabled = !hasCallouts;
+      editCalloutBtn.title = hasCallouts ? 'Edit most recent callout' : 'No callouts available to edit';
+      editCalloutBtn.style.opacity = hasCallouts ? '1' : '0.6';
+      editCalloutBtn.style.cursor = hasCallouts ? 'pointer' : 'not-allowed';
+    }
+  }
+  
+  // Helper for growing textareas and text inputs
+  function autoGrow(el) {
+    if (el.tagName.toLowerCase() === 'textarea') {
+      el.style.height = '38px';
+      el.style.height = (el.scrollHeight)+'px';
+      
+      // Ensure the textarea stays visible in the sidebar
+      ensureElementVisible(el);
+    } else if (el.tagName.toLowerCase() === 'input' && el.type === 'text') {
+      // For text inputs, expand width based on content
+      const tempSpan = document.createElement('span');
+      tempSpan.style.visibility = 'hidden';
+      tempSpan.style.position = 'absolute';
+      tempSpan.style.fontSize = window.getComputedStyle(el).fontSize;
+      tempSpan.style.fontFamily = window.getComputedStyle(el).fontFamily;
+      tempSpan.style.padding = window.getComputedStyle(el).padding;
+      tempSpan.textContent = el.value || el.placeholder;
+      document.body.appendChild(tempSpan);
+      
+      const minWidth = 150; // Minimum width
+      const maxWidth = 400; // Maximum width
+      const contentWidth = tempSpan.offsetWidth + 20; // Add some padding
+      
+      el.style.width = Math.min(Math.max(contentWidth, minWidth), maxWidth) + 'px';
+      document.body.removeChild(tempSpan);
+    }
+  }
+  
+  // Helper function to ensure form elements stay visible when focused or modified
+  function ensureElementVisible(element) {
+    const sidebarContainer = document.querySelector('.sidebar-form-container');
+    if (!sidebarContainer || !element) return;
+    
+    // Get element position relative to the scrollable container
+    const elementRect = element.getBoundingClientRect();
+    const containerRect = sidebarContainer.getBoundingClientRect();
+    
+    // Check if element is outside the visible area
+    const isAbove = elementRect.top < containerRect.top;
+    const isBelow = elementRect.bottom > containerRect.bottom;
+    
+    if (isAbove || isBelow) {
+      // Calculate the scroll position to center the element
+      const elementTop = element.offsetTop;
+      const containerHeight = sidebarContainer.clientHeight;
+      const elementHeight = element.offsetHeight;
+      
+      const scrollTop = elementTop - (containerHeight / 2) + (elementHeight / 2);
+      
+      sidebarContainer.scrollTo({
+        top: Math.max(0, scrollTop),
+        behavior: 'smooth'
+      });
+    }
+  }
+  
+  // Format SLANT input to #/#/# pattern
+  function formatSlant(input) {
+    let value = input.value.replace(/[^0-9]/g, ''); // Remove non-digits
+    if (value.length > 0) {
+      if (value.length <= 1) {
+        input.value = value;
+      } else if (value.length <= 2) {
+        input.value = value.charAt(0) + '/' + value.charAt(1);
+      } else {
+        input.value = value.charAt(0) + '/' + value.charAt(1) + '/' + value.substring(2, 3);
+      }
+    }
+  }
+  
+  // ------ Core UI Functions ------
+  function openRoomModal() { 
+    console.log("Opening room modal");
+    document.getElementById('roomModal').style.display = 'flex'; 
+  }
+  
+  function closeRoomModal() { 
+    console.log("Closing room modal");
+    document.getElementById('roomModal').style.display = 'none'; 
+  }
+  
+  function closeCalloutMenu() {
+    console.log("Closing callout menu");
+    document.getElementById('calloutMenuModal').style.display = 'none';
+  }
+  
+  function goDashboard() {
+    console.log("Navigating to dashboard");
+    window.location.href = '/dashboard.html';
+  }
+  
+  function logout() {
+    console.log("Logging out");
+    localStorage.removeItem('token');
+    localStorage.removeItem('userName');
+    window.location.href = '/login.html';
+  }
+  
+  function goToGrading() {
+    const role = localStorage.getItem('role');
+    if (role === 'instructor') {
+      window.location.href = '/instructor-grading.html';
+    } else {
+      window.location.href = '/student-grading.html';
+    }
+  }
+  
+  // ------ Form Handling Functions ------
+  async function handleJoinRoomForm(form) {
+    try {
+      console.log("Join Room form submitted");
+      
+      const teamSelect = document.getElementById('modalTeam');
+      const missionSelect = document.getElementById('modalMission');
+      
+      // Validate form fields
+      if (!teamSelect.value) {
+        alert("Please select a team");
+        return;
+      }
+      if (!missionSelect.value) {
+        alert("Please select a mission");
+        return;
+      }
+      
+      // Join room
+      let classId = "SMX";
+      let team = teamSelect.value;
+      let mission = missionSelect.value;
+      
+      console.log("Selected values:", { classId, team, mission });
+      
+      currentRoom = { classId, team, mission };
+      let roomId = classId + "_" + team + "_" + mission;
+      socket.emit('join_room', roomId);
+      
+      document.getElementById('currentClass').textContent = classId;
+      document.getElementById('currentTeam').textContent = team;
+      document.getElementById('currentMission').textContent = mission;
+      
+      closeRoomModal();
+      await loadCallouts(roomId);
+    } catch (error) {
+      console.error("Error joining room:", error);
+      alert("Error joining room: " + error.message);
+    }
+  }
+  
+  async function submitLogForm(form) {
+    if(!currentRoom.classId) {
+      alert('Join a room first.');
+      return;
+    }
+    
+    try {
+      console.log("Log form submitted");
+      
+      const formData = new FormData(form);
+      const data = Object.fromEntries(formData.entries());
+      
+      // Debug: Log the form data to see what's being submitted
+      console.log('Form data being submitted:', data);
+      console.log('SLANT value:', data.slant);
+      console.log('Vehicles value:', data.vehicles);
+      console.log('Target Status value:', data.targetStatus);
+      
+      // Additional debugging - check form elements directly
+      console.log('Form elements check:');
+      console.log('SLANT element:', form.elements.slant ? form.elements.slant.value : 'NOT FOUND');
+      console.log('Vehicles element:', form.elements.vehicles ? form.elements.vehicles.value : 'NOT FOUND');
+      console.log('Target Status element:', form.elements.targetStatus ? form.elements.targetStatus.value : 'NOT FOUND');
+      
+      let follow = undefined;
+      
+      // Check if follow form is visible and has data
+      const followForm = document.getElementById('followForm');
+      if (followForm && window.getComputedStyle(followForm).display !== 'none') {
+        const followNameInput = document.getElementById('followNameInput');
+        const followIdHidden = document.getElementById('followIdHidden');
+        const followStageSelected = document.getElementById('followStageSelected');
+        const followStageLabel = document.getElementById('followStageLabel');
+        
+        console.log('Follow form is visible, checking for data...');
+        console.log('Follow name:', followNameInput ? followNameInput.value : 'not found');
+        console.log('Follow ID:', followIdHidden ? followIdHidden.value : 'not found');
+        console.log('Follow stage:', followStageSelected ? followStageSelected.value : 'not found');
+        
+        if (followNameInput && followNameInput.value.trim()) {
+          follow = {
+            name: followNameInput.value.trim(),
+            followId: followIdHidden ? followIdHidden.value : Math.random().toString(36).substr(2, 6).toUpperCase(),
+            stage: followStageSelected ? followStageSelected.value : (followStageLabel ? followStageLabel.textContent : 'START'),
+            ended: followStageSelected ? followStageSelected.value === 'END' : (followStageLabel ? followStageLabel.textContent === 'END' : false)
+          };
+          console.log('Follow data created:', follow);
+        } else {
+          console.log('No follow name provided, skipping follow creation');
+        }
+      } else {
+        console.log('Follow form is not visible or not found');
+      }
+      
+      // Ensure vehicles is converted to number
+      if (data.vehicles) {
+        data.vehicles = parseInt(data.vehicles, 10) || 0;
+      }
+      
+      const payload = {
+        ...data,
+        roomId: currentRoom.classId + "_" + currentRoom.team + "_" + currentRoom.mission,
+        follow,
+        createdBy: localStorage.getItem('userName') || "You"
+      };
+      
+      // Debug: Log the final payload
+      console.log('Final payload being sent:', payload);
+      
+      const response = await fetch('/api/callouts', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}`);
+      }
+      
+      const log = await response.json();
+      callouts[log._id] = log;
+      createBubble(log, false);
+      
+      // Scroll to the new callout after a brief delay to ensure it's rendered
+      setTimeout(() => {
+        const newBubble = document.getElementById('callout_' + log._id);
+        const feedPanel = document.getElementById('feedPanel');
+        if (newBubble && feedPanel) {
+          // Scroll the feed panel to show the new callout
+          newBubble.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center',
+            inline: 'nearest'
+          });
+        }
+      }, 200);
+      
+      // DO NOT reset form - keep all field values populated
+      
+      // Reset follow form if it was used
+      if (follow) {
+        const followForm = document.getElementById('followForm');
+        const createFollowBtn = document.getElementById('createFollowBtn');
+        const followNameInput = document.getElementById('followNameInput');
+        const followIdHidden = document.getElementById('followIdHidden');
+        const followIdDisplay = document.getElementById('followIdDisplay');
+        const followStageSelected = document.getElementById('followStageSelected');
+        const followStageLabel = document.getElementById('followStageLabel');
+        
+        if (followForm) followForm.style.display = 'none';
+        if (createFollowBtn) createFollowBtn.textContent = 'Create Follow';
+        if (followNameInput) followNameInput.value = '';
+        if (followIdHidden) followIdHidden.value = '';
+        if (followIdDisplay) followIdDisplay.textContent = '';
+        if (followStageSelected) followStageSelected.value = 'START';
+        if (followStageLabel) followStageLabel.textContent = 'START';
+        
+        console.log('Follow form reset after successful submission');
+      }
+      
+      // Flash animation and highlight the new bubble
+      const bubble = document.getElementById('callout_' + log._id);
+      if (bubble) {
+        bubble.style.animation = 'none';
+        bubble.offsetHeight; /* trigger reflow */
+        bubble.style.animation = 'flash 1.5s';
+        
+        // Add a temporary highlight border to make it more visible
+        bubble.style.boxShadow = '0 0 20px rgba(34, 197, 94, 0.6), 0 0 40px rgba(34, 197, 94, 0.3)';
+        setTimeout(() => {
+          bubble.style.boxShadow = '';
+        }, 2000);
+      }
+      
+      // Show "LOG SUBMITTED" overlay feedback
+      showLogSubmittedOverlay();
+    } catch (error) {
+      console.error("Error submitting callout:", error);
+      alert("Error submitting callout: " + error.message);
+      // DO NOT clear form on error - keep user's input
+    }
+  }
+  
+  // Show "LOG SUBMITTED" overlay feedback
+  function showLogSubmittedOverlay() {
+    // Create overlay element
+    const overlay = document.createElement('div');
+    overlay.className = 'bg-black/70 fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-300';
+    overlay.style.opacity = '0';
+    
+    // Create text element
+    const text = document.createElement('div');
+    text.className = 'text-white text-3xl font-bold';
+    text.textContent = 'LOG SUBMITTED';
+    
+    overlay.appendChild(text);
+    document.body.appendChild(overlay);
+    
+    // Fade in
+    requestAnimationFrame(() => {
+      overlay.style.opacity = '1';
+    });
+    
+    // Add click handler to dismiss
+    overlay.addEventListener('click', function() {
+      // Fade out
+      overlay.style.opacity = '0';
+      
+      // Remove from DOM after transition
+      setTimeout(() => {
+        if (overlay.parentNode) {
+          overlay.parentNode.removeChild(overlay);
+        }
+      }, 300);
+    });
+  }
+  
+  // ------ Data Loading Functions ------
+  async function loadCallouts(roomId) {
+    try {
+      console.log("Loading callouts for room:", roomId);
+      
+      // Consistent API URL handling
+      const apiUrl = window.location.hostname === 'localhost' 
+        ? `http://localhost:3001/api/callouts/${roomId}`
+        : `/api/callouts/${roomId}`;
+        
+      const response = await fetch(apiUrl, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}`);
+      }
+      
+      const logs = await response.json();
+      console.log("Callouts loaded:", logs);
+      
+      callouts = {};
+      const feedPanel = document.getElementById('feedPanel');
+      feedPanel.innerHTML = '';
+      
+      // Add tip about double-clicking
+      const tipDiv = document.createElement('div');
+      tipDiv.style.textAlign = 'center';
+      tipDiv.style.padding = '8px 12px';
+      tipDiv.style.marginBottom = '15px';
+      tipDiv.style.background = 'rgba(34, 197, 94, 0.1)';
+      tipDiv.style.borderRadius = '8px';
+      tipDiv.style.color = '#a9d4c6';
+      tipDiv.style.fontSize = '0.95em';
+      tipDiv.style.border = '1px dashed rgba(34, 197, 94, 0.3)';
+      tipDiv.innerHTML = '<i>Tip: Double-click any callout to edit it quickly</i>';
+      feedPanel.appendChild(tipDiv);
+      
+      // Sort logs by zulu time (latest time first)
+      logs.sort((a, b) => {
+        // Parse zulu times (in HHMM format)
+        let timeA = a.zulu || '0000';
+        let timeB = b.zulu || '0000';
+        
+        // Convert to numbers for comparison (HHMM as a 4-digit number)
+        // Make sure we handle both old HH:MM format and new HHMM format
+        let valueA, valueB;
+        
+        if (timeA.includes(':')) {
+          // Old format - convert HH:MM to a number
+          let [hoursA, minutesA] = timeA.split(':').map(Number);
+          valueA = hoursA * 100 + minutesA;
+        } else {
+          // New format - already a 4-digit number as string
+          valueA = parseInt(timeA, 10);
+        }
+        
+        if (timeB.includes(':')) {
+          // Old format - convert HH:MM to a number
+          let [hoursB, minutesB] = timeB.split(':').map(Number);
+          valueB = hoursB * 100 + minutesB;
+        } else {
+          // New format - already a 4-digit number as string
+          valueB = parseInt(timeB, 10);
+        }
+        
+        // Compare the numeric values (higher number = later time)
+        return valueB - valueA;
+      });
+      
+      // Process logs in sorted order (latest zulu time to earliest)
+      // This creates the reverse chronological display order by zulu time
+      for(const log of logs) {
+        callouts[log._id] = log;
+        createBubble(log);
+      }
+      
+      // Update sidebar button states based on callout availability
+      updateSidebarButtonStates();
+    } catch (error) {
+      console.error("Error loading callouts:", error);
+      alert("Error loading room data: " + error.message);
+    }
+  }
+  
+  // ------ UI Generation Functions ------
+  window.createBubble = function(data, append=false) {
+    try {
+      // Debug: Log the data being used to create the bubble
+      console.log('Creating bubble with data:', data);
+      console.log('SLANT in bubble data:', data.slant);
+      console.log('Vehicles in bubble data:', data.vehicles);
+      console.log('Target Status in bubble data:', data.targetStatus);
+      
+      const panel = document.getElementById('feedPanel');
+      
+      // Check if this bubble already exists (for updates)
+      const existingBubble = document.getElementById('callout_' + data._id);
+      if (existingBubble) {
+        // Remove the existing bubble wrapper and recreate it to ensure clean layout
+        const existingWrapper = existingBubble.closest('.callout-wrapper');
+        if (existingWrapper) {
+          existingWrapper.remove();
+        } else {
+          existingBubble.remove();
+        }
+      }
+      
+      // Create wrapper for external elements
+      const wrapper = document.createElement('div');
+      wrapper.className = "callout-wrapper";
+      
+      // This is a new bubble, create it from scratch
+      const div = document.createElement('div');
+      div.className = "callout-card " + (data.qc || "qc-orange"); 
+      div.id = 'callout_' + data._id;
+      
+      // Add student-locked class for approved callouts when user is student
+      let userRole = localStorage.getItem('role') || 'student';
+      if (userRole === 'student' && data.qc === 'qc-green') {
+        div.classList.add('student-locked');
+      }
+      
+      // Add double-click handler to open edit menu
+      div.ondblclick = function() {
+        console.log('Double-click detected on callout:', data._id);
+        let userRole = localStorage.getItem('role') || 'student';
+        const isApproved = data.qc === 'qc-green';
+        
+        if (userRole === 'student' && isApproved) {
+          alert('Access Denied: Students cannot edit approved callouts.\n\nThis callout has been approved and can only be modified by instructors.');
+          return;
+        }
+        
+        editCallout(data._id);
+      };
+      div.style.cursor = 'pointer';
+      
+      // Update title based on permissions
+      userRole = localStorage.getItem('role') || 'student';
+      const isApproved = data.qc === 'qc-green';
+      if (userRole === 'student' && isApproved) {
+        div.title = 'Approved callout - Instructor access required to edit';
+        div.style.cursor = 'not-allowed';
+      } else {
+        div.title = 'Double-click to edit';
+      }
+      
+      // Make callout draggable
+      div.setAttribute('draggable', 'true');
+      div.addEventListener('dragstart', function(e) {
+        console.log('Dragging callout with data:', data);
+        if (data.follow) {
+          console.log('Follow data included:', data.follow);
+        }
+        e.dataTransfer.setData('text/plain', JSON.stringify(data));
+      });
+      
+      // Add selection checkbox for group operations
+      const selectCheckbox = document.createElement('input');
+      selectCheckbox.type = 'checkbox';
+      selectCheckbox.className = 'bubble-select-checkbox';
+      selectCheckbox.title = 'Select for group operation';
+      selectCheckbox.setAttribute('data-id', data._id);
+      selectCheckbox.addEventListener('change', function() {
+        updateGroupActionBar();
+      });
+      
+      // Create menu button with direct onclick attribute
+      const menuBtn = document.createElement('button');
+      menuBtn.className = "menu-btn";
+      menuBtn.title = "Options";
+      menuBtn.innerHTML = "&#8942;";
+      menuBtn.setAttribute('onclick', `showCalloutMenu(event, this, '${data._id}')`);
+      
+      // Create QC button with direct onclick attribute
+      const qcBtn = document.createElement('button');
+      qcBtn.className = "qc-btn";
+      qcBtn.title = "Quality Control";
+      qcBtn.innerHTML = "QC";
+      qcBtn.setAttribute('onclick', `showQCMenu(event, this, '${data._id}')`);
+      
+      // Add follow indicator if this callout has a follow
+      const hasFollow = data.follow && data.follow.name;
+      if (hasFollow) {
+        div.classList.add('has-follow');
+      }
+      
+      // If has follow, add the vertical indicator bar
+      if (hasFollow) {
+        const followIndicator = document.createElement('div');
+        followIndicator.className = "follow-indicator";
+        followIndicator.title = data.follow.followId || "Follow";
+        
+        // If follow is ended, add specific class
+        if (data.follow.ended || data.follow.stage === "END") {
+          followIndicator.classList.add('follow-ended');
+        }
+        
+        div.appendChild(followIndicator);
+      }
+      
+      // Create the classic bubble content
+      const content = document.createElement('div');
+      content.style.paddingTop = '20px'; // Space for buttons
+      
+      // Build the classic layout
+      let html = '';
+      
+      // Line 1: Objective & Date on same line
+      html += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">`;
+      html += `<span><strong>OBJ ${(data.operation || 'UNKNOWN').toUpperCase()}</strong></span>`;
+      html += `<span>${formatDateForBubble(data.createdAt)}</span>`;
+      html += `</div>`;
+      
+      // Line 2: Asset & Time aligned on same line
+      html += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">`;
+      html += `<span> <strong>${(data.asset || 'UNKNOWN').toUpperCase()}</strong></span>`;
+      html += `<span style="color: #22c55e; font-weight: bold;">${data.zulu ? data.zulu + 'Z' : '0000Z'}</span>`;
+      html += `</div>`;
+      
+      // Line 3: Location with MGRS and S/VIC right-aligned
+      html += `<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2px;">`;
+      html += `<span> <strong>Location:</strong> ${(data.location || 'Not specified').toUpperCase()}</span>`;
+      html += `<div style="text-align: right; font-size: 12px;">`;
+      html += `<div> ${(data.mgrs || 'Not specified').toUpperCase()}</div>`;
+      html += `<div>S: ${(data.slant || 'N/A').toUpperCase()}     VIC: ${data.vehicles !== undefined ? data.vehicles : '0'}</div>`;
+      html += `</div>`;
+      html += `</div>`;
+      
+      // Activity section
+      html += `<div style="margin-bottom: 2px;"><strong>Activity:</strong></div>`;
+      html += `<div style="margin-left: 8px; margin-bottom: 4px; color: #ccc;">${data.activity || 'No activity reported'}</div>`;
+      
+      // IA Notes
+      if (data.iaNotes && data.iaNotes.trim()) {
+        html += `<div style="margin-top: 4px; font-size: 10px; color: #999;">`;
+        html += `<strong>IA Notes:</strong> ${data.iaNotes.replace(/\n/g,'<br>')}`;
+        html += `</div>`;
+      }
+      
+      // Target Status - moved below IA Notes with bold font
+      if (data.targetStatus) {
+        const statusColor = data.targetStatus === 'ON TARGET' ? '#22c55e' : '#ef4444';
+        const statusBg = data.targetStatus === 'ON TARGET' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)';
+        html += `<div style="text-align: center; margin: 4px 0;">`;
+        html += `<span style="background: ${statusBg}; color: ${statusColor}; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold;">${data.targetStatus}</span>`;
+        html += `</div>`;
+      }
+      
+      // Follow section - name on left, stage on right, ID below
+      if (hasFollow) {
+        html += `<div class="follow-display">`;
+        html += `<div class="follow-header">`;
+        html += `<span class="follow-name">${(data.follow.name || '').toUpperCase()}</span>`;
+        html += `<span class="follow-stage">${(data.follow.stage || 'START').toUpperCase()}</span>`;
+        html += `</div>`;
+        if (data.follow.followId) {
+          html += `<div class="follow-id-row">ID: <span class="follow-id">#${data.follow.followId.toUpperCase()}</span></div>`;
+        }
+        html += `</div>`;
+      }
+      
+      content.innerHTML = html;
+      
+      const footer = document.createElement('div');
+      footer.style.cssText = 'font-size: 9px; color: #666; margin-top: 4px; text-align: right;';
+      
+      // Simple footer with creator info
+      let footerText = `By ${data.createdBy}`;
+      if (data.editedAt && data.editedBy) {
+        footerText = `Edited by ${data.editedBy}`;
+      }
+      
+      footer.textContent = footerText;
+      
+      // Assemble the bubble
+      wrapper.appendChild(selectCheckbox);
+      wrapper.appendChild(menuBtn);
+      wrapper.appendChild(qcBtn);
+      div.appendChild(content);
+      div.appendChild(footer);
+      div.dataset.payload = JSON.stringify(data);
+      wrapper.appendChild(div);
+      
+      // Insert the new callout in the correct position based on zulu time
+      if (data.zulu) {
+        // Parse the new callout's zulu time
+        let newTimeValue;
+        
+        // Handle both formats (old HH:MM and new HHMM)
+        if (data.zulu.includes(':')) {
+          // Old format
+          const [newHours, newMinutes] = data.zulu.split(':').map(Number);
+          newTimeValue = newHours * 100 + newMinutes;
+        } else {
+          // New format - already a 4-digit number as string
+          newTimeValue = parseInt(data.zulu, 10);
+        }
+        
+        // Check existing callouts to find the right position
+        let inserted = false;
+        const existingBubbles = panel.querySelectorAll('.callout-card');
+        
+        // Skip the first element if it's the tip div
+        for (let i = 0; i < existingBubbles.length; i++) {
+          const bubble = existingBubbles[i];
+          const bubbleId = bubble.id.replace('callout_', '');
+          const bubbleData = callouts[bubbleId];
+          
+          if (bubbleData && bubbleData.zulu) {
+            // Parse this bubble's zulu time
+            let bubbleTimeValue;
+            
+            // Handle both formats
+            if (bubbleData.zulu.includes(':')) {
+              // Old format - convert HH:MM to a number
+              const [bubbleHours, bubbleMinutes] = bubbleData.zulu.split(':').map(Number);
+              bubbleTimeValue = bubbleHours * 100 + bubbleMinutes;
+            } else {
+              // New format - already a 4-digit number as string
+              bubbleTimeValue = parseInt(bubbleData.zulu, 10);
+            }
+            
+            // If new time is later than current bubble's time, insert before it
+            if (newTimeValue > bubbleTimeValue) {
+              panel.insertBefore(wrapper, bubble.closest('.callout-wrapper') || bubble);
+              inserted = true;
+              break;
+            }
+          }
+        }
+        
+        // If we couldn't find a position or the feed is empty, append to the end
+        if (!inserted) {
+          panel.appendChild(wrapper);
+        }
+      } else {
+        // If no zulu time, add to the top as a fallback
+        panel.prepend(wrapper);
+      }
+      
+      // Update sidebar button states after adding a new bubble
+      updateSidebarButtonStates();
+      
+      // Auto-scroll to show the new bubble if it was just created (not during initial load)
+      if (!append) {
+        setTimeout(() => {
+          const feedPanel = document.getElementById('feedPanel');
+          const newBubble = document.getElementById('callout_' + data._id);
+          if (newBubble && feedPanel) {
+            // Scroll the new bubble into view smoothly
+            newBubble.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center',
+              inline: 'nearest'
+            });
+            
+            // Also ensure the feed panel scrolls to show the content
+            const bubbleRect = newBubble.getBoundingClientRect();
+            const feedRect = feedPanel.getBoundingClientRect();
+            
+            // If bubble is not fully visible, scroll to it
+            if (bubbleRect.top < feedRect.top || bubbleRect.bottom > feedRect.bottom) {
+              const scrollTop = feedPanel.scrollTop + (bubbleRect.top - feedRect.top) - (feedRect.height / 2) + (bubbleRect.height / 2);
+              feedPanel.scrollTo({
+                top: scrollTop,
+                behavior: 'smooth'
+              });
+            }
+          }
+        }, 100); // Small delay to ensure DOM is updated
+      }
+    } catch (error) {
+      console.error("Error creating bubble:", error);
+    }
+  };
+  
+  // Helper function to format date for bubble in MM/DD/YYYY format
+  function formatDateForBubble(dateString) {
+    if (!dateString) {
+      // If no date provided, use current date
+      const now = new Date();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const year = now.getFullYear();
+      return `${month}/${day}/${year}`;
+    }
+    
+    // Format the provided date
+    const date = new Date(dateString);
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${month}/${day}/${year}`;
+  }
+  
+  // Helper function to format zulu time
+  function formatZuluTime(zuluTime) {
+    if (!zuluTime) return '-';
+    
+    // If it already contains a colon, it's in the old format
+    if (zuluTime.includes(':')) {
+      return zuluTime;
+    }
+    
+    // For 4-digit format, insert a colon between hours and minutes
+    // Handle both 3-digit and 4-digit cases
+    if (zuluTime.length === 3) {
+      // For 3 digits (e.g., "130" for 1:30), add leading zero
+      return "0" + zuluTime.charAt(0) + ":" + zuluTime.substring(1);
+    } else if (zuluTime.length === 4) {
+      return zuluTime.substring(0, 2) + ":" + zuluTime.substring(2);
+    }
+    
+    // Return as-is for any other format
+    return zuluTime;
+  }
+  
+  // Helper function to update existing bubble content - DISABLED to prevent nested content
+  function updateBubbleContent() { 
+    return; 
+  }
+  
+  function showCalloutMenu(e, btn, id) {
+    try {
+      e.stopPropagation();
+      console.log("Opening callout menu for:", id);
+      const modalContent = document.getElementById('calloutMenuContent');
+      
+      // Create menu content
+      modalContent.innerHTML = '';
+      
+      // Close button
+      const closeBtn = document.createElement('button');
+      closeBtn.className = "modal-close";
+      closeBtn.innerHTML = "&times;";
+      closeBtn.addEventListener('click', closeCalloutMenu);
+      
+      // Title
+      const title = document.createElement('div');
+      title.style.textAlign = "center";
+      title.style.marginBottom = "20px";
+      title.style.fontWeight = "bold";
+      title.textContent = "Callout Options";
+      
+      // Options container
+      const options = document.createElement('div');
+      options.style.display = "flex";
+      options.style.gap = "15px";
+      options.style.flexDirection = "column";
+      
+      // Create button helper function
+      function createActionButton(text, action) {
+        const button = document.createElement('button');
+        button.className = "nav-btn";
+        button.textContent = text;
+        button.addEventListener('click', action);
+        return button;
+           }
+      
+      // Check user role and callout status for restrictions
+      let userRole = localStorage.getItem('role') || 'student';
+      const callout = callouts[id];
+      const isApproved = callout && callout.qc === 'qc-green';
+      const isStudent = userRole === 'student';
+      
+      // Add option buttons with restrictions
+      if (isStudent && isApproved) {
+        // For students viewing approved callouts, show restricted options
+        const restrictedEditBtn = createActionButton("Edit Callout 🔒", () => {
+          alert('Access Denied: Students cannot edit approved callouts.\n\nThis callout has been approved and can only be modified by instructors.');
+        });
+        restrictedEditBtn.style.opacity = '0.6';
+        restrictedEditBtn.style.color = '#999';
+        options.appendChild(restrictedEditBtn);
+      } else {
+        options.appendChild(createActionButton("Edit Callout", () => {
+          console.log('Menu edit button clicked for callout:', id);
+          editCallout(id);
+        }));
+      }
+      
+      options.appendChild(createActionButton("View History", () => calloutHistory(id)));
+      
+      if (isStudent && isApproved) {
+        // For students viewing approved callouts, show restricted delete option
+        const restrictedDeleteBtn = createActionButton("Delete Callout 🔒", () => {
+          alert('Access Denied: Students cannot delete approved callouts.\n\nThis callout has been approved and can only be deleted by instructors.');
+        });
+        restrictedDeleteBtn.style.opacity = '0.6';
+        restrictedDeleteBtn.style.color = '#999';
+        options.appendChild(restrictedDeleteBtn);
+      } else {
+        options.appendChild(createActionButton("Delete Callout", () => deleteCallout(id)));
+      }
+      
+      // QC options with restrictions
+      const qcTitle = document.createElement('div');
+      qcTitle.style.marginTop = "10px";
+      qcTitle.style.marginBottom = "8px";
+      qcTitle.style.fontWeight = "bold";
+      qcTitle.textContent = "Quality Control:";
+      options.appendChild(qcTitle);
+      
+      if (isStudent && isApproved) {
+        // For students viewing approved callouts, show all QC options as restricted
+        const restrictedMsg = document.createElement('div');
+        restrictedMsg.style.fontSize = '0.9em';
+        restrictedMsg.style.color = '#999';
+        restrictedMsg.style.fontStyle = 'italic';
+        restrictedMsg.style.marginBottom = '8px';
+        restrictedMsg.textContent = '🔒 QC status locked - Instructor access required';
+        options.appendChild(restrictedMsg);
+        
+        const restrictedQCBtn = createActionButton("Current: Approved (Locked)", () => {
+          alert('Access Denied: Students cannot modify QC status of approved callouts.\n\nThis callout has been approved and can only be modified by instructors.');
+        });
+        restrictedQCBtn.style.opacity = '0.6';
+        restrictedQCBtn.style.color = '#22c55e';
+        restrictedQCBtn.style.fontWeight = 'bold';
+        options.appendChild(restrictedQCBtn);
+      } else {
+        // Normal QC options
+        options.appendChild(createActionButton("QC: In Progress", () => updateQC(id, 'qc-orange')));
+        options.appendChild(createActionButton("QC: In Review", () => updateQC(id, 'qc-yellow')));
+        
+        if (isStudent) {
+          // Students can't set to Approved or Issues
+          const restrictedApproved = createActionButton("QC: Approved 🔒", () => {
+            alert('Access Denied: Students cannot set QC status to "Approved".\n\nOnly instructors can approve callouts.');
+          });
+          restrictedApproved.style.opacity = '0.6';
+          restrictedApproved.style.color = '#999';
+          options.appendChild(restrictedApproved);
+          
+          const restrictedIssues = createActionButton("QC: Issues 🔒", () => {
+            alert('Access Denied: Students cannot set QC status to "Issues".\n\nOnly instructors can mark callouts as having issues.');
+          });
+          restrictedIssues.style.opacity = '0.6';
+          restrictedIssues.style.color = '#999';
+          options.appendChild(restrictedIssues);
+        } else {
+          // Instructors/admins can set all QC statuses
+          options.appendChild(createActionButton("QC: Approved", () => updateQC(id, 'qc-green')));
+          options.appendChild(createActionButton("QC: Issues", () => updateQC(id, 'qc-red')));
+        }
+      }
+      
+      // Assemble modal content
+      modalContent.appendChild(closeBtn);
+      modalContent.appendChild(title);
+      modalContent.appendChild(options);
+      
+      // Show modal
+      document.getElementById('calloutMenuModal').style.display = 'flex';
+    } catch (error) {
+      console.error("Error showing callout menu:", error);
+    }
+  }
+  
+  // ------ Action Functions ------
+  window.originalUpdateQC = async function(id, qcClass) {
+    closeCalloutMenu();
+    console.log("Updating QC:", id, qcClass);
+    const callout = callouts[id];
+    if (!callout) return;
+    
+    // Check user permissions
+    let userRole = localStorage.getItem('role') || 'student';
+    const isCurrentlyApproved = callout.qc === 'qc-green';
+    
+    // Students cannot set QC to Approved or Issues
+    if (userRole === 'student' && (qcClass === 'qc-green' || qcClass === 'qc-red')) {
+      alert('Access Denied: Students cannot set QC status to "Approved" or "Issues".\n\nOnly instructors can perform this action.');
+      return;
+    }
+    
+    // Students cannot modify already approved callouts
+    if (userRole === 'student' && isCurrentlyApproved) {
+      alert('Access Denied: Students cannot modify approved callouts.\n\nThis callout has been approved and can only be modified by instructors.');
+      return;
+    }
+    
+    try {
+      const apiUrl = window.location.hostname === 'localhost' 
+        ? `http://localhost:3001/api/callouts/${id}`
+        : `/api/callouts/${id}`;
+        
+      const response = await fetch(apiUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          ...callout,
+          qc: qcClass,
+          editedBy: localStorage.getItem('userName') || 'You'
+        })
+      });
+      
+      if (!response.ok) {
+        if (response.status === 403) {
+          throw new Error('Permission denied. You do not have the required role to perform this action.');
+        }
+        throw new Error(`Server returned ${response.status}`);
+      }
+      
+      const updated = await response.json();
+      console.log('QC Update - Original callout:', callout);
+      console.log('QC Update - Updated callout from server:', updated);
+      
+      // Ensure SLANT and vehicles are preserved if missing from server response
+      if ((!updated.slant || updated.slant === '') && callout.slant) {
+        updated.slant = callout.slant;
+        console.log('Preserved SLANT:', updated.slant);
+      }
+      if ((updated.vehicles === undefined || updated.vehicles === null || updated.vehicles === '') && callout.vehicles !== undefined) {
+        updated.vehicles = callout.vehicles;
+        console.log('Preserved vehicles:', updated.vehicles);
+      }
+      
+      callouts[id] = updated;
+      
+      // Use createBubble to update the existing callout in place
+      // This will not change its position in the feed
+      createBubble(updated);
+    } catch (error) {
+      console.error('Error updating QC:', error);
+      alert('Error updating QC: ' + error.message);
+    }
+  }
+  
+ 
+  
+  async function deleteCallout(id) {
+    closeCalloutMenu();
+    
+    // Check user permissions
+    const userRole = localStorage.getItem('role') || 'student';
+    const callout = callouts[id];
+    const isApproved = callout && callout.qc === 'qc-green';
+    
+    if (userRole === 'student') {
+      alert('Access Denied: Students do not have permission to delete callouts.\n\nOnly instructors can perform this action.');
+      return;
+    }
+    
+    // Additional check for approved callouts (even for instructors, might want confirmation)
+    if (isApproved) {
+      if (!confirm('This callout has been APPROVED. Are you sure you want to delete it?\n\nThis action cannot be undone.')) {
+        return;
+      }
+    }
+    
+    if (confirm('Are you sure you want to delete this callout?')) {
+      console.log("Deleting callout:", id);
+      
+      try {
+        const apiUrl = window.location.hostname === 'localhost' 
+          ? `http://localhost:3001/api/callouts/${id}`
+          : `/api/callouts/${id}`;
+          
+        const response = await fetch(apiUrl, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        
+        if (!response.ok) {
+          if (response.status === 403) {
+            throw new Error('Permission denied. You do not have the required role to perform this action.');
+          }
+          throw new Error(`Server returned ${response.status}`);
+        }
+        
+        const bubble = document.getElementById('callout_' + id);
+        if (bubble) bubble.remove();
+        delete callouts[id];
+      } catch (error) {
+        console.error('Error deleting callout:', error);
+        alert('Error deleting callout: ' + error.message);
+      }
+    }
+  }
+  
+  function editCallout(id) {
+    closeCalloutMenu();
+    console.log("Editing callout:", id);
+    const callout = callouts[id];
+    if (!callout) {
+      console.error('Callout not found for ID:', id);
+      alert('Callout not found');
+      return;
+    }
+    
+    // Check if user is student and callout is approved (qc-green)
+    const userRole = localStorage.getItem('role') || 'student';
+    const isApproved = callout.qc === 'qc-green';
+    
+    if (userRole === 'student' && isApproved) {
+      alert('Access Denied: Students cannot edit approved callouts.\n\nThis callout has been approved and can only be modified by instructors.');
+      return;
+    }
+    
+    // Get the edit overlay and form
+    const overlay = document.getElementById('editCalloutOverlay');
+    const form = document.getElementById('editCalloutForm');
+    
+    if (!overlay || !form) {
+      console.error('Edit form elements not found. Overlay:', overlay, 'Form:', form);
+      alert('Edit form not found');
+      return;
+    }
+    
+    console.log('Opening edit form for callout:', callout);
+    
+    // Populate form fields with callout data
+    form.elements.calloutId.value = id;
+    form.elements.classification.value = callout.classification || '';
+    form.elements.asset.value = callout.asset || '';
+    form.elements.sensor.value = callout.sensor || '';
+    form.elements.operation.value = callout.operation || '';
+    form.elements.countryCode.value = callout.countryCode || '';
+    form.elements.team.value = callout.team || '';
+    form.elements.zulu.value = callout.zulu || '';
+    form.elements.mgrs.value = callout.mgrs || '';
+    form.elements.location.value = callout.location || '';
+    form.elements.activity.value = callout.activity || '';
+    form.elements.slant.value = callout.slant || '';
+    form.elements.vehicles.value = callout.vehicles || '0';
+    form.elements.iaNotes.value = callout.iaNotes || '';
+    form.elements.targetStatus.value = callout.targetStatus || '';
+    
+    // Store the callout ID in a data attribute on the form for group edits
+    form.dataset.calloutId = id;
+    
+    // Auto-grow textareas to fit content
+    const textareas = form.querySelectorAll('textarea');
+    textareas.forEach(autoGrow);
+    
+    // Show the overlay
+    console.log('Showing edit overlay');
+    overlay.style.display = 'flex';
+    
+    // Add submit handler if not already added
+    if (!form.dataset.handlerAttached) {
+      console.log('Attaching submit handler to edit form');
+      form.addEventListener('submit', window.handleEditFormSubmit);
+      form.dataset.handlerAttached = 'true';
+    } else {
+      console.log('Submit handler already attached to edit form');
+    }
+  }
+  
+  window.closeEditCallout = function() {
+    const overlay = document.getElementById('editCalloutOverlay');
+    if (overlay) {
+      overlay.style.display = 'none';
+    }
+  }
+  
+  window.originalHandleEditFormSubmit = async function(e) {
+    e.preventDefault();
+    console.log('Edit form submitted');
+    
+    // Get form and callout ID
+    const form = e.target;
+    const id = form.elements.calloutId.value;
+    console.log('Callout ID from form:', id);
+    
+    if (!id || !callouts[id]) {
+      console.error('Callout ID not found. ID:', id, 'Available callouts:', Object.keys(callouts));
+      alert('Callout ID not found');
+      return;
+    }
+    
+    // Get original callout
+    const callout = callouts[id];
+    
+    // Gather form data
+    const formData = {
+      ...callout, // Keep original data
+      classification: form.elements.classification.value.trim(),
+      asset: form.elements.asset.value.trim(),
+      sensor: form.elements.sensor.value.trim(),
+      operation: form.elements.operation.value.trim(),
+      countryCode: form.elements.countryCode.value.trim(),
+      team: form.elements.team.value.trim(),
+      zulu: form.elements.zulu.value.trim(),
+      mgrs: form.elements.mgrs.value.trim(),
+      location: form.elements.location.value.trim(),
+      activity: form.elements.activity.value.trim(),
+      slant: form.elements.slant.value.trim(),
+      vehicles: parseInt(form.elements.vehicles.value) || 0,
+      iaNotes: form.elements.iaNotes.value.trim(),
+      targetStatus: form.elements.targetStatus.value.trim(),
+      editedBy: localStorage.getItem('userName') || 'You'
+    };
+    
+    // Preserve existing follow data if it exists (edit form doesn't modify follow data)
+    if (callout.follow) {
+      formData.follow = callout.follow;
+    }
+    
+    try {
+      // Create consistent API URL
+      const apiUrl = window.location.hostname === 'localhost' 
+        ? `http://localhost:3001/api/callouts/${id}`
+        : `/api/callouts/${id}`;
+        
+      const response = await fetch(apiUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(formData)
+      });
+      
+      if (!response.ok) {
+        if (response.status === 403) {
+          throw new Error('Permission denied. You do not have the required role to perform this action.');
+        }
+        throw new Error(`Server returned ${response.status}`);
+      }
+      
+      // Get the updated callout data
+      const updated = await response.json();
+      console.log('Edit Form - Form data sent:', formData);
+      console.log('Edit Form - Updated callout from server:', updated);
+      
+      // Ensure SLANT and vehicles are preserved if missing from server response
+      if ((!updated.slant || updated.slant === '') && formData.slant) {
+        updated.slant = formData.slant;
+        console.log('Preserved SLANT from form:', updated.slant);
+      }
+      if ((updated.vehicles === undefined || updated.vehicles === null || updated.vehicles === '') && formData.vehicles !== undefined) {
+        updated.vehicles = formData.vehicles;
+        console.log('Preserved vehicles from form:', updated.vehicles);
+      }
+      
+      // Update the callout in our local store
+      callouts[id] = updated;
+      
+      // Update the UI using our createBubble function (which now updates in place)
+      createBubble(updated);
+      
+      // Close the edit form
+      closeEditCallout();
+      
+      console.log('Callout updated successfully');
+    } catch (error) {
+      console.error('Error updating callout:', error);
+      alert('Error updating callout: ' + error.message);
+    }
+  }
+  
+  // Note: autoGrow and formatSlant functions are already defined above - removed duplicates to prevent conflicts
+  
+  // Follow functionality has been moved to the end of the script
+  
+  // Set up form element focus handlers for automatic scrolling
+  function setupFormScrollHandlers() {
+    const sidebarContainer = document.querySelector('.sidebar-form-container');
+    if (!sidebarContainer) return;
+    
+    // Add focus event listeners to all form elements in the sidebar
+    const formElements = sidebarContainer.querySelectorAll('input, textarea, select');
+    
+    formElements.forEach(element => {
+      // Scroll into view when focused
+      element.addEventListener('focus', function() {
+        setTimeout(() => ensureElementVisible(this), 100);
+      });
+      
+      // Also scroll when typing in textareas (for auto-grow)
+      if (element.tagName.toLowerCase() === 'textarea') {
+        element.addEventListener('input', function() {
+          setTimeout(() => ensureElementVisible(this), 100);
+        });
+      }
+    });
+    
+    console.log('✅ Form scroll handlers set up for', formElements.length, 'elements');
+  }
+
+  // ------ CONSOLIDATED EVENT HANDLER INITIALIZATION ------
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log("🚀 DOM loaded - initializing ALL event handlers");
+    console.log(`Document ready state: ${document.readyState}`);
+    console.log(`Total elements in DOM: ${document.querySelectorAll('*').length}`);
+    
+    // Initialize sidebar resize functionality
+    initSidebarResize();
+    
+    // Lock functionality removed - all fields are now editable by default
+    
+    // CONSOLIDATED BUTTON EVENT HANDLERS - Single source of truth
+    const buttonHandlers = [
+      ['dashboardBtn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('✅ Dashboard button clicked');
+        try {
+          goDashboard();
+        } catch (error) {
+          console.error('❌ Error in dashboard button handler:', error);
+        }
+      }],
+      ['joinRoomBtn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('✅ Join Room button clicked');
+        try {
+          openRoomModal();
+        } catch (error) {
+          console.error('Error in join room button handler:', error);
+        }
+      }],
+      ['logoutBtn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        logout();
+      }],
+      ['editCalloutBtn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log("✅ Edit Clicked");
+        if (this.disabled) return;
+        
+        // Find the most recent callout and open it for editing
+        const calloutIds = Object.keys(callouts);
+        if (calloutIds.length > 0) {
+          // Get the most recent callout (first in the list)
+          const mostRecentCalloutId = calloutIds[0];
+          editCallout(mostRecentCalloutId);
+        } else {
+          alert('No callouts available to edit');
+        }
+      }],
+
+      ['closeRoomModalBtn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        closeRoomModal();
+      }],
+      ['createFollowBtn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log("✅ Create Follow Clicked");
+        
+        const followForm = document.getElementById('followForm');
+        if (!followForm) {
+          console.error("❌ followForm not found");
+          return;
+        }
+        
+        const isVisible = window.getComputedStyle(followForm).display !== 'none';
+        console.log('Follow form currently visible:', isVisible);
+        
+        if (isVisible) {
+          // Hide the follow form
+          followForm.style.display = 'none';
+          this.textContent = 'Create Follow';
+          console.log('Follow form hidden');
+        } else {
+          // Show the follow form
+          followForm.style.display = 'block';
+          this.textContent = 'Remove Follow';
+          console.log('Follow form shown');
+          
+          // Initialize follow form if needed
+          const followIdHidden = document.getElementById('followIdHidden');
+          const followIdDisplay = document.getElementById('followIdDisplay');
+          const followNameInput = document.getElementById('followNameInput');
+          const followStageSelected = document.getElementById('followStageSelected');
+          const followStageLabel = document.getElementById('followStageLabel');
+          const followStopNumber = document.getElementById('followStopNumber');
+          
+          if (followIdHidden && !followIdHidden.value) {
+            const newId = Math.random().toString(36).substr(2, 6).toUpperCase();
+            followIdHidden.value = newId;
+            if (followIdDisplay) followIdDisplay.textContent = newId;
+          }
+          
+          if (followNameInput) followNameInput.value = '';
+          if (followStageSelected) followStageSelected.value = 'START';
+          if (followStageLabel) followStageLabel.textContent = 'START';
+          if (followStopNumber) followStopNumber.value = '0';
+        }
+      }],
+      ['groupEditBtn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        handleGroupEdit();
+      }],
+      ['groupQCBtn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        handleGroupQC();
+      }],
+      ['groupCancelBtn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        clearBubbleSelection();
+      }],
+      ['gradingBtn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log("✅ Grading Clicked");
+        goToGrading();
+      }],
+      ['viewHistoryBtn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log("✅ View History Clicked");
+        if (this.disabled) return;
+        
+        const calloutIds = Object.keys(callouts);
+        if (calloutIds.length > 0) {
+          const mostRecentCalloutId = calloutIds[0];
+          if (typeof calloutHistory === 'function') calloutHistory(mostRecentCalloutId);
+        } else {
+          alert('No callout history available');
+        }
+      }]
+    ];
+    
+    // Proper button binding function that prevents duplicates
+    function bind(id, fn) {
+      const el = document.getElementById(id);
+      if (el && !el.dataset.bound) {
+        el.addEventListener("click", fn);
+        el.dataset.bound = "true";
+        console.log(`🟢 Bound: ${id}`);
+      }
+    }
+    
+    // Bind all button event handlers
+    console.log(`📋 Attempting to bind ${buttonHandlers.length} button handlers...`);
+    buttonHandlers.forEach(([id, handler]) => {
+      bind(id, handler);
+    });
+    console.log("📋 Button binding complete.");
+    
+    // MutationObserver to rebind buttons if they're added dynamically
+    new MutationObserver(() => {
+      buttonHandlers.forEach(([id, handler]) => bind(id, handler));
+    }).observe(document.body, { childList: true, subtree: true });
+    
+    // Form submission handlers
+    const joinRoomForm = document.getElementById('joinRoomForm');
+    if (joinRoomForm) {
+      joinRoomForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        handleJoinRoomForm(this);
+      });
+      console.log("🟢 Bound: joinRoomForm");
+    } else {
+      console.warn("⚠️ Missing element: joinRoomForm");
+    }
+    
+    const logForm = document.getElementById('logForm');
+    if (logForm) {
+      logForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        submitLogForm(this);
+      });
+      console.log("🟢 Bound: logForm");
+    } else {
+      console.warn("⚠️ Missing element: logForm");
+    }
+    
+    // Activity textarea auto-grow
+    const activityTextarea = document.getElementById('activityTextarea');
+    if (activityTextarea) {
+      activityTextarea.addEventListener('input', function() {
+        autoGrow(this);
+      });
+      console.log("🟢 Bound: activityTextarea");
+    } else {
+      console.warn("⚠️ Missing element: activityTextarea");
+    }
+    
+    // Initialize sidebar button states
+    updateSidebarButtonStates();
+    
+    // Attach event listeners for the history overlay using event delegation
+    const historyOverlay = document.getElementById('historyOverlay');
+    if (historyOverlay) {
+      historyOverlay.addEventListener('click', function(event) {
+        const target = event.target;
+        if (target.classList.contains('modal-close')) {
+          closeHistoryOverlay();
+        }
+      });
+      console.log('🟢 Bound: historyOverlay event delegation');
+    } else {
+      console.warn('⚠️ Missing element: historyOverlay');
+    }
+    
+    // Modal click-outside-to-close functionality
+    const roomModal = document.getElementById('roomModal');
+    if (roomModal) {
+      roomModal.addEventListener('click', function(e) {
+        if (e.target === roomModal) {
+          closeRoomModal();
+        }
+      });
+      console.log('🟢 Bound: roomModal click-outside-to-close');
+    }
+    
+    const editCalloutOverlay = document.getElementById('editCalloutOverlay');
+    if (editCalloutOverlay) {
+      editCalloutOverlay.addEventListener('click', function(e) {
+        if (e.target === editCalloutOverlay) {
+          closeEditCallout();
+        }
+      });
+      console.log('🟢 Bound: editCalloutOverlay click-outside-to-close');
+    }
+    
+    const calloutMenuModal = document.getElementById('calloutMenuModal');
+    if (calloutMenuModal) {
+      calloutMenuModal.addEventListener('click', function(e) {
+        if (e.target === calloutMenuModal) {
+          closeCalloutMenu();
+        }
+      });
+      console.log('🟢 Bound: calloutMenuModal click-outside-to-close');
+    }
+    
+    // Initialize follow form functionality
+    initializeFollowFormFunctionality();
+    
+    // Initialize socket connection (includes setupSocketListeners)
+    initializeSocket();
+    
+    // Initialize drag-and-drop functionality for callouts
+    initializeDragAndDrop();
+    
+    // Set up form element focus handlers for better scrolling
+    setupFormScrollHandlers();
+    
+    console.log("🎉 All event handlers attached, socket initialized, drag-drop ready, page ready!");
+    console.log("🔍 If buttons don't work, check console for ❌ Missing element messages above.");
+  }); // End of main DOMContentLoaded event listener
+
+  // DUPLICATE REMOVED - All button binding is now handled in the main DOMContentLoaded listener above
+  
+  async function calloutHistory(id) {
+    try {
+      console.log(`Fetching history for callout ID: ${id}`);
+
+      // Fetch history data from the API endpoint
+      const apiUrl = window.location.hostname === 'localhost' 
+        ? `http://localhost:3001/api/callouts/${id}/history` 
+        : `/api/callouts/${id}/history`;
+
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch history: ${response.status}`);
+      }
+
+      const historyData = await response.json();
+
+      // Populate the #historyLogContainer with the retrieved data
+      const historyLogContainer = document.getElementById('historyLogContainer');
+      historyLogContainer.innerHTML = '';
+
+      if (Array.isArray(historyData) && historyData.length > 0) {
+        historyData.forEach(entry => {
+          const entryDiv = document.createElement('div');
+          entryDiv.style.marginBottom = '10px';
+          entryDiv.innerHTML = `
+            <div><strong>Date:</strong> ${new Date(entry.date).toLocaleString()}</div>
+            <div><strong>Change:</strong> ${entry.change}</div>
+            <div><strong>Updated By:</strong> ${entry.updatedBy}</div>
+          `;
+          historyLogContainer.appendChild(entryDiv);
+        });
+      } else {
+        historyLogContainer.innerHTML = '<div>No history available for this callout.</div>';
+      }
+
+      // Display the modal
+      document.getElementById('historyOverlay').style.display = 'flex';
+    } catch (error) {
+      console.error(`Error fetching callout history: ${error.message}`);
+      alert(`Error fetching callout history: ${error.message}`);
+    }
+  }
+
+  function closeHistoryOverlay() {
+    const historyOverlay = document.getElementById('historyOverlay');
+    if (historyOverlay) {
+        historyOverlay.style.display = 'none';
+    } else {
+        console.error('History overlay not found');
+    }
+  }
+  
+  // Function to directly set QC to "In Review" when the QC button is clicked
+  function showQCMenu(event, btn, id) {
+    event.stopPropagation();
+    // Directly set the QC status to "In Review" (yellow)
+    updateQC(id, 'qc-yellow');
+  }
+  
+  // --- FOLLOW LOGIC --- //
+  // Group selection functionality
+  let selectedBubbles = [];
+  
+  function updateGroupActionBar() {
+    // Get all selected checkboxes
+    const checkboxes = document.querySelectorAll('.bubble-select-checkbox:checked');
+    selectedBubbles = Array.from(checkboxes).map(cb => cb.getAttribute('data-id'));
+    
+    const actionBar = document.getElementById('groupActionsBar');
+    const selectedCount = document.getElementById('selectedCount');
+    const editCount = document.getElementById('editCount');
+    const qcCount = document.getElementById('qcCount');
+    
+    // Update counts
+    const count = selectedBubbles.length;
+    selectedCount.textContent = count + (count === 1 ? ' selected' : ' selected');
+    editCount.textContent = count;
+    qcCount.textContent = count;
+    
+    // Show/hide action bar based on selection count
+    if (count > 0) {
+      actionBar.classList.add('active');
+    } else {
+      actionBar.classList.remove('active');
+    }
+  }
+  
+  // Handle group edit
+  function handleGroupEdit() {
+    console.log('Group edit triggered, selected bubbles:', selectedBubbles);
+    if (selectedBubbles.length === 0) return;
+    
+    // Use the last selected bubble for the form initialization
+    const lastId = selectedBubbles[selectedBubbles.length - 1];
+    console.log('Using last selected ID for group edit:', lastId);
+    
+    // Store the list of selected IDs in the form's dataset for later use
+    const editForm = document.getElementById('editCalloutForm');
+    if (editForm) {
+      editForm.dataset.groupEdit = JSON.stringify(selectedBubbles);
+      console.log('Stored group edit IDs in form dataset');
+    }
+    
+    // Call the normal edit function with the last selected bubble
+    editCallout(lastId);
+  }
+  
+  // Handle group QC
+  function handleGroupQC() {
+    if (selectedBubbles.length === 0) return;
+    
+    // Show a QC selection dialog
+    const qcDialog = document.createElement('div');
+    qcDialog.className = 'modal';
+    qcDialog.style.display = 'flex';
+    qcDialog.innerHTML = `
+      <div class="modal-content" style="max-width: 400px;">
+        <h3 style="margin-top: 0; color: var(--logo-color);">Apply QC Status</h3>
+        <p>Select a QC status to apply to ${selectedBubbles.length} callout(s):</p>
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 20px;">
+          <button class="group-action-btn" onclick="applyGroupQC('qc-orange')" style="border-left: 4px solid var(--qc-orange);">QC: In Progress</button>
+          <button class="group-action-btn" onclick="applyGroupQC('qc-yellow')" style="border-left: 4px solid var(--qc-yellow);">QC: In Review</button>
+          <button class="group-action-btn" onclick="applyGroupQC('qc-green')" style="border-left: 4px solid var(--qc-green);">QC: Approved</button>
+          <button class="group-action-btn" onclick="applyGroupQC('qc-red')" style="border-left: 4px solid var(--qc-red);">QC: Issues</button>
+        </div>
+        <button class="group-action-btn" onclick="closeGroupQCDialog()" style="width: 100%; margin-top: 20px; background: var(--qc-red);">Cancel</button>
+      </div>
+    `;
+    
+    document.body.appendChild(qcDialog);
+  }
+  
+  // Apply QC status to all selected bubbles
+  async function applyGroupQC(qcClass) {
+    // Close the QC dialog
+    closeGroupQCDialog();
+    
+    // Check user permissions
+    const userRole = localStorage.getItem('role');
+    if (userRole === 'student' && (qcClass === 'qc-green' || qcClass === 'qc-red')) {
+      alert('You do not have permission to set QC: Approved or QC: Issues. Only instructors can perform this action.');
+      return;
+    }
+    
+    // Process each selected bubble
+    for (const id of selectedBubbles) {
+      await updateQC(id, qcClass, true); // Pass true to skip menu closing
+    }
+    
+    // Clear selection after processing
+    clearBubbleSelection();
+  }
+  
+  // Close the group QC dialog
+  function closeGroupQCDialog() {
+    const dialogs = document.querySelectorAll('.modal');
+    dialogs.forEach(dialog => {
+      if (dialog.id !== 'editCalloutOverlay' && dialog.id !== 'roomModal' && dialog.id !== 'calloutMenuModal') {
+        dialog.remove();
+      }
+    });
+  }
+  
+  // Clear all bubble selections
+  function clearBubbleSelection() {
+    const checkboxes = document.querySelectorAll('.bubble-select-checkbox:checked');
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = false;
+    });
+    selectedBubbles = [];
+    updateGroupActionBar();
+  }
+  
+  // Define the updateQC function to support group operations
+  window.updateQC = function(id, qcClass, skipMenuClose = false) {
+    if (!skipMenuClose) {
+      closeCalloutMenu();
+    }
+    return window.originalUpdateQC(id, qcClass);
+  };
+  
+  // Define the editCallout submit handler to support group edits
+  window.handleEditFormSubmit = async function(e) {
+    e.preventDefault();
+    
+    // Get form and check if it's a group edit
+    const form = e.target;
+    const groupEditIds = form.dataset.groupEdit ? JSON.parse(form.dataset.groupEdit) : null;
+    
+    if (!groupEditIds || groupEditIds.length <= 1) {
+      // Regular single-callout edit
+      return originalHandleEditFormSubmit.call(this, e);
+    }
+    
+    // This is a group edit
+    const formData = new FormData(form);
+    const updatedFields = {};
+    
+    // Collect all changed fields
+    for (const [name, value] of formData.entries()) {
+      if (name !== 'calloutId' && value !== '') {
+        updatedFields[name] = value;
+      }
+    }
+    
+    // Check if any fields were actually changed
+    if (Object.keys(updatedFields).length === 0) {
+      alert('No fields were changed. Please modify at least one field to update the callouts.');
+      return;
+    }
+    
+    // Confirm the group edit operation
+    if (!confirm(`Are you sure you want to apply these changes to ${groupEditIds.length} callouts?`)) {
+      return;
+    }
+    
+    // Apply changes to all selected callouts
+    let successCount = 0;
+    let errorCount = 0;
+    
+    for (const id of groupEditIds) {
+      try {
+        // Get original callout
+        const callout = callouts[id];
+        if (!callout) continue;
+        
+        // Apply only the changed fields
+        const updatedCallout = { ...callout };
+        for (const [field, value] of Object.entries(updatedFields)) {
+          updatedCallout[field] = value;
+        }
+        
+        // Update the callout
+        const apiUrl = window.location.hostname === 'localhost' 
+          ? `http://localhost:3001/api/callouts/${id}`
+          : `/api/callouts/${id}`;
+          
+        const response = await fetch(apiUrl, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify({
+            ...updatedCallout,
+            editedBy: localStorage.getItem('userName') || 'You'
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Server returned ${response.status}`);
+        }
+        
+        // Update local data
+        const updatedData = await response.json();
+        callouts[id] = updatedData;
+        
+        // Update UI
+        const bubble = document.getElementById('callout_' + id);
+        if (bubble) {
+          updateBubbleContent(bubble, updatedData);
+        }
+        
+        successCount++;
+      } catch (error) {
+        console.error(`Error updating callout ${id}:`, error);
+        errorCount++;
+      }
+    }
+    
+    // Close the edit overlay
+    closeEditCallout();
+    
+    // Clear the group edit data
+    delete form.dataset.groupEdit;
+    
+    // Clear selection
+    clearBubbleSelection();
+    
+    // Show result message
+    alert(`Group update complete.\nSuccessfully updated: ${successCount} callouts\nErrors: ${errorCount}`);
+  };
+
+
+  // Initialize follow form functionality
+  function initializeFollowFormFunctionality() {
+    const followNameInput = document.getElementById('followNameInput');
+    const followIdDisplay = document.getElementById('followIdDisplay');
+    const followIdHidden = document.getElementById('followIdHidden');
+    const followStageHidden = document.getElementById('followStageSelected');
+    const followStopNumberInput = document.getElementById('followStopNumber');
+    const stageLabel = document.getElementById('followStageLabel');
+    let stopNumber = 0; // 0 means START, 1+ means STOP N
+    let showCont = false;
+    let ended = false;
+    let prevStageText = "START";
+    
+    // Hidden feature: Double-click follow ID to edit
+    const followIdEdit = document.getElementById('followIdEdit');
+    if (followIdDisplay && followIdEdit) {
+      // Add hover effect
+      followIdDisplay.addEventListener('mouseenter', function() {
+        this.style.background = 'rgba(34, 197, 94, 0.1)';
+      });
+      
+      followIdDisplay.addEventListener('mouseleave', function() {
+        this.style.background = 'transparent';
+      });
+      
+      // Double-click to edit
+      followIdDisplay.addEventListener('dblclick', function() {
+        console.log('Double-click detected on follow ID:', this.textContent);
+        
+        // If empty, generate a new ID first
+        if (this.textContent.trim() === '') {
+          const newId = Math.random().toString(36).substr(2, 6).toUpperCase();
+          followIdHidden.value = newId;
+          this.textContent = newId;
+          console.log('Generated new follow ID:', newId);
+        }
+        
+        // Hide display, show input
+        followIdDisplay.style.display = 'none';
+        followIdEdit.style.display = 'inline-block';
+        followIdEdit.value = this.textContent;
+        followIdEdit.focus();
+        followIdEdit.select();
+      });
+      
+      // Handle Enter key and blur to save
+      function saveFollowId() {
+        const newId = followIdEdit.value.trim().toUpperCase();
+        if (newId && newId.length <= 10) { // Validate length
+          followIdHidden.value = newId;
+          followIdDisplay.textContent = newId;
+        }
+        
+        // Hide input, show display
+        followIdEdit.style.display = 'none';
+        followIdDisplay.style.display = 'inline-block';
+      }
+      
+      followIdEdit.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          saveFollowId();
+        } else if (e.key === 'Escape') {
+          // Cancel edit
+          followIdEdit.style.display = 'none';
+          followIdDisplay.style.display = 'inline-block';
+        }
+      });
+      
+      followIdEdit.addEventListener('blur', saveFollowId);
+      console.log("Follow ID edit functionality attached");
+    }
+    
+    // Stage button functionality
+    document.querySelectorAll('.stage-btn').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const stage = btn.dataset.stage;
+        console.log('Stage button clicked:', stage);
+        
+        if (stage === "ADV.") {
+          if (!ended) {
+            stopNumber += 1;
+            if (followStopNumberInput) followStopNumberInput.value = stopNumber;
+          }
+        } else if (stage === "CONT.") {
+          showCont = !showCont;
+        } else if (stage === "END") {
+          if (!ended) {
+            prevStageText = stageLabel ? stageLabel.textContent : "START";
+            ended = true;
+          } else {
+            ended = false;
+          }
+        }
+        updateStageLabel();
+        updateStageButtons();
+      });
+    });
+    console.log("Stage button handlers attached");
+    
+    function updateStageLabel() {
+      if (!stageLabel || !followStageHidden) return;
+      
+      if (ended) {
+        stageLabel.textContent = "END";
+        followStageHidden.value = "END";
+        return;
+      }
+      let labelText = stopNumber === 0 ? "START" : "STOP " + stopNumber;
+      if (showCont) {
+        labelText += " CONT.";
+      }
+      stageLabel.textContent = labelText;
+      followStageHidden.value = labelText;
+    }
+    
+    function updateStageButtons() {
+      document.querySelectorAll('.stage-btn').forEach(btn => {
+        let active = false;
+        const stage = btn.dataset.stage;
+        if (stage === "END" && ended) active = true;
+        if (stage === "CONT." && showCont && !ended) active = true;
+        btn.style.background = active ? 'var(--qc-orange)' : 'var(--button-bg)';
+        btn.style.color = active ? '#181c1c' : '#fafafa';
+      });
+    }
+  } // End of initializeFollowFormFunctionality
+  
+  // Sidebar resize functionality
+  function initSidebarResize() {
+    const handle = document.getElementById('sidebar-resize-handle');
+    const sidebar = document.querySelector('.sidebar');
+    
+    if (!handle || !sidebar) return;
+    
+    let startX, startWidth;
+    
+    const startDrag = (e) => {
+      startX = e.clientX;
+      startWidth = parseInt(getComputedStyle(sidebar).width, 10);
+      document.addEventListener('mousemove', doDrag);
+      document.addEventListener('mouseup', stopDrag);
+      document.body.style.cursor = 'ew-resize';
+      document.body.style.userSelect = 'none';
+    };
+    
+    const doDrag = (e) => {
+      const newWidth = startWidth + e.clientX - startX;
+      // Apply constraints (min and max width)
+      if (newWidth >= 300 && newWidth <= 800) {
+        sidebar.style.width = `${newWidth}px`;
+      }
+    };
+    
+    const stopDrag = () => {
+      document.removeEventListener('mousemove', doDrag);
+      document.removeEventListener('mouseup', stopDrag);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+    
+    handle.addEventListener('mousedown', startDrag);
+    
+    console.log("Sidebar resize functionality initialized");
+  }
+  
+  // Note: initSidebarResize() is already called in the main DOMContentLoaded handler above
+  
+  // Handle dropping a callout onto the form
+  function handleFormDrop(event) {
+    event.preventDefault();
+    try {
+      const data = JSON.parse(event.dataTransfer.getData('text/plain'));
+      console.log("Dropped callout data:", data);
+      
+      // Debug follow data specifically
+      if (data.follow) {
+        console.log("Follow data found in dropped callout:", data.follow);
+      } else {
+        console.log("No follow data in dropped callout");
+      }
+      
+      // Debug SLANT data specifically
+      if (data.slant) {
+        console.log("SLANT data found in dropped callout:", data.slant);
+      } else {
+        console.log("No SLANT data in dropped callout");
+      }
+      
+      // Fill form with callout data
+      const form = document.getElementById('logForm');
+      if (form) {
+        // Fill all fields
+        if (data.classification) form.elements.classification.value = data.classification;
+        if (data.asset) form.elements.asset.value = data.asset;
+        if (data.sensor) form.elements.sensor.value = data.sensor;
+        if (data.operation) form.elements.operation.value = data.operation;
+        if (data.countryCode) form.elements.countryCode.value = data.countryCode;
+        if (data.team) form.elements.team.value = data.team;
+        if (data.zulu) form.elements.zulu.value = data.zulu.replace(':', '');
+        if (data.mgrs) form.elements.mgrs.value = data.mgrs;
+        if (data.location) form.elements.location.value = data.location;
+        if (data.activity) form.elements.activity.value = data.activity;
+        if (data.iaNotes) form.elements.iaNotes.value = data.iaNotes;
+        if (data.slant) {
+          form.elements.slant.value = data.slant;
+          // Trigger SLANT formatting if the formatSlant function exists
+          if (typeof formatSlant === 'function') {
+            formatSlant(form.elements.slant);
+          }
+          console.log('Set SLANT:', data.slant);
+        }
+        if (data.vehicles !== undefined && data.vehicles !== null) form.elements.vehicles.value = data.vehicles;
+        if (data.targetStatus) form.elements.targetStatus.value = data.targetStatus;
+        
+        // Form fields populated successfully
+        
+        // Handle follow information if present
+        if (data.follow && data.follow.name) {
+          console.log('Processing follow data:', data.follow);
+          const createFollowBtn = document.getElementById('createFollowBtn');
+          const followForm = document.getElementById('followForm');
+          
+          if (createFollowBtn && followForm) {
+            // Check if follow form is already open
+            const isFormOpen = window.getComputedStyle(followForm).display !== 'none';
+            
+            if (!isFormOpen) {
+              // Manually expand the follow form instead of clicking
+              followForm.style.display = 'block';
+              createFollowBtn.textContent = "Remove Follow";
+              
+              // Generate a new ID if needed
+              const followIdHidden = document.getElementById('followIdHidden');
+              const followIdDisplay = document.getElementById('followIdDisplay');
+              if (!followIdHidden.value) {
+                const newId = Math.random().toString(36).substr(2, 6).toUpperCase();
+                followIdHidden.value = newId;
+                followIdDisplay.textContent = newId;
+              }
+            }
+            
+            // Wait a moment for the form to appear, then fill in follow data
+            setTimeout(() => {
+              const followNameInput = document.getElementById('followNameInput');
+              if (followNameInput) {
+                followNameInput.value = data.follow.name;
+                console.log('Set follow name:', data.follow.name);
+              }
+              
+              // Set follow ID (overwrite the auto-generated one if provided)
+              const followIdHidden = document.getElementById('followIdHidden');
+              const followIdDisplay = document.getElementById('followIdDisplay');
+              if (data.follow.followId) {
+                if (followIdHidden) {
+                  followIdHidden.value = data.follow.followId;
+                  console.log('Set follow ID hidden:', data.follow.followId);
+                }
+                if (followIdDisplay) {
+                  followIdDisplay.textContent = data.follow.followId;
+                  console.log('Set follow ID display:', data.follow.followId);
+                }
+              }
+              
+              // Set follow stage using correct element IDs
+              if (data.follow.stage) {
+                const followStageSelected = document.getElementById('followStageSelected');
+                if (followStageSelected) {
+                  followStageSelected.value = data.follow.stage;
+                  console.log('Set follow stage selected:', data.follow.stage);
+                }
+                
+                // Update the stage display label
+                const followStageLabel = document.getElementById('followStageLabel');
+                if (followStageLabel) {
+                  followStageLabel.textContent = data.follow.stage;
+                  console.log('Set follow stage label:', data.follow.stage);
+                }
+                
+                // Also update the stop number if it's a STOP stage
+                const followStopNumber = document.getElementById('followStopNumber');
+                if (followStopNumber && data.follow.stage.startsWith('STOP')) {
+                  const stopNum = data.follow.stage.match(/\d+/);
+                  if (stopNum) {
+                    followStopNumber.value = stopNum[0];
+                    console.log('Set follow stop number:', stopNum[0]);
+                  }
+                }
+              }
+              
+              console.log('Follow form populated successfully');
+            }, 100); // Reduced delay since we're not clicking
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error handling drop:", error);
+    }
+  }
+
+  // Function to update Zulu time to current time
+  function updateZuluTime(button) {
+    try {
+      // Get the form group containing this button
+      const formGroup = button.closest('.form-group-with-refresh');
+      if (!formGroup) {
+        console.error('Could not find form group for refresh button');
+        return;
+      }
+      
+      // Find the zulu time input field
+      const zuluInput = formGroup.querySelector('input[name="zulu"]');
+      if (!zuluInput) {
+        console.error('Could not find zulu time input field');
+        return;
+      }
+      
+      // Get current UTC time and format as HH:MM (Zulu time)
+      const now = new Date();
+      const hours = String(now.getUTCHours()).padStart(2, '0');
+      const minutes = String(now.getUTCMinutes()).padStart(2, '0');
+      const zuluTime = hours + ':' + minutes;
+      
+      // Update the input field
+      zuluInput.value = zuluTime;
+      
+      // Add visual feedback
+      button.style.transform = 'rotate(180deg)';
+      setTimeout(() => {
+        button.style.transform = 'rotate(0deg)';
+      }, 200);
+      
+      console.log(`Updated Zulu time to: ${zuluTime} (UTC format)`);
+    } catch (error) {
+      console.error('Error updating Zulu time:', error);
+    }
+  }
+
+
+
+  // Initialize drag-and-drop functionality for callouts
+  function initializeDragAndDrop() {
+    console.log("Initializing drag-and-drop functionality...");
+    
+    // Get all bubble elements (callouts)
+    const calloutElements = document.querySelectorAll('.callout-card');
+    
+    if (calloutElements.length > 0) {
+      console.log(`Found ${calloutElements.length} callout elements for drag functionality`);
+      
+      calloutElements.forEach(callout => {
+        // Only make draggable if not already set up (individual callouts set up their own drag handlers with full data)
+        if (!callout.draggable) {
+          callout.draggable = true;
+          console.log('Made callout draggable (no existing drag handler):', callout.dataset.id);
+        } else {
+          console.log('Callout already has drag functionality (preserving existing handler):', callout.dataset.id);
+        }
+      });
+      
+      console.log("✅ Drag functionality verified for callout elements");
+    } else {
+      console.warn("⚠️ No callout elements found for drag functionality (this is normal if no callouts exist yet)");
+    }
+    
+    console.log("ℹ️ Drag-and-drop initialization complete");
+  }
+</script>
+<!-- DUPLICATE SCRIPT BLOCK REMOVED - All functionality consolidated into main DOMContentLoaded listener -->
+</body>
+</html>

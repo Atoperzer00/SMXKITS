@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streaming Connection Test</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #4CAF50;
+        }
+        .error { border-left-color: #f44336; }
+        .warning { border-left-color: #ff9800; }
+        .info { border-left-color: #2196F3; }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover { background: #45a049; }
+        .log {
+            background: #000;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+        input {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #555;
+            background: #333;
+            color: #fff;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 SMX Streaming Connection Test</h1>
+    
+    <div class="test-section">
+        <h3>1. Connection Setup</h3>
+        <label>Class ID: <input type="text" id="classId" value="Test class" placeholder="Enter class ID"></label>
+        <br>
+        <button onclick="testAsInstructor()">Test as Instructor</button>
+        <button onclick="testAsStudent()">Test as Student</button>
+        <button onclick="clearLog()">Clear Log</button>
+    </div>
+
+    <div class="test-section">
+        <h3>2. Connection Status</h3>
+        <div id="connectionStatus">Not connected</div>
+        <div id="roomStatus">Not in any room</div>
+        <div id="viewerCount">Viewer count: 0</div>
+    </div>
+
+    <div class="test-section">
+        <h3>3. Test Actions (Instructor Only)</h3>
+        <button onclick="sendStreamInit()" id="streamInitBtn" disabled>Send Stream Init</button>
+        <button onclick="sendStreamPlay()" id="streamPlayBtn" disabled>Send Stream Play</button>
+        <button onclick="sendStreamPause()" id="streamPauseBtn" disabled>Send Stream Pause</button>
+    </div>
+
+    <div class="test-section">
+        <h3>4. Event Log</h3>
+        <div id="eventLog" class="log"></div>
+    </div>
+
+    <script>
+        let socket = null;
+        let isInstructor = false;
+        let currentClassId = null;
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logDiv = document.getElementById('eventLog');
+            const color = type === 'error' ? '#f44336' : type === 'warning' ? '#ff9800' : type === 'success' ? '#4CAF50' : '#2196F3';
+            logDiv.innerHTML += `<div style="color: ${color}">[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+
+        function clearLog() {
+            document.getElementById('eventLog').innerHTML = '';
+        }
+
+        function updateStatus() {
+            document.getElementById('connectionStatus').textContent = 
+                socket && socket.connected ? '✅ Connected' : '❌ Disconnected';
+            document.getElementById('roomStatus').textContent = 
+                currentClassId ? `📍 In room: class:${currentClassId}` : '❌ Not in any room';
+        }
+
+        function testAsInstructor() {
+            currentClassId = document.getElementById('classId').value;
+            isInstructor = true;
+            
+            if (!currentClassId) {
+                log('❌ Please enter a class ID', 'error');
+                return;
+            }
+
+            log('🎓 Testing as INSTRUCTOR', 'success');
+            connectSocket();
+        }
+
+        function testAsStudent() {
+            currentClassId = document.getElementById('classId').value;
+            isInstructor = false;
+            
+            if (!currentClassId) {
+                log('❌ Please enter a class ID', 'error');
+                return;
+            }
+
+            log('👤 Testing as STUDENT', 'success');
+            connectSocket();
+        }
+
+        function connectSocket() {
+            if (socket) {
+                socket.disconnect();
+            }
+
+            log('🔌 Connecting to server...');
+            socket = io();
+
+            socket.on('connect', () => {
+                log(`✅ Connected with socket ID: ${socket.id}`, 'success');
+                updateStatus();
+
+                // Join appropriate room
+                if (isInstructor) {
+                    log(`👨‍🏫 Joining as instructor for class: ${currentClassId}`);
+                    socket.emit('instructor-join-class', { classId: currentClassId });
+                    
+                    // Enable instructor buttons
+                    document.getElementById('streamInitBtn').disabled = false;
+                    document.getElementById('streamPlayBtn').disabled = false;
+                    document.getElementById('streamPauseBtn').disabled = false;
+                } else {
+                    log(`🎓 Joining as student for class: ${currentClassId}`);
+                    socket.emit('student-join-class', { classId: currentClassId });
+                    
+                    // Disable instructor buttons
+                    document.getElementById('streamInitBtn').disabled = true;
+                    document.getElementById('streamPlayBtn').disabled = true;
+                    document.getElementById('streamPauseBtn').disabled = true;
+                }
+            });
+
+            socket.on('disconnect', () => {
+                log('❌ Disconnected from server', 'error');
+                updateStatus();
+            });
+
+            socket.on('connect_error', (error) => {
+                log(`❌ Connection error: ${error}`, 'error');
+            });
+
+            // Viewer count updates
+            socket.on('viewerCount', (data) => {
+                log(`👥 Viewer count update: ${data.count}`, 'success');
+                document.getElementById('viewerCount').textContent = `Viewer count: ${data.count}`;
+            });
+
+            // Stream events
+            socket.on('stream:init', (data) => {
+                log(`🎬 Stream initialized: ${JSON.stringify(data)}`, 'success');
+            });
+
+            socket.on('stream:play', (data) => {
+                log(`▶️ Stream play: ${JSON.stringify(data)}`, 'success');
+            });
+
+            socket.on('stream:pause', (data) => {
+                log(`⏸️ Stream pause: ${JSON.stringify(data)}`, 'success');
+            });
+
+            socket.on('stream:seek', (data) => {
+                log(`⏭️ Stream seek: ${JSON.stringify(data)}`, 'success');
+            });
+
+            socket.on('stream:time', (data) => {
+                log(`⏰ Stream time: ${data.time}s (playing: ${data.playing})`, 'info');
+            });
+
+            socket.on('stream:current-state', (data) => {
+                log(`📥 Current stream state: ${JSON.stringify(data)}`, 'success');
+            });
+
+            socket.on('stream:no-state', (data) => {
+                log(`ℹ️ No active stream state`, 'warning');
+            });
+
+            // Listen for any events (debugging)
+            socket.onAny((eventName, ...args) => {
+                if (eventName !== 'stream:time') { // Don't spam with time updates
+                    log(`📨 Event received: ${eventName} - ${JSON.stringify(args)}`, 'info');
+                }
+            });
+        }
+
+        function sendStreamInit() {
+            if (!socket || !isInstructor) return;
+            
+            const data = {
+                streamUrl: '/test-stream.mp4',
+                startTime: new Date().toISOString(),
+                currentTime: 0,
+                playing: false
+            };
+            
+            log(`🎬 Sending stream:init - ${JSON.stringify(data)}`, 'warning');
+            socket.emit('stream:init', data);
+        }
+
+        function sendStreamPlay() {
+            if (!socket || !isInstructor) return;
+            
+            const data = {
+                time: 10.5,
+                timestamp: new Date().toISOString()
+            };
+            
+            log(`▶️ Sending stream:play - ${JSON.stringify(data)}`, 'warning');
+            socket.emit('stream:play', data);
+        }
+
+        function sendStreamPause() {
+            if (!socket || !isInstructor) return;
+            
+            const data = {
+                time: 15.2,
+                timestamp: new Date().toISOString()
+            };
+            
+            log(`⏸️ Sending stream:pause - ${JSON.stringify(data)}`, 'warning');
+            socket.emit('stream:pause', data);
+        }
+
+        // Update status on page load
+        updateStatus();
+    </script>
+</body>
+</html>

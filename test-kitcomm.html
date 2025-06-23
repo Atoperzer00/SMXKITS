@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KitComm Test</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>KitComm Connection Test</h1>
+    <div id="status">Testing connection...</div>
+    <div id="messages"></div>
+    
+    <script>
+        const statusEl = document.getElementById('status');
+        const messagesEl = document.getElementById('messages');
+        
+        // Set up test user data
+        localStorage.setItem('userName', 'TestUser');
+        localStorage.setItem('role', 'admin');
+        
+        function addLog(message) {
+            const div = document.createElement('div');
+            div.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+            messagesEl.appendChild(div);
+        }
+        
+        // Test API connection
+        fetch('/api/kitcomm/channels')
+            .then(response => {
+                if (response.ok) {
+                    addLog('✅ API connection successful');
+                    return response.json();
+                } else {
+                    throw new Error(`API error: ${response.status}`);
+                }
+            })
+            .then(channels => {
+                addLog(`📋 Found ${channels.length} channels: ${channels.join(', ')}`);
+            })
+            .catch(error => {
+                addLog(`❌ API connection failed: ${error.message}`);
+            });
+        
+        // Test Socket.io connection
+        try {
+            const socket = io();
+            
+            socket.on('connect', () => {
+                addLog('✅ Socket.io connected');
+                statusEl.textContent = 'Connected to KitComm server';
+                statusEl.style.color = 'green';
+                
+                // Join a test channel
+                socket.emit('join', 'kitcomm:Global');
+                addLog('📡 Joined Global channel');
+            });
+            
+            socket.on('disconnect', () => {
+                addLog('❌ Socket.io disconnected');
+                statusEl.textContent = 'Disconnected from server';
+                statusEl.style.color = 'red';
+            });
+            
+            socket.on('connect_error', (error) => {
+                addLog(`❌ Socket.io connection error: ${error.message}`);
+                statusEl.textContent = 'Connection failed';
+                statusEl.style.color = 'red';
+            });
+            
+            socket.on('kitcomm:message', (message) => {
+                addLog(`💬 Received message: ${message.author}: ${message.content}`);
+            });
+            
+        } catch (error) {
+            addLog(`❌ Socket.io initialization failed: ${error.message}`);
+            statusEl.textContent = 'Socket.io failed to initialize';
+            statusEl.style.color = 'red';
+        }
+    </script>
+</body>
+</html>

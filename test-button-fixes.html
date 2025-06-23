@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 Button Fix Verification Test</title>
+    <style>
+        body {
+            font-family: 'Consolas', 'Monaco', monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            background: #2a2a2a;
+            border: 2px solid #444;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .test-title {
+            color: #ffff00;
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .success { color: #00ff00; }
+        .error { color: #ff4444; }
+        .warning { color: #ffaa00; }
+        .info { color: #44aaff; }
+        .test-button {
+            background: #333;
+            color: #fff;
+            border: 1px solid #666;
+            padding: 8px 16px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .test-button:hover {
+            background: #555;
+        }
+        pre {
+            background: #111;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        .iframe-container {
+            border: 2px solid #666;
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 BUTTON FIX VERIFICATION TEST</h1>
+    <p class="info">This tool will test the fixed OpsLog.html file to verify button functionality.</p>
+
+    <div class="test-section">
+        <div class="test-title">🎯 Test Controls</div>
+        <button class="test-button" onclick="loadOpsLog()">📂 Load OpsLog.html</button>
+        <button class="test-button" onclick="runDebugScript()">🔍 Run Debug Script</button>
+        <button class="test-button" onclick="testAllButtons()">🖱️ Test All Buttons</button>
+        <button class="test-button" onclick="clearResults()">🧹 Clear Results</button>
+    </div>
+
+    <div class="test-section">
+        <div class="test-title">📊 Test Results</div>
+        <div id="testResults">Click "Load OpsLog.html" to begin testing...</div>
+    </div>
+
+    <div class="test-section">
+        <div class="test-title">🖼️ OpsLog.html Preview</div>
+        <div class="iframe-container">
+            <iframe id="opsLogFrame" src="about:blank"></iframe>
+        </div>
+    </div>
+
+    <script>
+        let testResults = [];
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            testResults.push(`[${timestamp}] ${message}`);
+            updateResults();
+            
+            // Also log to console with appropriate styling
+            const styles = {
+                success: 'color: #00ff00',
+                error: 'color: #ff4444', 
+                warning: 'color: #ffaa00',
+                info: 'color: #44aaff'
+            };
+            console.log(`%c${message}`, styles[type] || styles.info);
+        }
+
+        function updateResults() {
+            const resultsDiv = document.getElementById('testResults');
+            resultsDiv.innerHTML = `<pre>${testResults.join('\n')}</pre>`;
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+
+        function clearResults() {
+            testResults = [];
+            updateResults();
+            log('🧹 Results cleared', 'info');
+        }
+
+        function loadOpsLog() {
+            log('📂 Loading OpsLog.html...', 'info');
+            const iframe = document.getElementById('opsLogFrame');
+            
+            iframe.onload = function() {
+                log('✅ OpsLog.html loaded successfully', 'success');
+                
+                // Wait a moment for the page to fully initialize
+                setTimeout(() => {
+                    analyzeLoadedPage();
+                }, 2000);
+            };
+            
+            iframe.onerror = function() {
+                log('❌ Failed to load OpsLog.html', 'error');
+            };
+            
+            iframe.src = '/OpsLog.html';
+        }
+
+        function analyzeLoadedPage() {
+            try {
+                const iframe = document.getElementById('opsLogFrame');
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                
+                if (!iframeDoc) {
+                    log('❌ Cannot access iframe content (CORS restriction)', 'error');
+                    return;
+                }
+
+                log('🔍 Analyzing loaded page...', 'info');
+                
+                // Check for target buttons
+                const targetButtons = [
+                    'createFollowBtn',
+                    'gradingBtn', 
+                    'editCalloutBtn',
+                    'viewHistoryBtn',
+                    'joinRoomBtn',
+                    'dashboardBtn',
+                    'logoutBtn'
+                ];
+
+                let foundButtons = 0;
+                let boundButtons = 0;
+
+                targetButtons.forEach(id => {
+                    const element = iframeDoc.getElementById(id);
+                    if (element) {
+                        foundButtons++;
+                        log(`✅ Found: ${id}`, 'success');
+                        
+                        // Check if bound
+                        if (element.dataset.bound === 'true' || element.onclick) {
+                            boundButtons++;
+                            log(`  🔗 Bound: ${id}`, 'success');
+                        } else {
+                            log(`  ❌ Not bound: ${id}`, 'error');
+                        }
+                    } else {
+                        log(`❌ Missing: ${id}`, 'error');
+                    }
+                });
+
+                log(`📊 Summary: ${foundButtons}/${targetButtons.length} buttons found, ${boundButtons}/${foundButtons} bound`, 'info');
+
+                // Check for script conflicts
+                const scripts = iframeDoc.querySelectorAll('script');
+                let domContentLoadedCount = 0;
+                
+                scripts.forEach(script => {
+                    if (script.textContent && script.textContent.includes('DOMContentLoaded')) {
+                        const matches = script.textContent.match(/DOMContentLoaded/g);
+                        if (matches) {
+                            domContentLoadedCount += matches.length;
+                        }
+                    }
+                });
+
+                if (domContentLoadedCount > 1) {
+                    log(`⚠️ Found ${domContentLoadedCount} DOMContentLoaded references - potential conflicts`, 'warning');
+                } else {
+                    log(`✅ Clean script structure (${domContentLoadedCount} DOMContentLoaded)`, 'success');
+                }
+
+            } catch (error) {
+                log(`❌ Error analyzing page: ${error.message}`, 'error');
+            }
+        }
+
+        function runDebugScript() {
+            try {
+                const iframe = document.getElementById('opsLogFrame');
+                const iframeWindow = iframe.contentWindow;
+                
+                if (!iframeWindow) {
+                    log('❌ Cannot access iframe window (CORS restriction)', 'error');
+                    return;
+                }
+
+                log('🔍 Injecting debug script...', 'info');
+
+                // Inject the debug script
+                const script = iframeWindow.document.createElement('script');
+                script.textContent = `
+                    console.log("🚀 INJECTING BUTTON DEBUG TOOL");
+                    
+                    const targetButtons = [
+                        "createFollowBtn", "gradingBtn", "editCalloutBtn",
+                        "viewHistoryBtn", "joinRoomBtn", "dashboardBtn", "logoutBtn"
+                    ];
+                    
+                    console.log("🔍 Button Analysis:");
+                    targetButtons.forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) {
+                            console.log(\`✅ \${id}: EXISTS, bound=\${el.dataset.bound}, onclick=\${!!el.onclick}\`);
+                            
+                            // Test click
+                            try {
+                                el.click();
+                                console.log(\`🖱️ \${id}: Click successful\`);
+                            } catch (e) {
+                                console.log(\`❌ \${id}: Click failed - \${e.message}\`);
+                            }
+                        } else {
+                            console.log(\`❌ \${id}: NOT FOUND\`);
+                        }
+                    });
+                    
+                    // Test dynamic button creation
+                    const testBtn = document.createElement('button');
+                    testBtn.id = 'dynamicTestBtn';
+                    testBtn.textContent = 'Dynamic Test';
+                    testBtn.style.cssText = 'position:fixed;top:10px;right:10px;z-index:9999;background:#444;color:#fff;padding:5px 10px;border:1px solid #666;border-radius:4px;';
+                    document.body.appendChild(testBtn);
+                    
+                    setTimeout(() => {
+                        const dynBtn = document.getElementById('dynamicTestBtn');
+                        if (dynBtn) {
+                            console.log(\`🧪 Dynamic button: bound=\${dynBtn.dataset.bound}\`);
+                        }
+                    }, 1000);
+                `;
+                
+                iframeWindow.document.head.appendChild(script);
+                log('✅ Debug script injected - check browser console for results', 'success');
+                
+            } catch (error) {
+                log(`❌ Error injecting debug script: ${error.message}`, 'error');
+            }
+        }
+
+        function testAllButtons() {
+            try {
+                const iframe = document.getElementById('opsLogFrame');
+                const iframeWindow = iframe.contentWindow;
+                const iframeDoc = iframe.contentDocument || iframeWindow.document;
+                
+                if (!iframeWindow || !iframeDoc) {
+                    log('❌ Cannot access iframe content for button testing', 'error');
+                    return;
+                }
+
+                log('🖱️ Testing all buttons...', 'info');
+
+                const targetButtons = [
+                    'createFollowBtn',
+                    'gradingBtn', 
+                    'editCalloutBtn',
+                    'viewHistoryBtn',
+                    'joinRoomBtn',
+                    'dashboardBtn',
+                    'logoutBtn'
+                ];
+
+                let successCount = 0;
+                let totalCount = 0;
+
+                targetButtons.forEach(id => {
+                    const element = iframeDoc.getElementById(id);
+                    if (element) {
+                        totalCount++;
+                        try {
+                            // Simulate click
+                            const clickEvent = new iframeWindow.MouseEvent('click', {
+                                bubbles: true,
+                                cancelable: true,
+                                view: iframeWindow
+                            });
+                            
+                            element.dispatchEvent(clickEvent);
+                            successCount++;
+                            log(`✅ ${id}: Click test passed`, 'success');
+                            
+                        } catch (error) {
+                            log(`❌ ${id}: Click test failed - ${error.message}`, 'error');
+                        }
+                    } else {
+                        log(`⚠️ ${id}: Element not found for testing`, 'warning');
+                    }
+                });
+
+                log(`📊 Button test summary: ${successCount}/${totalCount} buttons responded to clicks`, 'info');
+
+            } catch (error) {
+                log(`❌ Error testing buttons: ${error.message}`, 'error');
+            }
+        }
+
+        // Initialize
+        log('🧪 Button Fix Verification Test initialized', 'info');
+        log('📝 Instructions:', 'info');
+        log('1. Click "Load OpsLog.html" to load the fixed page', 'info');
+        log('2. Click "Run Debug Script" to inject debugging code', 'info');
+        log('3. Click "Test All Buttons" to simulate button clicks', 'info');
+        log('4. Check browser console for detailed debug output', 'info');
+    </script>
+</body>
+</html>

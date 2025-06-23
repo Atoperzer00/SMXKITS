@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tile Loading Diagnostics</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Arial, sans-serif;
+    }
+    
+    .diagnostics {
+      background: #f5f5f5;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 5px;
+      border-left: 4px solid #3498db;
+    }
+    
+    .error { border-left-color: #e74c3c; }
+    .success { border-left-color: #27ae60; }
+    .warning { border-left-color: #f39c12; }
+    
+    #map {
+      width: 100%;
+      height: 500px;
+      border: 2px solid #ddd;
+    }
+    
+    .tile-test {
+      margin: 20px 0;
+      padding: 15px;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    
+    .tile-test img {
+      max-width: 256px;
+      max-height: 256px;
+      border: 1px solid #ccc;
+    }
+    
+    .console-output {
+      background: #2c3e50;
+      color: #ecf0f1;
+      padding: 15px;
+      border-radius: 5px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 300px;
+      overflow-y: auto;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔍 Tile Loading Diagnostics</h1>
+  
+  <div id="diagnostics-container">
+    <!-- Diagnostics will be populated here -->
+  </div>
+  
+  <div class="tile-test">
+    <h3>Direct Tile Access Test</h3>
+    <p>Testing direct access to tile files:</p>
+    <div id="tile-images"></div>
+  </div>
+  
+  <div id="map"></div>
+  
+  <div class="console-output" id="console-output">
+    <strong>Console Output:</strong><br>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script>
+    // Override console.log to capture output
+    const originalLog = console.log;
+    const originalError = console.error;
+    const consoleOutput = document.getElementById('console-output');
+    
+    function addToConsole(message, type = 'log') {
+      const timestamp = new Date().toLocaleTimeString();
+      const color = type === 'error' ? '#e74c3c' : type === 'warn' ? '#f39c12' : '#ecf0f1';
+      consoleOutput.innerHTML += `<span style="color: ${color}">[${timestamp}] ${message}</span><br>`;
+      consoleOutput.scrollTop = consoleOutput.scrollHeight;
+    }
+    
+    console.log = function(...args) {
+      originalLog.apply(console, args);
+      addToConsole(args.join(' '), 'log');
+    };
+    
+    console.error = function(...args) {
+      originalError.apply(console, args);
+      addToConsole(args.join(' '), 'error');
+    };
+    
+    console.warn = function(...args) {
+      console.warn.apply(console, args);
+      addToConsole(args.join(' '), 'warn');
+    };
+
+    // Diagnostic functions
+    function addDiagnostic(message, type = 'info') {
+      const container = document.getElementById('diagnostics-container');
+      const div = document.createElement('div');
+      div.className = `diagnostics ${type}`;
+      div.innerHTML = message;
+      container.appendChild(div);
+    }
+
+    // Test 1: Check if tile directories exist
+    function testTileDirectories() {
+      console.log('🔍 Testing tile directory structure...');
+      
+      const testUrls = [
+        'altis/0/0/0.png',
+        'altis/1/0/0.png',
+        'altis/2/0/0.png',
+        'altis/6/16/9.png' // Known to exist from file search
+      ];
+      
+      testUrls.forEach(url => {
+        const img = new Image();
+        img.onload = function() {
+          console.log(`✅ Tile accessible: ${url}`);
+          addDiagnostic(`✅ Tile accessible: ${url}`, 'success');
+        };
+        img.onerror = function() {
+          console.error(`❌ Tile NOT accessible: ${url}`);
+          addDiagnostic(`❌ Tile NOT accessible: ${url}`, 'error');
+        };
+        img.src = url;
+      });
+    }
+
+    // Test 2: Check server configuration
+    function testServerConfig() {
+      console.log('🔍 Testing server configuration...');
+      
+      fetch('altis/6/16/9.png')
+        .then(response => {
+          if (response.ok) {
+            console.log('✅ Server serves static files correctly');
+            addDiagnostic('✅ Server serves static files correctly', 'success');
+            return response.blob();
+          } else {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+        })
+        .then(blob => {
+          console.log(`✅ Tile file size: ${blob.size} bytes`);
+          addDiagnostic(`✅ Tile file size: ${blob.size} bytes`, 'success');
+        })
+        .catch(error => {
+          console.error('❌ Server configuration issue:', error.message);
+          addDiagnostic(`❌ Server configuration issue: ${error.message}`, 'error');
+        });
+    }
+
+    // Test 3: Display sample tiles
+    function displaySampleTiles() {
+      const tileContainer = document.getElementById('tile-images');
+      const sampleTiles = [
+        'altis/6/16/9.png',
+        'altis/5/8/4.png',
+        'altis/4/4/2.png'
+      ];
+      
+      sampleTiles.forEach(tilePath => {
+        const img = document.createElement('img');
+        img.src = tilePath;
+        img.alt = tilePath;
+        img.title = tilePath;
+        img.style.margin = '5px';
+        
+        img.onload = function() {
+          console.log(`✅ Sample tile loaded: ${tilePath}`);
+        };
+        
+        img.onerror = function() {
+          console.error(`❌ Sample tile failed: ${tilePath}`);
+          img.style.border = '2px solid red';
+          img.alt = `FAILED: ${tilePath}`;
+        };
+        
+        tileContainer.appendChild(img);
+      });
+    }
+
+    // Test 4: Initialize map with detailed logging
+    function initializeTestMap() {
+      console.log('🗺️ Initializing test map...');
+      
+      // Altis configuration (simplified)
+      const altisConfig = {
+        minZoom: 0,
+        maxZoom: 6,
+        CRS: L.extend({}, L.CRS.Simple, {
+          transformation: new L.Transformation(1/256, 0, -1/256, 30720)
+        }),
+        tilePattern: 'altis/{z}/{x}/{y}.png',
+        center: [15360, 15360],
+        defaultZoom: 2
+      };
+
+      const map = L.map('map', {
+        minZoom: altisConfig.minZoom,
+        maxZoom: altisConfig.maxZoom,
+        crs: altisConfig.CRS
+      });
+
+      // Custom tile layer with extensive logging
+      const AltisLayer = L.TileLayer.extend({
+        getTileUrl: function (coords) {
+          const url = altisConfig.tilePattern
+            .replace('{z}', coords.z)
+            .replace('{x}', coords.x)
+            .replace('{y}', coords.y);
+          console.log(`🔗 Requesting tile: ${url} | z=${coords.z} x=${coords.x} y=${coords.y}`);
+          return url;
+        }
+      });
+
+      const tileLayer = new AltisLayer('', {
+        tileSize: 256,
+        minZoom: altisConfig.minZoom,
+        maxZoom: altisConfig.maxZoom
+      });
+
+      // Tile event listeners
+      tileLayer.on('tileloadstart', function(e) {
+        console.log(`🔄 Tile loading started: ${e.url}`);
+      });
+
+      tileLayer.on('tileload', function(e) {
+        console.log(`✅ Tile loaded successfully: ${e.url}`);
+      });
+
+      tileLayer.on('tileerror', function(e) {
+        console.error(`❌ Tile error: ${e.url}`);
+        console.error('Tile coordinates:', e.coords);
+        addDiagnostic(`❌ Tile error: ${e.url}`, 'error');
+      });
+
+      tileLayer.on('loading', function() {
+        console.log('🔄 Map tiles loading...');
+      });
+
+      tileLayer.on('load', function() {
+        console.log('✅ All map tiles loaded');
+        addDiagnostic('✅ All map tiles loaded', 'success');
+      });
+
+      tileLayer.addTo(map);
+      map.setView(altisConfig.center, altisConfig.defaultZoom);
+      
+      console.log('Map initialized with center:', altisConfig.center, 'zoom:', altisConfig.defaultZoom);
+    }
+
+    // Run all tests
+    $(document).ready(function() {
+      console.log('🚀 Starting tile diagnostics...');
+      addDiagnostic('🚀 Starting comprehensive tile diagnostics', 'info');
+      
+      // Test current URL and base path
+      console.log('📍 Current URL:', window.location.href);
+      console.log('📍 Base URL:', window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '/'));
+      addDiagnostic(`📍 Current URL: ${window.location.href}`, 'info');
+      
+      // Run tests
+      testTileDirectories();
+      testServerConfig();
+      displaySampleTiles();
+      
+      // Initialize map after a short delay
+      setTimeout(initializeTestMap, 1000);
+    });
+  </script>
+</body>
+</html>

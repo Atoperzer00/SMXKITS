@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SMX KITS</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="keyboard-training.css" />
+</head>
+<body>
+
+  <img id="logo" src="SE66806_logo_orig.png" alt="SMX Logo" />
+
+
+
+  <!-- Scrollable FMV overlay (hidden by default) -->
+  <div id="fmvOverlay" class="fmv-overlay">
+    <button id="closeFmvOverlay" class="close-overlay-btn">×</button>
+    <div class="fmv-window">
+      <div class="image-window">
+        <div class="scroll-container" id="scrollArea">
+          <img src="learn more picture edit.png" class="scroll-image" alt="FMV Feed">
+        </div>
+
+        <div class="hud-block" id="top-left"></div>
+        <div class="hud-block" id="top-right"></div>
+        <div class="hud-block" id="left-side"></div>
+        <div class="hud-block" id="right-side"></div>
+        <div class="hud-block" id="bottom-left">
+          <span id="static-label">SEL  ELRF</span>
+          <span id="clock-time">00:00:00</span>
+        </div>
+        <div class="hud-block" id="bottom-right"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar Component -->
+  <div id="sidebar">
+    <div id="sidebar-tab">☰</div>
+    <div id="sidebar-content">
+      <img src="https://cdn-icons-png.flaticon.com/512/847/847969.png" class="student-avatar" />
+      <p><strong>Student:</strong> <span id="info-student-sidebar">---</span></p>
+      <p><strong>Class:</strong> <span id="info-class-sidebar">---</span></p>
+      <p><strong>Last WPM:</strong> <span id="info-last-wpm-sidebar">0</span></p>
+      
+      <p><strong>Avg WPM:</strong> <span id="info-avg-wpm-sidebar">0</span></p>
+      <p><strong>Stars:</strong> <span id="info-stars-sidebar">0</span> / 100</p>
+      <span id="close-tab">→</span>
+
+      <div class="sidebar-link-tree" style="margin-top:2.5rem; border-top:1px solid #e0e0e0; padding-top:1.5rem; display:flex; flex-direction:column; gap:1.1rem; align-items:center;">
+        <a href="#" onclick="showScreen('screen-typing');return false;" class="sidebar-link-tree-link">Keyboard Input Training</a>
+        <a href="#" onclick="showScreen('screen-course-content');return false;" class="sidebar-link-tree-link">Course Content</a>
+        <a href="#" onclick="showScreen('screen-isr-training');return false;" class="sidebar-link-tree-link">Live Training</a>
+        <a href="#" onclick="showScreen('screen-contact');return false;" class="sidebar-link-tree-link">Contacts</a>
+      </div>
+    </div>
+  </div>
+
+
+
+  <section id="screen-login" class="screen active">
+    <div class="login-card">
+      <img src="SMXKITS.png" alt="SMX KITS" class="logo" />
+      <input type="text" id="classCode" placeholder="Class Code" />
+      <input type="text" id="studentCode" placeholder="Student Code" />
+      <button onclick="handleLogin()">Login</button>
+      <div id="login-error" class="error-message"></div>
+
+    </div>
+    <!-- Bottom bar for login screen only -->
+    <div class="bottom-bar">
+      <div class="bottom-bar-left"></div>
+      <a id="insideKitLink" class="inside-kit-link center-link" href="#">Inside&nbsp;the&nbsp;Kit</a>
+      <a id="contactLink" class="inside-kit-link right-link" href="#">Contact&nbsp;SMXKITS</a>
+    </div>
+  </section>
+
+  <section id="screen-home" class="screen">
+    <div class="top-bar"><span onclick="goToScreen('screen-login')">← Logout</span></div>
+    <h1 class="hub-title">Training HUB</h1>
+    <div class="home-container">
+      <div class="home-box" onclick="goToKITS()">
+        <img src="KIT CLICK LOGO.png" alt="KITS Logo" class="hub-logo" />
+        <h3>Keyboard Input Training</h3>
+      </div>
+      <div class="home-box" onclick="goToISRTraining()">
+        <img src="ISR CLICK LOGO.png" alt="ISR Logo" class="hub-logo" />
+        <h3>Live Training</h3>
+      </div>
+      <div class="home-box" onclick="goToCourseContent()">
+        <img src="COURSE REFERENCES LOGO.png" alt="Course Content Logo" class="hub-logo" />
+        <h3>Course Content</h3>
+      </div>
+      <div class="home-box">
+        <img src="CONTACT LOGO.png" alt="Contact Logo" class="hub-logo" />
+        <h3>Contact Information</h3>
+      </div>
+    </div>
+  </section>
+
+  <section id="screen-course-content" class="screen">
+    <div class="top-bar"><span onclick="goToScreen('screen-home')">← Back to Home</span></div>
+    <h2>Course References</h2>
+    <div class="module-list" id="course-content-list"></div>
+  </section>
+
+  <section id="screen-dashboard" class="screen">
+    <div class="top-bar"><span onclick="goToScreen('screen-home')">← Back to Home</span></div>
+    <h2>Available Modules</h2>
+    <div class="module-list" id="module-list"></div>
+  </section>
+
+  <section id="screen-course-practice" class="screen">
+    <div class="top-bar"><span onclick="goToScreen('screen-course-content')">← Back to Course Content</span></div>
+    <h2 id="course-practice-header">Module #: Practice List</h2>
+    <div class="module-list" id="course-practice-list"></div>
+  </section>
+
+  <section id="screen-powerpoint-lessons" class="screen">
+    <div class="top-bar"><span onclick="goToScreen('screen-course-content')">← Back to Course Content</span></div>
+    <h2>Lesson PowerPoints</h2>
+    <div class="module-list" id="powerpoint-list">
+      <div class="powerpoint-item" onclick="showPowerPointPDF('mIRC SETUP AND OVERVIEW.pdf', 'PowerPoint 1')">PowerPoint 1</div>
+    </div>
+  </section>
+
+  <!-- Slide Viewer Screen -->
+  <div id="screen-slide-viewer" class="screen">
+    <div class="slide-top-bar">
+      <button id="return-to-powerpoints" onclick="goToScreen('screen-powerpoint-lessons')">Return to Lesson PowerPoints</button>
+      <span id="slide-title"></span>
+      <span id="slide-counter"></span>
+    </div>
+    <div class="slide-viewer-content">
+      <canvas id="slide"></canvas>
+      <div id="slide-loading">Loading...</div>
+      <button class="nav-arrow" id="prev">&#8592;</button>
+      <button class="nav-arrow" id="next">&#8594;</button>
+    </div>
+    <div id="notes">
+      <div id="notes-header">Administrator Notes</div>
+      <div id="notes-content"></div>
+    </div>
+  </div>
+
+  <section id="screen-practice" class="screen">
+    <div class="top-bar"><span onclick="goToScreen('screen-dashboard')">← Back to Modules</span></div>
+    <h2 id="practice-header">Module #: Practice List</h2>
+    <div class="module-list" id="practice-list"></div>
+  </section>
+
+  <section id="screen-typing" class="screen">
+    <div class="top-bar"><span onclick="goBackToPractices()">← Back to Practices</span></div>
+    <div class="typing-header-container">
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+      <div class="stats-bar">
+        <span id="accuracy">Accuracy: 100%</span>
+        <span id="wpm">WPM: 0</span>
+        <span id="timer">Time: 0s</span>
+      </div>
+    </div>
+    <div id="letter-container"></div>
+    <textarea id="typing-input" placeholder="Begin typing..." oninput="handleTyping()"></textarea>
+  </section>
+
+  <section id="screen-results" class="screen">
+    <div class="result-bubble">
+      <div id="result-star" class="result-star">☆</div>
+      <h3 id="result-module">Module #</h3>
+      <h4 id="result-practice">Practice #</h4>
+      <p><strong>Completion Time:</strong> <span id="result-time"></span></p>
+      <p><strong>Accuracy:</strong> <span id="result-accuracy"></span></p>
+      <p><strong>Words Per Minute:</strong> <span id="result-wpm"></span></p>
+      <button onclick="retryTest()">Retry</button>
+      <button onclick="goBackToPractices()">Back to Practice</button>
+    </div>
+  </section>
+
+  <section id="screen-isr-training" class="screen">
+    <div class="top-bar"><span onclick="goToScreen('screen-home')">← Back to Home</span></div>
+    <h1 class="hub-title">ISR Training</h1>
+    <div class="isr-container">
+      <div class="isr-box" onclick="goToPEDTraining()">
+        <h3>PED Training</h3>
+      </div>
+      <div class="isr-box" onclick="goToScreen('screen-link-tree')">
+        <h3>Live Exercise</h3>
+      </div>
+    </div>
+  </section>
+
+  <section id="screen-ped-training" class="screen">
+    <div class="top-bar"><span onclick="goToScreen('screen-isr-training')">← Back to ISR Training</span></div>
+    <h1 class="hub-title">PED Training</h1>
+    <div class="ped-container">
+      <div class="ped-box">
+        <h3>Screener</h3>
+      </div>
+      <div class="ped-box">
+        <h3>Imagery Analyst (IA)</h3>
+      </div>
+    </div>
+  </section>
+
+  <section id="screen-link-tree" class="screen">
+    <div class="dark-link-tree-container">
+      <div class="dark-top-bar">
+        <a href="#" class="dark-back-link" onclick="goToScreen('screen-isr-training');return false;">&larr; Return to ISR Training</a>
+      </div>
+      
+      <!-- Mission Reference at top -->
+      <div class="dark-reference-section">
+        <h3 class="dark-section-title">Mission Reference</h3>
+        <p class="dark-reference-description">Select the exercise from the dropdown. Click it to open the document in a new tab for side-by-side viewing.</p>
+        <div class="dark-reference-controls">
+          <select id="mission-ref-dropdown" class="dark-dropdown">
+            <option value="">Choose Mission Reference Sheet</option>
+            <option value="DDMMM24_CAT01_UNCLASS_PMP (2)">TEMPLATE</option>
+            <option value="MISSION ONE REFERENCE PRODUCT">Test Mission</option>
+          </select>
+          <a id="output-file-link" class="dark-output-link" href="#" target="_blank">Output File</a>
+        </div>
+      </div>
+
+      <div class="dark-main-content">
+        <!-- Mission Links Section -->
+        <div class="dark-mission-links">
+          <h1 class="dark-hub-title">Access Mission Links</h1>
+          <div class="dark-links-container">
+            <div class="dark-link-box" onclick="window.open('SMXStream-integrated.html', '_blank')">
+              <img src="images/Play Button Logo.png" alt="SMX Stream Logo" class="dark-hub-logo" />
+              <h3>SMX Stream</h3>
+            </div>
+            <div class="dark-link-box" onclick="window.open('OpsLog.html', '_blank')">
+              <img src="images/Ops Log Logo.png" alt="Ops Log Logo" class="dark-hub-logo" />
+              <h3>Ops Log</h3>
+            </div>
+            <div class="dark-link-box" onclick="window.open('KitComm.html', '_blank')">
+              <img src="images/KitComm Logo.png" alt="KitComm Logo" class="dark-hub-logo" />
+              <h3>KitComm</h3>
+            </div>
+            <div class="dark-link-box">
+              <img src="images/Templates Logo.png" alt="Templates Logo" class="dark-hub-logo" />
+              <h3>Templates</h3>
+            </div>
+          </div>
+        </div>
+
+        <!-- Upload Vaults Section on the right -->
+        <div class="dark-upload-vaults">
+          <h3 class="dark-section-title">Upload Briefs & Data</h3>
+          <div class="dark-vaults-column">
+            <div class="dark-vault" id="slideVault">
+                <input type="file" accept=".ppt,.pptx,.pdf" multiple>
+                <h2>SlideVault</h2>
+                <p>Drop PowerPoint / PDF<br>or click to browse</p>
+            </div>
+            <div class="dark-vault" id="sheetVault">
+                <input type="file" accept=".xlsx,.xls,.csv" multiple>
+                <h2>SheetVault</h2>
+                <p>Drop Excel files<br>or click to browse</p>
+            </div>
+          </div>
+          <p class="dark-vault-description">Files land in the training repository and notify instructors automatically.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.2.67/pdf.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="script.js"></script>
+  
+  <!-- File Submission Socket.IO Handler -->
+  <script>
+    // Initialize Socket.IO for file submissions
+    let fileSubmissionSocket = null;
+    let currentStudentName = 'Unknown Student';
+    
+    // Initialize socket when entering mission links
+    function initializeFileSubmissionSocket() {
+      if (!fileSubmissionSocket) {
+        fileSubmissionSocket = io();
+        
+        // Get student name from localStorage or sidebar
+        const studentNameElement = document.getElementById('info-student-sidebar');
+        if (studentNameElement && studentNameElement.textContent !== '---') {
+          currentStudentName = studentNameElement.textContent;
+        }
+        
+        // Join mission links room
+        fileSubmissionSocket.emit('join-mission-links', { name: currentStudentName });
+        
+        console.log('🔌 File submission socket initialized for:', currentStudentName);
+      }
+    }
+    
+    // File drop handlers
+    function setupFileDropHandlers() {
+      const slideVault = document.getElementById('slideVault');
+      const sheetVault = document.getElementById('sheetVault');
+      
+      if (slideVault) {
+        setupVaultDropHandler(slideVault, 'slideVault', ['.ppt', '.pptx', '.pdf']);
+      }
+      
+      if (sheetVault) {
+        setupVaultDropHandler(sheetVault, 'sheetVault', ['.xlsx', '.xls', '.csv']);
+      }
+    }
+    
+    function setupVaultDropHandler(vaultElement, vaultType, allowedExtensions) {
+      // Prevent default drag behaviors
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        vaultElement.addEventListener(eventName, preventDefaults, false);
+        document.body.addEventListener(eventName, preventDefaults, false);
+      });
+      
+      // Highlight drop area when item is dragged over it
+      ['dragenter', 'dragover'].forEach(eventName => {
+        vaultElement.addEventListener(eventName, () => {
+          vaultElement.classList.add('dragover');
+        }, false);
+      });
+      
+      ['dragleave', 'drop'].forEach(eventName => {
+        vaultElement.addEventListener(eventName, () => {
+          vaultElement.classList.remove('dragover');
+        }, false);
+      });
+      
+      // Handle dropped files
+      vaultElement.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        handleFiles(files, vaultType, allowedExtensions);
+      }, false);
+      
+      // Handle click to browse files
+      vaultElement.addEventListener('click', () => {
+        const input = vaultElement.querySelector('input[type="file"]');
+        if (input) {
+          input.click();
+        }
+      });
+      
+      // Handle file input change
+      const fileInput = vaultElement.querySelector('input[type="file"]');
+      if (fileInput) {
+        fileInput.addEventListener('change', (e) => {
+          handleFiles(e.target.files, vaultType, allowedExtensions);
+        });
+      }
+    }
+    
+    function preventDefaults(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    function handleFiles(files, vaultType, allowedExtensions) {
+      // Initialize socket if not already done
+      initializeFileSubmissionSocket();
+      
+      [...files].forEach(file => {
+        const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+        
+        // Check if file type is allowed
+        if (!allowedExtensions.includes(fileExtension)) {
+          alert(`File type ${fileExtension} is not allowed in ${vaultType}. Allowed types: ${allowedExtensions.join(', ')}`);
+          return;
+        }
+        
+        // Check file size (limit to 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+          alert('File size must be less than 10MB');
+          return;
+        }
+        
+        // Read file and submit
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const fileData = e.target.result;
+          
+          // Create submission data
+          const submissionData = {
+            studentName: currentStudentName,
+            fileName: file.name,
+            fileSize: file.size,
+            fileType: file.type,
+            fileData: fileData,
+            vaultType: vaultType
+          };
+          
+          // Send via socket
+          fileSubmissionSocket.emit('file-submission', submissionData);
+          
+          // Show success message
+          showFileSubmissionSuccess(file.name, vaultType);
+        };
+        
+        reader.readAsDataURL(file);
+      });
+    }
+    
+    function showFileSubmissionSuccess(fileName, vaultType) {
+      // Create and show success notification
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+        z-index: 10000;
+        font-weight: 600;
+        max-width: 300px;
+      `;
+      notification.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <i class="fas fa-check-circle"></i>
+          <div>
+            <div>File Submitted Successfully!</div>
+            <div style="font-size: 0.9em; opacity: 0.9;">${fileName} → ${vaultType}</div>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(notification);
+      
+      // Remove notification after 4 seconds
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification);
+        }
+      }, 4000);
+    }
+    
+    // Initialize file drop handlers when the link tree screen is shown
+    function initializeMissionLinksFileHandlers() {
+      if (document.getElementById('screen-link-tree').classList.contains('active')) {
+        setupFileDropHandlers();
+      }
+    }
+    
+    // Override the existing goToScreen function to initialize file handlers
+    const originalGoToScreen = window.goToScreen;
+    window.goToScreen = function(screenId) {
+      if (originalGoToScreen) {
+        originalGoToScreen(screenId);
+      } else {
+        showScreen(screenId);
+      }
+      
+      // Initialize file handlers when entering mission links
+      if (screenId === 'screen-link-tree') {
+        setTimeout(initializeMissionLinksFileHandlers, 100);
+      }
+    };
+    
+    // Also initialize when DOM is ready if already on the screen
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(() => {
+        if (document.getElementById('screen-link-tree') && 
+            document.getElementById('screen-link-tree').classList.contains('active')) {
+          initializeMissionLinksFileHandlers();
+        }
+      }, 500);
+    });
+  </script>
+  
+  <!-- File Submission Socket.IO Handler -->
+  <script>
+    // Initialize Socket.IO for file submissions
+    let fileSubmissionSocket = null;
+    let currentStudentName = 'Unknown Student';
+    
+    // Initialize socket when entering mission links
+    function initializeFileSubmissionSocket() {
+      if (!fileSubmissionSocket) {
+        fileSubmissionSocket = io();
+        
+        // Get student name from localStorage or sidebar
+        const studentNameElement = document.getElementById('info-student-sidebar');
+        if (studentNameElement && studentNameElement.textContent !== '---') {
+          currentStudentName = studentNameElement.textContent;
+        }
+        
+        // Join mission links room
+        fileSubmissionSocket.emit('join-mission-links', { name: currentStudentName });
+        
+        console.log('🔌 File submission socket initialized for:', currentStudentName);
+      }
+    }
+    
+    // File drop handlers
+    function setupFileDropHandlers() {
+      const slideVault = document.getElementById('slideVault');
+      const sheetVault = document.getElementById('sheetVault');
+      
+      if (slideVault) {
+        setupVaultDropHandler(slideVault, 'slideVault', ['.ppt', '.pptx', '.pdf']);
+      }
+      
+      if (sheetVault) {
+        setupVaultDropHandler(sheetVault, 'sheetVault', ['.xlsx', '.xls', '.csv']);
+      }
+    }
+    
+    function setupVaultDropHandler(vaultElement, vaultType, allowedExtensions) {
+      // Prevent default drag behaviors
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        vaultElement.addEventListener(eventName, preventDefaults, false);
+        document.body.addEventListener(eventName, preventDefaults, false);
+      });
+      
+      // Highlight drop area when item is dragged over it
+      ['dragenter', 'dragover'].forEach(eventName => {
+        vaultElement.addEventListener(eventName, () => {
+          vaultElement.classList.add('dragover');
+        }, false);
+      });
+      
+      ['dragleave', 'drop'].forEach(eventName => {
+        vaultElement.addEventListener(eventName, () => {
+          vaultElement.classList.remove('dragover');
+        }, false);
+      });
+      
+      // Handle dropped files
+      vaultElement.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        handleFiles(files, vaultType, allowedExtensions);
+      }, false);
+      
+      // Handle click to browse files
+      vaultElement.addEventListener('click', () => {
+        const input = vaultElement.querySelector('input[type="file"]');
+        if (input) {
+          input.click();
+        }
+      });
+      
+      // Handle file input change
+      const fileInput = vaultElement.querySelector('input[type="file"]');
+      if (fileInput) {
+        fileInput.addEventListener('change', (e) => {
+          handleFiles(e.target.files, vaultType, allowedExtensions);
+        });
+      }
+    }
+    
+    function preventDefaults(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    function handleFiles(files, vaultType, allowedExtensions) {
+      // Initialize socket if not already done
+      initializeFileSubmissionSocket();
+      
+      [...files].forEach(file => {
+        const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+        
+        // Check if file type is allowed
+        if (!allowedExtensions.includes(fileExtension)) {
+          alert(`File type ${fileExtension} is not allowed in ${vaultType}. Allowed types: ${allowedExtensions.join(', ')}`);
+          return;
+        }
+        
+        // Check file size (limit to 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+          alert('File size must be less than 10MB');
+          return;
+        }
+        
+        // Read file and submit
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const fileData = e.target.result;
+          
+          // Create submission data
+          const submissionData = {
+            studentName: currentStudentName,
+            fileName: file.name,
+            fileSize: file.size,
+            fileType: file.type,
+            fileData: fileData,
+            vaultType: vaultType
+          };
+          
+          // Send via socket
+          fileSubmissionSocket.emit('file-submission', submissionData);
+          
+          // Show success message
+          showFileSubmissionSuccess(file.name, vaultType);
+        };
+        
+        reader.readAsDataURL(file);
+      });
+    }
+    
+    function showFileSubmissionSuccess(fileName, vaultType) {
+      // Create and show success notification
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+        z-index: 10000;
+        font-weight: 600;
+        max-width: 300px;
+      `;
+      notification.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <i class="fas fa-check-circle"></i>
+          <div>
+            <div>File Submitted Successfully!</div>
+            <div style="font-size: 0.9em; opacity: 0.9;">${fileName} → ${vaultType}</div>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(notification);
+      
+      // Remove notification after 4 seconds
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification);
+        }
+      }, 4000);
+    }
+    
+    // Initialize file drop handlers when the link tree screen is shown
+    function initializeMissionLinksFileHandlers() {
+      if (document.getElementById('screen-link-tree').classList.contains('active')) {
+        setupFileDropHandlers();
+      }
+    }
+    
+    // Override the existing goToScreen function to initialize file handlers
+    const originalGoToScreen = window.goToScreen;
+    window.goToScreen = function(screenId) {
+      if (originalGoToScreen) {
+        originalGoToScreen(screenId);
+      } else {
+        showScreen(screenId);
+      }
+      
+      // Initialize file handlers when entering mission links
+      if (screenId === 'screen-link-tree') {
+        setTimeout(initializeMissionLinksFileHandlers, 100);
+      }
+    };
+    
+    // Also initialize when DOM is ready if already on the screen
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(() => {
+        if (document.getElementById('screen-link-tree') && 
+            document.getElementById('screen-link-tree').classList.contains('active')) {
+          initializeMissionLinksFileHandlers();
+        }
+      }, 500);
+    });
+  </script>
+  
+  <!-- File Submission Socket.IO Handler -->
+  <script>
+    // Initialize Socket.IO for file submissions
+    let fileSubmissionSocket = null;
+    let currentStudentName = 'Unknown Student';
+    
+    // Initialize socket when entering mission links
+    function initializeFileSubmissionSocket() {
+      if (!fileSubmissionSocket) {
+        fileSubmissionSocket = io();
+        
+        // Get student name from localStorage or sidebar
+        const studentNameElement = document.getElementById('info-student-sidebar');
+        if (studentNameElement && studentNameElement.textContent !== '---') {
+          currentStudentName = studentNameElement.textContent;
+        }
+        
+        // Join mission links room
+        fileSubmissionSocket.emit('join-mission-links', { name: currentStudentName });
+        
+        console.log('🔌 File submission socket initialized for:', currentStudentName);
+      }
+    }
+    
+    // File drop handlers
+    function setupFileDropHandlers() {
+      const slideVault = document.getElementById('slideVault');
+      const sheetVault = document.getElementById('sheetVault');
+      
+      if (slideVault) {
+        setupVaultDropHandler(slideVault, 'slideVault', ['.ppt', '.pptx', '.pdf']);
+      }
+      
+      if (sheetVault) {
+        setupVaultDropHandler(sheetVault, 'sheetVault', ['.xlsx', '.xls', '.csv']);
+      }
+    }
+    
+    function setupVaultDropHandler(vaultElement, vaultType, allowedExtensions) {
+      // Prevent default drag behaviors
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        vaultElement.addEventListener(eventName, preventDefaults, false);
+        document.body.addEventListener(eventName, preventDefaults, false);
+      });
+      
+      // Highlight drop area when item is dragged over it
+      ['dragenter', 'dragover'].forEach(eventName => {
+        vaultElement.addEventListener(eventName, () => {
+          vaultElement.classList.add('dragover');
+        }, false);
+      });
+      
+      ['dragleave', 'drop'].forEach(eventName => {
+        vaultElement.addEventListener(eventName, () => {
+          vaultElement.classList.remove('dragover');
+        }, false);
+      });
+      
+      // Handle dropped files
+      vaultElement.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        handleFiles(files, vaultType, allowedExtensions);
+      }, false);
+      
+      // Handle click to browse files
+      vaultElement.addEventListener('click', () => {
+        const input = vaultElement.querySelector('input[type="file"]');
+        if (input) {
+          input.click();
+        }
+      });
+      
+      // Handle file input change
+      const fileInput = vaultElement.querySelector('input[type="file"]');
+      if (fileInput) {
+        fileInput.addEventListener('change', (e) => {
+          handleFiles(e.target.files, vaultType, allowedExtensions);
+        });
+      }
+    }
+    
+    function preventDefaults(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    function handleFiles(files, vaultType, allowedExtensions) {
+      // Initialize socket if not already done
+      initializeFileSubmissionSocket();
+      
+      [...files].forEach(file => {
+        const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+        
+        // Check if file type is allowed
+        if (!allowedExtensions.includes(fileExtension)) {
+          alert(`File type ${fileExtension} is not allowed in ${vaultType}. Allowed types: ${allowedExtensions.join(', ')}`);
+          return;
+        }
+        
+        // Check file size (limit to 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+          alert('File size must be less than 10MB');
+          return;
+        }
+        
+        // Read file and submit
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const fileData = e.target.result;
+          
+          // Create submission data
+          const submissionData = {
+            studentName: currentStudentName,
+            fileName: file.name,
+            fileSize: file.size,
+            fileType: file.type,
+            fileData: fileData,
+            vaultType: vaultType
+          };
+          
+          // Send via socket
+          fileSubmissionSocket.emit('file-submission', submissionData);
+          
+          // Show success message
+          showFileSubmissionSuccess(file.name, vaultType);
+        };
+        
+        reader.readAsDataURL(file);
+      });
+    }
+    
+    function showFileSubmissionSuccess(fileName, vaultType) {
+      // Create and show success notification
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+        z-index: 10000;
+        font-weight: 600;
+        max-width: 300px;
+      `;
+      notification.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <i class="fas fa-check-circle"></i>
+          <div>
+            <div>File Submitted Successfully!</div>
+            <div style="font-size: 0.9em; opacity: 0.9;">${fileName} → ${vaultType}</div>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(notification);
+      
+      // Remove notification after 4 seconds
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification);
+        }
+      }, 4000);
+    }
+    
+    // Initialize file drop handlers when the link tree screen is shown
+    function initializeMissionLinksFileHandlers() {
+      if (document.getElementById('screen-link-tree').classList.contains('active')) {
+        setupFileDropHandlers();
+      }
+    }
+    
+    // Override the existing goToScreen function to initialize file handlers
+    const originalGoToScreen = window.goToScreen;
+    window.goToScreen = function(screenId) {
+      if (originalGoToScreen) {
+        originalGoToScreen(screenId);
+      } else {
+        showScreen(screenId);
+      }
+      
+      // Initialize file handlers when entering mission links
+      if (screenId === 'screen-link-tree') {
+        setTimeout(initializeMissionLinksFileHandlers, 100);
+      }
+    };
+    
+    // Also initialize when DOM is ready if already on the screen
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(() => {
+        if (document.getElementById('screen-link-tree') && 
+            document.getElementById('screen-link-tree').classList.contains('active')) {
+          initializeMissionLinksFileHandlers();
+        }
+      }, 500);
+    });
+  </script>
+</body>
+</html>

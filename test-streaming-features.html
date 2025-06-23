@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Streaming Features</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .info {
+            color: #17a2b8;
+            font-weight: bold;
+        }
+        #results {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Streaming Features Test Suite</h1>
+    
+    <div class="test-section">
+        <h2>📂 localStorage Tests</h2>
+        <button class="test-button" onclick="testLocalStorageBasics()">Test localStorage Basics</button>
+        <button class="test-button" onclick="testFileStorage()">Test File Storage</button>
+        <button class="test-button" onclick="testFileRetrieval()">Test File Retrieval</button>
+        <button class="test-button" onclick="clearAllStorage()">Clear All Storage</button>
+    </div>
+
+    <div class="test-section">
+        <h2>🗂️ File Management Tests</h2>
+        <button class="test-button" onclick="addTestFiles()">Add Test Files</button>
+        <button class="test-button" onclick="listStoredFiles()">List Stored Files</button>
+        <button class="test-button" onclick="testDeleteFile()">Test Delete File</button>
+    </div>
+
+    <div class="test-section">
+        <h2>📡 Go Live Integration Tests</h2>
+        <button class="test-button" onclick="testGoLiveStorage()">Test Go Live Storage</button>
+        <button class="test-button" onclick="testStreamPageIntegration()">Test Stream Page Integration</button>
+    </div>
+
+    <div class="test-section">
+        <h2>🔗 Navigation Tests</h2>
+        <button class="test-button" onclick="openStreamMode()">Open Stream Mode</button>
+        <button class="test-button" onclick="openStreamViewer()">Open Stream Viewer</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+        const SUBMITTED_FILES_KEY = 'smx_submitted_files';
+        const LIVE_STREAM_VIDEO_KEY = 'liveStreamVideo';
+        
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'success' ? 'success' : type === 'error' ? 'error' : 'info';
+            results.innerHTML += `[${timestamp}] <span class="${className}">${message}</span>\n`;
+            results.scrollTop = results.scrollHeight;
+            console.log(message);
+        }
+
+        function testLocalStorageBasics() {
+            log('🧪 Testing localStorage basics...', 'info');
+            
+            try {
+                // Test basic localStorage functionality
+                localStorage.setItem('test_key', 'test_value');
+                const value = localStorage.getItem('test_key');
+                
+                if (value === 'test_value') {
+                    log('✅ localStorage read/write works', 'success');
+                } else {
+                    log('❌ localStorage read/write failed', 'error');
+                }
+                
+                localStorage.removeItem('test_key');
+                log('✅ localStorage cleanup works', 'success');
+                
+            } catch (error) {
+                log('❌ localStorage error: ' + error.message, 'error');
+            }
+        }
+
+        function testFileStorage() {
+            log('🧪 Testing file storage...', 'info');
+            
+            try {
+                const testFile = {
+                    id: 'test_' + Date.now(),
+                    name: 'test_video.mp4',
+                    url: 'blob:test-url',
+                    size: 1024000,
+                    type: 'video/mp4',
+                    timestamp: new Date().toISOString()
+                };
+                
+                const files = JSON.parse(localStorage.getItem(SUBMITTED_FILES_KEY) || '[]');
+                files.push(testFile);
+                localStorage.setItem(SUBMITTED_FILES_KEY, JSON.stringify(files));
+                
+                log('✅ File stored successfully: ' + testFile.name, 'success');
+                
+            } catch (error) {
+                log('❌ File storage error: ' + error.message, 'error');
+            }
+        }
+
+        function testFileRetrieval() {
+            log('🧪 Testing file retrieval...', 'info');
+            
+            try {
+                const files = JSON.parse(localStorage.getItem(SUBMITTED_FILES_KEY) || '[]');
+                log(`📂 Found ${files.length} stored files`, 'info');
+                
+                files.forEach((file, index) => {
+                    log(`  ${index + 1}. ${file.name} (${formatFileSize(file.size)})`, 'info');
+                });
+                
+                if (files.length > 0) {
+                    log('✅ File retrieval works', 'success');
+                } else {
+                    log('⚠️ No files found (add test files first)', 'info');
+                }
+                
+            } catch (error) {
+                log('❌ File retrieval error: ' + error.message, 'error');
+            }
+        }
+
+        function addTestFiles() {
+            log('🧪 Adding test files...', 'info');
+            
+            const testFiles = [
+                {
+                    id: 'test_1_' + Date.now(),
+                    name: 'intro_video.mp4',
+                    url: 'blob:test-url-1',
+                    size: 2048000,
+                    type: 'video/mp4',
+                    timestamp: new Date().toISOString()
+                },
+                {
+                    id: 'test_2_' + Date.now(),
+                    name: 'lesson_1.mp4',
+                    url: 'blob:test-url-2',
+                    size: 5120000,
+                    type: 'video/mp4',
+                    timestamp: new Date().toISOString()
+                },
+                {
+                    id: 'test_3_' + Date.now(),
+                    name: 'demo_presentation.mp4',
+                    url: 'blob:test-url-3',
+                    size: 10240000,
+                    type: 'video/mp4',
+                    timestamp: new Date().toISOString()
+                }
+            ];
+            
+            try {
+                localStorage.setItem(SUBMITTED_FILES_KEY, JSON.stringify(testFiles));
+                log(`✅ Added ${testFiles.length} test files`, 'success');
+                
+            } catch (error) {
+                log('❌ Error adding test files: ' + error.message, 'error');
+            }
+        }
+
+        function listStoredFiles() {
+            log('🧪 Listing all stored files...', 'info');
+            testFileRetrieval();
+        }
+
+        function testDeleteFile() {
+            log('🧪 Testing file deletion...', 'info');
+            
+            try {
+                const files = JSON.parse(localStorage.getItem(SUBMITTED_FILES_KEY) || '[]');
+                
+                if (files.length === 0) {
+                    log('⚠️ No files to delete (add test files first)', 'info');
+                    return;
+                }
+                
+                const fileToDelete = files[0];
+                const updatedFiles = files.slice(1);
+                
+                localStorage.setItem(SUBMITTED_FILES_KEY, JSON.stringify(updatedFiles));
+                log(`🗑️ Deleted file: ${fileToDelete.name}`, 'success');
+                log(`📊 Files remaining: ${updatedFiles.length}`, 'info');
+                
+            } catch (error) {
+                log('❌ File deletion error: ' + error.message, 'error');
+            }
+        }
+
+        function testGoLiveStorage() {
+            log('🧪 Testing Go Live storage...', 'info');
+            
+            try {
+                const files = JSON.parse(localStorage.getItem(SUBMITTED_FILES_KEY) || '[]');
+                
+                if (files.length === 0) {
+                    log('⚠️ No files available for Go Live test (add test files first)', 'info');
+                    return;
+                }
+                
+                const mostRecentFile = files[0];
+                localStorage.setItem(LIVE_STREAM_VIDEO_KEY, JSON.stringify(mostRecentFile));
+                
+                log(`📡 Stored for live stream: ${mostRecentFile.name}`, 'success');
+                
+                // Verify storage
+                const storedVideo = JSON.parse(localStorage.getItem(LIVE_STREAM_VIDEO_KEY));
+                if (storedVideo && storedVideo.name === mostRecentFile.name) {
+                    log('✅ Go Live storage verification passed', 'success');
+                } else {
+                    log('❌ Go Live storage verification failed', 'error');
+                }
+                
+            } catch (error) {
+                log('❌ Go Live storage error: ' + error.message, 'error');
+            }
+        }
+
+        function testStreamPageIntegration() {
+            log('🧪 Testing stream page integration...', 'info');
+            
+            try {
+                const storedVideo = localStorage.getItem(LIVE_STREAM_VIDEO_KEY);
+                
+                if (storedVideo) {
+                    const videoData = JSON.parse(storedVideo);
+                    log(`🎬 Found live stream video: ${videoData.name}`, 'success');
+                    log('✅ Stream page integration ready', 'success');
+                } else {
+                    log('⚠️ No live stream video found (run Go Live test first)', 'info');
+                }
+                
+            } catch (error) {
+                log('❌ Stream page integration error: ' + error.message, 'error');
+            }
+        }
+
+        function clearAllStorage() {
+            log('🧪 Clearing all storage...', 'info');
+            
+            try {
+                localStorage.removeItem(SUBMITTED_FILES_KEY);
+                localStorage.removeItem(LIVE_STREAM_VIDEO_KEY);
+                log('🧹 All storage cleared', 'success');
+                
+            } catch (error) {
+                log('❌ Storage clear error: ' + error.message, 'error');
+            }
+        }
+
+        function openStreamMode() {
+            log('🔗 Opening Stream Mode...', 'info');
+            window.open('public/Stream Mode.html', '_blank');
+        }
+
+        function openStreamViewer() {
+            log('🔗 Opening Stream Viewer...', 'info');
+            window.open('SMXStream-new.html', '_blank');
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Initialize
+        log('🚀 Test suite initialized', 'success');
+        log('💡 Run tests in order: localStorage → File Management → Go Live → Navigation', 'info');
+    </script>
+</body>
+</html>

@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SMX KITS - Instructor Command Center</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
+  <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      --dark-gradient: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 100%);
+      --card-gradient: linear-gradient(145deg, #16213e 0%, #0f1419 100%);
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --text-primary: #ffffff;
+      --text-secondary: #b8c5d6;
+      --text-accent: #64b5f6;
+      --shadow-primary: 0 20px 40px rgba(0, 0, 0, 0.3);
+      --shadow-hover: 0 30px 60px rgba(0, 0, 0, 0.4);
+      --border-radius: 20px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--dark-gradient);
+      color: var(--text-primary);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* Animated background particles */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.1) 0%, transparent 50%);
+      z-index: -1;
+      animation: float 20s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      33% { transform: translateY(-20px) rotate(1deg); }
+      66% { transform: translateY(10px) rotate(-1deg); }
+    }
+
+    .admin-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar Redesign */
+    .admin-sidebar {
+      width: 280px;
+      background: rgba(15, 20, 25, 0.95);
+      backdrop-filter: blur(20px);
+      border-right: 1px solid var(--glass-border);
+      display: flex;
+      flex-direction: column;
+      padding: 2rem 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .admin-sidebar::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, rgba(102, 126, 234, 0.1) 0%, transparent 100%);
+      z-index: -1;
+    }
+
+    .admin-logo {
+      width: 200px;
+      margin: 0 auto 3rem;
+      filter: drop-shadow(0 10px 30px rgba(102, 126, 234, 0.3));
+      transition: var(--transition);
+    }
+
+    .admin-logo:hover {
+      transform: scale(1.05);
+      filter: drop-shadow(0 15px 40px rgba(102, 126, 234, 0.5));
+    }
+
+    .admin-nav {
+      list-style: none;
+      padding: 0 1rem;
+    }
+
+    .admin-nav li {
+      margin-bottom: 0.5rem;
+      padding: 1rem 1.5rem;
+      border-radius: 15px;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .admin-nav li::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: var(--primary-gradient);
+      transition: var(--transition);
+      z-index: -1;
+    }
+
+    .admin-nav li:hover::before,
+    .admin-nav li.active::before {
+      left: 0;
+    }
+
+    .admin-nav li:hover,
+    .admin-nav li.active {
+      color: white;
+      transform: translateX(5px);
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    }
+
+    /* Main Content Area */
+    .admin-content {
+      flex: 1;
+      padding: 2rem;
+      background: transparent;
+      overflow-y: auto;
+    }
+
+    /* Header Section */
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 3rem;
+      padding: 2rem;
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border-radius: var(--border-radius);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+    }
+
+    .dashboard-title {
+      font-size: 3rem;
+      font-weight: 800;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin: 0;
+      letter-spacing: -0.02em;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.5rem;
+      background: var(--glass-bg);
+      border-radius: 50px;
+      border: 1px solid var(--glass-border);
+    }
+
+    .user-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: var(--accent-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+
+    /* Essential Tools Section */
+    .essential-tools {
+      margin-bottom: 3rem;
+    }
+
+    .section-title {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      color: var(--text-accent);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .section-title::before {
+      content: '';
+      width: 4px;
+      height: 40px;
+      background: var(--accent-gradient);
+      border-radius: 2px;
+    }
+
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .tool-card {
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tool-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--primary-gradient);
+      opacity: 0;
+      transition: var(--transition);
+    }
+
+    .tool-card:hover::before {
+      opacity: 0.1;
+    }
+
+    .tool-card:hover {
+      transform: translateY(-10px) scale(1.02);
+      box-shadow: var(--shadow-hover);
+      border-color: rgba(102, 126, 234, 0.5);
+    }
+
+    .tool-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .tool-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+
+    .tool-description {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    /* Quick Actions Grid */
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+
+    .action-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border-radius: var(--border-radius);
+      padding: 1.5rem;
+      border: 1px solid var(--glass-border);
+      cursor: pointer;
+      transition: var(--transition);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .action-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: var(--secondary-gradient);
+      transition: var(--transition);
+      z-index: -1;
+    }
+
+    .action-card:hover::before {
+      left: 0;
+    }
+
+    .action-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 35px rgba(245, 87, 108, 0.3);
+      color: white;
+    }
+
+    .action-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      opacity: 0.8;
+    }
+
+    .action-title {
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+
+    .badge {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: var(--secondary-gradient);
+      color: white;
+      border-radius: 20px;
+      padding: 0.3rem 0.8rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    /* Dashboard Widgets */
+    .dashboard-widgets {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 3rem;
+    }
+
+    .widget-card {
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+      transition: var(--transition);
+    }
+
+    .widget-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .widget-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-accent);
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Calendar Widget */
+    .calendar-widget {
+      grid-column: 1 / -1;
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+      margin-bottom: 2rem;
+    }
+
+    #calendar {
+      background: transparent;
+      border-radius: 15px;
+      overflow: hidden;
+    }
+
+    /* Chat Section */
+    .chat-section {
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+      margin-bottom: 2rem;
+    }
+
+    .chatbox-messages {
+      height: 400px;
+      overflow-y: auto;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 15px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border: 1px solid var(--glass-border);
+    }
+
+    .chatbox-inputs {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .chatbox-inputs input[type="text"] {
+      flex: 1;
+      padding: 1rem;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 25px;
+      color: var(--text-primary);
+      font-size: 1rem;
+    }
+
+    .chatbox-inputs button {
+      padding: 1rem 2rem;
+      background: var(--accent-gradient);
+      border: none;
+      border-radius: 25px;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .chatbox-inputs button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 10px 25px rgba(79, 172, 254, 0.4);
+    }
+
+    /* Progress Bars */
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 1rem 0;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--accent-gradient);
+      border-radius: 4px;
+      transition: width 1s ease;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+      .dashboard-widgets {
+        grid-template-columns: 1fr;
+      }
+      
+      .tools-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .admin-layout {
+        flex-direction: column;
+      }
+      
+      .admin-sidebar {
+        width: 100%;
+        height: auto;
+      }
+      
+      .admin-content {
+        padding: 1rem;
+      }
+      
+      .dashboard-title {
+        font-size: 2rem;
+      }
+      
+      .dashboard-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+      }
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--accent-gradient);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--primary-gradient);
+    }
+
+    /* Animation Classes */
+    .fade-in {
+      animation: fadeInUp 0.6s ease forwards;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .stagger-1 { animation-delay: 0.1s; }
+    .stagger-2 { animation-delay: 0.2s; }
+    .stagger-3 { animation-delay: 0.3s; }
+    .stagger-4 { animation-delay: 0.4s; }
+
+
+  </style>
+</head>
+<body>
+  <!-- Authentication Check -->
+  <script>
+    // Check if user is authenticated and has admin/instructor role
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    
+    if (!token || !role) {
+      // No authentication found, redirect to login
+      window.location.replace('/login.html');
+    } else if (role !== 'admin' && role !== 'instructor') {
+      // User is authenticated but doesn't have admin/instructor privileges
+      alert('Access denied. Admin or Instructor privileges required.');
+      window.location.replace('/dashboard.html');
+    }
+  </script>
+
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <img src="SMXKITS.png" alt="SMXKITS Logo" class="admin-logo" />
+      <ul class="admin-nav">
+        <li class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</li>
+        <li onclick="window.location.href='instructor-inbox.html'"><i class="fas fa-inbox"></i> Inbox</li>
+        <li onclick="window.location.href='dashboard.html'"><i class="fas fa-graduation-cap"></i> Student Training Hub</li>
+        <li><i class="fas fa-calendar-alt"></i> Calendar <span style="font-size: 0.7rem; color: #f093fb; opacity: 0.8;">(Needs link)</span></li>
+        <li onclick="window.location.href='add-class.html'"><i class="fas fa-chalkboard-teacher"></i> Classes</li>
+        <li onclick="window.location.href='add-student.html'"><i class="fas fa-user-graduate"></i> Students</li>
+        <li onclick="window.location.href='instructor-grading.html'"><i class="fas fa-star"></i> Student Grading</li>
+        <li onclick="window.location.href='lessons-learned.html'"><i class="fas fa-lightbulb"></i> Lessons Learned</li>
+        <li onclick="window.location.href='attendance.html'"><i class="fas fa-clipboard-check"></i> Attendance</li>
+        <li onclick="window.location.href='mission-links.html'"><i class="fas fa-broadcast-tower"></i> Live Controls</li>
+        <li><a href="instructor-feedback.html"><i class="fas fa-comments"></i> Feedback</a></li>
+        <li onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</li>
+      </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-content">
+      <!-- Header Section -->
+      <header class="dashboard-header fade-in">
+        <div>
+          <h1 class="dashboard-title">Instructor Command Center</h1>
+          <p style="color: var(--text-secondary); font-size: 1.1rem; margin-top: 0.5rem;">
+            Welcome back! Manage your classes, students, and training resources.
+          </p>
+        </div>
+        <div class="user-info">
+          <div class="user-avatar">
+            <i class="fas fa-user"></i>
+          </div>
+          <div>
+            <div style="font-weight: 600;">Instructor</div>
+            <div style="font-size: 0.9rem; color: var(--text-secondary);">Admin Access</div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Essential Tools Section -->
+      <section class="essential-tools fade-in stagger-1">
+        <h2 class="section-title">
+          <i class="fas fa-tools"></i>
+          Essential Instructor Tools
+        </h2>
+        <div class="tools-grid">
+          <div class="tool-card" onclick="window.open('Stream Mode.html', '_blank')">
+            <div class="tool-icon"><i class="fas fa-video"></i></div>
+            <h3 class="tool-title">Instructor Stream Mode</h3>
+            <p class="tool-description">Advanced streaming interface with full instructor controls and real-time student interaction capabilities.</p>
+          </div>
+          
+          <div class="tool-card" onclick="window.open('kitcomm.html', '_blank')">
+            <div class="tool-icon"><i class="fas fa-comments"></i></div>
+            <h3 class="tool-title">KitComm</h3>
+            <p class="tool-description">Comprehensive communication hub for instructor-student messaging and collaboration.</p>
+          </div>
+          
+          <div class="tool-card" onclick="window.open('../OpsLog.html', '_blank')">
+            <div class="tool-icon"><i class="fas fa-clipboard-list"></i></div>
+            <h3 class="tool-title">Operations Log</h3>
+            <p class="tool-description">Monitor system activities, track user actions, and maintain operational oversight.</p>
+          </div>
+          
+          <div class="tool-card" onclick="alert('Upload Templates functionality coming soon!')">
+            <div class="tool-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+            <h3 class="tool-title">Upload Templates <span style="font-size: 0.7rem; color: #f093fb; font-weight: 400;">(Needs link)</span></h3>
+            <p class="tool-description">Manage and upload course templates, resources, and educational materials.</p>
+          </div>
+          
+          <div class="tool-card" onclick="window.location.href='edit-typing-tests.html'">
+            <div class="tool-icon"><i class="fas fa-keyboard"></i></div>
+            <h3 class="tool-title">Edit Typing Tests</h3>
+            <p class="tool-description">Create, modify, and manage typing assessments and skill evaluation tests.</p>
+          </div>
+          
+          <div class="tool-card" onclick="window.location.href='instructor-grading.html'" target="_self">
+            <div class="tool-icon"><i class="fas fa-chart-line"></i></div>
+            <h3 class="tool-title">Instructor Grading</h3>
+            <p class="tool-description">Grade student submissions, provide feedback, and manage exercise assessments with interactive grading tools.</p>
+          </div>
+          
+          <div class="tool-card" onclick="window.location.href='Trackpoint-fixed.html'">
+            <div class="tool-icon"><i class="fas fa-map"></i></div>
+            <h3 class="tool-title">TrackPoint Map (Enhanced)</h3>
+            <p class="tool-description">Interactive tactical mapping system with enhanced diagnostics, improved tile loading, and real-time debug panel for mission planning.</p>
+            <div class="badge">Fixed</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Quick Actions Grid -->
+      <section class="fade-in stagger-2">
+        <h2 class="section-title">
+          <i class="fas fa-bolt"></i>
+          Quick Actions
+        </h2>
+        <div class="quick-actions">
+          <div class="action-card" onclick="window.location.href='users-roles.html'">
+            <div class="action-icon"><i class="fas fa-users-cog"></i></div>
+            <div class="action-title">Users & Roles</div>
+          </div>
+          
+          <div class="action-card" onclick="window.location.href='add-class.html'">
+            <div class="action-icon"><i class="fas fa-plus-circle"></i></div>
+            <div class="action-title">Add New Class</div>
+          </div>
+          
+          <div class="action-card" onclick="window.location.href='add-student.html'">
+            <div class="action-icon"><i class="fas fa-user-plus"></i></div>
+            <div class="action-title">Add New Student</div>
+          </div>
+          
+          <div class="action-card">
+            <div class="action-icon"><i class="fas fa-clipboard-check"></i></div>
+            <div class="action-title">Manage Attendance <span style="font-size: 0.7rem; color: #f093fb; font-weight: 400;">(Needs link)</span></div>
+          </div>
+          
+          <div class="action-card">
+            <div class="action-icon"><i class="fas fa-inbox"></i></div>
+            <div class="action-title">Instructor Inbox <span style="font-size: 0.7rem; color: #f093fb; font-weight: 400;">(Needs link)</span></div>
+            <span class="badge">3</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Calendar Widget -->
+      <section class="calendar-widget fade-in stagger-3">
+        <h2 class="widget-title">
+          <i class="fas fa-calendar-alt"></i>
+          Course Calendar
+        </h2>
+        <div id="calendar"></div>
+      </section>
+
+      <!-- Dashboard Widgets -->
+      <section class="dashboard-widgets fade-in stagger-4">
+        <div class="widget-card">
+          <h3 class="widget-title">
+            <i class="fas fa-chart-line"></i>
+            Analytics & Progress
+          </h3>
+          <div style="margin-top: 1.5rem;">
+            <div style="background: rgba(0,0,0,0.3); padding: 1.5rem; border-radius: 15px; margin-bottom: 1rem;">
+              <h4 style="margin: 0 0 1rem 0; color: var(--text-accent);">Student Progress Overview</h4>
+              <div style="margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                  <span>Alpha Class</span>
+                  <span>65%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 65%;"></div>
+                </div>
+              </div>
+              <div style="margin-bottom: 1rem;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                  <span>Bravo Class</span>
+                  <span>82%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 82%;"></div>
+                </div>
+              </div>
+              <div style="display: flex; justify-content: space-between; color: var(--text-secondary); font-size: 0.9rem;">
+                <span>Total Students: 68</span>
+                <span>Active Classes: 3</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="widget-card">
+          <h3 class="widget-title">
+            <i class="fas fa-clock"></i>
+            Upcoming Sessions
+          </h3>
+          <div style="margin-top: 1.5rem;">
+            <div style="padding: 1rem; border-left: 4px solid #4facfe; margin-bottom: 1rem; background: rgba(79, 172, 254, 0.1); border-radius: 0 10px 10px 0;">
+              <div style="font-weight: 600; margin-bottom: 0.5rem;">Alpha Class - Module 3</div>
+              <div style="color: var(--text-secondary); font-size: 0.9rem;">
+                <i class="fas fa-calendar"></i> October 9, 2023 • 09:00 - 12:00
+              </div>
+            </div>
+            <div style="padding: 1rem; border-left: 4px solid #f093fb; margin-bottom: 1rem; background: rgba(240, 147, 251, 0.1); border-radius: 0 10px 10px 0;">
+              <div style="font-weight: 600; margin-bottom: 0.5rem;">Bravo Class - Module 1</div>
+              <div style="color: var(--text-secondary); font-size: 0.9rem;">
+                <i class="fas fa-calendar"></i> October 15, 2023 • 13:00 - 16:00
+              </div>
+            </div>
+            <div style="padding: 1rem; border-left: 4px solid #667eea; margin-bottom: 1rem; background: rgba(102, 126, 234, 0.1); border-radius: 0 10px 10px 0;">
+              <div style="font-weight: 600; margin-bottom: 0.5rem;">Charlie Class - Assessment</div>
+              <div style="color: var(--text-secondary); font-size: 0.9rem;">
+                <i class="fas fa-calendar"></i> October 18, 2023 • 14:00 - 17:00
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Instructor Chat Section -->
+      <section class="chat-section fade-in stagger-4">
+        <h3 style="color: var(--text-accent); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+          <i class="fas fa-comments"></i>
+          Instructor Chat Hub
+        </h3>
+        <div class="chatbox-messages" id="chatMessages">
+          <div class="chat-loading">Loading messages...</div>
+        </div>
+        <div class="chatbox-inputs">
+          <input type="text" id="chatInput" placeholder="Type your message to students and staff..." />
+          <input type="file" id="chatFile" name="file" style="display: none;" />
+          <button type="button" onclick="document.getElementById('chatFile').click()">
+            <i class="fas fa-paperclip"></i>
+          </button>
+          <button type="button" onclick="sendChatMessage()">
+            <i class="fas fa-paper-plane"></i> Send
+          </button>
+        </div>
+        <div id="uploadStatus" style="margin-top: 1rem; color: var(--text-secondary); font-size: 0.9rem;"></div>
+      </section>
+    </main>
+  </div>
+      
+      <script>
+        // Enhanced class events with more variety
+        const classEvents = [
+          {
+            id: 'CLS-01',
+            title: 'Alpha Class - Module 3',
+            start: '2024-01-15',
+            end: '2024-01-19',
+            color: '#667eea',
+            textColor: '#fff',
+            extendedProps: {
+              instructor: 'John Smith',
+              students: 26
+            }
+          },
+          {
+            id: 'CLS-02',
+            title: 'Bravo Class - Assessment',
+            start: '2024-01-22',
+            end: '2024-01-26',
+            color: '#f093fb',
+            textColor: '#fff',
+            extendedProps: {
+              instructor: 'Sarah Johnson',
+              students: 18
+            }
+          },
+          {
+            id: 'CLS-03',
+            title: 'Charlie Class - Practical',
+            start: '2024-01-29',
+            end: '2024-02-02',
+            color: '#4facfe',
+            textColor: '#fff',
+            extendedProps: {
+              instructor: 'Mike Davis',
+              students: 24
+            }
+          },
+          {
+            id: 'EXAM-01',
+            title: 'Final Examinations',
+            start: '2024-02-05',
+            color: '#ff6b6b',
+            textColor: '#fff'
+          }
+        ];
+        
+        document.addEventListener('DOMContentLoaded', function() {
+          // Initialize animations
+          initializeAnimations();
+          
+          // Initialize calendar
+          var calendarEl = document.getElementById('calendar');
+          var calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            height: 'auto',
+            selectable: true,
+            headerToolbar: {
+              left: 'prev,next today',
+              center: 'title',
+              right: 'dayGridMonth,timeGridWeek,listWeek'
+            },
+            select: function(info) {
+              const eventTitle = prompt('📅 Add new event:');
+              if (eventTitle) {
+                const newEvent = {
+                  title: eventTitle,
+                  start: info.startStr,
+                  end: info.endStr,
+                  allDay: true,
+                  color: '#8bc34a',
+                  textColor: '#fff'
+                };
+                calendar.addEvent(newEvent);
+                showNotification('✅ Event added successfully!', 'success');
+                // TODO: Save to backend
+              }
+            },
+            events: classEvents,
+            eventDidMount: function(info) {
+              // Enhanced event styling
+              info.el.style.borderRadius = '8px';
+              info.el.style.border = 'none';
+              info.el.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+              info.el.style.transition = 'all 0.3s ease';
+              
+              // Add hover effects
+              info.el.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.02)';
+                this.style.boxShadow = '0 8px 25px rgba(0,0,0,0.25)';
+              });
+              
+              info.el.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+                this.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+              });
+            },
+            eventClick: function(info) {
+              const event = info.event;
+              const props = event.extendedProps;
+              let details = `📚 ${event.title}\n📅 ${event.start.toDateString()}`;
+              if (props.instructor) details += `\n👨‍🏫 Instructor: ${props.instructor}`;
+              if (props.students) details += `\n👥 Students: ${props.students}`;
+              
+              alert(details);
+            }
+          });
+          calendar.render();
+          
+          // Initialize progress bars animation
+          setTimeout(() => {
+            document.querySelectorAll('.progress-fill').forEach(bar => {
+              const width = bar.style.width;
+              bar.style.width = '0%';
+              setTimeout(() => {
+                bar.style.width = width;
+              }, 500);
+            });
+          }, 1000);
+        });
+
+        // Animation initialization
+        function initializeAnimations() {
+          const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+          };
+
+          const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+              if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+              }
+            });
+          }, observerOptions);
+
+          document.querySelectorAll('.fade-in').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+            observer.observe(el);
+          });
+        }
+
+        // Notification system
+        function showNotification(message, type = 'info') {
+          const notification = document.createElement('div');
+          notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            background: ${type === 'success' ? 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'};
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            z-index: 10000;
+            font-weight: 500;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+          `;
+          notification.textContent = message;
+          document.body.appendChild(notification);
+          
+          setTimeout(() => notification.style.transform = 'translateX(0)', 100);
+          setTimeout(() => {
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => document.body.removeChild(notification), 300);
+          }, 3000);
+        }
+
+        // Enhanced user experience features
+        document.addEventListener('DOMContentLoaded', function() {
+          // Add ripple effect to clickable elements
+          document.querySelectorAll('.tool-card, .action-card').forEach(card => {
+            card.addEventListener('click', function(e) {
+              const ripple = document.createElement('span');
+              const rect = this.getBoundingClientRect();
+              const size = Math.max(rect.width, rect.height);
+              const x = e.clientX - rect.left - size / 2;
+              const y = e.clientY - rect.top - size / 2;
+              
+              ripple.style.cssText = `
+                position: absolute;
+                width: ${size}px;
+                height: ${size}px;
+                left: ${x}px;
+                top: ${y}px;
+                background: rgba(255,255,255,0.3);
+                border-radius: 50%;
+                transform: scale(0);
+                animation: ripple 0.6s ease-out;
+                pointer-events: none;
+              `;
+              
+              this.style.position = 'relative';
+              this.style.overflow = 'hidden';
+              this.appendChild(ripple);
+              
+              setTimeout(() => ripple.remove(), 600);
+            });
+          });
+          
+          // Add CSS for ripple animation
+          const style = document.createElement('style');
+          style.textContent = `
+            @keyframes ripple {
+              to {
+                transform: scale(2);
+                opacity: 0;
+              }
+            }
+          `;
+          document.head.appendChild(style);
+        });
+
+
+      </script>
+    </main>
+  </div>
+
+  <script>
+    // Logout function
+    function logout() {
+      // Clear all authentication data
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      localStorage.removeItem('userName');
+      localStorage.removeItem('classId');
+      
+      // Redirect to login page
+      window.location.replace('/login.html');
+    }
+
+    // Display user information and initialize dashboard
+    document.addEventListener('DOMContentLoaded', function() {
+      const userName = localStorage.getItem('userName') || 'Instructor';
+      const role = localStorage.getItem('role') || 'admin';
+      
+      // Update user info in header
+      const userInfo = document.querySelector('.user-info div:last-child div:first-child');
+      if (userInfo) {
+        userInfo.textContent = userName;
+      }
+      
+      // Show welcome notification
+      setTimeout(() => {
+        showNotification(`🎉 Welcome back, ${userName}!`, 'success');
+      }, 1000);
+      
+      console.log('Logged in as:', userName, '(' + role + ')');
+    });
+  </script>
+</body>
+</html>

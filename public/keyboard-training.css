@@ -1,0 +1,219 @@
+/* Keyboard Input Training Styles */
+#letter-container {
+  margin: 2rem 0;
+  padding: 1rem;
+  background: #2c3e50;
+  border-radius: 8px;
+  font-size: 1.2rem;
+  line-height: 1.5;
+  overflow-wrap: break-word;
+  color: #ecf0f1;
+  border: 1px solid #3498db;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.letter {
+  display: inline-block;
+  padding: 0 2px;
+}
+
+.letter.correct {
+  color: #2ecc71;
+}
+
+.letter.incorrect {
+  color: #e74c3c;
+  text-decoration: underline;
+}
+
+#typing-input {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem;
+  background: #34495e;
+  border: 1px solid #3498db;
+  border-radius: 8px;
+  color: #ecf0f1;
+  margin-top: 1rem;
+}
+
+.progress-bar {
+  height: 8px;
+  background: #34495e;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.progress-fill {
+  height: 100%;
+  background: #3498db;
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+.stats-bar {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  color: #bdc3c7;
+}
+
+/* PowerPoint Viewer Styles */
+#screen-slide-viewer {
+  background: #202a36;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: 0;
+  max-width: 100%;
+}
+
+.slide-top-bar {
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem;
+  background: #1a2533;
+  align-items: center;
+}
+
+.slide-viewer-content {
+  flex: 1;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #0f1620;
+  overflow: auto;
+}
+
+#slide {
+  max-width: 100%;
+  max-height: 80vh;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+#slide-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #3498db;
+}
+
+.nav-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(52, 152, 219, 0.7);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  z-index: 10;
+}
+
+#prev {
+  left: 20px;
+}
+
+#next {
+  right: 20px;
+}
+
+#notes {
+  padding: 1rem;
+  background: #1a2533;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+#notes-header {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  color: #3498db;
+}
+
+/* Module and Practice Styles */
+.module-item, .practice-item, .powerpoint-item {
+  background: #2c3e50;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
+  border-left: 4px solid #3498db;
+  cursor: pointer;
+}
+
+.module-item:hover, .practice-item:hover, .powerpoint-item:hover {
+  background: #34495e;
+  transform: translateX(5px);
+}
+
+/* Enhanced Module Group Styles */
+.module-group {
+  border-radius: 1rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.module-group button[data-module] {
+  border-radius: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.module-group button[data-module]:hover {
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.6);
+}
+
+.module-group button[data-practice] {
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+}
+
+.module-group button[data-practice]:hover {
+  border-left-color: #3b82f6;
+  background-color: rgba(30, 64, 175, 0.3);
+}
+
+.module-group button[data-practice].text-green-400 {
+  border-left-color: #4ade80;
+}
+
+.checkmark {
+  color: #4ade80;
+  font-weight: bold;
+}
+
+.result-bubble {
+  background: #2c3e50;
+  padding: 2rem;
+  border-radius: 12px;
+  max-width: 500px;
+  margin: 2rem auto;
+  text-align: center;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.result-star {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.gold-star {
+  color: gold;
+}
+
+.silver-star {
+  color: silver;
+}
+
+.bronze-star {
+  color: #cd7f32;
+}

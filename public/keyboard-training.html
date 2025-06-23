@@ -1,0 +1,1611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SMX KITS - Keyboard Input Training</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="typing-progress.js"></script>
+  <style>
+    :root {
+      --primary-gradient: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+      --secondary-gradient: linear-gradient(135deg, #ff8c42 0%, #ff6b35 100%);
+      --accent-gradient: linear-gradient(135deg, #ffa726 0%, #ff9800 100%);
+      --dark-gradient: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 100%);
+      --card-gradient: linear-gradient(145deg, #2d1810 0%, #1a0f08 100%);
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --text-primary: #ffffff;
+      --text-secondary: #b8c5d6;
+      --text-accent: #ffa726;
+      --shadow-primary: 0 20px 40px rgba(0, 0, 0, 0.3);
+      --shadow-hover: 0 30px 60px rgba(0, 0, 0, 0.4);
+      --border-radius: 20px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--dark-gradient);
+      color: var(--text-primary);
+      overflow-x: hidden;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* Animated background particles */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(255, 107, 53, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(247, 147, 30, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(255, 140, 66, 0.1) 0%, transparent 50%);
+      z-index: -1;
+      animation: float 20s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      33% { transform: translateY(-20px) rotate(1deg); }
+      66% { transform: translateY(10px) rotate(-1deg); }
+    }
+
+    .admin-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar Redesign */
+    .admin-sidebar {
+      width: 280px;
+      background: rgba(15, 20, 25, 0.95);
+      backdrop-filter: blur(20px);
+      border-right: 1px solid var(--glass-border);
+      display: flex;
+      flex-direction: column;
+      padding: 2rem 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .admin-sidebar::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, rgba(255, 107, 53, 0.1) 0%, transparent 100%);
+      z-index: -1;
+    }
+
+    .admin-logo {
+      width: 200px;
+      margin: 0 auto 3rem;
+      filter: drop-shadow(0 10px 30px rgba(255, 107, 53, 0.3));
+      transition: var(--transition);
+    }
+
+    .admin-logo:hover {
+      transform: scale(1.05);
+      filter: drop-shadow(0 15px 40px rgba(255, 107, 53, 0.5));
+    }
+
+    .nav-item {
+      margin: 0.5rem 1.5rem;
+      border-radius: 15px;
+      overflow: hidden;
+      transition: var(--transition);
+    }
+
+    .nav-item:hover {
+      transform: translateX(5px);
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: var(--transition);
+      background: var(--glass-bg);
+      border: 1px solid transparent;
+    }
+
+    .nav-link:hover, .nav-link.active {
+      color: var(--text-primary);
+      background: var(--primary-gradient);
+      border-color: var(--text-accent);
+      box-shadow: 0 8px 25px rgba(255, 107, 53, 0.3);
+    }
+
+    .nav-link i {
+      margin-right: 1rem;
+      font-size: 1.2rem;
+      width: 20px;
+      text-align: center;
+    }
+
+    /* Main Content */
+    .admin-main {
+      flex: 1;
+      padding: 2rem;
+      overflow-y: auto;
+    }
+
+    .page-header {
+      margin-bottom: 3rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      text-align: left;
+    }
+
+    .page-header > div:first-child {
+      text-align: center;
+      flex: 1;
+    }
+
+    .page-title {
+      font-size: 3rem;
+      font-weight: 800;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1rem;
+      text-shadow: 0 4px 20px rgba(255, 107, 53, 0.3);
+    }
+
+    .page-subtitle {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      font-weight: 400;
+    }
+
+    /* Progress Section */
+    .progress-section {
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      margin-bottom: 3rem;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+    }
+
+    .section-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    .progress-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+    }
+
+    .progress-item {
+      background: var(--glass-bg);
+      border-radius: 15px;
+      padding: 1.5rem;
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(10px);
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 12px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      overflow: hidden;
+      margin: 1rem 0;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--primary-gradient);
+      border-radius: 6px;
+      transition: width 0.5s ease;
+    }
+
+    /* Modules Section */
+    .modules-section {
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+    }
+
+    .module-item {
+      background: var(--glass-bg);
+      border-radius: 15px;
+      margin-bottom: 1.5rem;
+      border: 1px solid var(--glass-border);
+      overflow: hidden;
+      transition: var(--transition);
+    }
+
+    .module-item:hover {
+      border-color: var(--text-accent);
+      box-shadow: 0 8px 25px rgba(255, 107, 53, 0.2);
+    }
+
+    .module-header {
+      padding: 1.5rem;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+    }
+
+    .module-header:hover {
+      background: rgba(255, 107, 53, 0.1);
+    }
+
+    .module-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .module-description {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin-bottom: 1rem;
+    }
+
+    .module-progress {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    .module-arrow {
+      position: absolute;
+      right: 1.5rem;
+      top: 1.5rem;
+      color: var(--text-accent);
+      font-size: 1.5rem;
+      transition: var(--transition);
+    }
+
+    .module-practices {
+      display: none;
+      padding: 0 1.5rem 1.5rem;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .practice-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      margin-bottom: 0.8rem;
+      background: var(--card-gradient);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: var(--transition);
+      border: 1px solid var(--glass-border);
+    }
+
+    .practice-item:hover {
+      border-color: var(--text-accent);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(255, 107, 53, 0.3);
+    }
+
+    .practice-info {
+      flex: 1;
+    }
+
+    .practice-title {
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .practice-preview {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .practice-results {
+      text-align: right;
+      min-width: 120px;
+    }
+
+    /* Typing Interface Modal */
+    .typing-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .typing-container {
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      padding: 3rem;
+      max-width: 800px;
+      width: 90%;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+    }
+
+    .typing-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .typing-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .typing-stats {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-bottom: 2rem;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    .typing-text {
+      background: var(--glass-bg);
+      border-radius: 10px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      font-size: 1.1rem;
+      line-height: 1.8;
+      border: 1px solid var(--glass-border);
+      font-family: 'Courier New', monospace;
+    }
+
+    .typing-input {
+      width: 100%;
+      background: var(--glass-bg);
+      border: 2px solid var(--glass-border);
+      border-radius: 10px;
+      padding: 1rem;
+      font-size: 1.1rem;
+      color: var(--text-primary);
+      font-family: 'Courier New', monospace;
+      resize: none;
+      outline: none;
+      transition: var(--transition);
+    }
+
+    .typing-input:focus {
+      border-color: var(--text-accent);
+      box-shadow: 0 0 20px rgba(255, 167, 38, 0.3);
+    }
+
+    .typing-controls {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .btn {
+      padding: 0.8rem 2rem;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      font-size: 1rem;
+    }
+
+    .btn-primary {
+      background: var(--primary-gradient);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(255, 107, 53, 0.4);
+    }
+
+    .btn-secondary {
+      background: var(--glass-bg);
+      color: var(--text-primary);
+      border: 1px solid var(--glass-border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--glass-border);
+    }
+
+    /* Results Modal */
+    .results-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1001;
+    }
+
+    .results-container {
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      padding: 3rem;
+      max-width: 500px;
+      width: 90%;
+      text-align: center;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+    }
+
+    .results-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 2rem;
+    }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .result-item {
+      background: var(--glass-bg);
+      border-radius: 10px;
+      padding: 1.5rem;
+      border: 1px solid var(--glass-border);
+    }
+
+    .result-label {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .result-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text-accent);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Admin Controls */
+    .admin-controls {
+      margin-top: 2rem;
+      padding: 1.5rem;
+      background: var(--glass-bg);
+      border-radius: 15px;
+      border: 1px solid var(--glass-border);
+    }
+
+    .admin-controls h3 {
+      color: var(--text-accent);
+      margin-bottom: 1rem;
+    }
+
+    .admin-controls .btn {
+      margin-right: 1rem;
+      margin-bottom: 0.5rem;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <img src="smx-logo.png" alt="SMX KITS Logo" class="admin-logo">
+      
+      <nav>
+        <div class="nav-item">
+          <a href="dashboard.html" class="nav-link">
+            <i class="fas fa-tachometer-alt"></i>
+            Dashboard
+          </a>
+        </div>
+        <div class="nav-item">
+          <a href="keyboard-training.html" class="nav-link active">
+            <i class="fas fa-keyboard"></i>
+            Keyboard Training
+          </a>
+        </div>
+        <div class="nav-item">
+          <a href="edit-typing-tests.html" class="nav-link">
+            <i class="fas fa-edit"></i>
+            Edit Tests
+          </a>
+        </div>
+        <div class="nav-item">
+          <a href="OpsLog.html" class="nav-link">
+            <i class="fas fa-clipboard-list"></i>
+            Ops Log
+          </a>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+      <!-- Page Header -->
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Keyboard Training</h1>
+          <p class="page-subtitle">Welcome back, <span id="studentName">Student</span>! Continue your typing journey.</p>
+        </div>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+          <button onclick="window.forceReloadTypingData()" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+            <i class="fas fa-sync-alt" style="margin-right: 0.5rem;"></i>Refresh Content
+          </button>
+          <button onclick="window.compareTypingData()" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+            <i class="fas fa-search" style="margin-right: 0.5rem;"></i>Debug
+          </button>
+        </div>
+      </div>
+
+      <!-- Progress Section -->
+      <div class="progress-section">
+        <h2 class="section-title">Your Progress</h2>
+        <div class="progress-grid">
+          <div class="progress-item">
+            <h3 style="font-weight: 600; margin-bottom: 1rem; color: var(--text-primary);">Overall Progress</h3>
+            <div class="progress-bar">
+              <div id="overall-progress-fill" class="progress-fill" style="width: 0%;"></div>
+            </div>
+            <div id="overall-progress-text" style="color: var(--text-secondary); font-size: 0.9rem;">0 of 0 practices completed</div>
+          </div>
+          
+          <div class="progress-item">
+            <h3 style="font-weight: 600; margin-bottom: 1rem; color: var(--text-primary);">Your Metrics</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+              <div style="background: rgba(255, 255, 255, 0.05); border-radius: 10px; padding: 1rem; text-align: center;">
+                <div style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 0.5rem;">Last WPM</div>
+                <div style="font-size: 1.8rem; font-weight: bold; color: var(--text-accent);"><span id="last-wpm">0</span></div>
+              </div>
+              <div style="background: rgba(255, 255, 255, 0.05); border-radius: 10px; padding: 1rem; text-align: center;">
+                <div style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 0.5rem;">Avg WPM</div>
+                <div style="font-size: 1.8rem; font-weight: bold; color: var(--text-accent);"><span id="avg-wpm">0</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Modules Section -->
+      <div class="modules-section">
+        <h2 class="section-title">Training Modules</h2>
+        <div id="modules-container">
+          <div style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+            <div>Loading modules...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Admin Controls (hidden by default) -->
+      <div id="admin-controls" class="admin-controls hidden">
+        <h3>Admin Controls</h3>
+        <button type="button" class="btn btn-primary" onclick="window.open('edit-typing-tests.html', '_blank')">Edit Typing Tests</button>
+        <button type="button" class="btn btn-secondary" onclick="refreshTypingData()">Refresh Data</button>
+        <button type="button" class="btn btn-secondary" onclick="clearAllProgress()">Clear All Progress</button>
+        <button type="button" class="btn btn-secondary" onclick="exportProgress()">Export Progress</button>
+        <button type="button" class="btn btn-secondary" onclick="resetToDefaults()">Reset to Defaults</button>
+      </div>
+    </main>
+  </div>
+
+  <!-- Typing Interface Modal -->
+  <div id="typing-modal" class="typing-modal">
+    <div class="typing-container">
+      <div class="typing-header">
+        <h2 id="typing-title" class="typing-title">Module 1 - Practice 1</h2>
+        <div class="typing-stats">
+          <span>Time: <span id="typing-time">0:00</span></span>
+          <span>WPM: <span id="typing-wpm">0</span></span>
+          <span>Accuracy: <span id="typing-accuracy">100%</span></span>
+        </div>
+      </div>
+      
+      <div id="typing-text" class="typing-text">
+        <!-- Practice text will be loaded here -->
+      </div>
+      
+      <textarea id="typing-input" class="typing-input" placeholder="Start typing here..." rows="4"></textarea>
+      
+      <div class="typing-controls">
+        <button type="button" id="typing-restart" class="btn btn-secondary">Restart</button>
+        <button type="button" id="typing-close" class="btn btn-secondary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results Modal -->
+  <div id="results-modal" class="results-modal">
+    <div class="results-container">
+      <h2 class="results-title">Practice Complete!</h2>
+      
+      <div class="results-grid">
+        <div class="result-item">
+          <div class="result-label">WPM</div>
+          <div id="result-wpm" class="result-value">0</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Accuracy</div>
+          <div id="result-accuracy" class="result-value">0%</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Time</div>
+          <div id="result-time" class="result-value">0:00</div>
+        </div>
+      </div>
+      
+      <div class="typing-controls">
+        <button type="button" id="results-retry" class="btn btn-primary">Try Again</button>
+        <button type="button" id="results-close" class="btn btn-secondary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * KEYBOARD TRAINING SYSTEM
+     * Main application for typing practice with module management
+     */
+
+    // Global state variables
+    let typingModules = [];
+    let currentModule = 0;
+    let currentPractice = 0;
+    let typingStartTime = null;
+    let typingTimer = null;
+    let isTypingActive = false;
+
+    /**
+     * Initialize the application when DOM is ready
+     * Sets up all event listeners and loads initial data
+     */
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('Keyboard Training System - Initializing...');
+      
+      // Load user info
+      loadUserInfo();
+      
+      // Initialize typing modules with defaults if needed
+      initializeTypingModules();
+      
+      // Render the module list
+      renderModules();
+      
+      // Update progress display
+      updateProgressDisplay();
+      
+      // Setup event listeners
+      setupEventListeners();
+      
+      // Show admin controls if user is admin
+      checkAdminAccess();
+      
+      console.log('Keyboard Training System - Ready!');
+    });
+
+    /**
+     * Load user information from localStorage
+     * Updates the welcome message with the current user's name
+     */
+    function loadUserInfo() {
+      const userName = localStorage.getItem('userName') || 'Student';
+      document.getElementById('studentName').textContent = userName;
+      
+      // Load typing progress data if available
+      if (typeof loadTypingData === 'function') {
+        loadTypingData();
+      }
+    }
+
+    // Global variables for module data
+    let moduleNames = [];
+    
+    /**
+     * Initialize typing modules with default content if none exist
+     * Creates a structured set of 5 modules with 20 practices each
+     */
+    function initializeTypingModules() {
+      const existingData = localStorage.getItem('smx_typing_tests');
+      
+      if (!existingData || existingData === '[]') {
+        console.log('Creating default typing modules...');
+        
+        const defaultModuleNames = [
+          'Module 1: Basic Typing',
+          'Module 2: Numbers and Symbols',
+          'Module 3: Military Terminology',
+          'Module 4: POL Basic Descriptors',
+          'Module 5: POL SITREP Format'
+        ];
+        
+        const defaultModules = [
+          createModule('Module 1: Basic Typing', [
+            'The quick brown fox jumps over the lazy dog. This sentence contains every letter of the alphabet.',
+            'Practice makes perfect. Keep typing to improve your speed and accuracy with consistent daily training.',
+            'Touch typing is a skill that will serve you well throughout your career and personal computing tasks.'
+          ]),
+          createModule('Module 2: Numbers and Symbols', [
+            '1234567890 !@#$%^&*() The numbers and symbols are important for data entry and programming tasks.',
+            'Email addresses like user@example.com require symbol typing skills for professional communication.',
+            'Special characters: ~`!@#$%^&*()_+-={}[]|\\:";\'<>?,./ are used in coding and technical writing.'
+          ]),
+          createModule('Module 3: Military Terminology', [
+            'Military ranks: Private, Corporal, Sergeant, Lieutenant, Captain, Major, Colonel, General.',
+            'Military time: 0600 hours, 1200 hours, 1800 hours, 2400 hours for precise time coordination.',
+            'NATO phonetic alphabet: Alpha, Bravo, Charlie, Delta, Echo, Foxtrot, Golf, Hotel, India, Juliet.'
+          ]),
+          createModule('Module 4: POL Basic Descriptors', [
+            'One adult male in dark traditional wear. Two adult females in light clothing observed at location.',
+            'Personnel count: Three adult males, one adult female, two children observed entering the compound.',
+            'Description: Individual wearing dark jacket, light pants, carrying backpack, proceeding north.'
+          ]),
+          createModule('Module 5: POL SITREP Format', [
+            'SITREP: At 0630Z, one adult male departed E gate on red motorcycle, rode S out of FOV 0635Z. SLANT 1/0/0',
+            'SITREP: At 0745Z, white sedan entered compound through W gate, parked E side. SLANT 1/0/0',
+            'SITREP: At 0900Z, two adult males on foot entered compound, proceeded to building A. SLANT 2/0/0'
+          ])
+        ];
+        
+        const defaultData = {
+          modules: defaultModules,
+          moduleNames: defaultModuleNames
+        };
+        
+        localStorage.setItem('smx_typing_tests', JSON.stringify(defaultData));
+        typingModules = defaultModules;
+        moduleNames = defaultModuleNames;
+      } else {
+        const data = JSON.parse(existingData);
+        
+        // Check if it's the new format with module names
+        if (data.modules && data.moduleNames) {
+          typingModules = data.modules;
+          moduleNames = data.moduleNames;
+        } else {
+          // Convert old format to new format
+          typingModules = data;
+          moduleNames = [
+            'Module 1: Basic Typing',
+            'Module 2: Numbers and Symbols',
+            'Module 3: Military Terminology',
+            'Module 4: POL Basic Descriptors',
+            'Module 5: POL SITREP Format'
+          ];
+          
+          // Save in new format
+          const newData = {
+            modules: typingModules,
+            moduleNames: moduleNames
+          };
+          localStorage.setItem('smx_typing_tests', JSON.stringify(newData));
+        }
+      }
+      
+      console.log(`Loaded ${typingModules.length} typing modules`);
+    }
+
+    /**
+     * Create a module with the specified name and practices
+     * Fills remaining slots with placeholder text
+     */
+    function createModule(name, practices) {
+      const module = [];
+      const maxPractices = 20;
+      
+      for (let i = 0; i < maxPractices; i++) {
+        if (i < practices.length) {
+          module.push(practices[i]);
+        } else {
+          module.push(`${name} Practice ${i + 1}: Enter typing text here.`);
+        }
+      }
+      
+      return module;
+    }
+
+    /**
+     * Render all modules in the modules container
+     * Creates accordion-style expandable modules with practice lists
+     */
+    function renderModules() {
+      const container = document.getElementById('modules-container');
+      container.innerHTML = '';
+      
+      typingModules.forEach((module, moduleIndex) => {
+        const moduleElement = createModuleElement(module, moduleIndex, moduleNames[moduleIndex]);
+        container.appendChild(moduleElement);
+      });
+    }
+
+    /**
+     * Create a single module element with header and practice list
+     * Includes progress tracking and click handlers
+     */
+    function createModuleElement(module, moduleIndex, moduleName) {
+      const moduleDiv = document.createElement('div');
+      moduleDiv.className = 'module-item';
+      
+      // Calculate module progress
+      const results = getUserResults();
+      let completedPractices = 0;
+      let totalPractices = 0;
+      
+      module.forEach((practice, practiceIndex) => {
+        if (practice && practice.trim() !== '') {
+          totalPractices++;
+          if (results[moduleIndex] && results[moduleIndex][practiceIndex] && results[moduleIndex][practiceIndex].completed) {
+            completedPractices++;
+          }
+        }
+      });
+      
+      const progressPercent = totalPractices > 0 ? Math.round((completedPractices / totalPractices) * 100) : 0;
+      
+      // Create module header
+      const header = document.createElement('div');
+      header.className = 'module-header';
+      header.innerHTML = `
+        <div class="module-title">${moduleName || `Module ${moduleIndex + 1}`}</div>
+        <div class="module-description">Practice typing with specialized content</div>
+        <div class="module-progress">
+          <span>${completedPractices} of ${totalPractices} practices completed</span>
+          <span style="color: var(--text-accent); font-weight: 600;">${progressPercent}%</span>
+        </div>
+        <div class="progress-bar" style="margin-top: 1rem;">
+          <div class="progress-fill" style="width: ${progressPercent}%;"></div>
+        </div>
+        <div class="module-arrow">▼</div>
+      `;
+      
+      // Create practices container
+      const practicesContainer = document.createElement('div');
+      practicesContainer.className = 'module-practices';
+      
+      module.forEach((practice, practiceIndex) => {
+        if (practice && practice.trim() !== '') {
+          const practiceElement = createPracticeElement(practice, moduleIndex, practiceIndex, results);
+          practicesContainer.appendChild(practiceElement);
+        }
+      });
+      
+      // Add click handler for accordion behavior
+      header.addEventListener('click', () => toggleModule(practicesContainer, header));
+      
+      moduleDiv.appendChild(header);
+      moduleDiv.appendChild(practicesContainer);
+      
+      return moduleDiv;
+    }
+
+    /**
+     * Create a single practice element with results display
+     * Shows completion status and performance metrics
+     */
+    function createPracticeElement(practice, moduleIndex, practiceIndex, results) {
+      const practiceDiv = document.createElement('div');
+      practiceDiv.className = 'practice-item';
+      
+      const previewText = practice.length > 60 ? practice.substring(0, 60) + '...' : practice;
+      const result = results[moduleIndex] && results[moduleIndex][practiceIndex];
+      
+      practiceDiv.innerHTML = `
+        <div class="practice-info">
+          <div class="practice-title">Practice ${practiceIndex + 1}</div>
+          <div class="practice-preview">${previewText}</div>
+        </div>
+        <div class="practice-results">
+          ${result ? 
+            `<div style="color: #22c55e; font-weight: bold;">WPM: ${result.wpm}</div>
+             <div style="color: #fbbf24;">Acc: ${result.accuracy}%</div>
+             <div style="color: var(--text-secondary); font-size: 0.8rem;">${result.time}s</div>` :
+            `<div style="color: var(--text-secondary); padding: 0.5rem; border: 1px dashed var(--glass-border); border-radius: 5px;">
+               Not completed
+             </div>`
+          }
+        </div>
+      `;
+      
+      // Add click handler to start typing test
+      practiceDiv.addEventListener('click', () => startTypingTest(moduleIndex, practiceIndex));
+      
+      return practiceDiv;
+    }
+
+    /**
+     * Toggle module expansion/collapse (accordion behavior)
+     * Animates the arrow and shows/hides practice list
+     */
+    function toggleModule(practicesContainer, header) {
+      const isExpanded = practicesContainer.style.display === 'block';
+      const arrow = header.querySelector('.module-arrow');
+      
+      if (isExpanded) {
+        practicesContainer.style.display = 'none';
+        arrow.style.transform = 'rotate(0deg)';
+      } else {
+        practicesContainer.style.display = 'block';
+        arrow.style.transform = 'rotate(180deg)';
+      }
+    }
+
+    /**
+     * Start a typing test for the specified module and practice
+     * Opens the typing interface modal with the practice text
+     */
+    function startTypingTest(moduleIndex, practiceIndex) {
+      if (!typingModules[moduleIndex] || !typingModules[moduleIndex][practiceIndex]) {
+        console.error('Practice not found:', moduleIndex, practiceIndex);
+        return;
+      }
+      
+      currentModule = moduleIndex;
+      currentPractice = practiceIndex;
+      
+      const practiceText = typingModules[moduleIndex][practiceIndex];
+      
+      // Update modal content
+      document.getElementById('typing-title').textContent = `Module ${moduleIndex + 1} - Practice ${practiceIndex + 1}`;
+      document.getElementById('typing-text').textContent = practiceText;
+      document.getElementById('typing-input').value = '';
+      
+      // Reset stats
+      resetTypingStats();
+      
+      // Show modal
+      document.getElementById('typing-modal').style.display = 'flex';
+      
+      // Focus on input
+      setTimeout(() => {
+        document.getElementById('typing-input').focus();
+      }, 100);
+      
+      console.log(`Started typing test: Module ${moduleIndex + 1}, Practice ${practiceIndex + 1}`);
+    }
+
+    /**
+     * Reset typing statistics and timer
+     * Prepares for a new typing session
+     */
+    function resetTypingStats() {
+      typingStartTime = null;
+      isTypingActive = false;
+      
+      if (typingTimer) {
+        clearInterval(typingTimer);
+        typingTimer = null;
+      }
+      
+      document.getElementById('typing-time').textContent = '0:00';
+      document.getElementById('typing-wpm').textContent = '0';
+      document.getElementById('typing-accuracy').textContent = '100%';
+    }
+
+    /**
+     * Start the typing timer and statistics tracking
+     * Called when user begins typing
+     */
+    function startTypingTimer() {
+      if (isTypingActive) return;
+      
+      isTypingActive = true;
+      typingStartTime = Date.now();
+      
+      typingTimer = setInterval(updateTypingStats, 100);
+    }
+
+    /**
+     * Update typing statistics in real-time
+     * Calculates WPM, accuracy, and elapsed time
+     */
+    function updateTypingStats() {
+      if (!isTypingActive || !typingStartTime) return;
+      
+      const elapsedTime = (Date.now() - typingStartTime) / 1000;
+      const minutes = elapsedTime / 60;
+      
+      const typedText = document.getElementById('typing-input').value;
+      const originalText = document.getElementById('typing-text').textContent;
+      
+      // Calculate WPM (words per minute)
+      const wordsTyped = typedText.length / 5; // Standard: 5 characters = 1 word
+      const wpm = minutes > 0 ? Math.round(wordsTyped / minutes) : 0;
+      
+      // Calculate accuracy
+      const accuracy = calculateAccuracy(typedText, originalText);
+      
+      // Update display
+      document.getElementById('typing-time').textContent = formatTime(elapsedTime);
+      document.getElementById('typing-wpm').textContent = wpm;
+      document.getElementById('typing-accuracy').textContent = accuracy + '%';
+      
+      // Check if typing is complete
+      if (typedText.length >= originalText.length) {
+        completeTypingTest();
+      }
+    }
+
+    /**
+     * Calculate typing accuracy percentage
+     * Compares typed text with original character by character
+     */
+    function calculateAccuracy(typed, original) {
+      if (typed.length === 0) return 100;
+      
+      let correct = 0;
+      const minLength = Math.min(typed.length, original.length);
+      
+      for (let i = 0; i < minLength; i++) {
+        if (typed[i] === original[i]) {
+          correct++;
+        }
+      }
+      
+      return Math.round((correct / typed.length) * 100);
+    }
+
+    /**
+     * Complete the typing test and show results
+     * Saves results to localStorage and displays performance metrics
+     */
+    function completeTypingTest() {
+      if (!isTypingActive) return;
+      
+      // Stop timer
+      isTypingActive = false;
+      if (typingTimer) {
+        clearInterval(typingTimer);
+        typingTimer = null;
+      }
+      
+      const elapsedTime = (Date.now() - typingStartTime) / 1000;
+      const typedText = document.getElementById('typing-input').value;
+      const originalText = document.getElementById('typing-text').textContent;
+      
+      // Calculate final stats
+      const wordsTyped = typedText.length / 5;
+      const minutes = elapsedTime / 60;
+      const wpm = minutes > 0 ? Math.round(wordsTyped / minutes) : 0;
+      const accuracy = calculateAccuracy(typedText, originalText);
+      
+      // Save results
+      saveTypingResult(currentModule, currentPractice, {
+        wpm: wpm,
+        accuracy: accuracy,
+        time: Math.round(elapsedTime),
+        completed: true,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Show results modal
+      showResults(wpm, accuracy, elapsedTime);
+      
+      console.log(`Typing test completed: WPM=${wpm}, Accuracy=${accuracy}%, Time=${elapsedTime}s`);
+    }
+
+    /**
+     * Show the results modal with performance metrics
+     * Displays WPM, accuracy, and time taken
+     */
+    function showResults(wpm, accuracy, time) {
+      document.getElementById('result-wpm').textContent = wpm;
+      document.getElementById('result-accuracy').textContent = accuracy + '%';
+      document.getElementById('result-time').textContent = formatTime(time);
+      
+      // Hide typing modal and show results modal
+      document.getElementById('typing-modal').style.display = 'none';
+      document.getElementById('results-modal').style.display = 'flex';
+    }
+
+    /**
+     * Save typing test result to localStorage
+     * Stores results under the current username
+     */
+    function saveTypingResult(moduleIndex, practiceIndex, result) {
+      const userName = localStorage.getItem('userName') || 'student';
+      const storageKey = 'smx_typing_results_' + userName;
+      
+      let results = JSON.parse(localStorage.getItem(storageKey) || '{}');
+      
+      if (!results[moduleIndex]) {
+        results[moduleIndex] = {};
+      }
+      
+      results[moduleIndex][practiceIndex] = result;
+      
+      localStorage.setItem(storageKey, JSON.stringify(results));
+      
+      // Update typing progress data for dashboard
+      if (typeof updateTypingProgress === 'function') {
+        updateTypingProgress(result.wpm, result.accuracy);
+      }
+    }
+
+    /**
+     * Get user's typing results from localStorage
+     * Returns results object organized by module and practice
+     */
+    function getUserResults() {
+      const userName = localStorage.getItem('userName') || 'student';
+      const storageKey = 'smx_typing_results_' + userName;
+      return JSON.parse(localStorage.getItem(storageKey) || '{}');
+    }
+
+    /**
+     * Update the progress display with current statistics
+     * Shows overall completion percentage and performance metrics
+     */
+    function updateProgressDisplay() {
+      const results = getUserResults();
+      let totalCompleted = 0;
+      let totalPractices = 0;
+      let totalWPM = 0;
+      let wpmCount = 0;
+      let lastWPM = 0;
+      
+      // Count completed practices and calculate averages
+      typingModules.forEach((module, moduleIndex) => {
+        module.forEach((practice, practiceIndex) => {
+          if (practice && practice.trim() !== '') {
+            totalPractices++;
+            
+            const result = results[moduleIndex] && results[moduleIndex][practiceIndex];
+            if (result && result.completed) {
+              totalCompleted++;
+              totalWPM += result.wpm || 0;
+              wpmCount++;
+              lastWPM = result.wpm || 0;
+            }
+          }
+        });
+      });
+      
+      // Update progress bar
+      const progressPercent = totalPractices > 0 ? Math.round((totalCompleted / totalPractices) * 100) : 0;
+      document.getElementById('overall-progress-fill').style.width = progressPercent + '%';
+      document.getElementById('overall-progress-text').textContent = 
+        `${totalCompleted} of ${totalPractices} practices completed`;
+      
+      // Update metrics
+      const avgWPM = wpmCount > 0 ? Math.round(totalWPM / wpmCount) : 0;
+      document.getElementById('last-wpm').textContent = lastWPM;
+      document.getElementById('avg-wpm').textContent = avgWPM;
+    }
+
+    /**
+     * Setup all event listeners for the application
+     * Handles modal controls, input events, and keyboard shortcuts
+     */
+    function setupEventListeners() {
+      // Typing input event listener
+      const typingInput = document.getElementById('typing-input');
+      typingInput.addEventListener('input', function() {
+        if (!isTypingActive && this.value.length > 0) {
+          startTypingTimer();
+        }
+      });
+      
+      // Typing modal controls
+      document.getElementById('typing-restart').addEventListener('click', function() {
+        document.getElementById('typing-input').value = '';
+        resetTypingStats();
+      });
+      
+      document.getElementById('typing-close').addEventListener('click', function() {
+        document.getElementById('typing-modal').style.display = 'none';
+        resetTypingStats();
+      });
+      
+      // Results modal controls
+      document.getElementById('results-retry').addEventListener('click', function() {
+        document.getElementById('results-modal').style.display = 'none';
+        startTypingTest(currentModule, currentPractice);
+      });
+      
+      document.getElementById('results-close').addEventListener('click', function() {
+        document.getElementById('results-modal').style.display = 'none';
+        renderModules(); // Refresh to show updated results
+        updateProgressDisplay();
+      });
+      
+      // Keyboard shortcuts
+      document.addEventListener('keydown', function(e) {
+        // Escape key closes modals
+        if (e.key === 'Escape') {
+          if (document.getElementById('typing-modal').style.display === 'flex') {
+            document.getElementById('typing-modal').style.display = 'none';
+            resetTypingStats();
+          }
+          if (document.getElementById('results-modal').style.display === 'flex') {
+            document.getElementById('results-modal').style.display = 'none';
+          }
+        }
+      });
+    }
+
+    /**
+     * Check if current user has admin access
+     * Shows admin controls if user role is 'admin'
+     */
+    function checkAdminAccess() {
+      const userRole = localStorage.getItem('role');
+      if (userRole === 'admin') {
+        document.getElementById('admin-controls').classList.remove('hidden');
+      }
+    }
+
+    /**
+     * Format time in seconds to MM:SS format
+     * Used for displaying elapsed time and results
+     */
+    function formatTime(seconds) {
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = Math.floor(seconds % 60);
+      return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+
+    /**
+     * ADMIN FUNCTIONS
+     * Functions for administrative tasks and data management
+     */
+
+    /**
+     * Clear all user progress data
+     * Removes all typing results for the current user
+     */
+    function clearAllProgress() {
+      if (confirm('Are you sure you want to clear all progress? This cannot be undone.')) {
+        const userName = localStorage.getItem('userName') || 'student';
+        const storageKey = 'smx_typing_results_' + userName;
+        localStorage.removeItem(storageKey);
+        
+        renderModules();
+        updateProgressDisplay();
+        
+        alert('All progress has been cleared.');
+      }
+    }
+
+    /**
+     * Export progress data as JSON
+     * Downloads user's typing results as a file
+     */
+    function exportProgress() {
+      const userName = localStorage.getItem('userName') || 'student';
+      const results = getUserResults();
+      
+      const dataStr = JSON.stringify(results, null, 2);
+      const dataBlob = new Blob([dataStr], {type: 'application/json'});
+      
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(dataBlob);
+      link.download = `typing-progress-${userName}-${new Date().toISOString().split('T')[0]}.json`;
+      link.click();
+    }
+
+    /**
+     * Reset typing modules to default content
+     * Restores original practice texts
+     */
+    function resetToDefaults() {
+      if (confirm('Are you sure you want to reset all modules to default content? This will overwrite any custom practices.')) {
+        localStorage.removeItem('smx_typing_tests');
+        initializeTypingModules();
+        renderModules();
+        
+        alert('Modules have been reset to default content.');
+      }
+    }
+
+    /**
+     * Refresh typing data from localStorage
+     * Manually reloads the typing modules and updates the display
+     */
+    function refreshTypingData() {
+      console.log('Manually refreshing typing data...');
+      const existingData = localStorage.getItem('smx_typing_tests');
+      
+      if (existingData) {
+        const data = JSON.parse(existingData);
+        
+        // Handle new format with module names
+        if (data.modules && data.moduleNames) {
+          typingModules = data.modules;
+          moduleNames = data.moduleNames;
+          console.log('Loaded', data.modules.length, 'modules with names');
+        } else {
+          // Fallback for old format
+          typingModules = data;
+          console.log('Loaded', data.length, 'modules (old format)');
+        }
+        
+        renderModules();
+        updateProgressDisplay();
+        
+        alert('Typing data refreshed successfully!');
+      } else {
+        alert('No typing data found in localStorage. Initializing defaults...');
+        initializeTypingModules();
+        renderModules();
+        updateProgressDisplay();
+      }
+    }
+
+    // Function to reload typing data from localStorage
+    function reloadTypingData() {
+      console.log('=== Reloading typing data from localStorage ===');
+      const rawData = localStorage.getItem('smx_typing_tests');
+      console.log('Raw localStorage data:', rawData);
+      
+      if (!rawData) {
+        console.log('No data found in localStorage, initializing defaults...');
+        initializeTypingModules();
+        return;
+      }
+      
+      let data;
+      try {
+        data = JSON.parse(rawData);
+        console.log('Parsed data:', data);
+      } catch (error) {
+        console.error('Error parsing localStorage data:', error);
+        console.log('Initializing defaults due to parse error...');
+        initializeTypingModules();
+        return;
+      }
+      
+      // Handle new format with module names
+      if (data.modules && data.moduleNames) {
+        console.log('Using new format with module names');
+        typingModules = data.modules;
+        moduleNames = data.moduleNames;
+        console.log('Loaded modules:', typingModules.length);
+        console.log('Loaded module names:', moduleNames);
+      } else if (data.length) {
+        // Fallback for old format (array)
+        console.log('Converting from old format (array)');
+        typingModules = data;
+        moduleNames = [
+          'Module 1: Basic Typing',
+          'Module 2: Numbers and Symbols',
+          'Module 3: Military Terminology',
+          'Module 4: POL Basic Descriptors',
+          'Module 5: POL SITREP Format'
+        ];
+      } else {
+        console.log('No valid data structure found, initializing defaults...');
+        initializeTypingModules();
+        return;
+      }
+      
+      console.log('Rendering modules...');
+      renderModules();
+      updateProgressDisplay();
+      console.log('=== Typing data reloaded successfully ===');
+    }
+
+    // Listen for storage changes from other tabs (like edit-typing-tests.html)
+    window.addEventListener('storage', function(e) {
+      console.log('Storage event detected:', e.key, e.newValue);
+      if (e.key === 'smx_typing_tests' || e.key === 'smx_typing_tests_update_trigger') {
+        console.log('Typing tests updated from another tab, refreshing...');
+        reloadTypingData();
+        showSyncIndicator('✓ Content updated from another tab');
+      }
+    });
+    
+    // Listen for custom event from same tab (edit-typing-tests.html)
+    window.addEventListener('typingTestsUpdated', function(e) {
+      console.log('Custom typingTestsUpdated event received:', e.detail);
+      const data = e.detail.data;
+      
+      // Handle new format with module names
+      if (data.modules && data.moduleNames) {
+        console.log('Using data from event (new format)');
+        typingModules = data.modules;
+        moduleNames = data.moduleNames;
+      } else {
+        console.log('Using data from event (old format)');
+        // Fallback for old format
+        typingModules = data;
+      }
+      
+      console.log('Rendering modules from event data...');
+      renderModules();
+      updateProgressDisplay();
+      console.log('Modules updated from custom event');
+      
+      // Show sync indicator
+      showSyncIndicator('✓ Content updated from edit page');
+    });
+
+    // Listen for BroadcastChannel messages (modern browsers)
+    if (typeof BroadcastChannel !== 'undefined') {
+      const channel = new BroadcastChannel('smx_typing_updates');
+      channel.addEventListener('message', function(e) {
+        console.log('BroadcastChannel message received:', e.data);
+        if (e.data.type === 'typing_tests_updated') {
+          console.log('Typing tests updated via BroadcastChannel, refreshing...');
+          reloadTypingData();
+          showSyncIndicator('✓ Content updated via BroadcastChannel');
+        }
+      });
+      console.log('BroadcastChannel listener set up');
+    } else {
+      console.log('BroadcastChannel not supported in this browser');
+    }
+
+    // Polling fallback for older browsers or edge cases
+    let lastUpdateTimestamp = localStorage.getItem('smx_typing_tests_timestamp') || '0';
+    setInterval(function() {
+      const currentTimestamp = localStorage.getItem('smx_typing_tests_timestamp') || '0';
+      if (currentTimestamp !== lastUpdateTimestamp) {
+        console.log('Typing tests updated detected via polling, refreshing...');
+        lastUpdateTimestamp = currentTimestamp;
+        reloadTypingData();
+        showSyncIndicator('✓ Content updated (polling)');
+      }
+    }, 1000); // Check every second
+    
+    // Test function to check current typing data
+    window.checkTypingData = function() {
+      console.log('=== Current Typing Data ===');
+      console.log('typingModules:', typingModules);
+      console.log('moduleNames:', moduleNames);
+      console.log('localStorage data:', JSON.parse(localStorage.getItem('smx_typing_tests') || '{}'));
+      console.log('Last update timestamp:', localStorage.getItem('smx_typing_tests_timestamp'));
+    };
+
+    // Force reload function for testing
+    window.forceReloadTypingData = function() {
+      console.log('=== Force Reloading Typing Data ===');
+      reloadTypingData();
+    };
+
+    // Test function to compare current display with localStorage
+    window.compareTypingData = function() {
+      console.log('=== Comparing Current Display vs localStorage ===');
+      const storedData = JSON.parse(localStorage.getItem('smx_typing_tests') || '{}');
+      
+      if (storedData.modules && typingModules) {
+        let differences = [];
+        for (let m = 0; m < Math.max(storedData.modules.length, typingModules.length); m++) {
+          if (!storedData.modules[m] || !typingModules[m]) {
+            differences.push(`Module ${m}: One version missing`);
+            continue;
+          }
+          for (let p = 0; p < Math.max(storedData.modules[m].length, typingModules[m].length); p++) {
+            if (storedData.modules[m][p] !== typingModules[m][p]) {
+              differences.push(`Module ${m}, Practice ${p}: Different content`);
+              console.log(`  Stored: "${storedData.modules[m][p]}"`);
+              console.log(`  Display: "${typingModules[m][p]}"`);
+            }
+          }
+        }
+        
+        if (differences.length === 0) {
+          console.log('✓ All data matches between localStorage and display');
+        } else {
+          console.log('✗ Found differences:', differences);
+        }
+      } else {
+        console.log('✗ Data format mismatch or missing data');
+      }
+    };
+    
+    // Debug function for troubleshooting sync issues
+    window.debugTrainingSync = function() {
+      console.log('=== Debug Training Page Sync ===');
+      console.log('Current typingModules:', typingModules);
+      console.log('Current moduleNames:', moduleNames);
+      console.log('localStorage raw:', localStorage.getItem('smx_typing_tests'));
+      console.log('localStorage timestamp:', localStorage.getItem('smx_typing_tests_timestamp'));
+      console.log('localStorage trigger:', localStorage.getItem('smx_typing_tests_update_trigger'));
+      
+      // Test reload
+      console.log('Testing reload...');
+      reloadTypingData();
+    };
+    
+    // Show sync status indicator
+    function showSyncIndicator(message, isError = false) {
+      // Remove existing indicator
+      const existing = document.getElementById('syncIndicator');
+      if (existing) {
+        existing.remove();
+      }
+      
+      // Create new indicator
+      const indicator = document.createElement('div');
+      indicator.id = 'syncIndicator';
+      indicator.textContent = message;
+      indicator.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${isError ? '#ef4444' : '#22c55e'};
+        color: white;
+        padding: 12px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        z-index: 1000;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        animation: slideIn 0.3s ease-out;
+      `;
+      
+      // Add animation keyframes if not already added
+      if (!document.getElementById('syncIndicatorStyles')) {
+        const style = document.createElement('style');
+        style.id = 'syncIndicatorStyles';
+        style.textContent = `
+          @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+          }
+          @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+      
+      document.body.appendChild(indicator);
+      
+      // Auto-remove after 2 seconds
+      setTimeout(() => {
+        if (indicator.parentNode) {
+          indicator.style.animation = 'slideOut 0.3s ease-in';
+          setTimeout(() => {
+            if (indicator.parentNode) {
+              indicator.remove();
+            }
+          }, 300);
+        }
+      }, 2000);
+    }
+
+  </script>
+</body>
+</html>

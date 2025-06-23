@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔍 COMPREHENSIVE BUTTON DEBUG SWEEP</title>
+    <style>
+        body {
+            font-family: 'Consolas', 'Monaco', monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .debug-section {
+            background: #2a2a2a;
+            border: 2px solid #444;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .debug-title {
+            color: #ffff00;
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .success { color: #00ff00; }
+        .error { color: #ff4444; }
+        .warning { color: #ffaa00; }
+        .info { color: #44aaff; }
+        .test-button {
+            background: #333;
+            color: #fff;
+            border: 1px solid #666;
+            padding: 8px 16px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .test-button:hover {
+            background: #555;
+        }
+        pre {
+            background: #111;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 COMPREHENSIVE BUTTON DEBUG SWEEP</h1>
+    <p class="info">This debug tool will perform a complete analysis of button functionality issues.</p>
+
+    <div class="debug-section">
+        <div class="debug-title">🎯 Step 1: Element Existence Check</div>
+        <div id="elementCheck">Running...</div>
+    </div>
+
+    <div class="debug-section">
+        <div class="debug-title">🔗 Step 2: Event Handler Binding Check</div>
+        <div id="bindingCheck">Running...</div>
+    </div>
+
+    <div class="debug-section">
+        <div class="debug-title">⏰ Step 3: Script Timing Analysis</div>
+        <div id="timingCheck">Running...</div>
+    </div>
+
+    <div class="debug-section">
+        <div class="debug-title">🖱️ Step 4: Manual Click Simulation</div>
+        <div id="clickTest">Running...</div>
+        <div style="margin-top: 10px;">
+            <button class="test-button" onclick="simulateClicks()">🔄 Re-run Click Tests</button>
+        </div>
+    </div>
+
+    <div class="debug-section">
+        <div class="debug-title">🧬 Step 5: DOM Mutation Test</div>
+        <div id="mutationTest">Running...</div>
+        <div style="margin-top: 10px;">
+            <button class="test-button" onclick="testMutationObserver()">🧪 Test Mutation Observer</button>
+        </div>
+    </div>
+
+    <div class="debug-section">
+        <div class="debug-title">🎨 Step 6: CSS & Layout Validation</div>
+        <div id="cssCheck">Running...</div>
+    </div>
+
+    <div class="debug-section">
+        <div class="debug-title">📊 Debug Summary</div>
+        <div id="debugSummary">Analyzing...</div>
+    </div>
+
+    <script>
+        // Global debug state
+        const debugResults = {
+            elementCheck: {},
+            bindingCheck: {},
+            timingCheck: {},
+            clickTest: {},
+            mutationTest: {},
+            cssCheck: {}
+        };
+
+        // Target button IDs to check
+        const targetButtons = [
+            "createFollowBtn",
+            "gradingBtn", 
+            "editCalloutBtn",
+            "viewHistoryBtn",
+            "joinRoomBtn",
+            "dashboardBtn",
+            "logoutBtn"
+        ];
+
+        // Step 1: Element Existence Check
+        function checkElementExistence() {
+            console.log("🔍 Step 1: Checking element existence...");
+            const results = [];
+            const allButtons = document.querySelectorAll('button');
+            
+            results.push(`📋 Total buttons found in DOM: ${allButtons.length}`);
+            results.push(`📋 All button IDs: ${Array.from(allButtons).map(btn => btn.id || 'NO-ID').join(', ')}`);
+            results.push('');
+            
+            targetButtons.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    debugResults.elementCheck[id] = true;
+                    results.push(`✅ ${id}: EXISTS`);
+                    results.push(`   - Tag: ${element.tagName}`);
+                    results.push(`   - Type: ${element.type || 'N/A'}`);
+                    results.push(`   - Disabled: ${element.disabled}`);
+                    results.push(`   - Display: ${getComputedStyle(element).display}`);
+                    results.push(`   - Visibility: ${getComputedStyle(element).visibility}`);
+                    results.push(`   - Pointer Events: ${getComputedStyle(element).pointerEvents}`);
+                } else {
+                    debugResults.elementCheck[id] = false;
+                    results.push(`❌ ${id}: NOT FOUND`);
+                }
+                results.push('');
+            });
+
+            document.getElementById('elementCheck').innerHTML = `<pre>${results.join('\n')}</pre>`;
+        }
+
+        // Step 2: Event Handler Binding Check
+        function checkEventBindings() {
+            console.log("🔗 Step 2: Checking event bindings...");
+            const results = [];
+            
+            targetButtons.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    const bound = element.dataset.bound === "true";
+                    const hasOnClick = element.onclick !== null;
+                    const hasEventListeners = getEventListeners ? getEventListeners(element) : 'N/A (DevTools required)';
+                    
+                    debugResults.bindingCheck[id] = {
+                        bound: bound,
+                        hasOnClick: hasOnClick,
+                        hasEventListeners: hasEventListeners
+                    };
+                    
+                    results.push(`🔍 ${id}:`);
+                    results.push(`   - dataset.bound: ${bound ? '✅' : '❌'} (${element.dataset.bound})`);
+                    results.push(`   - onclick handler: ${hasOnClick ? '✅' : '❌'}`);
+                    results.push(`   - Event listeners: ${typeof hasEventListeners === 'object' ? JSON.stringify(hasEventListeners, null, 2) : hasEventListeners}`);
+                } else {
+                    results.push(`❌ ${id}: Element not found`);
+                }
+                results.push('');
+            });
+
+            document.getElementById('bindingCheck').innerHTML = `<pre>${results.join('\n')}</pre>`;
+        }
+
+        // Step 3: Script Timing Analysis
+        function checkScriptTiming() {
+            console.log("⏰ Step 3: Analyzing script timing...");
+            const results = [];
+            
+            results.push(`📊 Document ready state: ${document.readyState}`);
+            results.push(`📊 Total DOM elements: ${document.querySelectorAll('*').length}`);
+            results.push(`📊 Current timestamp: ${new Date().toISOString()}`);
+            results.push(`📊 Page load time: ${performance.now().toFixed(2)}ms`);
+            results.push('');
+            
+            // Check if DOMContentLoaded has fired
+            if (document.readyState === 'complete' || document.readyState === 'interactive') {
+                results.push('✅ DOMContentLoaded should have fired');
+            } else {
+                results.push('⚠️ DOM may not be fully loaded');
+            }
+            
+            // Check for multiple script tags
+            const scripts = document.querySelectorAll('script');
+            results.push(`📊 Total script tags: ${scripts.length}`);
+            
+            debugResults.timingCheck = {
+                readyState: document.readyState,
+                elementCount: document.querySelectorAll('*').length,
+                scriptCount: scripts.length
+            };
+
+            document.getElementById('timingCheck').innerHTML = `<pre>${results.join('\n')}</pre>`;
+        }
+
+        // Step 4: Manual Click Simulation
+        function simulateClicks() {
+            console.log("🖱️ Step 4: Simulating manual clicks...");
+            const results = [];
+            
+            targetButtons.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    try {
+                        // Create a click event
+                        const clickEvent = new MouseEvent('click', {
+                            bubbles: true,
+                            cancelable: true,
+                            view: window
+                        });
+                        
+                        // Capture console logs during click
+                        const originalLog = console.log;
+                        let clickLogs = [];
+                        console.log = (...args) => {
+                            clickLogs.push(args.join(' '));
+                            originalLog.apply(console, args);
+                        };
+                        
+                        // Dispatch the click
+                        element.dispatchEvent(clickEvent);
+                        
+                        // Restore console.log
+                        console.log = originalLog;
+                        
+                        debugResults.clickTest[id] = {
+                            success: true,
+                            logs: clickLogs
+                        };
+                        
+                        results.push(`🖱️ ${id}:`);
+                        results.push(`   - Click dispatched: ✅`);
+                        results.push(`   - Console logs: ${clickLogs.length > 0 ? clickLogs.join(', ') : 'None'}`);
+                        
+                    } catch (error) {
+                        debugResults.clickTest[id] = {
+                            success: false,
+                            error: error.message
+                        };
+                        results.push(`🖱️ ${id}:`);
+                        results.push(`   - Click failed: ❌ ${error.message}`);
+                    }
+                } else {
+                    results.push(`🖱️ ${id}: Element not found`);
+                }
+                results.push('');
+            });
+
+            document.getElementById('clickTest').innerHTML = `<pre>${results.join('\n')}</pre>`;
+        }
+
+        // Step 5: DOM Mutation Test
+        function testMutationObserver() {
+            console.log("🧬 Step 5: Testing DOM mutation...");
+            const results = [];
+            
+            // Create a test button
+            const testBtn = document.createElement('button');
+            testBtn.id = 'dynamicTestBtn';
+            testBtn.textContent = 'Dynamic Test Button';
+            testBtn.style.margin = '10px';
+            testBtn.style.padding = '5px 10px';
+            testBtn.style.background = '#444';
+            testBtn.style.color = '#fff';
+            testBtn.style.border = '1px solid #666';
+            testBtn.style.borderRadius = '4px';
+            
+            // Add it to the DOM
+            document.body.appendChild(testBtn);
+            
+            // Wait a moment for MutationObserver to potentially trigger
+            setTimeout(() => {
+                const dynamicElement = document.getElementById('dynamicTestBtn');
+                if (dynamicElement) {
+                    const bound = dynamicElement.dataset.bound === "true";
+                    results.push('🧪 Dynamic button test:');
+                    results.push(`   - Button created: ✅`);
+                    results.push(`   - MutationObserver binding: ${bound ? '✅' : '❌'}`);
+                    
+                    // Test click on dynamic button
+                    try {
+                        dynamicElement.click();
+                        results.push(`   - Click test: ✅`);
+                    } catch (error) {
+                        results.push(`   - Click test: ❌ ${error.message}`);
+                    }
+                    
+                    // Clean up
+                    dynamicElement.remove();
+                } else {
+                    results.push('❌ Failed to create dynamic button');
+                }
+                
+                debugResults.mutationTest = { tested: true, results: results };
+                document.getElementById('mutationTest').innerHTML = `<pre>${results.join('\n')}</pre>`;
+            }, 1000);
+            
+            results.push('🧬 Creating dynamic button and testing MutationObserver...');
+            results.push('⏳ Please wait 1 second for results...');
+            document.getElementById('mutationTest').innerHTML = `<pre>${results.join('\n')}</pre>`;
+        }
+
+        // Step 6: CSS & Layout Validation
+        function checkCSSLayout() {
+            console.log("🎨 Step 6: Checking CSS and layout...");
+            const results = [];
+            
+            targetButtons.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    const styles = getComputedStyle(element);
+                    const rect = element.getBoundingClientRect();
+                    
+                    const issues = [];
+                    
+                    // Check for common CSS issues
+                    if (styles.pointerEvents === 'none') issues.push('pointer-events: none');
+                    if (styles.display === 'none') issues.push('display: none');
+                    if (styles.visibility === 'hidden') issues.push('visibility: hidden');
+                    if (styles.opacity === '0') issues.push('opacity: 0');
+                    if (rect.width === 0 || rect.height === 0) issues.push('zero dimensions');
+                    if (styles.zIndex && parseInt(styles.zIndex) < 0) issues.push('negative z-index');
+                    
+                    debugResults.cssCheck[id] = {
+                        issues: issues,
+                        styles: {
+                            display: styles.display,
+                            visibility: styles.visibility,
+                            pointerEvents: styles.pointerEvents,
+                            opacity: styles.opacity,
+                            zIndex: styles.zIndex
+                        },
+                        dimensions: {
+                            width: rect.width,
+                            height: rect.height
+                        }
+                    };
+                    
+                    results.push(`🎨 ${id}:`);
+                    results.push(`   - Issues: ${issues.length > 0 ? '❌ ' + issues.join(', ') : '✅ None'}`);
+                    results.push(`   - Dimensions: ${rect.width}x${rect.height}`);
+                    results.push(`   - Position: (${rect.left.toFixed(1)}, ${rect.top.toFixed(1)})`);
+                } else {
+                    results.push(`🎨 ${id}: Element not found`);
+                }
+                results.push('');
+            });
+
+            document.getElementById('cssCheck').innerHTML = `<pre>${results.join('\n')}</pre>`;
+        }
+
+        // Generate Debug Summary
+        function generateSummary() {
+            const results = [];
+            let totalIssues = 0;
+            
+            results.push('📊 COMPREHENSIVE DEBUG SUMMARY');
+            results.push('=' .repeat(50));
+            results.push('');
+            
+            // Element existence summary
+            const missingElements = targetButtons.filter(id => !debugResults.elementCheck[id]);
+            if (missingElements.length > 0) {
+                results.push(`❌ Missing Elements (${missingElements.length}): ${missingElements.join(', ')}`);
+                totalIssues += missingElements.length;
+            } else {
+                results.push('✅ All target elements exist');
+            }
+            
+            // Binding summary
+            const unboundElements = targetButtons.filter(id => {
+                const binding = debugResults.bindingCheck[id];
+                return binding && !binding.bound && !binding.hasOnClick;
+            });
+            if (unboundElements.length > 0) {
+                results.push(`❌ Unbound Elements (${unboundElements.length}): ${unboundElements.join(', ')}`);
+                totalIssues += unboundElements.length;
+            } else {
+                results.push('✅ All elements have event handlers');
+            }
+            
+            // CSS issues summary
+            const elementsWithCSSIssues = Object.keys(debugResults.cssCheck).filter(id => 
+                debugResults.cssCheck[id].issues && debugResults.cssCheck[id].issues.length > 0
+            );
+            if (elementsWithCSSIssues.length > 0) {
+                results.push(`❌ CSS Issues (${elementsWithCSSIssues.length}): ${elementsWithCSSIssues.join(', ')}`);
+                totalIssues += elementsWithCSSIssues.length;
+            } else {
+                results.push('✅ No CSS layout issues detected');
+            }
+            
+            results.push('');
+            results.push(`🎯 TOTAL ISSUES FOUND: ${totalIssues}`);
+            
+            if (totalIssues === 0) {
+                results.push('');
+                results.push('🎉 NO ISSUES DETECTED!');
+                results.push('If buttons still don\'t work, the issue may be:');
+                results.push('- JavaScript errors preventing execution');
+                results.push('- Event propagation being stopped');
+                results.push('- Browser security restrictions');
+                results.push('- Network/server connectivity issues');
+            } else {
+                results.push('');
+                results.push('🔧 RECOMMENDED FIXES:');
+                if (missingElements.length > 0) {
+                    results.push('1. Ensure all button elements exist in HTML');
+                }
+                if (unboundElements.length > 0) {
+                    results.push('2. Fix event handler binding for unbound elements');
+                }
+                if (elementsWithCSSIssues.length > 0) {
+                    results.push('3. Resolve CSS layout issues preventing interaction');
+                }
+            }
+
+            document.getElementById('debugSummary').innerHTML = `<pre>${results.join('\n')}</pre>`;
+        }
+
+        // Run all debug steps
+        function runAllDebugSteps() {
+            console.log("🚀 Starting comprehensive button debug sweep...");
+            
+            checkElementExistence();
+            checkEventBindings();
+            checkScriptTiming();
+            simulateClicks();
+            testMutationObserver();
+            checkCSSLayout();
+            
+            // Generate summary after a short delay to allow async operations
+            setTimeout(generateSummary, 1500);
+        }
+
+        // Initialize debug when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', runAllDebugSteps);
+        } else {
+            runAllDebugSteps();
+        }
+
+        // Also provide manual trigger
+        window.runDebugSweep = runAllDebugSteps;
+        
+        console.log("🔍 Comprehensive Button Debug Tool Loaded");
+        console.log("Run window.runDebugSweep() to manually trigger debug sweep");
+    </script>
+</body>
+</html>

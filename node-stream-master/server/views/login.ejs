@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<%- include('header') %>
+<body>
+<%- include('navbar') %>
+
+
+<div class="container" style="padding-top: 3rem;">
+    <div style="max-width: 500px; margin: 0 auto; background: var(--track); padding: 2rem; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        <h2 style="margin-bottom: 1.5rem; text-align: center;">SMX Stream Login</h2>
+        
+        <form action="/login" method="post">
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--fg);">Email address</label>
+                <input type="email" name="email" placeholder="Enter email" required
+                       style="width: 100%; padding: 0.75rem; border-radius: 5px; background: rgba(255,255,255,0.1); 
+                              border: 1px solid rgba(255,255,255,0.2); color: var(--fg);">
+                <% if (errors.email.length) { %>
+                    <small style="color: #ff4d4d; display: block; margin-top: 0.25rem;"><%= errors.email %></small>
+                <% } %>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--fg);">Password</label>
+                <input type="password" name="password" placeholder="Password" required
+                       style="width: 100%; padding: 0.75rem; border-radius: 5px; background: rgba(255,255,255,0.1); 
+                              border: 1px solid rgba(255,255,255,0.2); color: var(--fg);">
+                <% if (errors.password.length) { %>
+                    <small style="color: #ff4d4d; display: block; margin-top: 0.25rem;"><%= errors.password %></small>
+                <% } %>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem; text-align: center;">
+                <div style="color: rgba(255,255,255,0.7);">
+                    Don't have an account? <a href="/register" style="color: var(--accent); text-decoration: none;">Register here</a>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem;">Login</button>
+        </form>
+    </div>
+</div>
+
+<%- include('footer') %>
+</body>
+</html>

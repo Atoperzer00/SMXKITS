@@ -1,0 +1,2293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Instructor Grading - SMXKITS</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --primary-gradient: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+      --secondary-gradient: linear-gradient(135deg, #ff8c42 0%, #ff6b35 100%);
+      --accent-gradient: linear-gradient(135deg, #ffa726 0%, #ff9800 100%);
+      --dark-gradient: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 100%);
+      --card-gradient: linear-gradient(145deg, #2d1810 0%, #1a0f08 100%);
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --text-primary: #ffffff;
+      --text-secondary: #b8c5d6;
+      --text-accent: #ffa726;
+      --shadow-primary: 0 20px 40px rgba(0, 0, 0, 0.3);
+      --shadow-hover: 0 30px 60px rgba(0, 0, 0, 0.4);
+      --border-radius: 20px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      
+      /* Legacy variables for compatibility */
+      --bg: #1e1e1e;
+      --panel: #23272e;
+      --sidebar: #20232a;
+      --accent: #ffa726;
+      --inactive: #3b3b3b;
+      --hover: #262a32;
+      --qc-orange: #ff9800;
+      --qc-yellow: #ffe066;
+      --qc-green: #22c55e;
+      --qc-red: #ef4444;
+      --bubble-bg: #141414;
+      --bubble-text: #fafafa;
+      --button-bg: #2a2f36;
+      --button-hover: #343a42;
+      --input-bg: #252a33;
+      --input-border: #333c48;
+      --logo-color: #ffa726;
+      --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--dark-gradient);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow: hidden;
+      line-height: 1.6;
+    }
+
+    /* Animated background particles */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(255, 107, 53, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 167, 38, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(247, 147, 30, 0.2) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .container {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 400px;
+      min-width: 350px;
+      max-width: 600px;
+      background: var(--card-gradient);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      padding: 28px 18px;
+      overflow-y: auto;
+      position: relative;
+      resize: horizontal;
+      overflow-x: hidden;
+      box-shadow: var(--shadow-primary);
+      z-index: 5;
+    }
+
+    .logo {
+      font-size: 2em;
+      font-weight: 800;
+      letter-spacing: 2px;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 20px;
+      text-align: center;
+      position: relative;
+    }
+
+    .logo::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 2px;
+      background: var(--accent-gradient);
+      border-radius: 1px;
+    }
+
+    .nav {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .nav-btn {
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--glass-border);
+      color: var(--text-primary);
+      font-size: 1.07em;
+      padding: 14px 20px;
+      text-align: left;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      transition: var(--transition);
+      outline: none;
+      font-weight: 500;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .nav-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: var(--accent-gradient);
+      transition: var(--transition);
+      z-index: -1;
+    }
+
+    .nav-btn:hover::before, .nav-btn.active::before {
+      left: 0;
+    }
+
+    .nav-btn:hover, .nav-btn.active {
+      color: #000;
+      border-color: var(--text-accent);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-hover);
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--inactive);
+      margin: 16px 0 12px 0;
+      border-radius: 2px;
+    }
+
+    /* Exercise Section */
+    .exercise-section {
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: var(--glass-shadow);
+    }
+
+    .exercise-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .exercise-title {
+      font-size: 1.1em;
+      font-weight: 600;
+      color: var(--logo-color);
+    }
+
+    .exercise-timestamp {
+      font-size: 0.9em;
+      color: #a9d4c6;
+      font-family: 'Consolas', monospace;
+    }
+
+    .start-exercise-btn {
+      background: linear-gradient(135deg, var(--accent), #28dd6c);
+      color: #fff;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.1em;
+      padding: 14px 24px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      width: 100%;
+      margin-bottom: 20px;
+    }
+
+    .start-exercise-btn:hover {
+      background: linear-gradient(135deg, #28dd6c, #22c55e);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+    }
+
+    /* Submissions List */
+    .submissions-list {
+      background: var(--panel);
+      border: 1px solid var(--input-border);
+      border-radius: 8px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .submission-item {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--inactive);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .submission-item:hover {
+      background: var(--hover);
+    }
+
+    .submission-item.selected {
+      background: rgba(34, 197, 94, 0.1);
+      border-left: 3px solid var(--accent);
+    }
+
+    .submission-info {
+      flex: 1;
+    }
+
+    .submission-student {
+      font-weight: 600;
+      color: var(--bubble-text);
+    }
+
+    .submission-mission {
+      font-size: 0.9em;
+      color: #a9d4c6;
+    }
+
+    .submission-time {
+      font-size: 0.85em;
+      color: #888;
+      font-family: 'Consolas', monospace;
+    }
+
+    /* Main Panel */
+    .main-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--panel);
+      overflow: hidden;
+    }
+
+    .top-bar {
+      height: 70px;
+      background: var(--card-gradient);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 30px;
+      font-size: 1.2em;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      color: var(--text-primary);
+      box-shadow: var(--shadow-primary);
+      position: relative;
+      z-index: 10;
+    }
+
+    .top-bar::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--accent-gradient);
+    }
+
+    .content-area {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* Grading Panel */
+    .grading-panel {
+      flex: 1;
+      padding: 30px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+
+    .grading-wheel-container {
+      display: flex;
+      gap: 30px;
+      align-items: flex-start;
+    }
+
+    .sliders-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    /* Rubric Panel Styles */
+    .rubric-panel {
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: var(--glass-shadow);
+      transition: all 0.3s ease;
+    }
+
+    .rubric-panel:hover {
+      border-color: rgba(34, 197, 94, 0.3);
+      box-shadow: 0 8px 32px rgba(34, 197, 94, 0.1);
+    }
+
+    .rubric-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .rubric-title {
+      font-size: 1.2em;
+      font-weight: 600;
+      color: var(--logo-color);
+    }
+
+    .rubric-score-container {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .rubric-slider {
+      width: 120px;
+      height: 6px;
+      background: var(--inactive);
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .rubric-slider::-webkit-slider-thumb {
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(34, 197, 94, 0.3);
+    }
+
+    .rubric-slider::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      background: var(--accent);
+      border-radius: 50%;
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 2px 6px rgba(34, 197, 94, 0.3);
+    }
+
+    .rubric-score {
+      background: var(--accent);
+      color: #000;
+      padding: 6px 12px;
+      border-radius: 15px;
+      font-weight: bold;
+      font-size: 1.1em;
+      min-width: 35px;
+      text-align: center;
+    }
+
+    .rubric-criteria {
+      margin-bottom: 15px;
+    }
+
+    .criteria-title {
+      font-weight: 600;
+      color: var(--bubble-text);
+      margin-bottom: 8px;
+      font-size: 0.95em;
+    }
+
+    .criteria-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .criteria-list li {
+      padding: 4px 0;
+      color: #a9d4c6;
+      font-size: 0.9em;
+      position: relative;
+      padding-left: 15px;
+    }
+
+    .criteria-list li::before {
+      content: '•';
+      color: var(--accent);
+      position: absolute;
+      left: 0;
+      font-weight: bold;
+    }
+
+    .score-guide {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .score-guide-title {
+      font-weight: 600;
+      color: var(--bubble-text);
+      margin-bottom: 8px;
+      font-size: 0.9em;
+    }
+
+    .score-levels {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .score-level {
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 0.8em;
+      font-weight: 500;
+    }
+
+    .score-level.excellent {
+      background: rgba(34, 197, 94, 0.2);
+      color: #22c55e;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .score-level.proficient {
+      background: rgba(59, 130, 246, 0.2);
+      color: #3b82f6;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .score-level.developing {
+      background: rgba(255, 193, 7, 0.2);
+      color: #ffc107;
+      border: 1px solid rgba(255, 193, 7, 0.3);
+    }
+
+    .score-level.needs-improvement {
+      background: rgba(255, 152, 0, 0.2);
+      color: #ff9800;
+      border: 1px solid rgba(255, 152, 0, 0.3);
+    }
+
+    .score-level.unsatisfactory {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    /* Number Box Scoring System */
+    .score-boxes-container {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .score-box {
+      width: 35px;
+      height: 35px;
+      border: 2px solid var(--glass-border);
+      border-radius: 8px;
+      background: var(--glass-bg);
+      color: var(--text-primary);
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(10px);
+    }
+
+    .score-box:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+    }
+
+    .score-box.selected {
+      border-width: 3px;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+    }
+
+    /* Score colors */
+    .score-box.score-9, .score-box.score-10 {
+      background: #22c55e;
+      border-color: #16a34a;
+      color: #000;
+    }
+
+    .score-box.score-7, .score-box.score-8 {
+      background: #3b82f6;
+      border-color: #2563eb;
+      color: #fff;
+    }
+
+    .score-box.score-5, .score-box.score-6 {
+      background: #ffc107;
+      border-color: #f59e0b;
+      color: #000;
+    }
+
+    .score-box.score-1, .score-box.score-2, .score-box.score-3, .score-box.score-4 {
+      background: #ef4444;
+      border-color: #dc2626;
+      color: #fff;
+    }
+
+    /* Class and Student Dropdowns */
+    .dropdown-container {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .dropdown-group {
+      flex: 1;
+    }
+
+    .dropdown-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: var(--text-accent);
+      font-size: 0.9em;
+    }
+
+    .dropdown-group select {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 8px;
+      padding: 12px;
+      color: var(--text-primary);
+      font-size: 1em;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .dropdown-group select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(255, 167, 38, 0.3);
+    }
+
+    .dropdown-group select option {
+      background: var(--input-bg);
+      color: var(--text-primary);
+    }
+
+    .chart-container {
+      width: 400px;
+      height: 400px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: var(--glass-shadow);
+    }
+
+    /* Notes Section - Styled to match Grade History */
+    .notes-section {
+      background: var(--sidebar);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: var(--glass-shadow);
+    }
+
+    .notes-section h3 {
+      margin: 0 0 15px 0;
+      color: var(--logo-color);
+      font-size: 1.2em;
+    }
+
+    .notes-section textarea {
+      width: 100%;
+      height: 100px;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 8px;
+      padding: 15px;
+      color: var(--bubble-text);
+      font-family: inherit;
+      font-size: 1em;
+      resize: none;
+      box-sizing: border-box;
+    }
+
+    .notes-section textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(255, 167, 38, 0.3);
+    }
+
+    /* File Drop Zone */
+    .file-drop-zone {
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      border: 2px dashed var(--glass-border);
+      border-radius: 12px;
+      padding: 30px;
+      text-align: center;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      box-shadow: var(--glass-shadow);
+    }
+
+    .file-drop-zone:hover, .file-drop-zone.dragover {
+      border-color: var(--accent);
+      background: rgba(34, 197, 94, 0.05);
+    }
+
+    .file-drop-zone i {
+      font-size: 2em;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+      display: flex;
+      gap: 15px;
+      justify-content: flex-end;
+    }
+
+    .save-btn {
+      background: linear-gradient(135deg, var(--accent), #28dd6c);
+      color: #fff;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1em;
+      padding: 12px 24px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+    }
+
+    .save-btn:hover {
+      background: linear-gradient(135deg, #28dd6c, #22c55e);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+    }
+
+    .cancel-btn {
+      background: var(--button-bg);
+      color: var(--bubble-text);
+      border: 1px solid var(--input-border);
+      border-radius: 8px;
+      font-size: 1.1em;
+      padding: 12px 24px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .cancel-btn:hover {
+      background: var(--button-hover);
+      transform: translateY(-1px);
+    }
+
+    /* Grade History Panel */
+    .history-panel {
+      width: 350px;
+      background: var(--sidebar);
+      border-left: 2px solid var(--inactive);
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: var(--glass-shadow);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .history-item:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(255, 167, 38, 0.2);
+    }
+
+    .history-item.expanded {
+      border-color: var(--accent);
+    }
+
+    .history-item h4 {
+      margin: 0 0 10px 0;
+      color: var(--logo-color);
+      font-size: 1em;
+    }
+
+    .history-scores {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+      font-size: 0.85em;
+      margin-bottom: 10px;
+    }
+
+    .history-score {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .history-timestamp {
+      font-size: 0.8em;
+      color: #888;
+      font-family: 'Consolas', monospace;
+    }
+
+    .history-notes {
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid var(--glass-border);
+      display: none;
+    }
+
+    .history-notes.visible {
+      display: block;
+    }
+
+    .history-notes h5 {
+      margin: 0 0 8px 0;
+      color: var(--text-accent);
+      font-size: 0.9em;
+    }
+
+    .history-notes p {
+      margin: 0;
+      color: var(--text-secondary);
+      font-size: 0.85em;
+      line-height: 1.4;
+      font-style: italic;
+    }
+
+    /* Modal */
+    .modal {
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 30px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: var(--glass-shadow);
+    }
+
+    .modal-content h3 {
+      margin: 0 0 20px 0;
+      color: var(--logo-color);
+    }
+
+    .modal-content input {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 8px;
+      padding: 12px;
+      color: var(--bubble-text);
+      font-size: 1em;
+      margin-bottom: 20px;
+      box-sizing: border-box;
+    }
+
+    .modal-content input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.3);
+    }
+
+    /* Submission Overlay Styles */
+    .submission-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+
+    .submission-overlay-content {
+      background: var(--card-gradient);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-hover);
+      position: relative;
+    }
+
+    .overlay-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      color: var(--text-primary);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .overlay-close:hover {
+      background: var(--qc-red);
+      border-color: var(--qc-red);
+      color: white;
+    }
+
+    .submission-details {
+      margin-bottom: 1.5rem;
+    }
+
+    .submission-details h3 {
+      color: var(--text-accent);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .detail-row:last-child {
+      border-bottom: none;
+    }
+
+    .detail-label {
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .detail-value {
+      color: var(--text-primary);
+    }
+
+    .file-preview {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1rem;
+      text-align: center;
+    }
+
+    .file-icon-large {
+      font-size: 3rem;
+      color: var(--text-accent);
+      margin-bottom: 0.5rem;
+    }
+
+    .download-btn {
+      background: var(--accent-gradient);
+      border: none;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      margin-top: 1rem;
+      transition: var(--transition);
+    }
+
+    .download-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 167, 38, 0.3);
+    }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar { width: 10px; background: #17181a; }
+    ::-webkit-scrollbar-thumb { background: #22262b; border-radius: 6px; }
+    ::-webkit-scrollbar-thumb:hover { background: #363b40; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="logo">SMXKITS</div>
+      
+      <!-- Navigation -->
+      <div class="nav">
+        <button type="button" class="nav-btn" onclick="goToDashboard()">Dashboard</button>
+      </div>
+      
+      <div class="divider"></div>
+
+      <!-- Start New Exercise -->
+      <button type="button" class="start-exercise-btn" onclick="startNewExercise()">
+        Start New Exercise
+      </button>
+
+      <!-- Class and Student Selection -->
+      <div class="exercise-section">
+        <h4 style="margin: 0 0 15px 0; color: var(--text-accent);">Class Submissions</h4>
+        
+        <!-- Class and Student Dropdowns -->
+        <div class="dropdown-container">
+          <div class="dropdown-group">
+            <label for="classSelect">Choose Class</label>
+            <select id="classSelect" onchange="loadStudentsForClass()">
+              <option value="">Select a class...</option>
+            </select>
+          </div>
+          <div class="dropdown-group">
+            <label for="studentSelect">Choose Student</label>
+            <select id="studentSelect" onchange="loadStudentSubmission()" disabled>
+              <option value="">Select a student...</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Current Exercise -->
+      <div class="exercise-section" id="currentExercise" style="display: none;">
+        <div class="exercise-header">
+          <div class="exercise-title" id="exerciseTitle">Exercise 1</div>
+          <div class="exercise-timestamp" id="exerciseTimestamp"></div>
+        </div>
+        
+        <div class="submissions-list" id="submissionsList">
+          <!-- Submissions will be populated here -->
+        </div>
+      </div>
+
+      <!-- Logout -->
+      <button type="button" class="nav-btn" onclick="logout()" style="margin-top: auto; background: var(--qc-red);">
+        Logout
+      </button>
+    </aside>
+
+    <!-- Main Panel -->
+    <main class="main-panel">
+      <div class="top-bar">
+        <span style="font-weight: bold;">INSTRUCTOR GRADING</span>
+        <span id="selectedStudent">No student selected</span>
+      </div>
+
+      <div class="content-area">
+        <!-- Grading Panel -->
+        <div class="grading-panel" id="gradingPanel">
+          <div id="noSelectionMessage" style="text-align: center; color: #888; font-size: 1.2em; margin-top: 100px;">
+            Select a submission to begin grading
+          </div>
+
+          <div id="gradingContent" style="display: none;">
+            <!-- Grading Wheel and Sliders -->
+            <div class="grading-wheel-container">
+              <div class="sliders-container" id="slidersContainer">
+                <!-- Number boxes will be generated here -->
+              </div>
+              <div class="chart-container">
+                <canvas id="gradingChart" width="360" height="360"></canvas>
+              </div>
+            </div>
+
+            <!-- Instructor Notes - Moved below chart -->
+            <div class="notes-section">
+              <h3>Instructor Notes (Private)</h3>
+              <textarea id="instructorNotes" placeholder="Enter private notes about this submission..." rows="4"></textarea>
+            </div>
+
+            <!-- Feedback File Drop -->
+            <div class="file-drop-zone" id="fileDropZone" onclick="document.getElementById('feedbackFile').click()">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <div>Drop feedback file here or click to browse</div>
+              <div style="font-size: 0.9em; color: #888; margin-top: 5px;">PDF, DOC, DOCX files accepted</div>
+              <input type="file" id="feedbackFile" style="display: none;" accept=".pdf,.doc,.docx" onchange="handleFileUpload(this)">
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+              <button type="button" class="cancel-btn" onclick="clearGrading()">Clear</button>
+              <button type="button" class="save-btn" onclick="saveGrade()">Save Grade</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Grade History Panel -->
+        <div class="history-panel">
+          <h3 style="margin: 0 0 20px 0; color: var(--logo-color);">Grade History</h3>
+          <div id="gradeHistory">
+            <div style="text-align: center; color: #888; margin-top: 50px;">
+              Select a student to view grade history
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- New Exercise Modal -->
+  <div id="newExerciseModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <h3>Start New Exercise</h3>
+      <input type="text" id="exerciseNameInput" placeholder="Enter exercise name (optional)" />
+      <div class="action-buttons">
+        <button type="button" class="cancel-btn" onclick="closeNewExerciseModal()">Cancel</button>
+        <button type="button" class="save-btn" onclick="createNewExercise()">Start Exercise</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Submission Overlay -->
+  <div id="submissionOverlay" class="submission-overlay" style="display: none;">
+    <div class="submission-overlay-content">
+      <button class="overlay-close" onclick="closeSubmissionOverlay()">
+        <i class="fas fa-times"></i>
+      </button>
+      
+      <div class="submission-details">
+        <h3><i class="fas fa-file-alt"></i> Submission Details</h3>
+        <div id="submissionDetailsContent">
+          <!-- Content will be populated by JavaScript -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+  <script>
+    // Global state
+    let currentExercise = null;
+    let selectedSubmission = null;
+    let gradingChart = null;
+    let grades = JSON.parse(localStorage.getItem('grades') || '[]');
+    let exercises = JSON.parse(localStorage.getItem('exercises') || '[]');
+    let submissions = JSON.parse(localStorage.getItem('submissions') || '[]');
+
+    // Comprehensive Rubric System
+    const rubricCategories = {
+      'Accuracy': {
+        name: 'Accuracy',
+        criteria: [
+          'Correct identification of targets/objects',
+          'Accurate coordinate reporting',
+          'Proper classification of activities',
+          'Minimal false positives/negatives',
+          'Verification of information before reporting'
+        ]
+      },
+      'Analytic Judgment': {
+        name: 'Analytic Judgment',
+        criteria: [
+          'Sound reasoning in analysis',
+          'Appropriate use of intelligence methods',
+          'Logical conclusions drawn from evidence',
+          'Recognition of patterns and trends',
+          'Assessment of threat levels and priorities'
+        ]
+      },
+      'Attention to Detail': {
+        name: 'Attention to Detail',
+        criteria: [
+          'Thorough examination of imagery/data',
+          'Notice of subtle changes or anomalies',
+          'Complete documentation of observations',
+          'Consistent quality throughout task',
+          'Minimal oversight of important details'
+        ]
+      },
+      'Communication': {
+        name: 'Communication',
+        criteria: [
+          'Clear and concise reporting',
+          'Appropriate use of terminology',
+          'Effective briefing delivery',
+          'Professional written products',
+          'Timely information dissemination'
+        ]
+      },
+      'Format': {
+        name: 'Format',
+        criteria: [
+          'Adherence to reporting standards',
+          'Proper use of templates and formats',
+          'Consistent structure and organization',
+          'Appropriate classification markings',
+          'Professional presentation quality'
+        ]
+      },
+      'Mission Awareness': {
+        name: 'Mission Awareness',
+        criteria: [
+          'Understanding of operational context',
+          'Alignment with mission objectives',
+          'Awareness of customer requirements',
+          'Integration with broader intelligence picture',
+          'Consideration of operational security'
+        ]
+      },
+      'Products': {
+        name: 'Products',
+        criteria: [
+          'Quality of deliverable outputs',
+          'Completeness of required products',
+          'Value-added analysis and insights',
+          'Appropriate level of detail',
+          'Meeting customer specifications'
+        ]
+      },
+      'Teamwork': {
+        name: 'Teamwork',
+        criteria: [
+          'Effective collaboration with peers',
+          'Constructive participation in discussions',
+          'Sharing of relevant information',
+          'Support for team objectives',
+          'Professional interpersonal conduct'
+        ]
+      },
+      'Timeliness': {
+        name: 'Timeliness',
+        criteria: [
+          'Meeting established deadlines',
+          'Efficient use of allocated time',
+          'Prioritization of urgent tasks',
+          'Proactive time management',
+          'Minimal delays in reporting'
+        ]
+      },
+      'Tool Proficiency': {
+        name: 'Tool Proficiency',
+        criteria: [
+          'Effective use of analysis software',
+          'Proper operation of equipment',
+          'Efficient workflow management',
+          'Troubleshooting technical issues',
+          'Adaptation to new tools and systems'
+        ]
+      }
+    };
+
+    // Extract category names for chart
+    const categories = Object.keys(rubricCategories);
+
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', function() {
+      checkAuth();
+      loadExercises();
+      initializeGradingChart();
+      setupFileDropZone();
+      loadClasses();
+      loadSubmissions(); // Load submissions on page load
+      
+      // Initialize current scores
+      window.currentScores = {};
+    });
+
+    function checkAuth() {
+      const role = localStorage.getItem('role');
+      if (role !== 'instructor' && role !== 'admin') {
+        alert('Access denied. This page is for instructors and admins only.');
+        window.location.href = '/dashboard.html';
+        return;
+      }
+    }
+
+    function startNewExercise() {
+      document.getElementById('newExerciseModal').style.display = 'flex';
+    }
+
+    function closeNewExerciseModal() {
+      document.getElementById('newExerciseModal').style.display = 'none';
+      document.getElementById('exerciseNameInput').value = '';
+    }
+
+    function createNewExercise() {
+      const exerciseName = document.getElementById('exerciseNameInput').value.trim();
+      const timestamp = new Date().toISOString();
+      const exerciseNumber = exercises.length + 1;
+      
+      const newExercise = {
+        id: 'exercise_' + Date.now(),
+        name: exerciseName || `Exercise ${exerciseNumber}`,
+        timestamp: timestamp,
+        active: true
+      };
+
+      // Deactivate previous exercises
+      exercises.forEach(ex => ex.active = false);
+      
+      exercises.push(newExercise);
+      localStorage.setItem('exercises', JSON.stringify(exercises));
+      
+      currentExercise = newExercise;
+      updateExerciseDisplay();
+      generateMockSubmissions(); // For demo purposes
+      
+      closeNewExerciseModal();
+    }
+
+    function loadExercises() {
+      if (exercises.length > 0) {
+        currentExercise = exercises.find(ex => ex.active) || exercises[exercises.length - 1];
+        updateExerciseDisplay();
+        loadSubmissions();
+      }
+    }
+
+    function updateExerciseDisplay() {
+      if (currentExercise) {
+        document.getElementById('currentExercise').style.display = 'block';
+        document.getElementById('exerciseTitle').textContent = currentExercise.name;
+        document.getElementById('exerciseTimestamp').textContent = 
+          new Date(currentExercise.timestamp).toLocaleString();
+      }
+    }
+
+    function generateMockSubmissions() {
+      // Generate some mock submissions for demo
+      const mockStudents = ['Alice Johnson', 'Bob Smith', 'Charlie Brown', 'Diana Prince', 'Eve Wilson'];
+      const missions = ['Mission Alpha', 'Mission Bravo', 'Mission Charlie'];
+      
+      const newSubmissions = mockStudents.map((student, index) => ({
+        id: 'sub_' + Date.now() + '_' + index,
+        student: student,
+        class: 'Class A',
+        exercise: currentExercise.id,
+        mission: missions[index % missions.length],
+        submittedAt: new Date(Date.now() - Math.random() * 3600000).toISOString(),
+        fileUrl: null // Would be actual file in real implementation
+      }));
+
+      submissions = submissions.concat(newSubmissions);
+      localStorage.setItem('submissions', JSON.stringify(submissions));
+      loadSubmissions();
+    }
+
+    function loadSubmissions() {
+      // Load both exercise submissions and file submissions
+      const exerciseSubmissions = currentExercise ? submissions.filter(sub => sub.exercise === currentExercise.id) : [];
+      const fileSubmissions = JSON.parse(localStorage.getItem('fileSubmissions') || '[]');
+      
+      const allSubmissions = [...exerciseSubmissions, ...fileSubmissions];
+      const submissionsList = document.getElementById('submissionsList');
+      
+      if (allSubmissions.length === 0) {
+        submissionsList.innerHTML = '<div style="padding: 20px; text-align: center; color: #888;">No submissions yet</div>';
+        return;
+      }
+
+      submissionsList.innerHTML = allSubmissions.map(submission => `
+        <div class="submission-item" onclick="openSubmissionOverlay('${submission.id}')">
+          <div class="submission-info">
+            <div class="submission-student">${submission.studentName || submission.student}</div>
+            <div class="submission-mission">${submission.fileName || submission.mission || submission.exercise}</div>
+          </div>
+          <div class="submission-time">${new Date(submission.submittedAt).toLocaleTimeString()}</div>
+        </div>
+      `).join('');
+    }
+
+    function selectSubmission(submissionId) {
+      // This function is now handled by loadStudentSubmission()
+      console.log('Selected submission:', submissionId);
+    }
+
+    // Submission overlay functions
+    function openSubmissionOverlay(submissionId) {
+      // Find the submission in both exercise submissions and file submissions
+      const exerciseSubmissions = currentExercise ? submissions.filter(sub => sub.exercise === currentExercise.id) : [];
+      const fileSubmissions = JSON.parse(localStorage.getItem('fileSubmissions') || '[]');
+      const allSubmissions = [...exerciseSubmissions, ...fileSubmissions];
+      
+      const submission = allSubmissions.find(sub => sub.id === submissionId);
+      
+      if (!submission) {
+        console.error('Submission not found:', submissionId);
+        return;
+      }
+
+      displaySubmissionDetails(submission);
+      document.getElementById('submissionOverlay').style.display = 'flex';
+    }
+
+    function closeSubmissionOverlay() {
+      document.getElementById('submissionOverlay').style.display = 'none';
+    }
+
+    function displaySubmissionDetails(submission) {
+      const content = document.getElementById('submissionDetailsContent');
+      
+      // Format file size if available
+      const fileSize = submission.fileSize ? formatFileSize(submission.fileSize) : 'Unknown';
+      
+      // Get file icon
+      const fileName = submission.fileName || submission.mission || 'Unknown file';
+      const fileIcon = getFileIcon(fileName);
+      
+      content.innerHTML = `
+        <div class="detail-row">
+          <span class="detail-label">Student:</span>
+          <span class="detail-value">${submission.studentName || submission.student}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">File Name:</span>
+          <span class="detail-value">${fileName}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">File Size:</span>
+          <span class="detail-value">${fileSize}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Submitted:</span>
+          <span class="detail-value">${new Date(submission.submittedAt).toLocaleString()}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Status:</span>
+          <span class="detail-value" style="color: ${submission.status === 'graded' ? 'var(--qc-green)' : 'var(--qc-yellow)'}">
+            ${submission.status || 'Pending'}
+          </span>
+        </div>
+        
+        <div class="file-preview">
+          <div class="file-icon-large">
+            <i class="${fileIcon}"></i>
+          </div>
+          <div style="font-weight: 600; margin-bottom: 0.5rem;">${fileName}</div>
+          <div style="color: var(--text-secondary); font-size: 0.9rem;">
+            ${submission.fileType || 'File type unknown'}
+          </div>
+          ${submission.fileData ? `
+            <button class="download-btn" onclick="downloadFile('${submission.id}')">
+              <i class="fas fa-download"></i> Open File
+            </button>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function getFileIcon(fileName) {
+      const extension = fileName.split('.').pop().toLowerCase();
+      const iconMap = {
+        'pdf': 'fas fa-file-pdf',
+        'doc': 'fas fa-file-word',
+        'docx': 'fas fa-file-word',
+        'txt': 'fas fa-file-alt',
+        'jpg': 'fas fa-file-image',
+        'jpeg': 'fas fa-file-image',
+        'png': 'fas fa-file-image',
+        'gif': 'fas fa-file-image',
+        'mp4': 'fas fa-file-video',
+        'mov': 'fas fa-file-video',
+        'avi': 'fas fa-file-video'
+      };
+      return iconMap[extension] || 'fas fa-file';
+    }
+
+    function downloadFile(submissionId) {
+      const fileSubmissions = JSON.parse(localStorage.getItem('fileSubmissions') || '[]');
+      const submission = fileSubmissions.find(sub => sub.id === submissionId);
+      
+      if (!submission || !submission.fileData) {
+        alert('File not available for download.');
+        return;
+      }
+
+      // Create a blob URL and trigger download
+      const blob = new Blob([submission.fileData], { type: submission.fileType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = submission.fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // Make functions globally accessible
+    window.openSubmissionOverlay = openSubmissionOverlay;
+    window.closeSubmissionOverlay = closeSubmissionOverlay;
+    window.downloadFile = downloadFile;
+
+    // loadExistingGrade and resetGradingForm functions moved to Class and Student Management section
+
+    function initializeGradingChart() {
+      const ctx = document.getElementById('gradingChart').getContext('2d');
+      const initialScores = Array(categories.length).fill(5);
+      
+      gradingChart = new Chart(ctx, {
+        type: 'radar',
+        data: {
+          labels: categories,
+          datasets: [{
+            label: 'Score',
+            data: initialScores,
+            backgroundColor: 'rgba(34, 197, 94, 0.2)',
+            borderColor: '#22c55e',
+            pointBackgroundColor: '#22c55e',
+            borderWidth: 2,
+            pointRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          scales: {
+            r: {
+              suggestedMin: 0,
+              suggestedMax: 10,
+              ticks: { 
+                color: '#ccc',
+                stepSize: 2
+              },
+              pointLabels: {
+                color: '#eee',
+                font: { size: 10 }
+              },
+              grid: { color: '#333' },
+              angleLines: { color: '#444' }
+            }
+          },
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
+
+      // Generate number boxes
+      generateSliders();
+    }
+
+    function generateSliders() {
+      const container = document.getElementById('slidersContainer');
+      container.innerHTML = categories.map(category => {
+        const rubric = rubricCategories[category];
+        return `
+          <div class="rubric-panel">
+            <div class="rubric-header">
+              <div class="rubric-title">${rubric.name}</div>
+              <div class="score-boxes-container" data-category="${category}">
+                ${[1,2,3,4,5,6,7,8,9,10].map(num => `
+                  <div class="score-box score-${num}" data-score="${num}" onclick="selectScore('${category}', ${num})">
+                    ${num}
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+            <div class="rubric-criteria">
+              <div class="criteria-title">Assessment Criteria:</div>
+              <ul class="criteria-list">
+                ${rubric.criteria.map(criterion => `<li>${criterion}</li>`).join('')}
+              </ul>
+            </div>
+            <div class="score-guide">
+              <div class="score-guide-title">Scoring Guide:</div>
+              <div class="score-levels">
+                <span class="score-level excellent">9-10: Excellent</span>
+                <span class="score-level proficient">7-8: Proficient</span>
+                <span class="score-level developing">5-6: Developing</span>
+                <span class="score-level needs-improvement">3-4: Needs Improvement</span>
+                <span class="score-level unsatisfactory">1-2: Unsatisfactory</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Score selection for number boxes
+    function selectScore(category, score) {
+      // Remove selected class from all boxes in this category
+      const container = document.querySelector(`[data-category="${category}"]`);
+      container.querySelectorAll('.score-box').forEach(box => {
+        box.classList.remove('selected');
+      });
+      
+      // Add selected class to clicked box
+      const selectedBox = container.querySelector(`[data-score="${score}"]`);
+      selectedBox.classList.add('selected');
+      
+      // Store the score
+      if (!window.currentScores) window.currentScores = {};
+      window.currentScores[category] = score;
+      
+      updateGradingChart();
+    }
+
+    function updateSliderValue(slider, value) {
+      // Legacy support for old slider format
+      const valueSpan = slider.parentElement.querySelector('.slider-value');
+      if (valueSpan) {
+        valueSpan.textContent = value;
+      }
+      
+      updateGradingChart();
+    }
+
+    function updateGradingChart() {
+      const scores = categories.map(category => {
+        // Check for number box scores first
+        if (window.currentScores && window.currentScores[category]) {
+          return window.currentScores[category];
+        }
+        
+        // Fallback to slider if exists (legacy support)
+        const slider = document.querySelector(`input[data-category="${category}"]`);
+        if (slider) {
+          return parseInt(slider.value);
+        }
+        
+        return 5; // Default score
+      });
+      
+      gradingChart.data.datasets[0].data = scores;
+      gradingChart.update();
+    }
+
+    // saveGrade function moved to Class and Student Management section
+
+    // loadGradeHistory function moved to Class and Student Management section
+
+    function clearGrading() {
+      resetGradingForm();
+    }
+
+    function setupFileDropZone() {
+      const dropZone = document.getElementById('fileDropZone');
+      
+      dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+      });
+
+      dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('dragover');
+      });
+
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          handleFileUpload({ files: files });
+        }
+      });
+    }
+
+    let selectedFeedbackFile = null;
+
+    function handleFileUpload(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      // Store file information for later use
+      selectedFeedbackFile = {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        lastModified: file.lastModified,
+        // In a real implementation, you would upload to server and store URL
+        // For demo purposes, we'll store file data as base64
+        data: null
+      };
+
+      // Read file as base64 for storage
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        selectedFeedbackFile.data = e.target.result;
+        updateFileDropZone();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function updateFileDropZone() {
+      const dropZone = document.getElementById('fileDropZone');
+      if (selectedFeedbackFile) {
+        dropZone.innerHTML = `
+          <i class="fas fa-file-check" style="color: var(--qc-green);"></i>
+          <div style="color: var(--qc-green);">File Selected: ${selectedFeedbackFile.name}</div>
+          <div style="font-size: 0.9em; color: #888; margin-top: 5px;">Click to change file</div>
+        `;
+        dropZone.style.borderColor = 'var(--qc-green)';
+        dropZone.style.backgroundColor = 'rgba(34, 197, 94, 0.1)';
+      } else {
+        dropZone.innerHTML = `
+          <i class="fas fa-cloud-upload-alt"></i>
+          <div>Drop feedback file here or click to browse</div>
+          <div style="font-size: 0.9em; color: #888; margin-top: 5px;">PDF, DOC, DOCX files accepted</div>
+        `;
+        dropZone.style.borderColor = '';
+        dropZone.style.backgroundColor = '';
+      }
+    }
+
+    function goToDashboard() {
+      window.location.href = '/dashboard.html';
+    }
+
+    // Class and Student Management
+    function loadClasses() {
+      // Mock classes data - in real implementation, fetch from server
+      const classes = [
+        { id: 'class_1', name: 'Alpha Squadron' },
+        { id: 'class_2', name: 'Bravo Squadron' },
+        { id: 'class_3', name: 'Charlie Squadron' },
+        { id: 'class_4', name: 'Delta Squadron' }
+      ];
+      
+      const classSelect = document.getElementById('classSelect');
+      classSelect.innerHTML = '<option value="">Select a class...</option>' +
+        classes.map(cls => `<option value="${cls.id}">${cls.name}</option>`).join('');
+    }
+
+    function loadStudentsForClass() {
+      const classSelect = document.getElementById('classSelect');
+      const studentSelect = document.getElementById('studentSelect');
+      const selectedClass = classSelect.value;
+      
+      if (!selectedClass) {
+        studentSelect.innerHTML = '<option value="">Select a student...</option>';
+        studentSelect.disabled = true;
+        return;
+      }
+      
+      // Mock students data - in real implementation, fetch from server based on class
+      const students = [
+        { id: 'student_1', name: 'Alice Johnson', class: selectedClass },
+        { id: 'student_2', name: 'Bob Smith', class: selectedClass },
+        { id: 'student_3', name: 'Charlie Brown', class: selectedClass },
+        { id: 'student_4', name: 'Diana Prince', class: selectedClass },
+        { id: 'student_5', name: 'Eve Wilson', class: selectedClass }
+      ];
+      
+      studentSelect.innerHTML = '<option value="">Select a student...</option>' +
+        students.map(student => `<option value="${student.id}">${student.name}</option>`).join('');
+      studentSelect.disabled = false;
+    }
+
+    function loadStudentSubmission() {
+      const studentSelect = document.getElementById('studentSelect');
+      const selectedStudent = studentSelect.value;
+      
+      if (!selectedStudent) {
+        document.getElementById('gradingContent').style.display = 'none';
+        document.getElementById('noSelectionMessage').style.display = 'block';
+        return;
+      }
+      
+      // Mock submission data - in real implementation, fetch from mission-links.html dropboxes
+      const studentName = studentSelect.options[studentSelect.selectedIndex].text;
+      selectedSubmission = {
+        id: 'sub_' + selectedStudent,
+        student: studentName,
+        class: document.getElementById('classSelect').options[document.getElementById('classSelect').selectedIndex].text,
+        mission: 'Current Mission',
+        submittedAt: new Date().toISOString()
+      };
+      
+      document.getElementById('selectedStudent').textContent = `Grading: ${studentName}`;
+      document.getElementById('gradingContent').style.display = 'block';
+      document.getElementById('noSelectionMessage').style.display = 'none';
+      
+      loadExistingGrade();
+      loadGradeHistory();
+    }
+
+    // Updated Grade History with clickable items and notes
+    function loadGradeHistory() {
+      if (!selectedSubmission) return;
+
+      const studentGrades = grades.filter(grade => grade.student === selectedSubmission.student);
+      const historyContainer = document.getElementById('gradeHistory');
+
+      if (studentGrades.length === 0) {
+        historyContainer.innerHTML = '<div style="text-align: center; color: #888; margin-top: 50px;">No grades found for this student</div>';
+        return;
+      }
+
+      historyContainer.innerHTML = studentGrades.map((grade, index) => `
+        <div class="history-item" onclick="toggleHistoryNotes(${index})">
+          <h4>${grade.exercise} - ${grade.mission}</h4>
+          <div class="history-scores">
+            ${Object.entries(grade.scores).map(([category, score]) => `
+              <div class="history-score">
+                <span>${category}:</span>
+                <span>${score}</span>
+              </div>
+            `).join('')}
+          </div>
+          <div class="history-timestamp">${new Date(grade.gradedAt).toLocaleString()}</div>
+          <div class="history-notes" id="notes-${index}">
+            <h5>Instructor Notes:</h5>
+            <p>${grade.instructorNotes || 'No notes provided'}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function toggleHistoryNotes(index) {
+      const notesElement = document.getElementById(`notes-${index}`);
+      const historyItem = notesElement.parentElement;
+      
+      if (notesElement.classList.contains('visible')) {
+        notesElement.classList.remove('visible');
+        historyItem.classList.remove('expanded');
+      } else {
+        // Hide all other notes first
+        document.querySelectorAll('.history-notes').forEach(notes => {
+          notes.classList.remove('visible');
+          notes.parentElement.classList.remove('expanded');
+        });
+        
+        // Show this one
+        notesElement.classList.add('visible');
+        historyItem.classList.add('expanded');
+      }
+    }
+
+    // Updated save function to work with number boxes
+    function saveGrade() {
+      if (!selectedSubmission) {
+        alert('Please select a submission first.');
+        return;
+      }
+
+      const scores = {};
+      categories.forEach(category => {
+        scores[category] = window.currentScores[category] || 5;
+      });
+
+      const gradeData = {
+        id: 'grade_' + Date.now(),
+        student: selectedSubmission.student,
+        class: selectedSubmission.class,
+        classId: document.getElementById('classSelect').value,
+        studentId: document.getElementById('studentSelect').value,
+        exercise: currentExercise ? currentExercise.name : 'Current Exercise',
+        exerciseId: currentExercise ? currentExercise.id : 'current',
+        mission: selectedSubmission.mission,
+        missionId: selectedSubmission.mission.toLowerCase().replace(/\s+/g, '_'),
+        submittedAt: selectedSubmission.submittedAt,
+        gradedAt: new Date().toISOString(),
+        scores: scores,
+        rubricData: rubricCategories,
+        instructorNotes: document.getElementById('instructorNotes').value,
+        feedbackFile: selectedFeedbackFile,
+        gradingMethod: 'number_box_rubric',
+        overallScore: Object.values(scores).reduce((a, b) => a + b, 0) / Object.values(scores).length
+      };
+
+      // Remove existing grade for same student/exercise/mission
+      grades = grades.filter(grade => 
+        !(grade.student === gradeData.student && 
+          grade.exerciseId === gradeData.exerciseId &&
+          grade.mission === gradeData.mission)
+      );
+
+      grades.push(gradeData);
+      localStorage.setItem('grades', JSON.stringify(grades));
+
+      alert('Grade saved successfully!');
+      loadGradeHistory();
+    }
+
+    // Updated reset function for number boxes
+    function resetGradingForm() {
+      // Reset all score boxes
+      document.querySelectorAll('.score-box').forEach(box => {
+        box.classList.remove('selected');
+      });
+      
+      // Reset current scores
+      window.currentScores = {};
+      
+      // Clear notes
+      document.getElementById('instructorNotes').value = '';
+      
+      // Clear feedback file
+      selectedFeedbackFile = null;
+      document.getElementById('feedbackFile').value = '';
+      updateFileDropZone();
+      
+      // Update chart with default scores
+      updateGradingChart();
+    }
+
+    // Updated load existing grade function
+    function loadExistingGrade() {
+      const existingGrade = grades.find(grade => 
+        grade.student === selectedSubmission.student && 
+        grade.exercise === (currentExercise ? currentExercise.name : 'Current Exercise') &&
+        grade.mission === selectedSubmission.mission
+      );
+
+      if (existingGrade) {
+        // Load scores into number boxes
+        categories.forEach((category) => {
+          const score = existingGrade.scores[category] || 5;
+          selectScore(category, score);
+        });
+        
+        // Load instructor notes
+        document.getElementById('instructorNotes').value = existingGrade.instructorNotes || '';
+        
+        // Load feedback file
+        selectedFeedbackFile = existingGrade.feedbackFile || null;
+        updateFileDropZone();
+      } else {
+        // Reset to defaults
+        resetGradingForm();
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      localStorage.removeItem('userName');
+      window.location.href = '/login.html';
+    }
+    
+    // ===== SOCKET.IO FILE SUBMISSION HANDLER =====
+    let instructorSocket = null;
+    
+    function initializeInstructorSocket() {
+      if (!instructorSocket) {
+        instructorSocket = io();
+        
+        // Join instructor grading room
+        instructorSocket.emit('join-instructor-grading');
+        
+        // Listen for new file submissions
+        instructorSocket.on('new-file-submission', (submission) => {
+          console.log('📁 New file submission received:', submission);
+          
+          // Add to file submissions storage
+          let fileSubmissions = JSON.parse(localStorage.getItem('fileSubmissions') || '[]');
+          fileSubmissions.push(submission);
+          localStorage.setItem('fileSubmissions', JSON.stringify(fileSubmissions));
+          
+          // Add to regular submissions for display
+          let submissions = JSON.parse(localStorage.getItem('submissions') || '[]');
+          const displaySubmission = {
+            id: submission.id,
+            student: submission.studentName,
+            class: 'Mission Exercise',
+            mission: `${submission.vaultType === 'slideVault' ? 'Slide' : 'Sheet'} Submission`,
+            submittedAt: submission.submittedAt,
+            status: 'pending',
+            fileData: submission.fileData,
+            fileName: submission.fileName,
+            fileSize: submission.fileSize,
+            fileType: submission.fileType,
+            vaultType: submission.vaultType
+          };
+          
+          submissions.push(displaySubmission);
+          localStorage.setItem('submissions', JSON.stringify(submissions));
+          
+          // Refresh submissions list
+          loadSubmissions();
+          
+          // Show notification
+          showFileSubmissionNotification(submission);
+        });
+        
+        console.log('🔌 Instructor socket initialized for file submissions');
+      }
+    }
+    
+    function showFileSubmissionNotification(submission) {
+      // Create notification element
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+        z-index: 10000;
+        font-weight: 600;
+        max-width: 350px;
+        animation: slideInRight 0.3s ease-out;
+      `;
+      
+      notification.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <i class="fas fa-file-upload" style="font-size: 1.2em;"></i>
+          <div>
+            <div style="font-size: 1.1em;">New File Submission!</div>
+            <div style="font-size: 0.9em; opacity: 0.9;">
+              ${submission.studentName} → ${submission.fileName}
+            </div>
+            <div style="font-size: 0.8em; opacity: 0.8;">
+              ${submission.vaultType === 'slideVault' ? 'SlideVault' : 'SheetVault'}
+            </div>
+          </div>
+        </div>
+      `;
+      
+      // Add animation styles
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes slideInRight {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+      `;
+      document.head.appendChild(style);
+      
+      document.body.appendChild(notification);
+      
+      // Remove notification after 5 seconds
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.style.animation = 'slideInRight 0.3s ease-out reverse';
+          setTimeout(() => {
+            if (notification.parentNode) {
+              notification.parentNode.removeChild(notification);
+            }
+          }, 300);
+        }
+      }, 5000);
+      
+      // Play notification sound (optional)
+      try {
+        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT');
+        audio.play().catch(() => {}); // Ignore errors if audio fails
+      } catch (e) {}
+    }
+    
+    // Initialize socket when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      // Small delay to ensure everything is loaded
+      setTimeout(initializeInstructorSocket, 1000);
+    });
+  </script>
+  
+  <!-- Socket.IO Client -->
+  <script src="/socket.io/socket.io.js">  
+    // ===== SOCKET.IO FILE SUBMISSION HANDLER =====
+    let instructorSocket = null;
+    
+    function initializeInstructorSocket() {
+      if (!instructorSocket) {
+        instructorSocket = io();
+        
+        // Join instructor grading room
+        instructorSocket.emit('join-instructor-grading');
+        
+        // Listen for new file submissions
+        instructorSocket.on('new-file-submission', (submission) => {
+          console.log('📁 New file submission received:', submission);
+          
+          // Add to file submissions storage
+          let fileSubmissions = JSON.parse(localStorage.getItem('fileSubmissions') || '[]');
+          fileSubmissions.push(submission);
+          localStorage.setItem('fileSubmissions', JSON.stringify(fileSubmissions));
+          
+          // Add to regular submissions for display
+          let submissions = JSON.parse(localStorage.getItem('submissions') || '[]');
+          const displaySubmission = {
+            id: submission.id,
+            student: submission.studentName,
+            class: 'Mission Exercise',
+            mission: `${submission.vaultType === 'slideVault' ? 'Slide' : 'Sheet'} Submission`,
+            submittedAt: submission.submittedAt,
+            status: 'pending',
+            fileData: submission.fileData,
+            fileName: submission.fileName,
+            fileSize: submission.fileSize,
+            fileType: submission.fileType,
+            vaultType: submission.vaultType
+          };
+          
+          submissions.push(displaySubmission);
+          localStorage.setItem('submissions', JSON.stringify(submissions));
+          
+          // Refresh submissions list
+          loadSubmissions();
+          
+          // Show notification
+          showFileSubmissionNotification(submission);
+        });
+        
+        console.log('🔌 Instructor socket initialized for file submissions');
+      }
+    }
+    
+    function showFileSubmissionNotification(submission) {
+      // Create notification element
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+        z-index: 10000;
+        font-weight: 600;
+        max-width: 350px;
+        animation: slideInRight 0.3s ease-out;
+      `;
+      
+      notification.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <i class="fas fa-file-upload" style="font-size: 1.2em;"></i>
+          <div>
+            <div style="font-size: 1.1em;">New File Submission!</div>
+            <div style="font-size: 0.9em; opacity: 0.9;">
+              ${submission.studentName} → ${submission.fileName}
+            </div>
+            <div style="font-size: 0.8em; opacity: 0.8;">
+              ${submission.vaultType === 'slideVault' ? 'SlideVault' : 'SheetVault'}
+            </div>
+          </div>
+        </div>
+      `;
+      
+      // Add animation styles
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes slideInRight {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+      `;
+      document.head.appendChild(style);
+      
+      document.body.appendChild(notification);
+      
+      // Remove notification after 5 seconds
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.style.animation = 'slideInRight 0.3s ease-out reverse';
+          setTimeout(() => {
+            if (notification.parentNode) {
+              notification.parentNode.removeChild(notification);
+            }
+          }, 300);
+        }
+      }, 5000);
+      
+      // Play notification sound (optional)
+      try {
+        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT');
+        audio.play().catch(() => {}); // Ignore errors if audio fails
+      } catch (e) {}
+    }
+    
+    // Initialize socket when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      // Small delay to ensure everything is loaded
+      setTimeout(initializeInstructorSocket, 1000);
+    });
+  </script>
+  
+  <!-- Socket.IO Client -->
+  <script src="/socket.io/socket.io.js">  
+    // ===== SOCKET.IO FILE SUBMISSION HANDLER =====
+    let instructorSocket = null;
+    
+    function initializeInstructorSocket() {
+      if (!instructorSocket) {
+        instructorSocket = io();
+        
+        // Join instructor grading room
+        instructorSocket.emit('join-instructor-grading');
+        
+        // Listen for new file submissions
+        instructorSocket.on('new-file-submission', (submission) => {
+          console.log('📁 New file submission received:', submission);
+          
+          // Add to file submissions storage
+          let fileSubmissions = JSON.parse(localStorage.getItem('fileSubmissions') || '[]');
+          fileSubmissions.push(submission);
+          localStorage.setItem('fileSubmissions', JSON.stringify(fileSubmissions));
+          
+          // Add to regular submissions for display
+          let submissions = JSON.parse(localStorage.getItem('submissions') || '[]');
+          const displaySubmission = {
+            id: submission.id,
+            student: submission.studentName,
+            class: 'Mission Exercise',
+            mission: `${submission.vaultType === 'slideVault' ? 'Slide' : 'Sheet'} Submission`,
+            submittedAt: submission.submittedAt,
+            status: 'pending',
+            fileData: submission.fileData,
+            fileName: submission.fileName,
+            fileSize: submission.fileSize,
+            fileType: submission.fileType,
+            vaultType: submission.vaultType
+          };
+          
+          submissions.push(displaySubmission);
+          localStorage.setItem('submissions', JSON.stringify(submissions));
+          
+          // Refresh submissions list
+          loadSubmissions();
+          
+          // Show notification
+          showFileSubmissionNotification(submission);
+        });
+        
+        console.log('🔌 Instructor socket initialized for file submissions');
+      }
+    }
+    
+    function showFileSubmissionNotification(submission) {
+      // Create notification element
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+        z-index: 10000;
+        font-weight: 600;
+        max-width: 350px;
+        animation: slideInRight 0.3s ease-out;
+      `;
+      
+      notification.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <i class="fas fa-file-upload" style="font-size: 1.2em;"></i>
+          <div>
+            <div style="font-size: 1.1em;">New File Submission!</div>
+            <div style="font-size: 0.9em; opacity: 0.9;">
+              ${submission.studentName} → ${submission.fileName}
+            </div>
+            <div style="font-size: 0.8em; opacity: 0.8;">
+              ${submission.vaultType === 'slideVault' ? 'SlideVault' : 'SheetVault'}
+            </div>
+          </div>
+        </div>
+      `;
+      
+      // Add animation styles
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes slideInRight {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+      `;
+      document.head.appendChild(style);
+      
+      document.body.appendChild(notification);
+      
+      // Remove notification after 5 seconds
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.style.animation = 'slideInRight 0.3s ease-out reverse';
+          setTimeout(() => {
+            if (notification.parentNode) {
+              notification.parentNode.removeChild(notification);
+            }
+          }, 300);
+        }
+      }, 5000);
+      
+      // Play notification sound (optional)
+      try {
+        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT');
+        audio.play().catch(() => {}); // Ignore errors if audio fails
+      } catch (e) {}
+    }
+    
+    // Initialize socket when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      // Small delay to ensure everything is loaded
+      setTimeout(initializeInstructorSocket, 1000);
+    });
+  </script>
+  
+  <!-- Socket.IO Client -->
+  <script src="/socket.io/socket.io.js"></script>
+</body>
+</html>
