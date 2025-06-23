@@ -340,6 +340,32 @@
       border-radius: 6px;
       border: 1px solid rgba(255, 255, 255, 0.2);
     }
+    
+    /* Role Indicator */
+    .role-indicator {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      z-index: 100;
+    }
+    
+    .role-indicator.instructor {
+      background: rgba(34, 197, 94, 0.8);
+      border-color: rgba(34, 197, 94, 0.3);
+    }
+    
+    .role-indicator.student {
+      background: rgba(59, 130, 246, 0.8);
+      border-color: rgba(59, 130, 246, 0.3);
+    }
 
     /* Video Overlay Controls - Bottom Center */
     .video-controls-overlay {
@@ -1306,6 +1332,11 @@
             --:--:--
           </div>
           
+          <!-- Role Indicator - Bottom Right -->
+          <div class="role-indicator" id="roleIndicator">
+            🔍 Detecting role...
+          </div>
+          
           <!-- Behind Live Indicator - Top Right -->
           <div class="behind-live-indicator" id="behindLiveIndicator" style="display:none;">
             📡 You are <span id="behindLiveSeconds">0</span> seconds behind live
@@ -1881,20 +1912,51 @@
       const urlParams = new URLSearchParams(window.location.search);
       const classId = urlParams.get('class') || 'default-class';
       
-      // Determine user role (this should be set from authentication)
-      // For now, we'll check if user has instructor privileges
-      const userRole = isInstructor ? 'instructor' : 'student';
+      // Get role from URL parameter first, then check authentication
+      const urlRole = urlParams.get('role');
+      let userRole = 'student'; // Default to student
+      
+      // Check URL parameter first
+      if (urlRole === 'instructor' || urlRole === 'admin') {
+        userRole = 'instructor';
+        isInstructor = true;
+      } else if (urlRole === 'student') {
+        userRole = 'student';
+        isInstructor = false;
+      } else {
+        // Fallback to checking authentication (if available)
+        userRole = isInstructor ? 'instructor' : 'student';
+      }
       
       console.log(`🚪 Joining streaming room as ${userRole} for class: ${classId}`);
+      console.log(`🔍 Role detection: URL=${urlRole}, Final=${userRole}, isInstructor=${isInstructor}`);
+      console.log(`🌐 Current URL: ${window.location.href}`);
+      console.log(`📋 URL Parameters:`, Object.fromEntries(urlParams));
       
       if (userRole === 'instructor') {
         socket.emit('instructor-join-class', { classId });
         currentRoom = `class:${classId}`;
         console.log('👨‍🏫 Instructor joining class:', classId);
+        
+        // Show instructor controls immediately
+        document.getElementById('instructorControls').style.display = 'flex';
+        
+        // Update role indicator
+        const roleIndicator = document.getElementById('roleIndicator');
+        roleIndicator.textContent = '👨‍🏫 Instructor';
+        roleIndicator.className = 'role-indicator instructor';
       } else {
         socket.emit('student-join-class', { classId });
         currentRoom = `class:${classId}`;
         console.log('👨‍🎓 Student joining class:', classId);
+        
+        // Hide instructor controls for students
+        document.getElementById('instructorControls').style.display = 'none';
+        
+        // Update role indicator
+        const roleIndicator = document.getElementById('roleIndicator');
+        roleIndicator.textContent = '👨‍🎓 Student';
+        roleIndicator.className = 'role-indicator student';
       }
     }
     

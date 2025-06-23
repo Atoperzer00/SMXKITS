@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMX Stream Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            border: 1px solid #444;
+        }
+        .test-link {
+            display: inline-block;
+            background: #22c55e;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 8px;
+            margin: 10px 10px 10px 0;
+            font-weight: bold;
+        }
+        .test-link:hover {
+            background: #16a34a;
+        }
+        .instructor-link {
+            background: #ef4444;
+        }
+        .instructor-link:hover {
+            background: #dc2626;
+        }
+        .instructions {
+            background: #1e40af;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        code {
+            background: #333;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎥 SMX Stream Testing</h1>
+    
+    <div class="instructions">
+        <h3>📋 Testing Instructions:</h3>
+        <ol>
+            <li>Open the <strong>Instructor</strong> link first</li>
+            <li>Check console (F12) for role detection messages</li>
+            <li>You should see "Go Live" button and "👨‍🏫 Instructor" indicator</li>
+            <li>Open 2+ <strong>Student</strong> links in new tabs</li>
+            <li>Check that instructor shows viewer count (should be 2+)</li>
+            <li>Click "Go Live" and share your screen</li>
+            <li>Students should see your shared screen</li>
+        </ol>
+    </div>
+    
+    <div class="test-section">
+        <h2>🎛️ Instructor Access</h2>
+        <p>Use this link to join as an instructor:</p>
+        <a href="/SMXStream-new.html?class=test-stream&role=instructor" class="test-link instructor-link" target="_blank">
+            👨‍🏫 Join as Instructor
+        </a>
+        <p><small>Should show: "Go Live" button, viewer count, instructor controls</small></p>
+    </div>
+    
+    <div class="test-section">
+        <h2>👨‍🎓 Student Access</h2>
+        <p>Use these links to join as students (open multiple tabs):</p>
+        <a href="/SMXStream-new.html?class=test-stream&role=student" class="test-link" target="_blank">
+            👨‍🎓 Join as Student #1
+        </a>
+        <a href="/SMXStream-new.html?class=test-stream&role=student" class="test-link" target="_blank">
+            👨‍🎓 Join as Student #2
+        </a>
+        <a href="/SMXStream-new.html?class=test-stream&role=student" class="test-link" target="_blank">
+            👨‍🎓 Join as Student #3
+        </a>
+        <p><small>Should show: "Instructor will start stream soon", no controls</small></p>
+    </div>
+    
+    <div class="test-section">
+        <h2>🔍 Debug Information</h2>
+        <p>Check browser console (F12) for these messages:</p>
+        <ul>
+            <li><code>🔍 Role detection: URL=instructor, Final=instructor, isInstructor=true</code></li>
+            <li><code>👨‍🏫 Instructor joining class: test-stream</code></li>
+            <li><code>👥 Updated viewer count for class:test-stream: 2</code></li>
+            <li><code>🔴 Instructor started stream in room: class:test-stream</code></li>
+            <li><code>📥 Received WebRTC offer from instructor</code></li>
+            <li><code>✅ WebRTC connection established</code></li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h2>⚠️ Troubleshooting</h2>
+        <p><strong>If viewer count shows 0:</strong></p>
+        <ul>
+            <li>Make sure all tabs use the same <code>class=test-stream</code> parameter</li>
+            <li>Check that students show "👨‍🎓 Student" role indicator</li>
+            <li>Refresh student tabs if they joined before instructor</li>
+        </ul>
+        
+        <p><strong>If "Go Live" doesn't work:</strong></p>
+        <ul>
+            <li>Make sure instructor shows "👨‍🏫 Instructor" role indicator</li>
+            <li>Check browser permissions for screen sharing</li>
+            <li>Look for WebRTC errors in console</li>
+        </ul>
+        
+        <p><strong>If students don't see stream:</strong></p>
+        <ul>
+            <li>Check for "📥 Received WebRTC offer" in student console</li>
+            <li>Try different browsers (Chrome recommended)</li>
+            <li>Check firewall/antivirus WebRTC blocking</li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h2>🌐 Custom Class Testing</h2>
+        <p>Test with your own class name:</p>
+        <form onsubmit="openCustomClass(event)">
+            <input type="text" id="className" placeholder="Enter class name" value="my-class" style="padding: 8px; margin-right: 10px; border-radius: 4px; border: 1px solid #666; background: #333; color: white;">
+            <button type="submit" style="padding: 8px 16px; background: #22c55e; color: white; border: none; border-radius: 4px; cursor: pointer;">Generate Links</button>
+        </form>
+        <div id="customLinks" style="margin-top: 15px;"></div>
+    </div>
+    
+    <script>
+        function openCustomClass(event) {
+            event.preventDefault();
+            const className = document.getElementById('className').value || 'my-class';
+            const linksDiv = document.getElementById('customLinks');
+            
+            linksDiv.innerHTML = `
+                <p><strong>Custom Class: ${className}</strong></p>
+                <a href="/SMXStream-new.html?class=${className}&role=instructor" class="test-link instructor-link" target="_blank">
+                    👨‍🏫 Instructor - ${className}
+                </a>
+                <a href="/SMXStream-new.html?class=${className}&role=student" class="test-link" target="_blank">
+                    👨‍🎓 Student - ${className}
+                </a>
+            `;
+        }
+    </script>
+</body>
+</html>
