@@ -1330,7 +1330,7 @@
     <!-- Sidebar with form -->
     <aside class="sidebar">
       <div class="resize-handle" id="sidebar-resize-handle"></div>
-      <div class="logo">SMXKITS</div>
+      <div class="logo">DRIFT</div>
       
       <!-- Navigation buttons -->
       <div class="nav">
@@ -2196,15 +2196,15 @@
       
       // Line 2: Asset & Time aligned on same line
       html += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">`;
-      html += `<span>🛰️ <strong>${(data.asset || 'UNKNOWN').toUpperCase()}</strong></span>`;
+      html += `<span> <strong>${(data.asset || 'UNKNOWN').toUpperCase()}</strong></span>`;
       html += `<span style="color: #22c55e; font-weight: bold;">${data.zulu ? data.zulu + 'Z' : '0000Z'}</span>`;
       html += `</div>`;
       
       // Line 3: Location with MGRS and S/VIC right-aligned
       html += `<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2px;">`;
-      html += `<span>📍 <strong>Location:</strong> ${(data.location || 'Not specified').toUpperCase()}</span>`;
-      html += `<div style="text-align: right; font-size: 10px;">`;
-      html += `<div>📐 ${(data.mgrs || 'Not specified').toUpperCase()}</div>`;
+      html += `<span> <strong>Location:</strong> ${(data.location || 'Not specified').toUpperCase()}</span>`;
+      html += `<div style="text-align: right; font-size: 12px;">`;
+      html += `<div> ${(data.mgrs || 'Not specified').toUpperCase()}</div>`;
       html += `<div>S: ${(data.slant || 'N/A').toUpperCase()}     VIC: ${data.vehicles !== undefined ? data.vehicles : '0'}</div>`;
       html += `</div>`;
       html += `</div>`;

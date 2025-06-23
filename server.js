@@ -1038,9 +1038,10 @@ io.on('connection', socket => {
   
   // Instructor stream control events
   socket.on('stream:init', (data) => {
-    const classId = socket.classId;
+    const classId = data.classId || socket.classId;
     if (!classId) {
       console.warn('⚠️ No classId for stream:init from socket:', socket.id);
+      console.warn('⚠️ Data received:', data);
       return;
     }
     
@@ -1228,7 +1229,7 @@ io.on('connection', socket => {
     socket.lastTimeUpdate = now;
     
     // Update stream state
-    const classId = socket.classId;
+    const classId = data.classId || socket.classId;
     const state = io.streamStates.get(classId) || {};
     const updatedState = {
       ...state,

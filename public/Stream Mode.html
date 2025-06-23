@@ -914,6 +914,24 @@
     let currentClassId = null;
     let authToken = localStorage.getItem('token');
     
+    // Auto-detect class ID from URL parameters or localStorage (like student viewer)
+    function initializeClassId() {
+      const urlParams = new URLSearchParams(window.location.search);
+      currentClassId = urlParams.get('classId') || localStorage.getItem('currentClassId');
+      
+      console.log('🔍 Class ID detection:', {
+        fromURL: urlParams.get('classId'),
+        fromStorage: localStorage.getItem('currentClassId'),
+        final: currentClassId,
+        currentURL: window.location.href
+      });
+      
+      return currentClassId;
+    }
+    
+    // Initialize class ID immediately
+    initializeClassId();
+    
     // Debug initialization
     console.log('🔧 Stream Mode initialized');
     console.log('API Base URL:', apiBaseUrl);
@@ -973,6 +991,36 @@
             option.textContent = cls.name;
             classSelect.appendChild(option);
           });
+          
+          // Auto-select the detected class ID if available
+          if (currentClassId) {
+            classSelect.value = currentClassId;
+            const selectedOption = classSelect.options[classSelect.selectedIndex];
+            if (selectedOption && selectedOption.value === currentClassId) {
+              classLabel.textContent = selectedOption.text;
+              localStorage.setItem('currentClassId', currentClassId);
+              console.log('✅ Auto-selected class:', currentClassId, selectedOption.text);
+              
+              // Join the class room immediately if socket is connected
+              if (socket && socket.connected) {
+                socket.emit('instructor-join-class', { classId: currentClassId });
+                console.log('🏫 Auto-joined class room:', currentClassId);
+              }
+            }
+          } else if (classes.length > 0) {
+            // If no class ID detected, auto-select the first class
+            currentClassId = classes[0]._id;
+            classSelect.value = currentClassId;
+            classLabel.textContent = classes[0].name;
+            localStorage.setItem('currentClassId', currentClassId);
+            console.log('✅ Auto-selected first available class:', currentClassId, classes[0].name);
+            
+            // Join the class room immediately if socket is connected
+            if (socket && socket.connected) {
+              socket.emit('instructor-join-class', { classId: currentClassId });
+              console.log('🏫 Auto-joined first class room:', currentClassId);
+            }
+          }
         }
       } catch (error) {
         console.error('Error loading classes:', error);
@@ -985,6 +1033,12 @@
     classSelect.addEventListener('change', () => {
       currentClassId = classSelect.value;
       classLabel.textContent = classSelect.options[classSelect.selectedIndex].text;
+      
+      // Store class ID in localStorage for student viewer compatibility
+      if (currentClassId) {
+        localStorage.setItem('currentClassId', currentClassId);
+        console.log('💾 Stored class ID in localStorage:', currentClassId);
+      }
       
       // If socket is connected, join the new class room
       if (socket && socket.connected && currentClassId) {
@@ -2116,6 +2170,7 @@
         // Only send if time changed significantly or play state changed
         if (Math.abs(currentTime - lastTimeUpdate) > 0.5 || isPlaying !== lastPlayState) {
           socket.emit('stream:time', {
+            classId: currentClassId,
             time: currentTime,
             playing: isPlaying,
             timestamp: new Date().toISOString()
@@ -2128,15 +2183,18 @@
       
       // Send initial stream state
       socket.emit('stream:init', {
+        classId: currentClassId,
         streamUrl: videoElement.src,
         startTime: new Date().toISOString(),
         currentTime: videoElement.currentTime,
-        playing: !videoElement.paused
+        playing: !videoElement.paused,
+        filename: videoElement.src.split('/').pop() // Extract filename from URL
       });
       
       // Listen for video events and broadcast them
       videoElement.addEventListener('play', () => {
         socket.emit('stream:play', {
+          classId: currentClassId,
           time: videoElement.currentTime,
           timestamp: new Date().toISOString()
         });
@@ -2144,6 +2202,7 @@
       
       videoElement.addEventListener('pause', () => {
         socket.emit('stream:pause', {
+          classId: currentClassId,
           time: videoElement.currentTime,
           timestamp: new Date().toISOString()
         });
@@ -2151,6 +2210,7 @@
       
       videoElement.addEventListener('seeked', () => {
         socket.emit('stream:seek', {
+          classId: currentClassId,
           time: videoElement.currentTime,
           timestamp: new Date().toISOString()
         });
@@ -2170,6 +2230,13 @@
       const currentStatus = statusElement.textContent;
       
       if (currentStatus === 'OFFLINE') {
+        // Validate class selection first
+        if (!currentClassId) {
+          alert('Please select a class before starting the stream.');
+          console.error('❌ Cannot start stream: No class selected');
+          return;
+        }
+        
         // Start streaming
         const previewVideo = document.getElementById('previewVideo');
         
