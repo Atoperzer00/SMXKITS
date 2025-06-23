@@ -42,9 +42,12 @@ app.use(express.static('.'));
 
 // Create uploads directory if it doesn't exist
 const uploadsDir = path.join(__dirname, 'uploads');
+console.log('📂 Uploads directory path:', uploadsDir);
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
-  console.log('📁 Created uploads directory');
+  console.log('📁 Created uploads directory at:', uploadsDir);
+} else {
+  console.log('📁 Uploads directory already exists at:', uploadsDir);
 }
 
 // Serve uploaded videos
@@ -80,13 +83,27 @@ const upload = multer({
 
 // ===== VIDEO UPLOAD API =====
 app.post('/api/stream/upload', upload.single('video'), (req, res) => {
+  console.log('📤 Upload request received');
+  console.log('📋 Request body:', req.body);
+  console.log('📁 Request file:', req.file ? 'File received' : 'No file');
+  console.log('📂 Uploads directory exists:', fs.existsSync(uploadsDir));
+  
   try {
     if (!req.file) {
+      console.error('❌ No file in request');
       return res.status(400).json({ error: 'No video file uploaded' });
     }
 
     const { classId } = req.body;
-    console.log(`📹 Video uploaded: ${req.file.filename} for class: ${classId}`);
+    console.log(`📹 Video uploaded successfully: ${req.file.filename} for class: ${classId}`);
+    console.log(`📊 File details: ${req.file.size} bytes, saved to: ${req.file.path}`);
+
+    // Verify file was actually saved
+    if (fs.existsSync(req.file.path)) {
+      console.log('✅ File confirmed saved to disk');
+    } else {
+      console.error('❌ File not found on disk after upload');
+    }
 
     // Return file information
     res.json({
@@ -95,6 +112,7 @@ app.post('/api/stream/upload', upload.single('video'), (req, res) => {
       originalName: req.file.originalname,
       size: req.file.size,
       path: `/uploads/${req.file.filename}`,
+      streamUrl: `/uploads/${req.file.filename}`, // Add streamUrl for client compatibility
       classId: classId
     });
 

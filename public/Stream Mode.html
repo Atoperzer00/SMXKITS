@@ -1597,6 +1597,8 @@
         }
 
         const result = await response.json();
+        console.log('✅ Upload successful, server response:', result);
+        
         progressFill.style.width = '100%';
         uploadStatus.textContent = `Video uploaded successfully! Ready to stream.`;
         uploadStatus.className = 'upload-status success';
@@ -1632,12 +1634,12 @@
           window.currentUploadedVideo = {
             url: result.streamUrl,
             filename: result.filename,
-            originalName: file.name
+            originalName: fileName
           };
           
           // Update the submitted files list with the uploaded video URL
           const files = loadSubmittedFiles();
-          const existingFileIndex = files.findIndex(f => f.name === file.name);
+          const existingFileIndex = files.findIndex(f => f.name === fileName);
           if (existingFileIndex !== -1) {
             // Update existing file with server URL
             files[existingFileIndex].url = result.streamUrl;
