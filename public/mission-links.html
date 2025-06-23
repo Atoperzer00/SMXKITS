@@ -697,6 +697,14 @@
           <p style="color: var(--text-secondary); font-size: 1.1rem; margin-top: 0.5rem;">
             Access essential mission resources and external links for training operations.
           </p>
+          
+          <!-- TEMPORARY DEBUG BUTTONS -->
+          <div style="margin-top: 1rem; padding: 1rem; background: rgba(255,0,0,0.1); border-radius: 10px;">
+            <p style="color: #ff6b35; font-weight: bold; margin-bottom: 0.5rem;">DEBUG TOOLS (Temporary):</p>
+            <button onclick="testModalVisibility()" style="background: #dc2626; border: none; color: white; padding: 0.5rem 1rem; border-radius: 5px; margin-right: 0.5rem; cursor: pointer;">Test Modal (M key)</button>
+            <button onclick="openSlideshowViewer()" style="background: #16a34a; border: none; color: white; padding: 0.5rem 1rem; border-radius: 5px; margin-right: 0.5rem; cursor: pointer;">Test Slideshow (T key)</button>
+            <button onclick="console.log('Modal element:', document.getElementById('slideshowModal'))" style="background: #2563eb; border: none; color: white; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">Check Modal</button>
+          </div>
 
         </div>
       </header>
@@ -969,7 +977,11 @@
           return;
         }
         
-        // Force show modal with explicit styles and higher z-index
+        // COMPLETELY BYPASS CSS - Create new modal if needed
+        console.log('Attempting to show modal...');
+        
+        // First try: Use existing modal
+        modal.className = 'slideshow-modal active';
         modal.style.cssText = `
           display: flex !important;
           position: fixed !important;
@@ -978,20 +990,53 @@
           width: 100vw !important;
           height: 100vh !important;
           background: rgba(0, 0, 0, 0.95) !important;
-          z-index: 999999 !important;
+          z-index: 9999999 !important;
           align-items: center !important;
           justify-content: center !important;
-          backdrop-filter: blur(10px) !important;
+          visibility: visible !important;
+          opacity: 1 !important;
         `;
-        modal.classList.add('active');
-        console.log('Modal styles applied and active class added');
+        
+        // If that doesn't work, create a completely new modal
+        setTimeout(() => {
+          const computedDisplay = window.getComputedStyle(modal).display;
+          console.log('Modal computed display after styling:', computedDisplay);
+          
+          if (computedDisplay === 'none' || !modal.offsetParent) {
+            console.log('Original modal not showing, creating new one...');
+            
+            // Create a brand new modal element
+            const newModal = document.createElement('div');
+            newModal.id = 'emergencyModal';
+            newModal.style.cssText = `
+              display: flex !important;
+              position: fixed !important;
+              top: 0 !important;
+              left: 0 !important;
+              width: 100vw !important;
+              height: 100vh !important;
+              background: rgba(0, 0, 0, 0.95) !important;
+              z-index: 9999999 !important;
+              align-items: center !important;
+              justify-content: center !important;
+              color: white !important;
+              font-size: 2rem !important;
+            `;
+            newModal.innerHTML = `
+              <div style="text-align: center; background: rgba(255,255,255,0.1); padding: 2rem; border-radius: 10px;">
+                <h2>SLIDESHOW MODAL TEST</h2>
+                <p>This is a test modal that should be visible</p>
+                <button onclick="this.parentElement.parentElement.remove()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: #ff6b35; color: white; border: none; border-radius: 5px; cursor: pointer;">Close</button>
+              </div>
+            `;
+            
+            document.body.appendChild(newModal);
+            console.log('Emergency modal created and added to body');
+          }
+        }, 500);
         
         // Prevent body scrolling when modal is open
         document.body.style.overflow = 'hidden';
-        
-        // Force modal to be visible by removing any hidden classes
-        modal.classList.remove('hidden');
-        modal.removeAttribute('hidden');
         
         // Debug modal visibility
         console.log('Modal computed styles:', window.getComputedStyle(modal));
@@ -1103,6 +1148,12 @@
       const modal = document.getElementById('slideshowModal');
       if (modal) {
         console.log('Modal found, forcing display...');
+        
+        // Remove ALL classes and styles first
+        modal.className = '';
+        modal.removeAttribute('style');
+        
+        // Apply completely new styles
         modal.style.cssText = `
           display: flex !important;
           position: fixed !important;
@@ -1110,18 +1161,25 @@
           left: 0 !important;
           width: 100vw !important;
           height: 100vh !important;
-          background: rgba(255, 0, 0, 0.8) !important;
-          z-index: 999999 !important;
+          background: rgba(255, 0, 0, 0.9) !important;
+          z-index: 9999999 !important;
           align-items: center !important;
           justify-content: center !important;
+          visibility: visible !important;
+          opacity: 1 !important;
         `;
-        console.log('Modal should now be visible with red background');
         
-        // Auto-hide after 3 seconds
+        // Also add a visible text element
+        modal.innerHTML = '<div style="color: white; font-size: 2rem; text-align: center;">TEST MODAL IS VISIBLE!</div>';
+        
+        console.log('Modal should now be visible with red background');
+        console.log('Modal computed styles:', window.getComputedStyle(modal));
+        
+        // Auto-hide after 5 seconds
         setTimeout(() => {
           modal.style.display = 'none';
           console.log('Modal hidden');
-        }, 3000);
+        }, 5000);
       } else {
         console.error('Modal not found!');
       }

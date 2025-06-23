@@ -432,6 +432,10 @@
           <i class="fas fa-sync" style="margin-right: 0.5rem;"></i>
           Test Sync
         </button>
+        <button onclick="resetToDefaults()" class="btn btn-warning" title="Reset all content to synchronized defaults">
+          <i class="fas fa-undo" style="margin-right: 0.5rem;"></i>
+          Reset to Defaults
+        </button>
         <span style="color: var(--text-secondary); font-size: 0.9rem;">
           <i class="fas fa-info-circle" style="margin-right: 0.3rem;"></i>
           Changes auto-save and sync to keyboard training
@@ -480,23 +484,23 @@
             switch (m) {
               case 0: // Basic Typing
                 moduleTexts[p] = p === 0 ? 'The quick brown fox jumps over the lazy dog. This sentence contains every letter of the alphabet.' :
-                                p === 1 ? 'Practice makes perfect. Keep typing to improve your speed and accuracy.' :
-                                'Touch typing is a skill that will serve you well throughout your career.';
+                                p === 1 ? 'Practice makes perfect. Keep typing to improve your speed and accuracy with consistent daily training.' :
+                                'Touch typing is a skill that will serve you well throughout your career and personal computing tasks.';
                 break;
               case 1: // Numbers and Symbols
-                moduleTexts[p] = p === 0 ? '1234567890 !@#$%^&*() The numbers and symbols are important for data entry.' :
-                                p === 1 ? 'Email addresses like user@example.com require symbol typing skills.' :
-                                'Special characters: ~`!@#$%^&*()_+-={}[]|\\:";\'<>?,./';
+                moduleTexts[p] = p === 0 ? '1234567890 !@#$%^&*() The numbers and symbols are important for data entry and programming tasks.' :
+                                p === 1 ? 'Email addresses like user@example.com require symbol typing skills for professional communication.' :
+                                'Special characters: ~`!@#$%^&*()_+-={}[]|\\:";\'<>?,./ are used in coding and technical writing.';
                 break;
               case 2: // Military Terminology
                 moduleTexts[p] = p === 0 ? 'Military ranks: Private, Corporal, Sergeant, Lieutenant, Captain, Major, Colonel, General.' :
-                                p === 1 ? 'Military time: 0600 hours, 1200 hours, 1800 hours, 2400 hours.' :
-                                'NATO phonetic alphabet: Alpha, Bravo, Charlie, Delta, Echo, Foxtrot, Golf, Hotel.';
+                                p === 1 ? 'Military time: 0600 hours, 1200 hours, 1800 hours, 2400 hours for precise time coordination.' :
+                                'NATO phonetic alphabet: Alpha, Bravo, Charlie, Delta, Echo, Foxtrot, Golf, Hotel, India, Juliet.';
                 break;
               case 3: // POL Basic Descriptors
-                moduleTexts[p] = p === 0 ? 'One adult male in dark traditional wear. Two adult females in light clothing.' :
-                                p === 1 ? 'Personnel count: Three adult males, one adult female, two children observed.' :
-                                'Description: Individual wearing dark jacket, light pants, carrying backpack.';
+                moduleTexts[p] = p === 0 ? 'One adult male in dark traditional wear. Two adult females in light clothing observed at location.' :
+                                p === 1 ? 'Personnel count: Three adult males, one adult female, two children observed entering the compound.' :
+                                'Description: Individual wearing dark jacket, light pants, carrying backpack, proceeding north.';
                 break;
               case 4: // POL SITREP Format
                 moduleTexts[p] = p === 0 ? 'SITREP: At 0630Z, one adult male departed E gate on red motorcycle, rode S out of FOV 0635Z. SLANT 1/0/0' :
@@ -1049,6 +1053,55 @@
       } else {
         alert('No data available for sync test');
       }
+    };
+    
+    // Force reset to synchronized defaults
+    window.resetToDefaults = function() {
+      if (confirm('This will reset all typing tests to the default synchronized content. Are you sure?')) {
+        console.log('=== Resetting to Default Synchronized Content ===');
+        
+        // Clear existing data
+        localStorage.removeItem('smx_typing_tests');
+        localStorage.removeItem('smx_typing_tests_timestamp');
+        localStorage.removeItem('smx_typing_tests_update_trigger');
+        
+        // Create fresh default data
+        const defaultData = createDefaultTypingTests();
+        saveTypingTests(defaultData);
+        
+        // Reload the editor
+        renderEditor();
+        
+        alert('Typing tests have been reset to synchronized defaults. Both edit and training pages now have identical content.');
+        console.log('Reset complete - data synchronized');
+      }
+    };
+    
+    // Check sync status between pages
+    window.checkSyncStatus = function() {
+      console.log('=== Checking Sync Status ===');
+      
+      const data = getTypingTests();
+      if (!data.modules) {
+        console.error('No typing test data found');
+        return;
+      }
+      
+      console.log('Current data structure:');
+      console.log('- Modules:', data.modules.length);
+      console.log('- Module names:', data.moduleNames ? data.moduleNames.length : 'None');
+      
+      data.modules.forEach((module, moduleIndex) => {
+        console.log(`Module ${moduleIndex + 1}: ${module.length} practices`);
+        module.forEach((practice, practiceIndex) => {
+          if (practiceIndex < 3) { // Show first 3 practices
+            console.log(`  Practice ${practiceIndex + 1}: "${practice.substring(0, 50)}..."`);
+          }
+        });
+      });
+      
+      console.log('Timestamp:', localStorage.getItem('smx_typing_tests_timestamp'));
+      console.log('Update trigger:', localStorage.getItem('smx_typing_tests_update_trigger'));
     };
     
     // Initial render
