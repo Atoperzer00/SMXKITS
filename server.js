@@ -5,6 +5,7 @@ const fs = require('fs');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const socketio = require('socket.io');
+const multer = require('multer');
 const bcrypt = require('bcryptjs');
 const User = require('./models/User');
 require('dotenv').config();
@@ -38,6 +39,97 @@ app.use(express.static('public'));
 
 // Serve static files from root as fallback
 app.use(express.static('.'));
+
+// Create uploads directory if it doesn't exist
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log('📁 Created uploads directory');
+}
+
+// Serve uploaded videos
+app.use('/uploads', express.static(uploadsDir));
+
+// Configure multer for video uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadsDir);
+  },
+  filename: function (req, file, cb) {
+    // Generate unique filename with timestamp
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  limits: {
+    fileSize: 500 * 1024 * 1024 // 500MB limit
+  },
+  fileFilter: function (req, file, cb) {
+    // Accept video files only
+    if (file.mimetype.startsWith('video/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only video files are allowed!'), false);
+    }
+  }
+});
+
+// ===== VIDEO UPLOAD API =====
+app.post('/api/stream/upload', upload.single('video'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No video file uploaded' });
+    }
+
+    const { classId } = req.body;
+    console.log(`📹 Video uploaded: ${req.file.filename} for class: ${classId}`);
+
+    // Return file information
+    res.json({
+      success: true,
+      filename: req.file.filename,
+      originalName: req.file.originalname,
+      size: req.file.size,
+      path: `/uploads/${req.file.filename}`,
+      classId: classId
+    });
+
+  } catch (error) {
+    console.error('❌ Upload error:', error);
+    res.status(500).json({ error: 'Upload failed: ' + error.message });
+  }
+});
+
+// Get list of uploaded videos
+app.get('/api/stream/videos', (req, res) => {
+  try {
+    const files = fs.readdirSync(uploadsDir);
+    const videos = files
+      .filter(file => {
+        const ext = path.extname(file).toLowerCase();
+        return ['.mp4', '.webm', '.ogg', '.avi', '.mov'].includes(ext);
+      })
+      .map(file => {
+        const filePath = path.join(uploadsDir, file);
+        const stats = fs.statSync(filePath);
+        return {
+          filename: file,
+          size: stats.size,
+          uploadDate: stats.mtime,
+          path: `/uploads/${file}`
+        };
+      });
+
+    res.json({ videos });
+  } catch (error) {
+    console.error('❌ Error listing videos:', error);
+    res.status(500).json({ error: 'Failed to list videos' });
+  }
+});
 
 // Function to create default users
 async function createDefaultUsers() {
@@ -766,7 +858,65 @@ io.on('connection', socket => {
     });
   });
   
-  // WebRTC Stream Control - Instructor started streaming
+  // Instructor starts WebRTC streaming (from Stream Mode.html)
+  socket.on('instructor-start-webrtc', (data) => {
+    const { classId, mediaType } = data;
+    console.log(`🔴 Instructor started WebRTC streaming in class ${classId}: ${mediaType}`);
+    
+    // Notify all students in the class
+    io.to(`webrtc:${classId}`).emit('instructor-started-webrtc', {
+      classId: classId,
+      mediaType: mediaType,
+      instructor: socket.id
+    });
+    
+    // Also notify via regular streaming room
+    io.to(`class:${classId}`).emit('stream:started', {
+      instructor: socket.id,
+      room: `class:${classId}`,
+      mediaType: mediaType
+    });
+  });
+  
+  // Instructor stops WebRTC streaming
+  socket.on('instructor-stopped-webrtc', (data) => {
+    const { classId } = data;
+    console.log(`⏹️ Instructor stopped WebRTC streaming in class ${classId}`);
+    
+    // Notify all students in the class
+    io.to(`webrtc:${classId}`).emit('instructor-stopped-webrtc', {
+      classId: classId,
+      instructor: socket.id
+    });
+    
+    // Also notify via regular streaming room
+    io.to(`class:${classId}`).emit('stream:stopped', {
+      instructor: socket.id,
+      room: `class:${classId}`
+    });
+  });
+  
+  // Get existing students for WebRTC connections
+  socket.on('get-existing-students', (data) => {
+    const { classId } = data;
+    const webrtcRoom = `webrtc:${classId}`;
+    const roomSockets = io.sockets.adapter.rooms.get(webrtcRoom);
+    
+    if (roomSockets) {
+      const students = Array.from(roomSockets).filter(socketId => socketId !== socket.id);
+      console.log(`📋 Found ${students.length} existing students in class ${classId}`);
+      
+      // Send each student ID to instructor for WebRTC connection
+      students.forEach(studentId => {
+        socket.emit('student-joined', { 
+          studentId: studentId,
+          classId: classId 
+        });
+      });
+    }
+  });
+  
+  // WebRTC Stream Control - Instructor started streaming (legacy)
   socket.on('instructor-started-webrtc', (data) => {
     const { classId, mediaType } = data;
     console.log(`🔴 Instructor started WebRTC streaming in class ${classId}: ${mediaType}`);

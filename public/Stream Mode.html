@@ -923,6 +923,12 @@
     // --- WebRTC Variables ---
     let localStream = null;
     let socket = null;
+    
+    // Initialize socket immediately when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('🚀 Page loaded, initializing socket...');
+      initializeStreamingSocket();
+    });
     let peerConnections = new Map();
     let isLiveMode = false;
     let isStreaming = false;
@@ -1834,6 +1840,19 @@
       
       try {
         console.log('🔴 Starting WebRTC live stream...');
+        
+        // Ensure socket is initialized
+        if (!socket) {
+          console.log('🔌 Socket not initialized, initializing now...');
+          initializeStreamingSocket();
+          // Wait a moment for socket to connect
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        
+        if (!socket) {
+          throw new Error('Socket failed to initialize');
+        }
+        
         isStreaming = true;
         
         // Update UI
