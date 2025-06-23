@@ -238,6 +238,16 @@
       box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
     }
 
+    .btn-warning {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: white;
+    }
+
+    .btn-warning:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(245, 158, 11, 0.3);
+    }
+
     .module-accordion {
       background: var(--glass-bg);
       backdrop-filter: blur(20px);
@@ -420,25 +430,35 @@
         <div>
           <h1 class="dashboard-title">Edit Typing Tests</h1>
           <p style="color: var(--text-secondary); font-size: 1.1rem; margin-top: 0.5rem;">Customize typing test content for all trainees. Changes will be immediately available in the typing trainer.</p>
+          <div style="background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 10px; padding: 1rem; margin-top: 1rem;">
+            <p style="color: #ffc107; margin: 0; font-weight: 600;">
+              <i class="fas fa-exclamation-triangle" style="margin-right: 0.5rem;"></i>
+              <strong>Global Changes:</strong> All modifications are saved to the database and will be visible to ALL users immediately. Changes affect every student and instructor using the typing trainer.
+            </p>
+          </div>
         </div>
       </div>
       
-      <div style="margin-bottom: 2rem; display: flex; gap: 1rem; align-items: center;">
+      <div style="margin-bottom: 2rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+        <button onclick="saveAllChanges()" class="btn btn-success" title="Save all changes to database for all users">
+          <i class="fas fa-save" style="margin-right: 0.5rem;"></i>
+          Save All Changes
+        </button>
         <button onclick="addModule()" class="btn btn-primary">
           <i class="fas fa-plus" style="margin-right: 0.5rem;"></i>
           Add New Module
         </button>
-        <button onclick="testRealTimeSync()" class="btn btn-success" title="Test if changes sync to keyboard training page">
+        <button onclick="testRealTimeSync()" class="btn" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white;" title="Test if changes sync to keyboard training page">
           <i class="fas fa-sync" style="margin-right: 0.5rem;"></i>
           Test Sync
         </button>
-        <button onclick="resetToDefaults()" class="btn btn-warning" title="Reset all content to synchronized defaults">
+        <button onclick="resetToDefaults()" class="btn btn-danger" title="Reset all content to synchronized defaults">
           <i class="fas fa-undo" style="margin-right: 0.5rem;"></i>
           Reset to Defaults
         </button>
         <span style="color: var(--text-secondary); font-size: 0.9rem;">
           <i class="fas fa-info-circle" style="margin-right: 0.3rem;"></i>
-          Changes auto-save and sync to keyboard training
+          Changes auto-save globally for all users
         </span>
       </div>
       
@@ -450,85 +470,109 @@
     style="top:0;left:0;">Save changes</button>
   <span id="savedMsg" class="saved-msg absolute z-50 hidden fade-in">Saved!</span>
   <script>
-    // Demo data, replace with your backend if needed
+    // API-based data management
     const NUM_MODULES = 5, PRACTICES_PER_MODULE = 20;
-    // Load typing tests from localStorage, or create default
-    function getTypingTests() {
-      let d = localStorage.getItem('smx_typing_tests');
-      if (d) {
-        const data = JSON.parse(d);
-        // Check if it's the new format with module names
-        if (data.modules && data.moduleNames) {
-          return data;
-        } else {
-          // Convert old format to new format
-          return {
-            modules: data,
-            moduleNames: [
-              'Module 1: Basic Typing',
-              'Module 2: Numbers and Symbols',
-              'Module 3: Military Terminology',
-              'Module 4: POL Basic Descriptors',
-              'Module 5: POL SITREP Format'
-            ]
-          };
+    
+    // Load typing tests from API
+    async function getTypingTests() {
+      try {
+        console.log('📚 Fetching typing tests from API...');
+        const response = await fetch('/api/typing-tests');
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-      }
-      
-      // Create default structure with sample content (same as keyboard-training.html)
-      const modules = Array.from({length: NUM_MODULES}, (_, m) => {
-        const moduleTexts = [];
-        for (let p = 0; p < PRACTICES_PER_MODULE; p++) {
-          // Add some sample content for the first few practices of each module
-          if (p < 3) {
-            switch (m) {
-              case 0: // Basic Typing
-                moduleTexts[p] = p === 0 ? 'The quick brown fox jumps over the lazy dog. This sentence contains every letter of the alphabet.' :
-                                p === 1 ? 'Practice makes perfect. Keep typing to improve your speed and accuracy with consistent daily training.' :
-                                'Touch typing is a skill that will serve you well throughout your career and personal computing tasks.';
-                break;
-              case 1: // Numbers and Symbols
-                moduleTexts[p] = p === 0 ? '1234567890 !@#$%^&*() The numbers and symbols are important for data entry and programming tasks.' :
-                                p === 1 ? 'Email addresses like user@example.com require symbol typing skills for professional communication.' :
-                                'Special characters: ~`!@#$%^&*()_+-={}[]|\\:";\'<>?,./ are used in coding and technical writing.';
-                break;
-              case 2: // Military Terminology
-                moduleTexts[p] = p === 0 ? 'Military ranks: Private, Corporal, Sergeant, Lieutenant, Captain, Major, Colonel, General.' :
-                                p === 1 ? 'Military time: 0600 hours, 1200 hours, 1800 hours, 2400 hours for precise time coordination.' :
-                                'NATO phonetic alphabet: Alpha, Bravo, Charlie, Delta, Echo, Foxtrot, Golf, Hotel, India, Juliet.';
-                break;
-              case 3: // POL Basic Descriptors
-                moduleTexts[p] = p === 0 ? 'One adult male in dark traditional wear. Two adult females in light clothing observed at location.' :
-                                p === 1 ? 'Personnel count: Three adult males, one adult female, two children observed entering the compound.' :
-                                'Description: Individual wearing dark jacket, light pants, carrying backpack, proceeding north.';
-                break;
-              case 4: // POL SITREP Format
-                moduleTexts[p] = p === 0 ? 'SITREP: At 0630Z, one adult male departed E gate on red motorcycle, rode S out of FOV 0635Z. SLANT 1/0/0' :
-                                p === 1 ? 'SITREP: At 0745Z, white sedan entered compound through W gate, parked E side. SLANT 1/0/0' :
-                                'SITREP: At 0900Z, two adult males on foot entered compound, proceeded to building A. SLANT 2/0/0';
-                break;
-              default:
-                moduleTexts[p] = `Module ${m+1} Practice ${p+1}: Sample typing text for practice.`;
-            }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          console.log('✅ Typing tests loaded from API successfully');
+          return result.data;
+        } else {
+          throw new Error(result.message || 'Failed to load typing tests');
+        }
+      } catch (error) {
+        console.error('❌ Error loading typing tests from API:', error);
+        
+        // Fallback to localStorage if API fails
+        console.log('🔄 Falling back to localStorage...');
+        let d = localStorage.getItem('smx_typing_tests');
+        if (d) {
+          const data = JSON.parse(d);
+          // Check if it's the new format with module names
+          if (data.modules && data.moduleNames) {
+            return data;
           } else {
-            moduleTexts[p] = `Module ${m+1} Practice ${p+1}: Enter typing text here.`;
+            // Convert old format to new format
+            return {
+              modules: data,
+              moduleNames: [
+                'Module 1: Basic Typing',
+                'Module 2: Numbers and Symbols',
+                'Module 3: Military Terminology',
+                'Module 4: POL Basic Descriptors',
+                'Module 5: POL SITREP Format'
+              ]
+            };
           }
         }
-        return moduleTexts;
-      });
-      
-      return {
-        modules: modules,
-        moduleNames: [
-          'Module 1: Basic Typing',
-          'Module 2: Numbers and Symbols',
-          'Module 3: Military Terminology',
-          'Module 4: POL Basic Descriptors',
-          'Module 5: POL SITREP Format'
-        ]
-      };
+        
+        // Create default structure if both API and localStorage fail
+        console.log('🏗️ Creating default structure...');
+        const modules = Array.from({length: NUM_MODULES}, (_, m) => {
+          const moduleTexts = [];
+          for (let p = 0; p < PRACTICES_PER_MODULE; p++) {
+            // Add some sample content for the first few practices of each module
+            if (p < 3) {
+              switch (m) {
+                case 0: // Basic Typing
+                  moduleTexts[p] = p === 0 ? 'The quick brown fox jumps over the lazy dog. This sentence contains every letter of the alphabet.' :
+                                  p === 1 ? 'Practice makes perfect. Keep typing to improve your speed and accuracy with consistent daily training.' :
+                                  'Touch typing is a skill that will serve you well throughout your career and personal computing tasks.';
+                  break;
+                case 1: // Numbers and Symbols
+                  moduleTexts[p] = p === 0 ? '1234567890 !@#$%^&*() The numbers and symbols are important for data entry and programming tasks.' :
+                                  p === 1 ? 'Email addresses like user@example.com require symbol typing skills for professional communication.' :
+                                  'Special characters: ~`!@#$%^&*()_+-={}[]|\\:";\'<>?,./ are used in coding and technical writing.';
+                  break;
+                case 2: // Military Terminology
+                  moduleTexts[p] = p === 0 ? 'Military ranks: Private, Corporal, Sergeant, Lieutenant, Captain, Major, Colonel, General.' :
+                                  p === 1 ? 'Military time: 0600 hours, 1200 hours, 1800 hours, 2400 hours for precise time coordination.' :
+                                  'NATO phonetic alphabet: Alpha, Bravo, Charlie, Delta, Echo, Foxtrot, Golf, Hotel, India, Juliet.';
+                  break;
+                case 3: // POL Basic Descriptors
+                  moduleTexts[p] = p === 0 ? 'One adult male in dark traditional wear. Two adult females in light clothing observed at location.' :
+                                  p === 1 ? 'Personnel count: Three adult males, one adult female, two children observed entering the compound.' :
+                                  'Description: Individual wearing dark jacket, light pants, carrying backpack, proceeding north.';
+                  break;
+                case 4: // POL SITREP Format
+                  moduleTexts[p] = p === 0 ? 'SITREP: At 0630Z, one adult male departed E gate on red motorcycle, rode S out of FOV 0635Z. SLANT 1/0/0' :
+                                  p === 1 ? 'SITREP: At 0745Z, white sedan entered compound through W gate, parked E side. SLANT 1/0/0' :
+                                  'SITREP: At 0900Z, two adult males on foot entered compound, proceeded to building A. SLANT 2/0/0';
+                  break;
+                default:
+                  moduleTexts[p] = `Module ${m+1} Practice ${p+1}: Sample typing text for practice.`;
+              }
+            } else {
+              moduleTexts[p] = `Module ${m+1} Practice ${p+1}: Enter typing text here.`;
+            }
+          }
+          return moduleTexts;
+        });
+        
+        return {
+          modules: modules,
+          moduleNames: [
+            'Module 1: Basic Typing',
+            'Module 2: Numbers and Symbols',
+            'Module 3: Military Terminology',
+            'Module 4: POL Basic Descriptors',
+            'Module 5: POL SITREP Format'
+          ]
+        };
+      }
     }
-    function saveTypingTests(data) {
+    async function saveTypingTests(data) {
       console.log('=== Saving Typing Tests ===');
       console.log('Data to save:', data);
       
@@ -536,63 +580,89 @@
       if (!data || !data.modules || !data.moduleNames) {
         console.error('Invalid data structure for saving:', data);
         alert('Error: Invalid data structure. Cannot save.');
-        return;
+        return false;
       }
       
       try {
-        localStorage.setItem('smx_typing_tests', JSON.stringify(data));
-        console.log('✓ Data saved to localStorage');
-        
-        // Set a timestamp to help detect changes
-        const timestamp = Date.now().toString();
-        localStorage.setItem('smx_typing_tests_timestamp', timestamp);
-        console.log('✓ Timestamp updated:', timestamp);
-        
-        // Trigger a custom event for same-tab updates
-        window.dispatchEvent(new CustomEvent('typingTestsUpdated', {
-          detail: { data: data }
-        }));
-        console.log('✓ Custom event dispatched');
-        
-        // Use BroadcastChannel for cross-tab communication (modern browsers)
-        if (typeof BroadcastChannel !== 'undefined') {
-          const channel = new BroadcastChannel('smx_typing_updates');
-          channel.postMessage({
-            type: 'typing_tests_updated',
-            data: data,
-            timestamp: Date.now()
-          });
-          channel.close();
-          console.log('✓ BroadcastChannel message sent');
-        } else {
-          console.log('⚠ BroadcastChannel not supported');
+        // Get authentication token
+        const token = localStorage.getItem('token');
+        if (!token) {
+          console.error('No authentication token found');
+          alert('Authentication required. Please log in again.');
+          window.location.href = '/login.html';
+          return false;
         }
         
-        // Fallback: Use a polling mechanism trigger
-        localStorage.setItem('smx_typing_tests_update_trigger', timestamp);
-        console.log('✓ Update trigger set');
+        console.log('📤 Sending data to API...');
+        const response = await fetch('/api/typing-tests', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            modules: data.modules,
+            moduleNames: data.moduleNames
+          })
+        });
         
-        // Verify the save worked
-        setTimeout(() => {
-          const savedData = JSON.parse(localStorage.getItem('smx_typing_tests') || '{}');
-          if (JSON.stringify(savedData) === JSON.stringify(data)) {
-            console.log('✓ Save verification successful');
-          } else {
-            console.error('✗ Save verification failed!');
-            console.error('Original:', data);
-            console.error('Saved:', savedData);
+        const result = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(result.message || `HTTP error! status: ${response.status}`);
+        }
+        
+        if (result.success) {
+          console.log('✅ Data saved to database successfully');
+          
+          // Also save to localStorage as backup/cache
+          localStorage.setItem('smx_typing_tests', JSON.stringify(data));
+          const timestamp = Date.now().toString();
+          localStorage.setItem('smx_typing_tests_timestamp', timestamp);
+          
+          // Trigger events for real-time updates
+          window.dispatchEvent(new CustomEvent('typingTestsUpdated', {
+            detail: { data: data }
+          }));
+          
+          // Use BroadcastChannel for cross-tab communication
+          if (typeof BroadcastChannel !== 'undefined') {
+            const channel = new BroadcastChannel('smx_typing_updates');
+            channel.postMessage({
+              type: 'typing_tests_updated',
+              data: data,
+              timestamp: Date.now()
+            });
+            channel.close();
           }
-        }, 50);
-        
-        console.log('=== Typing tests saved and all events dispatched ===');
-        
-        // Show global sync indicator
-        showSyncIndicator('✓ Synced to keyboard training');
+          
+          localStorage.setItem('smx_typing_tests_update_trigger', timestamp);
+          
+          console.log('=== Typing tests saved successfully ===');
+          showSyncIndicator('✅ Saved & synced globally');
+          return true;
+        } else {
+          throw new Error(result.message || 'Failed to save typing tests');
+        }
         
       } catch (error) {
-        console.error('Error saving typing tests:', error);
-        alert('Error saving data: ' + error.message);
-        showSyncIndicator('✗ Sync failed', true);
+        console.error('❌ Error saving typing tests:', error);
+        
+        // Fallback to localStorage if API fails
+        console.log('🔄 Falling back to localStorage...');
+        try {
+          localStorage.setItem('smx_typing_tests', JSON.stringify(data));
+          const timestamp = Date.now().toString();
+          localStorage.setItem('smx_typing_tests_timestamp', timestamp);
+          
+          showSyncIndicator('⚠️ Saved locally only (API unavailable)', true);
+          return true;
+        } catch (localError) {
+          console.error('❌ Even localStorage save failed:', localError);
+          alert('Error saving data: ' + error.message);
+          showSyncIndicator('❌ Save failed', true);
+          return false;
+        }
       }
     }
     
@@ -654,14 +724,18 @@
       }, 3000);
     }
     // Render accordion
-    function renderEditor() {
-      const data = getTypingTests();
-      const modules = data.modules;
-      const moduleNames = data.moduleNames;
-      const cont = document.getElementById('modules-accordion');
-      cont.innerHTML = '';
-      
-      modules.forEach((practices, mIdx) => {
+    async function renderEditor() {
+      try {
+        console.log('🎨 Rendering editor...');
+        const data = await getTypingTests();
+        const modules = data.modules;
+        const moduleNames = data.moduleNames;
+        const cont = document.getElementById('modules-accordion');
+        cont.innerHTML = '';
+        
+        console.log(`📊 Rendering ${modules.length} modules`);
+        
+        modules.forEach((practices, mIdx) => {
         // Module wrapper
         const modWrap = document.createElement('div');
         modWrap.className = "module-accordion";
@@ -756,7 +830,23 @@
         modWrap.appendChild(pCont);
         cont.appendChild(modWrap);
       });
+      
+      console.log('✅ Editor rendered successfully');
+    } catch (error) {
+      console.error('❌ Error rendering editor:', error);
+      const cont = document.getElementById('modules-accordion');
+      cont.innerHTML = `
+        <div style="padding: 2rem; text-align: center; color: var(--text-secondary);">
+          <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 1rem; color: #ef4444;"></i>
+          <h3>Error Loading Typing Tests</h3>
+          <p>Failed to load typing test data. Please refresh the page or contact support.</p>
+          <button onclick="location.reload()" class="btn btn-primary" style="margin-top: 1rem;">
+            <i class="fas fa-refresh" style="margin-right: 0.5rem;"></i>Refresh Page
+          </button>
+        </div>
+      `;
     }
+  }
     // Show/hide save bubble, track edits
     let currentEditing = null;
     document.addEventListener('focusin', function(e) {
@@ -787,33 +877,37 @@
         }
         
         // Set new timeout for auto-save (2 seconds after user stops typing)
-        autoSaveTimeout = setTimeout(() => {
+        autoSaveTimeout = setTimeout(async () => {
           console.log('Auto-saving after user stopped typing...');
           const mod = parseInt(e.target.dataset.module);
           const prac = parseInt(e.target.dataset.practice);
           
           if (!isNaN(mod) && !isNaN(prac)) {
-            let data = getTypingTests();
-            if (data.modules && data.modules[mod] && data.modules[mod][prac] !== undefined) {
-              if (data.modules[mod][prac] !== e.target.value) {
-                data.modules[mod][prac] = e.target.value;
-                saveTypingTests(data);
-                console.log(`Auto-saved Module ${mod}, Practice ${prac}`);
-                
-                // Show brief auto-save indicator
-                const indicator = document.createElement('span');
-                indicator.textContent = ' ✓ Auto-saved';
-                indicator.style.color = '#22c55e';
-                indicator.style.fontSize = '0.9em';
-                indicator.style.marginLeft = '0.5rem';
-                e.target.parentNode.appendChild(indicator);
-                
-                setTimeout(() => {
-                  if (indicator.parentNode) {
-                    indicator.parentNode.removeChild(indicator);
-                  }
-                }, 1500);
+            try {
+              let data = await getTypingTests();
+              if (data.modules && data.modules[mod] && data.modules[mod][prac] !== undefined) {
+                if (data.modules[mod][prac] !== e.target.value) {
+                  data.modules[mod][prac] = e.target.value;
+                  await saveTypingTests(data);
+                  console.log(`Auto-saved Module ${mod}, Practice ${prac}`);
+                  
+                  // Show brief auto-save indicator
+                  const indicator = document.createElement('span');
+                  indicator.textContent = ' ✓ Auto-saved';
+                  indicator.style.color = '#22c55e';
+                  indicator.style.fontSize = '0.9em';
+                  indicator.style.marginLeft = '0.5rem';
+                  e.target.parentNode.appendChild(indicator);
+                  
+                  setTimeout(() => {
+                    if (indicator.parentNode) {
+                      indicator.parentNode.removeChild(indicator);
+                    }
+                  }, 1500);
+                }
               }
+            } catch (error) {
+              console.error('Auto-save failed:', error);
             }
           }
         }, 2000);
@@ -829,14 +923,19 @@
       }
     });
     // Save module name
-    function saveModuleName(moduleIdx, newName) {
-      let data = getTypingTests();
-      data.moduleNames[moduleIdx] = newName;
-      saveTypingTests(data);
+    async function saveModuleName(moduleIdx, newName) {
+      try {
+        let data = await getTypingTests();
+        data.moduleNames[moduleIdx] = newName;
+        await saveTypingTests(data);
+      } catch (error) {
+        console.error('Error saving module name:', error);
+        alert('Failed to save module name. Please try again.');
+      }
     }
     
     // Save changes
-    document.getElementById('saveBubble').addEventListener('click', function() {
+    document.getElementById('saveBubble').addEventListener('click', async function() {
       console.log('Save button clicked');
       if (!currentEditing) {
         console.log('No current editing element found');
@@ -855,257 +954,509 @@
       console.log(`Saving Module ${mod}, Practice ${prac}`);
       console.log('Current text:', currentEditing.value);
       
-      let data = getTypingTests();
-      
-      if (!data.modules || !data.modules[mod] || data.modules[mod][prac] === undefined) {
-        console.error('Invalid data structure or indices:', { 
-          hasModules: !!data.modules, 
-          moduleExists: !!(data.modules && data.modules[mod]),
-          practiceExists: !!(data.modules && data.modules[mod] && data.modules[mod][prac] !== undefined)
-        });
-        alert('Error: Invalid data structure. Please refresh the page.');
-        return;
+      try {
+        let data = await getTypingTests();
+        
+        if (!data.modules || !data.modules[mod] || data.modules[mod][prac] === undefined) {
+          console.error('Invalid data structure or indices:', { 
+            hasModules: !!data.modules, 
+            moduleExists: !!(data.modules && data.modules[mod]),
+            practiceExists: !!(data.modules && data.modules[mod] && data.modules[mod][prac] !== undefined)
+          });
+          alert('Error: Invalid data structure. Please refresh the page.');
+          return;
+        }
+        
+        data.modules[mod][prac] = currentEditing.value;
+        const saveSuccess = await saveTypingTests(data);
+        
+        if (saveSuccess) {
+          console.log('✅ Data saved successfully');
+          
+          // Animate "Saved!" msg
+          const rect = currentEditing.getBoundingClientRect();
+          const msg = document.getElementById('savedMsg');
+          msg.style.top = (window.scrollY + rect.top + rect.height/2 - 20) + 'px';
+          msg.style.left = (window.scrollX + rect.right + 22) + 'px';
+          msg.innerText = "Saved!";
+          msg.classList.remove('hidden');
+          setTimeout(()=>msg.classList.add('hidden'), 1100);
+        }
+        
+      } catch (error) {
+        console.error('❌ Error saving:', error);
+        alert('Failed to save changes. Please try again.');
       }
       
-      data.modules[mod][prac] = currentEditing.value;
-      saveTypingTests(data);
-      
-      console.log('Data saved to localStorage');
-      console.log('Saved data:', data);
-      
-      // Verify the save worked
-      setTimeout(() => {
-        const verifyData = getTypingTests();
-        if (verifyData.modules[mod][prac] === currentEditing.value) {
-          console.log('✓ Save verification successful');
-        } else {
-          console.error('✗ Save verification failed!');
-          console.error('Expected:', currentEditing.value);
-          console.error('Got:', verifyData.modules[mod][prac]);
-        }
-      }, 100);
-      
-      // Animate "Saved!" msg
-      const rect = currentEditing.getBoundingClientRect();
-      const msg = document.getElementById('savedMsg');
-      msg.style.top = (window.scrollY + rect.top + rect.height/2 - 20) + 'px';
-      msg.style.left = (window.scrollX + rect.right + 22) + 'px';
-      msg.innerText = "Saved!";
-      msg.classList.remove('hidden');
-      setTimeout(()=>msg.classList.add('hidden'), 1100);
-      // Hide bubble after save
+      // Hide bubble after save attempt
       setTimeout(()=>document.getElementById('saveBubble').classList.add('hidden'), 600);
     });
     
     // Add new module
-    function addModule() {
-      let data = getTypingTests();
-      const newModuleNum = data.modules.length + 1;
-      const newModule = Array.from({length: PRACTICES_PER_MODULE}, (_, p) => `Module ${newModuleNum} Practice ${p + 1}: Enter typing text here.`);
-      data.modules.push(newModule);
-      data.moduleNames.push(`Module ${newModuleNum}`);
-      saveTypingTests(data);
-      renderEditor();
+    async function addModule() {
+      try {
+        let data = await getTypingTests();
+        const newModuleNum = data.modules.length + 1;
+        const newModule = Array.from({length: PRACTICES_PER_MODULE}, (_, p) => `Module ${newModuleNum} Practice ${p + 1}: Enter typing text here.`);
+        data.modules.push(newModule);
+        data.moduleNames.push(`Module ${newModuleNum}`);
+        await saveTypingTests(data);
+        await renderEditor();
+      } catch (error) {
+        console.error('Error adding module:', error);
+        alert('Failed to add new module. Please try again.');
+      }
     }
     
     // Delete module
-    function deleteModule(moduleIdx) {
+    async function deleteModule(moduleIdx) {
       if (confirm('Are you sure you want to delete this entire module? This action cannot be undone.')) {
-        let data = getTypingTests();
-        data.modules.splice(moduleIdx, 1);
-        data.moduleNames.splice(moduleIdx, 1);
-        saveTypingTests(data);
-        renderEditor();
+        try {
+          let data = await getTypingTests();
+          data.modules.splice(moduleIdx, 1);
+          data.moduleNames.splice(moduleIdx, 1);
+          await saveTypingTests(data);
+          await renderEditor();
+        } catch (error) {
+          console.error('Error deleting module:', error);
+          alert('Failed to delete module. Please try again.');
+        }
       }
     }
     
     // Add new practice to a module
-    function addPractice(moduleIdx) {
-      let data = getTypingTests();
-      if (data.modules[moduleIdx]) {
-        const practiceNum = data.modules[moduleIdx].length + 1;
-        const moduleName = data.moduleNames[moduleIdx] || `Module ${moduleIdx + 1}`;
-        data.modules[moduleIdx].push(`${moduleName} Practice ${practiceNum}: Enter typing text here.`);
-        saveTypingTests(data);
-        renderEditor();
+    async function addPractice(moduleIdx) {
+      try {
+        let data = await getTypingTests();
+        if (data.modules[moduleIdx]) {
+          const practiceNum = data.modules[moduleIdx].length + 1;
+          const moduleName = data.moduleNames[moduleIdx] || `Module ${moduleIdx + 1}`;
+          data.modules[moduleIdx].push(`${moduleName} Practice ${practiceNum}: Enter typing text here.`);
+          await saveTypingTests(data);
+          await renderEditor();
+        }
+      } catch (error) {
+        console.error('Error adding practice:', error);
+        alert('Failed to add new practice. Please try again.');
       }
     }
     
     // Delete practice from a module
-    function deletePractice(moduleIdx, practiceIdx) {
+    async function deletePractice(moduleIdx, practiceIdx) {
       if (confirm('Are you sure you want to delete this practice? This action cannot be undone.')) {
-        let data = getTypingTests();
-        if (data.modules[moduleIdx] && data.modules[moduleIdx][practiceIdx] !== undefined) {
-          data.modules[moduleIdx].splice(practiceIdx, 1);
-          saveTypingTests(data);
-          renderEditor();
+        try {
+          let data = await getTypingTests();
+          if (data.modules[moduleIdx] && data.modules[moduleIdx][practiceIdx] !== undefined) {
+            data.modules[moduleIdx].splice(practiceIdx, 1);
+            await saveTypingTests(data);
+            await renderEditor();
+          }
+        } catch (error) {
+          console.error('Error deleting practice:', error);
+          alert('Failed to delete practice. Please try again.');
         }
       }
     }
     
     // Save entire module (all practices in a module)
-    function saveModule(moduleIdx) {
+    async function saveModule(moduleIdx) {
       console.log(`Saving entire module ${moduleIdx}`);
-      let data = getTypingTests();
       
-      // Get all textareas for this module
-      const moduleTextareas = document.querySelectorAll(`textarea[data-module="${moduleIdx}"]`);
-      let changesMade = false;
+      try {
+        let data = await getTypingTests();
+        
+        // Get all textareas for this module
+        const moduleTextareas = document.querySelectorAll(`textarea[data-module="${moduleIdx}"]`);
+        let changesMade = false;
+        
+        moduleTextareas.forEach(textarea => {
+          const practiceIdx = parseInt(textarea.dataset.practice);
+          if (!isNaN(practiceIdx) && data.modules[moduleIdx] && data.modules[moduleIdx][practiceIdx] !== undefined) {
+            if (data.modules[moduleIdx][practiceIdx] !== textarea.value) {
+              data.modules[moduleIdx][practiceIdx] = textarea.value;
+              changesMade = true;
+            }
+          }
+        });
+        
+        if (changesMade) {
+          await saveTypingTests(data);
+          
+          // Show success message
+          const moduleHeader = document.querySelector(`[data-module="${moduleIdx}"]`).closest('.module-accordion').querySelector('.module-header');
+          const tempMsg = document.createElement('span');
+          tempMsg.textContent = ' ✓ Saved!';
+          tempMsg.style.color = '#22c55e';
+          tempMsg.style.fontWeight = 'bold';
+          tempMsg.style.marginLeft = '1rem';
+          moduleHeader.appendChild(tempMsg);
+          
+          setTimeout(() => {
+            if (tempMsg.parentNode) {
+              tempMsg.parentNode.removeChild(tempMsg);
+            }
+          }, 2000);
+          
+          console.log(`Module ${moduleIdx} saved successfully`);
+        } else {
+          console.log(`No changes detected in module ${moduleIdx}`);
+        }
+      } catch (error) {
+        console.error('Error saving module:', error);
+        alert('Failed to save module. Please try again.');
+      }
+    }
+    
+    // Save all changes function - collects all textarea values and saves them
+    async function saveAllChanges() {
+      console.log('🔄 Saving all changes...');
       
-      moduleTextareas.forEach(textarea => {
-        const practiceIdx = parseInt(textarea.dataset.practice);
-        if (!isNaN(practiceIdx) && data.modules[moduleIdx] && data.modules[moduleIdx][practiceIdx] !== undefined) {
-          if (data.modules[moduleIdx][practiceIdx] !== textarea.value) {
-            data.modules[moduleIdx][practiceIdx] = textarea.value;
+      try {
+        // Get current data structure
+        let data = await getTypingTests();
+        let changesMade = false;
+        
+        // Get all textareas and update the data structure
+        const allTextareas = document.querySelectorAll('.practice-textarea');
+        console.log(`📝 Found ${allTextareas.length} text areas to check`);
+        
+        allTextareas.forEach(textarea => {
+          const moduleIdx = parseInt(textarea.dataset.module);
+          const practiceIdx = parseInt(textarea.dataset.practice);
+          
+          if (!isNaN(moduleIdx) && !isNaN(practiceIdx)) {
+            if (data.modules[moduleIdx] && data.modules[moduleIdx][practiceIdx] !== undefined) {
+              if (data.modules[moduleIdx][practiceIdx] !== textarea.value) {
+                console.log(`📝 Updating Module ${moduleIdx}, Practice ${practiceIdx}`);
+                data.modules[moduleIdx][practiceIdx] = textarea.value;
+                changesMade = true;
+              }
+            }
+          }
+        });
+        
+        // Also check for module name changes
+        const moduleNameInputs = document.querySelectorAll('input[data-module-name]');
+        moduleNameInputs.forEach(input => {
+          const moduleIdx = parseInt(input.dataset.moduleIndex);
+          if (!isNaN(moduleIdx) && data.moduleNames[moduleIdx] !== input.value) {
+            console.log(`📝 Updating Module ${moduleIdx} name to: ${input.value}`);
+            data.moduleNames[moduleIdx] = input.value;
             changesMade = true;
           }
-        }
-      });
-      
-      if (changesMade) {
-        saveTypingTests(data);
+        });
         
-        // Show success message
-        const moduleHeader = document.querySelector(`[data-module="${moduleIdx}"]`).closest('.module-accordion').querySelector('.module-header');
-        const tempMsg = document.createElement('span');
-        tempMsg.textContent = ' ✓ Saved!';
-        tempMsg.style.color = '#22c55e';
-        tempMsg.style.fontWeight = 'bold';
-        tempMsg.style.marginLeft = '1rem';
-        moduleHeader.appendChild(tempMsg);
+        if (changesMade) {
+          console.log('💾 Changes detected, saving to database...');
+          const saveSuccess = await saveTypingTests(data);
+          
+          if (saveSuccess) {
+            console.log('✅ All changes saved successfully');
+            showSyncIndicator('✅ All changes saved globally for all users');
+            
+            // Show success message
+            const successMsg = document.createElement('div');
+            successMsg.innerHTML = `
+              <div style="
+                position: fixed; 
+                top: 20px; 
+                right: 20px; 
+                background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); 
+                color: white; 
+                padding: 1rem 1.5rem; 
+                border-radius: 10px; 
+                box-shadow: 0 10px 25px rgba(34, 197, 94, 0.3);
+                z-index: 1000;
+                font-weight: 600;
+              ">
+                <i class="fas fa-check-circle" style="margin-right: 0.5rem;"></i>
+                All changes saved successfully!<br>
+                <small style="opacity: 0.9;">Available to all users immediately</small>
+              </div>
+            `;
+            document.body.appendChild(successMsg);
+            
+            setTimeout(() => {
+              if (successMsg.parentNode) {
+                successMsg.parentNode.removeChild(successMsg);
+              }
+            }, 4000);
+          } else {
+            throw new Error('Save operation failed');
+          }
+        } else {
+          console.log('ℹ️ No changes detected');
+          showSyncIndicator('ℹ️ No changes to save');
+          
+          const infoMsg = document.createElement('div');
+          infoMsg.innerHTML = `
+            <div style="
+              position: fixed; 
+              top: 20px; 
+              right: 20px; 
+              background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); 
+              color: white; 
+              padding: 1rem 1.5rem; 
+              border-radius: 10px; 
+              box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+              z-index: 1000;
+              font-weight: 600;
+            ">
+              <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>
+              No changes to save
+            </div>
+          `;
+          document.body.appendChild(infoMsg);
+          
+          setTimeout(() => {
+            if (infoMsg.parentNode) {
+              infoMsg.parentNode.removeChild(infoMsg);
+            }
+          }, 2000);
+        }
+        
+      } catch (error) {
+        console.error('❌ Error saving all changes:', error);
+        showSyncIndicator('❌ Save failed', true);
+        
+        const errorMsg = document.createElement('div');
+        errorMsg.innerHTML = `
+          <div style="
+            position: fixed; 
+            top: 20px; 
+            right: 20px; 
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); 
+            color: white; 
+            padding: 1rem 1.5rem; 
+            border-radius: 10px; 
+            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+            z-index: 1000;
+            font-weight: 600;
+          ">
+            <i class="fas fa-exclamation-triangle" style="margin-right: 0.5rem;"></i>
+            Failed to save changes<br>
+            <small style="opacity: 0.9;">${error.message}</small>
+          </div>
+        `;
+        document.body.appendChild(errorMsg);
         
         setTimeout(() => {
-          if (tempMsg.parentNode) {
-            tempMsg.parentNode.removeChild(tempMsg);
+          if (errorMsg.parentNode) {
+            errorMsg.parentNode.removeChild(errorMsg);
           }
-        }, 2000);
+        }, 5000);
+      }
+    }
+    
+    // Reset to defaults function
+    async function resetToDefaults() {
+      if (confirm('Are you sure you want to reset all typing tests to default content? This will permanently delete all custom content and cannot be undone.')) {
+        try {
+          console.log('🔄 Resetting to defaults...');
+          
+          // Get authentication token
+          const token = localStorage.getItem('token');
+          if (!token) {
+            alert('Authentication required. Please log in again.');
+            window.location.href = '/login.html';
+            return;
+          }
+          
+          const response = await fetch('/api/typing-tests/reset', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          const result = await response.json();
+          
+          if (!response.ok) {
+            throw new Error(result.message || `HTTP error! status: ${response.status}`);
+          }
+          
+          if (result.success) {
+            console.log('✅ Reset to defaults successful');
+            
+            // Clear localStorage cache
+            localStorage.removeItem('smx_typing_tests');
+            localStorage.removeItem('smx_typing_tests_timestamp');
+            localStorage.removeItem('smx_typing_tests_update_trigger');
+            
+            // Reload the editor
+            await renderEditor();
+            
+            showSyncIndicator('✅ Reset to defaults successful');
+            alert('Typing tests have been reset to default content successfully.');
+          } else {
+            throw new Error(result.message || 'Failed to reset to defaults');
+          }
+          
+        } catch (error) {
+          console.error('❌ Error resetting to defaults:', error);
+          alert('Failed to reset to defaults: ' + error.message);
+          showSyncIndicator('❌ Reset failed', true);
+        }
+      }
+    }
+    
+    // Test real-time sync function
+    async function testRealTimeSync() {
+      try {
+        console.log('🧪 Testing real-time sync...');
+        const data = await getTypingTests();
         
-        console.log(`Module ${moduleIdx} saved successfully`);
-      } else {
-        console.log(`No changes detected in module ${moduleIdx}`);
+        // Trigger all sync mechanisms
+        window.dispatchEvent(new CustomEvent('typingTestsUpdated', {
+          detail: { data: data }
+        }));
+        
+        if (typeof BroadcastChannel !== 'undefined') {
+          const channel = new BroadcastChannel('smx_typing_updates');
+          channel.postMessage({
+            type: 'typing_tests_updated',
+            data: data,
+            timestamp: Date.now()
+          });
+          channel.close();
+        }
+        
+        const timestamp = Date.now().toString();
+        localStorage.setItem('smx_typing_tests_update_trigger', timestamp);
+        
+        console.log('✅ Sync test completed');
+        showSyncIndicator('✅ Sync test successful - check keyboard training page');
+        
+      } catch (error) {
+        console.error('❌ Sync test failed:', error);
+        showSyncIndicator('❌ Sync test failed', true);
       }
     }
     
     // Test function to verify data sync
-    window.testDataSync = function() {
+    window.testDataSync = async function() {
       console.log('=== Testing Data Sync ===');
-      const data = getTypingTests();
-      console.log('Current data in localStorage:', data);
-      
-      // Trigger the custom event manually
-      window.dispatchEvent(new CustomEvent('typingTestsUpdated', {
-        detail: { data: data }
-      }));
-      
-      console.log('Custom event dispatched');
+      try {
+        const data = await getTypingTests();
+        console.log('Current data from API:', data);
+        
+        // Trigger the custom event manually
+        window.dispatchEvent(new CustomEvent('typingTestsUpdated', {
+          detail: { data: data }
+        }));
+        
+        console.log('Custom event dispatched');
+      } catch (error) {
+        console.error('Data sync test failed:', error);
+      }
     };
     
     // Debug function to check sync status
-    window.debugSync = function() {
+    window.debugSync = async function() {
       console.log('=== Debug Sync Status ===');
       console.log('localStorage smx_typing_tests:', localStorage.getItem('smx_typing_tests'));
       console.log('localStorage smx_typing_tests_timestamp:', localStorage.getItem('smx_typing_tests_timestamp'));
       console.log('localStorage smx_typing_tests_update_trigger:', localStorage.getItem('smx_typing_tests_update_trigger'));
       
-      const data = getTypingTests();
-      console.log('Parsed data:', data);
-      console.log('Data structure valid:', !!(data && data.modules && data.moduleNames));
-      
-      // Test all sync mechanisms
-      console.log('Testing sync mechanisms...');
-      saveTypingTests(data);
-    };
-    
-    // Force sync function for troubleshooting
-    window.forceSync = function() {
-      console.log('=== Force Sync ===');
-      const data = getTypingTests();
-      saveTypingTests(data);
-      alert('Sync forced! Check the keyboard training page to see if changes appear.');
-    };
-    
-    // Real-time sync test
-    window.testRealTimeSync = function() {
-      console.log('=== Testing Real-Time Sync ===');
-      
-      // Add a test marker to the first practice
-      let data = getTypingTests();
-      if (data.modules && data.modules[0] && data.modules[0][0]) {
-        const timestamp = new Date().toLocaleTimeString();
-        const originalText = data.modules[0][0];
+      try {
+        const data = await getTypingTests();
+        console.log('Parsed data:', data);
+        console.log('Data structure valid:', !!(data && data.modules && data.moduleNames));
         
-        // Add timestamp marker
-        data.modules[0][0] = `[SYNC TEST ${timestamp}] ${originalText}`;
-        saveTypingTests(data);
-        
-        console.log('Test marker added. Check keyboard-training.html to see if it appears.');
-        alert(`Sync test initiated at ${timestamp}. Check the keyboard training page to see if the test marker appears in Module 1, Practice 1.`);
-        
-        // Remove the marker after 10 seconds
-        setTimeout(() => {
-          let currentData = getTypingTests();
-          if (currentData.modules && currentData.modules[0] && currentData.modules[0][0]) {
-            currentData.modules[0][0] = originalText;
-            saveTypingTests(currentData);
-            console.log('Test marker removed');
-          }
-        }, 10000);
-      } else {
-        alert('No data available for sync test');
+        // Test all sync mechanisms
+        console.log('Testing sync mechanisms...');
+        await saveTypingTests(data);
+      } catch (error) {
+        console.error('Debug sync failed:', error);
       }
     };
     
-    // Force reset to synchronized defaults
-    window.resetToDefaults = function() {
-      if (confirm('This will reset all typing tests to the default synchronized content. Are you sure?')) {
-        console.log('=== Resetting to Default Synchronized Content ===');
-        
-        // Clear existing data
-        localStorage.removeItem('smx_typing_tests');
-        localStorage.removeItem('smx_typing_tests_timestamp');
-        localStorage.removeItem('smx_typing_tests_update_trigger');
-        
-        // Create fresh default data
-        const defaultData = createDefaultTypingTests();
-        saveTypingTests(defaultData);
-        
-        // Reload the editor
-        renderEditor();
-        
-        alert('Typing tests have been reset to synchronized defaults. Both edit and training pages now have identical content.');
-        console.log('Reset complete - data synchronized');
+    // Force sync function for troubleshooting
+    window.forceSync = async function() {
+      console.log('=== Force Sync ===');
+      try {
+        const data = await getTypingTests();
+        await saveTypingTests(data);
+        alert('Sync forced! Check the keyboard training page to see if changes appear.');
+      } catch (error) {
+        console.error('Force sync failed:', error);
+        alert('Force sync failed: ' + error.message);
       }
     };
     
     // Check sync status between pages
-    window.checkSyncStatus = function() {
+    window.checkSyncStatus = async function() {
       console.log('=== Checking Sync Status ===');
       
-      const data = getTypingTests();
-      if (!data.modules) {
-        console.error('No typing test data found');
-        return;
-      }
-      
-      console.log('Current data structure:');
-      console.log('- Modules:', data.modules.length);
-      console.log('- Module names:', data.moduleNames ? data.moduleNames.length : 'None');
-      
-      data.modules.forEach((module, moduleIndex) => {
-        console.log(`Module ${moduleIndex + 1}: ${module.length} practices`);
-        module.forEach((practice, practiceIndex) => {
-          if (practiceIndex < 3) { // Show first 3 practices
-            console.log(`  Practice ${practiceIndex + 1}: "${practice.substring(0, 50)}..."`);
-          }
+      try {
+        const data = await getTypingTests();
+        if (!data.modules) {
+          console.error('No typing test data found');
+          return;
+        }
+        
+        console.log('Current data structure:');
+        console.log('- Modules:', data.modules.length);
+        console.log('- Module names:', data.moduleNames ? data.moduleNames.length : 'None');
+        
+        data.modules.forEach((module, moduleIndex) => {
+          console.log(`Module ${moduleIndex + 1}: ${module.length} practices`);
+          module.forEach((practice, practiceIndex) => {
+            if (practiceIndex < 3) { // Show first 3 practices
+              console.log(`  Practice ${practiceIndex + 1}: "${practice.substring(0, 50)}..."`);
+            }
+          });
         });
-      });
-      
-      console.log('Timestamp:', localStorage.getItem('smx_typing_tests_timestamp'));
-      console.log('Update trigger:', localStorage.getItem('smx_typing_tests_update_trigger'));
+        
+        console.log('Timestamp:', localStorage.getItem('smx_typing_tests_timestamp'));
+        console.log('Update trigger:', localStorage.getItem('smx_typing_tests_update_trigger'));
+      } catch (error) {
+        console.error('Check sync status failed:', error);
+      }
     };
     
     // Initial render
-    renderEditor();
+    document.addEventListener('DOMContentLoaded', async function() {
+      console.log('🚀 Initializing typing tests editor...');
+      await renderEditor();
+      console.log('✅ Editor initialized successfully');
+      
+      // Set up periodic sync check (every 30 seconds)
+      setInterval(async () => {
+        try {
+          console.log('🔄 Checking for updates from other admins...');
+          const currentData = await getTypingTests();
+          
+          // Compare with what's currently displayed
+          const allTextareas = document.querySelectorAll('.practice-textarea');
+          let needsUpdate = false;
+          
+          allTextareas.forEach(textarea => {
+            const moduleIdx = parseInt(textarea.dataset.module);
+            const practiceIdx = parseInt(textarea.dataset.practice);
+            
+            if (!isNaN(moduleIdx) && !isNaN(practiceIdx)) {
+              if (currentData.modules[moduleIdx] && currentData.modules[moduleIdx][practiceIdx] !== undefined) {
+                // Only update if the textarea is not currently being edited
+                if (document.activeElement !== textarea && 
+                    currentData.modules[moduleIdx][practiceIdx] !== textarea.value) {
+                  needsUpdate = true;
+                }
+              }
+            }
+          });
+          
+          if (needsUpdate) {
+            console.log('📥 Updates detected from other admins, refreshing editor...');
+            await renderEditor();
+            showSyncIndicator('📥 Content updated by another admin');
+          }
+        } catch (error) {
+          console.error('❌ Periodic sync check failed:', error);
+        }
+      }, 30000); // Check every 30 seconds
+    });
     
     // Logout function
     function logout() {

@@ -311,6 +311,7 @@ app.use('/api/streams', require('./routes/streams'));
 app.use('/api/stream', require('./routes/stream-upload.route'));
 const feedbackRoutes = require('./routes/feedback.route');
 app.use('/api/feedback', feedbackRoutes);
+app.use('/api/typing-tests', require('./routes/typing-tests'));
 
 // ===== OpsLog API Routes =====
 // Get all callouts for a room
