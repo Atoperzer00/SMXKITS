@@ -517,31 +517,66 @@
       };
     }
     function saveTypingTests(data) {
-      localStorage.setItem('smx_typing_tests', JSON.stringify(data));
+      console.log('=== Saving Typing Tests ===');
+      console.log('Data to save:', data);
       
-      // Set a timestamp to help detect changes
-      localStorage.setItem('smx_typing_tests_timestamp', Date.now().toString());
-      
-      // Trigger a custom event for same-tab updates
-      window.dispatchEvent(new CustomEvent('typingTestsUpdated', {
-        detail: { data: data }
-      }));
-      
-      // Use BroadcastChannel for cross-tab communication (modern browsers)
-      if (typeof BroadcastChannel !== 'undefined') {
-        const channel = new BroadcastChannel('smx_typing_updates');
-        channel.postMessage({
-          type: 'typing_tests_updated',
-          data: data,
-          timestamp: Date.now()
-        });
-        channel.close();
+      // Validate data structure
+      if (!data || !data.modules || !data.moduleNames) {
+        console.error('Invalid data structure for saving:', data);
+        alert('Error: Invalid data structure. Cannot save.');
+        return;
       }
       
-      // Fallback: Use a polling mechanism trigger
-      localStorage.setItem('smx_typing_tests_update_trigger', Date.now().toString());
-      
-      console.log('Typing tests saved and events dispatched');
+      try {
+        localStorage.setItem('smx_typing_tests', JSON.stringify(data));
+        console.log('✓ Data saved to localStorage');
+        
+        // Set a timestamp to help detect changes
+        const timestamp = Date.now().toString();
+        localStorage.setItem('smx_typing_tests_timestamp', timestamp);
+        console.log('✓ Timestamp updated:', timestamp);
+        
+        // Trigger a custom event for same-tab updates
+        window.dispatchEvent(new CustomEvent('typingTestsUpdated', {
+          detail: { data: data }
+        }));
+        console.log('✓ Custom event dispatched');
+        
+        // Use BroadcastChannel for cross-tab communication (modern browsers)
+        if (typeof BroadcastChannel !== 'undefined') {
+          const channel = new BroadcastChannel('smx_typing_updates');
+          channel.postMessage({
+            type: 'typing_tests_updated',
+            data: data,
+            timestamp: Date.now()
+          });
+          channel.close();
+          console.log('✓ BroadcastChannel message sent');
+        } else {
+          console.log('⚠ BroadcastChannel not supported');
+        }
+        
+        // Fallback: Use a polling mechanism trigger
+        localStorage.setItem('smx_typing_tests_update_trigger', timestamp);
+        console.log('✓ Update trigger set');
+        
+        // Verify the save worked
+        setTimeout(() => {
+          const savedData = JSON.parse(localStorage.getItem('smx_typing_tests') || '{}');
+          if (JSON.stringify(savedData) === JSON.stringify(data)) {
+            console.log('✓ Save verification successful');
+          } else {
+            console.error('✗ Save verification failed!');
+            console.error('Original:', data);
+            console.error('Saved:', savedData);
+          }
+        }, 50);
+        
+        console.log('=== Typing tests saved and all events dispatched ===');
+      } catch (error) {
+        console.error('Error saving typing tests:', error);
+        alert('Error saving data: ' + error.message);
+      }
     }
     // Render accordion
     function renderEditor() {
@@ -793,6 +828,49 @@
       }
     }
     
+    // Save entire module (all practices in a module)
+    function saveModule(moduleIdx) {
+      console.log(`Saving entire module ${moduleIdx}`);
+      let data = getTypingTests();
+      
+      // Get all textareas for this module
+      const moduleTextareas = document.querySelectorAll(`textarea[data-module="${moduleIdx}"]`);
+      let changesMade = false;
+      
+      moduleTextareas.forEach(textarea => {
+        const practiceIdx = parseInt(textarea.dataset.practice);
+        if (!isNaN(practiceIdx) && data.modules[moduleIdx] && data.modules[moduleIdx][practiceIdx] !== undefined) {
+          if (data.modules[moduleIdx][practiceIdx] !== textarea.value) {
+            data.modules[moduleIdx][practiceIdx] = textarea.value;
+            changesMade = true;
+          }
+        }
+      });
+      
+      if (changesMade) {
+        saveTypingTests(data);
+        
+        // Show success message
+        const moduleHeader = document.querySelector(`[data-module="${moduleIdx}"]`).closest('.module-accordion').querySelector('.module-header');
+        const tempMsg = document.createElement('span');
+        tempMsg.textContent = ' ✓ Saved!';
+        tempMsg.style.color = '#22c55e';
+        tempMsg.style.fontWeight = 'bold';
+        tempMsg.style.marginLeft = '1rem';
+        moduleHeader.appendChild(tempMsg);
+        
+        setTimeout(() => {
+          if (tempMsg.parentNode) {
+            tempMsg.parentNode.removeChild(tempMsg);
+          }
+        }, 2000);
+        
+        console.log(`Module ${moduleIdx} saved successfully`);
+      } else {
+        console.log(`No changes detected in module ${moduleIdx}`);
+      }
+    }
+    
     // Test function to verify data sync
     window.testDataSync = function() {
       console.log('=== Testing Data Sync ===');
@@ -805,6 +883,30 @@
       }));
       
       console.log('Custom event dispatched');
+    };
+    
+    // Debug function to check sync status
+    window.debugSync = function() {
+      console.log('=== Debug Sync Status ===');
+      console.log('localStorage smx_typing_tests:', localStorage.getItem('smx_typing_tests'));
+      console.log('localStorage smx_typing_tests_timestamp:', localStorage.getItem('smx_typing_tests_timestamp'));
+      console.log('localStorage smx_typing_tests_update_trigger:', localStorage.getItem('smx_typing_tests_update_trigger'));
+      
+      const data = getTypingTests();
+      console.log('Parsed data:', data);
+      console.log('Data structure valid:', !!(data && data.modules && data.moduleNames));
+      
+      // Test all sync mechanisms
+      console.log('Testing sync mechanisms...');
+      saveTypingTests(data);
+    };
+    
+    // Force sync function for troubleshooting
+    window.forceSync = function() {
+      console.log('=== Force Sync ===');
+      const data = getTypingTests();
+      saveTypingTests(data);
+      alert('Sync forced! Check the keyboard training page to see if changes appear.');
     };
     
     // Initial render

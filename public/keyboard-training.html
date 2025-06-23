@@ -1374,15 +1374,37 @@
 
     // Function to reload typing data from localStorage
     function reloadTypingData() {
-      console.log('Reloading typing data from localStorage...');
-      const data = JSON.parse(localStorage.getItem('smx_typing_tests') || '{}');
+      console.log('=== Reloading typing data from localStorage ===');
+      const rawData = localStorage.getItem('smx_typing_tests');
+      console.log('Raw localStorage data:', rawData);
+      
+      if (!rawData) {
+        console.log('No data found in localStorage, initializing defaults...');
+        initializeTypingModules();
+        return;
+      }
+      
+      let data;
+      try {
+        data = JSON.parse(rawData);
+        console.log('Parsed data:', data);
+      } catch (error) {
+        console.error('Error parsing localStorage data:', error);
+        console.log('Initializing defaults due to parse error...');
+        initializeTypingModules();
+        return;
+      }
       
       // Handle new format with module names
       if (data.modules && data.moduleNames) {
+        console.log('Using new format with module names');
         typingModules = data.modules;
         moduleNames = data.moduleNames;
+        console.log('Loaded modules:', typingModules.length);
+        console.log('Loaded module names:', moduleNames);
       } else if (data.length) {
         // Fallback for old format (array)
+        console.log('Converting from old format (array)');
         typingModules = data;
         moduleNames = [
           'Module 1: Basic Typing',
@@ -1392,18 +1414,20 @@
           'Module 5: POL SITREP Format'
         ];
       } else {
-        console.log('No valid data found, initializing defaults...');
+        console.log('No valid data structure found, initializing defaults...');
         initializeTypingModules();
         return;
       }
       
+      console.log('Rendering modules...');
       renderModules();
       updateProgressDisplay();
-      console.log('Typing data reloaded successfully');
+      console.log('=== Typing data reloaded successfully ===');
     }
 
     // Listen for storage changes from other tabs (like edit-typing-tests.html)
     window.addEventListener('storage', function(e) {
+      console.log('Storage event detected:', e.key, e.newValue);
       if (e.key === 'smx_typing_tests' || e.key === 'smx_typing_tests_update_trigger') {
         console.log('Typing tests updated from another tab, refreshing...');
         reloadTypingData();
@@ -1412,31 +1436,39 @@
     
     // Listen for custom event from same tab (edit-typing-tests.html)
     window.addEventListener('typingTestsUpdated', function(e) {
-      console.log('Typing tests updated in same tab, refreshing...');
+      console.log('Custom typingTestsUpdated event received:', e.detail);
       const data = e.detail.data;
       
       // Handle new format with module names
       if (data.modules && data.moduleNames) {
+        console.log('Using data from event (new format)');
         typingModules = data.modules;
         moduleNames = data.moduleNames;
       } else {
+        console.log('Using data from event (old format)');
         // Fallback for old format
         typingModules = data;
       }
       
+      console.log('Rendering modules from event data...');
       renderModules();
       updateProgressDisplay();
+      console.log('Modules updated from custom event');
     });
 
     // Listen for BroadcastChannel messages (modern browsers)
     if (typeof BroadcastChannel !== 'undefined') {
       const channel = new BroadcastChannel('smx_typing_updates');
       channel.addEventListener('message', function(e) {
+        console.log('BroadcastChannel message received:', e.data);
         if (e.data.type === 'typing_tests_updated') {
           console.log('Typing tests updated via BroadcastChannel, refreshing...');
           reloadTypingData();
         }
       });
+      console.log('BroadcastChannel listener set up');
+    } else {
+      console.log('BroadcastChannel not supported in this browser');
     }
 
     // Polling fallback for older browsers or edge cases
@@ -1494,6 +1526,20 @@
       } else {
         console.log('✗ Data format mismatch or missing data');
       }
+    };
+    
+    // Debug function for troubleshooting sync issues
+    window.debugTrainingSync = function() {
+      console.log('=== Debug Training Page Sync ===');
+      console.log('Current typingModules:', typingModules);
+      console.log('Current moduleNames:', moduleNames);
+      console.log('localStorage raw:', localStorage.getItem('smx_typing_tests'));
+      console.log('localStorage timestamp:', localStorage.getItem('smx_typing_tests_timestamp'));
+      console.log('localStorage trigger:', localStorage.getItem('smx_typing_tests_update_trigger'));
+      
+      // Test reload
+      console.log('Testing reload...');
+      reloadTypingData();
     };
 
   </script>
