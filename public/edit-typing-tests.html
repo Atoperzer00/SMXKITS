@@ -452,6 +452,14 @@
           <i class="fas fa-sync" style="margin-right: 0.5rem;"></i>
           Test Sync
         </button>
+        <button onclick="forceRefreshFromDatabase()" class="btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;" title="Force refresh from database, clearing cache">
+          <i class="fas fa-database" style="margin-right: 0.5rem;"></i>
+          Refresh from DB
+        </button>
+        <button onclick="window.testSaveLoadCycle()" class="btn" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white;" title="Test if save/load cycle works correctly">
+          <i class="fas fa-vial" style="margin-right: 0.5rem;"></i>
+          Test Save/Load
+        </button>
         <button onclick="resetToDefaults()" class="btn btn-danger" title="Reset all content to synchronized defaults">
           <i class="fas fa-undo" style="margin-right: 0.5rem;"></i>
           Reset to Defaults
@@ -487,6 +495,11 @@
         
         if (result.success) {
           console.log('✅ Typing tests loaded from API successfully');
+          
+          // Update localStorage cache with fresh data from API
+          localStorage.setItem('smx_typing_tests', JSON.stringify(result.data));
+          localStorage.setItem('smx_typing_tests_timestamp', Date.now().toString());
+          
           return result.data;
         } else {
           throw new Error(result.message || 'Failed to load typing tests');
@@ -494,8 +507,8 @@
       } catch (error) {
         console.error('❌ Error loading typing tests from API:', error);
         
-        // Fallback to localStorage if API fails
-        console.log('🔄 Falling back to localStorage...');
+        // Only use localStorage as absolute fallback if API is completely unavailable
+        console.log('🔄 API unavailable, falling back to localStorage...');
         let d = localStorage.getItem('smx_typing_tests');
         if (d) {
           const data = JSON.parse(d);
@@ -615,7 +628,7 @@
         if (result.success) {
           console.log('✅ Data saved to database successfully');
           
-          // Also save to localStorage as backup/cache
+          // Update localStorage cache with the saved data
           localStorage.setItem('smx_typing_tests', JSON.stringify(data));
           const timestamp = Date.now().toString();
           localStorage.setItem('smx_typing_tests_timestamp', timestamp);
@@ -639,7 +652,11 @@
           localStorage.setItem('smx_typing_tests_update_trigger', timestamp);
           
           console.log('=== Typing tests saved successfully ===');
-          showSyncIndicator('✅ Saved & synced globally');
+          showSyncIndicator('✅ Saved to database & synced globally');
+          
+          // Show success message to user
+          alert('✅ Changes saved successfully!\n\nAll users will see the updated content immediately.\nThe keyboard training page will automatically refresh with your changes.');
+          
           return true;
         } else {
           throw new Error(result.message || 'Failed to save typing tests');
@@ -1450,10 +1467,63 @@
       }
     };
     
+    // Force refresh from database, clearing cache
+    async function forceRefreshFromDatabase() {
+      console.log('🔄 Force refreshing from database...');
+      
+      try {
+        // Clear localStorage cache first
+        localStorage.removeItem('smx_typing_tests');
+        localStorage.removeItem('smx_typing_tests_timestamp');
+        localStorage.removeItem('smx_typing_tests_update_trigger');
+        
+        console.log('🗑️ Cache cleared, fetching fresh data from database...');
+        
+        // Force fetch from API (no fallback to localStorage)
+        const response = await fetch('/api/typing-tests');
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          console.log('✅ Fresh data loaded from database');
+          
+          // Update cache with fresh data
+          localStorage.setItem('smx_typing_tests', JSON.stringify(result.data));
+          localStorage.setItem('smx_typing_tests_timestamp', Date.now().toString());
+          
+          // Re-render the editor with fresh data
+          await renderEditor();
+          
+          showSyncIndicator('✅ Refreshed from database');
+          alert('Successfully refreshed from database. All changes now reflect the current database state.');
+        } else {
+          throw new Error(result.message || 'Failed to load from database');
+        }
+        
+      } catch (error) {
+        console.error('❌ Error refreshing from database:', error);
+        showSyncIndicator('❌ Database refresh failed', true);
+        alert('Failed to refresh from database: ' + error.message);
+      }
+    };
+    
     // Initial render
     document.addEventListener('DOMContentLoaded', async function() {
       console.log('🚀 Initializing typing tests editor...');
-      await renderEditor();
+      
+      // Force fresh data from API on page load to avoid cache issues
+      try {
+        console.log('🔄 Forcing fresh data load from API...');
+        await forceRefreshFromDatabase();
+      } catch (error) {
+        console.warn('⚠️ Failed to force refresh, falling back to normal load:', error);
+        await renderEditor();
+      }
+      
       console.log('✅ Editor initialized successfully');
       
       // Set up periodic sync check (every 60 seconds, silent)
@@ -1492,6 +1562,64 @@
         }
       }, 60000); // Check every 60 seconds
     });
+    
+    // Debug function to test the save/load cycle
+    window.testSaveLoadCycle = async function() {
+      console.log('=== Testing Save/Load Cycle ===');
+      
+      try {
+        // 1. Load current data
+        console.log('1. Loading current data...');
+        const currentData = await getTypingTests();
+        console.log('Current data loaded:', currentData.modules.length, 'modules');
+        
+        // 2. Modify first practice
+        const originalText = currentData.modules[0][0];
+        const testText = `TEST SAVE/LOAD: ${new Date().toISOString()}`;
+        currentData.modules[0][0] = testText;
+        console.log('2. Modified first practice to:', testText);
+        
+        // 3. Save to database
+        console.log('3. Saving to database...');
+        const saveResult = await saveTypingTests(currentData);
+        if (!saveResult) {
+          throw new Error('Save failed');
+        }
+        console.log('3. Save successful');
+        
+        // 4. Clear cache and reload
+        console.log('4. Clearing cache and reloading...');
+        localStorage.removeItem('smx_typing_tests');
+        localStorage.removeItem('smx_typing_tests_timestamp');
+        
+        const reloadedData = await getTypingTests();
+        console.log('4. Reloaded data from API');
+        
+        // 5. Verify the change persisted
+        if (reloadedData.modules[0][0] === testText) {
+          console.log('✅ SUCCESS: Change persisted in database');
+          alert('✅ Test PASSED: Save/Load cycle working correctly!');
+        } else {
+          console.log('❌ FAILED: Change did not persist');
+          console.log('Expected:', testText);
+          console.log('Got:', reloadedData.modules[0][0]);
+          alert('❌ Test FAILED: Change did not persist in database');
+        }
+        
+        // 6. Restore original text
+        console.log('6. Restoring original text...');
+        reloadedData.modules[0][0] = originalText;
+        await saveTypingTests(reloadedData);
+        console.log('6. Original text restored');
+        
+        // 7. Re-render editor
+        await renderEditor();
+        
+      } catch (error) {
+        console.error('❌ Test failed:', error);
+        alert('❌ Test FAILED: ' + error.message);
+      }
+    };
     
     // Logout function
     function logout() {

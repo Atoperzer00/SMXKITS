@@ -574,6 +574,9 @@
           <button onclick="window.forceReloadTypingData()" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
             <i class="fas fa-sync-alt" style="margin-right: 0.5rem;"></i>Refresh Content
           </button>
+          <button onclick="window.forceRefreshFromAPI()" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
+            <i class="fas fa-database" style="margin-right: 0.5rem;"></i>Refresh from DB
+          </button>
           <button onclick="window.compareTypingData()" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
             <i class="fas fa-search" style="margin-right: 0.5rem;"></i>Debug
           </button>
@@ -741,7 +744,7 @@
         // Show admin controls if user is admin
         checkAdminAccess();
         
-        // Set up periodic sync check for real-time updates (every 30 seconds, silent)
+        // Set up periodic sync check for real-time updates (every 10 seconds, silent)
         setInterval(async () => {
           try {
             // Try to get fresh data from API (silent check)
@@ -762,12 +765,13 @@
                   localStorage.setItem('smx_typing_tests', JSON.stringify(result.data));
                   localStorage.setItem('smx_typing_tests_timestamp', Date.now().toString());
                   
-                  // Re-render modules
+                  // Re-render modules and update progress
                   renderModules();
+                  updateProgressDisplay();
                   
                   // Only show notification if user is not actively typing
                   if (document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'INPUT') {
-                    showSyncIndicator('📥 Content updated');
+                    showSyncIndicator('📥 Content updated from admin');
                   }
                 }
               }
@@ -778,7 +782,7 @@
               console.warn('⚠️ Sync check failed (network issue)');
             }
           }
-        }, 30000); // Check every 30 seconds
+        }, 10000); // Check every 10 seconds
         
         console.log('Keyboard Training System - Ready!');
       } catch (error) {
@@ -825,7 +829,7 @@
       try {
         console.log('📚 Loading typing modules from API...');
         
-        // Try to load from API first
+        // Always try to load from API first for the most current data
         const response = await fetch('/api/typing-tests');
         
         if (response.ok) {
@@ -836,7 +840,7 @@
             typingModules = result.data.modules;
             moduleNames = result.data.moduleNames;
             
-            // Cache in localStorage for offline use
+            // Update localStorage cache with fresh data from API
             localStorage.setItem('smx_typing_tests', JSON.stringify(result.data));
             localStorage.setItem('smx_typing_tests_timestamp', Date.now().toString());
             
@@ -1631,6 +1635,55 @@
     window.forceReloadTypingData = async function() {
       console.log('=== Force Reloading Typing Data ===');
       await reloadTypingData();
+    };
+    
+    // Force refresh from API, clearing cache
+    window.forceRefreshFromAPI = async function() {
+      console.log('🔄 Force refreshing from API...');
+      
+      try {
+        // Clear localStorage cache first
+        localStorage.removeItem('smx_typing_tests');
+        localStorage.removeItem('smx_typing_tests_timestamp');
+        localStorage.removeItem('smx_typing_tests_update_trigger');
+        
+        console.log('🗑️ Cache cleared, fetching fresh data from API...');
+        
+        // Force fetch from API (no fallback to localStorage)
+        const response = await fetch('/api/typing-tests');
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+          console.log('✅ Fresh data loaded from API');
+          
+          // Update global variables with fresh data
+          typingModules = result.data.modules;
+          moduleNames = result.data.moduleNames;
+          
+          // Update cache with fresh data
+          localStorage.setItem('smx_typing_tests', JSON.stringify(result.data));
+          localStorage.setItem('smx_typing_tests_timestamp', Date.now().toString());
+          
+          // Re-render modules with fresh data
+          renderModules();
+          updateProgressDisplay();
+          
+          showSyncIndicator('✅ Refreshed from API');
+          console.log('✅ Keyboard training refreshed with latest data from database');
+        } else {
+          throw new Error(result.message || 'Failed to load from API');
+        }
+        
+      } catch (error) {
+        console.error('❌ Error refreshing from API:', error);
+        showSyncIndicator('❌ API refresh failed', true);
+        alert('Failed to refresh from API: ' + error.message);
+      }
     };
 
     // Test function to compare current display with localStorage
