@@ -884,30 +884,64 @@
           
           if (!isNaN(mod) && !isNaN(prac)) {
             try {
+              console.log(`🔄 Auto-saving Module ${mod}, Practice ${prac}...`);
               let data = await getTypingTests();
+              
               if (data.modules && data.modules[mod] && data.modules[mod][prac] !== undefined) {
-                if (data.modules[mod][prac] !== e.target.value) {
-                  data.modules[mod][prac] = e.target.value;
-                  await saveTypingTests(data);
-                  console.log(`Auto-saved Module ${mod}, Practice ${prac}`);
+                const oldValue = data.modules[mod][prac];
+                const newValue = e.target.value;
+                
+                if (oldValue !== newValue) {
+                  console.log(`📝 Content changed for Module ${mod}, Practice ${prac}`);
+                  console.log(`Old: "${oldValue.substring(0, 50)}..."`);
+                  console.log(`New: "${newValue.substring(0, 50)}..."`);
                   
-                  // Show brief auto-save indicator
-                  const indicator = document.createElement('span');
-                  indicator.textContent = ' ✓ Auto-saved';
-                  indicator.style.color = '#22c55e';
-                  indicator.style.fontSize = '0.9em';
-                  indicator.style.marginLeft = '0.5rem';
-                  e.target.parentNode.appendChild(indicator);
+                  data.modules[mod][prac] = newValue;
+                  const saveSuccess = await saveTypingTests(data);
                   
-                  setTimeout(() => {
-                    if (indicator.parentNode) {
-                      indicator.parentNode.removeChild(indicator);
-                    }
-                  }, 1500);
+                  if (saveSuccess) {
+                    console.log(`✅ Auto-saved Module ${mod}, Practice ${prac} successfully`);
+                    
+                    // Show brief auto-save indicator
+                    const indicator = document.createElement('span');
+                    indicator.textContent = ' ✓ Saved';
+                    indicator.style.color = '#22c55e';
+                    indicator.style.fontSize = '0.9em';
+                    indicator.style.marginLeft = '0.5rem';
+                    indicator.style.fontWeight = 'bold';
+                    e.target.parentNode.appendChild(indicator);
+                    
+                    setTimeout(() => {
+                      if (indicator.parentNode) {
+                        indicator.parentNode.removeChild(indicator);
+                      }
+                    }, 2000);
+                  } else {
+                    throw new Error('Save operation returned false');
+                  }
+                } else {
+                  console.log(`ℹ️ No changes detected for Module ${mod}, Practice ${prac}`);
                 }
+              } else {
+                console.error(`❌ Invalid data structure for Module ${mod}, Practice ${prac}`);
               }
             } catch (error) {
-              console.error('Auto-save failed:', error);
+              console.error('❌ Auto-save failed:', error);
+              
+              // Show error indicator
+              const errorIndicator = document.createElement('span');
+              errorIndicator.textContent = ' ❌ Save failed';
+              errorIndicator.style.color = '#ef4444';
+              errorIndicator.style.fontSize = '0.9em';
+              errorIndicator.style.marginLeft = '0.5rem';
+              errorIndicator.style.fontWeight = 'bold';
+              e.target.parentNode.appendChild(errorIndicator);
+              
+              setTimeout(() => {
+                if (errorIndicator.parentNode) {
+                  errorIndicator.parentNode.removeChild(errorIndicator);
+                }
+              }, 3000);
             }
           }
         }, 2000);
@@ -1422,10 +1456,10 @@
       await renderEditor();
       console.log('✅ Editor initialized successfully');
       
-      // Set up periodic sync check (every 30 seconds)
+      // Set up periodic sync check (every 60 seconds, silent)
       setInterval(async () => {
         try {
-          console.log('🔄 Checking for updates from other admins...');
+          // Silent check for updates from other admins
           const currentData = await getTypingTests();
           
           // Compare with what's currently displayed
@@ -1450,12 +1484,13 @@
           if (needsUpdate) {
             console.log('📥 Updates detected from other admins, refreshing editor...');
             await renderEditor();
-            showSyncIndicator('📥 Content updated by another admin');
+            showSyncIndicator('📥 Updated by another admin');
           }
         } catch (error) {
-          console.error('❌ Periodic sync check failed:', error);
+          // Silent error handling
+          console.warn('⚠️ Sync check failed:', error.message);
         }
-      }, 30000); // Check every 30 seconds
+      }, 60000); // Check every 60 seconds
     });
     
     // Logout function
