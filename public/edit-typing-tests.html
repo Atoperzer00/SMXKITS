@@ -423,11 +423,19 @@
         </div>
       </div>
       
-      <div style="margin-bottom: 2rem;">
+      <div style="margin-bottom: 2rem; display: flex; gap: 1rem; align-items: center;">
         <button onclick="addModule()" class="btn btn-primary">
           <i class="fas fa-plus" style="margin-right: 0.5rem;"></i>
           Add New Module
         </button>
+        <button onclick="testRealTimeSync()" class="btn btn-success" title="Test if changes sync to keyboard training page">
+          <i class="fas fa-sync" style="margin-right: 0.5rem;"></i>
+          Test Sync
+        </button>
+        <span style="color: var(--text-secondary); font-size: 0.9rem;">
+          <i class="fas fa-info-circle" style="margin-right: 0.3rem;"></i>
+          Changes auto-save and sync to keyboard training
+        </span>
       </div>
       
       <div id="modules-accordion"></div>
@@ -573,10 +581,73 @@
         }, 50);
         
         console.log('=== Typing tests saved and all events dispatched ===');
+        
+        // Show global sync indicator
+        showSyncIndicator('✓ Synced to keyboard training');
+        
       } catch (error) {
         console.error('Error saving typing tests:', error);
         alert('Error saving data: ' + error.message);
+        showSyncIndicator('✗ Sync failed', true);
       }
+    }
+    
+    // Show sync status indicator
+    function showSyncIndicator(message, isError = false) {
+      // Remove existing indicator
+      const existing = document.getElementById('syncIndicator');
+      if (existing) {
+        existing.remove();
+      }
+      
+      // Create new indicator
+      const indicator = document.createElement('div');
+      indicator.id = 'syncIndicator';
+      indicator.textContent = message;
+      indicator.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${isError ? '#ef4444' : '#22c55e'};
+        color: white;
+        padding: 12px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        z-index: 1000;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        animation: slideIn 0.3s ease-out;
+      `;
+      
+      // Add animation keyframes if not already added
+      if (!document.getElementById('syncIndicatorStyles')) {
+        const style = document.createElement('style');
+        style.id = 'syncIndicatorStyles';
+        style.textContent = `
+          @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+          }
+          @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+      
+      document.body.appendChild(indicator);
+      
+      // Auto-remove after 3 seconds
+      setTimeout(() => {
+        if (indicator.parentNode) {
+          indicator.style.animation = 'slideOut 0.3s ease-in';
+          setTimeout(() => {
+            if (indicator.parentNode) {
+              indicator.remove();
+            }
+          }, 300);
+        }
+      }, 3000);
     }
     // Render accordion
     function renderEditor() {
@@ -698,10 +769,50 @@
         saveBubble.style.opacity = 0.65;
       }
     });
+    // Auto-save timeout
+    let autoSaveTimeout;
+    
     document.addEventListener('input', function(e) {
       if (e.target.matches('.practice-textarea')) {
         document.getElementById('saveBubble').disabled = false;
         document.getElementById('saveBubble').style.opacity = 1;
+        
+        // Clear existing timeout
+        if (autoSaveTimeout) {
+          clearTimeout(autoSaveTimeout);
+        }
+        
+        // Set new timeout for auto-save (2 seconds after user stops typing)
+        autoSaveTimeout = setTimeout(() => {
+          console.log('Auto-saving after user stopped typing...');
+          const mod = parseInt(e.target.dataset.module);
+          const prac = parseInt(e.target.dataset.practice);
+          
+          if (!isNaN(mod) && !isNaN(prac)) {
+            let data = getTypingTests();
+            if (data.modules && data.modules[mod] && data.modules[mod][prac] !== undefined) {
+              if (data.modules[mod][prac] !== e.target.value) {
+                data.modules[mod][prac] = e.target.value;
+                saveTypingTests(data);
+                console.log(`Auto-saved Module ${mod}, Practice ${prac}`);
+                
+                // Show brief auto-save indicator
+                const indicator = document.createElement('span');
+                indicator.textContent = ' ✓ Auto-saved';
+                indicator.style.color = '#22c55e';
+                indicator.style.fontSize = '0.9em';
+                indicator.style.marginLeft = '0.5rem';
+                e.target.parentNode.appendChild(indicator);
+                
+                setTimeout(() => {
+                  if (indicator.parentNode) {
+                    indicator.parentNode.removeChild(indicator);
+                  }
+                }, 1500);
+              }
+            }
+          }
+        }, 2000);
       }
     });
     document.addEventListener('focusout', function(e) {
@@ -907,6 +1018,37 @@
       const data = getTypingTests();
       saveTypingTests(data);
       alert('Sync forced! Check the keyboard training page to see if changes appear.');
+    };
+    
+    // Real-time sync test
+    window.testRealTimeSync = function() {
+      console.log('=== Testing Real-Time Sync ===');
+      
+      // Add a test marker to the first practice
+      let data = getTypingTests();
+      if (data.modules && data.modules[0] && data.modules[0][0]) {
+        const timestamp = new Date().toLocaleTimeString();
+        const originalText = data.modules[0][0];
+        
+        // Add timestamp marker
+        data.modules[0][0] = `[SYNC TEST ${timestamp}] ${originalText}`;
+        saveTypingTests(data);
+        
+        console.log('Test marker added. Check keyboard-training.html to see if it appears.');
+        alert(`Sync test initiated at ${timestamp}. Check the keyboard training page to see if the test marker appears in Module 1, Practice 1.`);
+        
+        // Remove the marker after 10 seconds
+        setTimeout(() => {
+          let currentData = getTypingTests();
+          if (currentData.modules && currentData.modules[0] && currentData.modules[0][0]) {
+            currentData.modules[0][0] = originalText;
+            saveTypingTests(currentData);
+            console.log('Test marker removed');
+          }
+        }, 10000);
+      } else {
+        alert('No data available for sync test');
+      }
     };
     
     // Initial render

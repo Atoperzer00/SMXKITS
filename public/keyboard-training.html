@@ -1431,6 +1431,7 @@
       if (e.key === 'smx_typing_tests' || e.key === 'smx_typing_tests_update_trigger') {
         console.log('Typing tests updated from another tab, refreshing...');
         reloadTypingData();
+        showSyncIndicator('✓ Content updated from another tab');
       }
     });
     
@@ -1454,6 +1455,9 @@
       renderModules();
       updateProgressDisplay();
       console.log('Modules updated from custom event');
+      
+      // Show sync indicator
+      showSyncIndicator('✓ Content updated from edit page');
     });
 
     // Listen for BroadcastChannel messages (modern browsers)
@@ -1464,6 +1468,7 @@
         if (e.data.type === 'typing_tests_updated') {
           console.log('Typing tests updated via BroadcastChannel, refreshing...');
           reloadTypingData();
+          showSyncIndicator('✓ Content updated via BroadcastChannel');
         }
       });
       console.log('BroadcastChannel listener set up');
@@ -1479,6 +1484,7 @@
         console.log('Typing tests updated detected via polling, refreshing...');
         lastUpdateTimestamp = currentTimestamp;
         reloadTypingData();
+        showSyncIndicator('✓ Content updated (polling)');
       }
     }, 1000); // Check every second
     
@@ -1541,6 +1547,64 @@
       console.log('Testing reload...');
       reloadTypingData();
     };
+    
+    // Show sync status indicator
+    function showSyncIndicator(message, isError = false) {
+      // Remove existing indicator
+      const existing = document.getElementById('syncIndicator');
+      if (existing) {
+        existing.remove();
+      }
+      
+      // Create new indicator
+      const indicator = document.createElement('div');
+      indicator.id = 'syncIndicator';
+      indicator.textContent = message;
+      indicator.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${isError ? '#ef4444' : '#22c55e'};
+        color: white;
+        padding: 12px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        z-index: 1000;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        animation: slideIn 0.3s ease-out;
+      `;
+      
+      // Add animation keyframes if not already added
+      if (!document.getElementById('syncIndicatorStyles')) {
+        const style = document.createElement('style');
+        style.id = 'syncIndicatorStyles';
+        style.textContent = `
+          @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+          }
+          @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+      
+      document.body.appendChild(indicator);
+      
+      // Auto-remove after 2 seconds
+      setTimeout(() => {
+        if (indicator.parentNode) {
+          indicator.style.animation = 'slideOut 0.3s ease-in';
+          setTimeout(() => {
+            if (indicator.parentNode) {
+              indicator.remove();
+            }
+          }, 300);
+        }
+      }, 2000);
+    }
 
   </script>
 </body>
