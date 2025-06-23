@@ -835,7 +835,7 @@
           <!-- Stream Controls -->
           <div class="stream-controls">
             <button class="btn btn-primary btn-full" id="goLiveBtn">
-              � Go Live
+              🔴 Go Live
             </button>
             <button class="btn btn-danger btn-full" id="stopBtn" disabled>
               ⏹️ End Stream
@@ -844,7 +844,7 @@
               📹 Camera
             </button>
             <button class="btn btn-secondary" id="startScreenBtn" style="display:none;">
-              �️ Screen Share
+              🖥️ Screen Share
             </button>
             <button class="btn btn-danger" id="stopMediaBtn" style="display:none;">
               ⏹️ Stop Media
@@ -1470,9 +1470,12 @@
       uploadBtn.addEventListener('click', () => {
         console.log('🔄 Upload button clicked');
         console.log('Current local video:', window.currentLocalVideo);
+        console.log('File object:', window.currentLocalVideo?.file);
+        console.log('File name from object:', window.currentLocalVideo?.file?.name);
+        console.log('File name from currentLocalVideo:', window.currentLocalVideo?.name);
         
         if (window.currentLocalVideo && window.currentLocalVideo.file) {
-          console.log('✅ File found, starting upload:', window.currentLocalVideo.file.name);
+          console.log('✅ File found, starting upload');
           handleFileUpload(window.currentLocalVideo.file);
         } else {
           console.error('❌ No file found to upload');
@@ -1489,20 +1492,39 @@
       });
     }
     async function handleFileUpload(file) {
-      console.log('🚀 Starting file upload process for:', file?.name);
+      console.log('🚀 Starting file upload process for:', file);
+      console.log('🔍 File object structure:', {
+        hasName: !!file?.name,
+        hasOriginalFile: !!file?.originalFile,
+        currentLocalVideo: window.currentLocalVideo
+      });
       
-      if (!file || !file.name.endsWith('.mp4')) {
-        console.error('❌ Invalid file type:', file?.name);
+      // Get the actual file object and name
+      let actualFile = file;
+      let fileName = file?.name;
+      
+      // If file doesn't have name, try to get it from currentLocalVideo
+      if (!fileName && window.currentLocalVideo) {
+        fileName = window.currentLocalVideo.name;
+        actualFile = window.currentLocalVideo.file || file;
+      }
+      
+      if (!actualFile || !fileName || !fileName.endsWith('.mp4')) {
+        console.error('❌ Invalid file type:', fileName || 'No file name');
+        const uploadStatus = document.getElementById('uploadStatus');
         uploadStatus.textContent = 'Please select an MP4 file only';
         uploadStatus.className = 'upload-status error';
         hideFileInfo();
         return;
       }
       
+      console.log('✅ Using file:', fileName);
+      
       // Check file size (4GB limit)
       const maxSize = 4 * 1024 * 1024 * 1024; // 4GB
-      if (file.size > maxSize) {
-        const currentSizeGB = (file.size / 1024 / 1024 / 1024).toFixed(2);
+      if (actualFile.size > maxSize) {
+        const currentSizeGB = (actualFile.size / 1024 / 1024 / 1024).toFixed(2);
+        const uploadStatus = document.getElementById('uploadStatus');
         uploadStatus.textContent = `File too large: ${currentSizeGB}GB (max 4GB)`;
         uploadStatus.className = 'upload-status error';
         hideFileInfo();
@@ -1527,12 +1549,12 @@
         return;
       }
 
-      uploadStatus.textContent = `Uploading "${file.name}"...`;
+      uploadStatus.textContent = `Uploading "${fileName}"...`;
       uploadStatus.className = 'upload-status info';
       progressFill.style.width = '25%';
 
       const formData = new FormData();
-      formData.append('video', file);
+      formData.append('video', actualFile);
       formData.append('classId', currentClassId);
 
       try {
@@ -1543,9 +1565,9 @@
         
         console.log('🚀 Uploading to:', uploadUrl);
         console.log('📦 Form data contains:', {
-          video: file.name,
+          video: fileName,
           classId: currentClassId,
-          fileSize: file.size
+          fileSize: actualFile.size
         });
         
         const headers = {};
@@ -1732,7 +1754,7 @@
         initializeStreamingSocket();
       }
       
-      console.log('� Switched to live streaming mode');
+      console.log('🔴 Switched to live streaming mode');
     }
     // WebRTC socket functionality is now integrated into the main streaming socket
     
@@ -2312,6 +2334,10 @@
       
       if (uploadBtn) {
         uploadBtn.addEventListener('click', () => {
+          console.log('🔄 Upload button clicked (second handler)');
+          console.log('Current local video:', window.currentLocalVideo);
+          console.log('File object:', window.currentLocalVideo?.file);
+          
           if (window.currentLocalVideo && window.currentLocalVideo.file) {
             handleFileUpload(window.currentLocalVideo.file);
           } else {
