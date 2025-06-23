@@ -387,8 +387,7 @@ app.get('/api/callouts/:id/history', async (req, res) => {
   }
 });
 
-// Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Note: /uploads route already defined above at line 54
 
 // Serve temporary stream files (for testing/preview)
 app.use('/temp', express.static(path.join(__dirname, 'temp')));

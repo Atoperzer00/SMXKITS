@@ -1090,8 +1090,14 @@
 
           
           <!-- Video Elements -->
-          <video id="video" autoplay muted style="display:none;"></video>
-          <video id="webrtcVideo" autoplay playsinline muted style="display:block; width:100%; height:100%; background:#000;"></video>
+          <video id="video" autoplay muted style="display:none;" 
+                 onerror="handleVideoError(this, 'main')"
+                 onloadstart="handleVideoLoadStart(this, 'main')"
+                 oncanplay="handleVideoCanPlay(this, 'main')"></video>
+          <video id="webrtcVideo" autoplay playsinline muted style="display:block; width:100%; height:100%; background:#000;"
+                 onerror="handleVideoError(this, 'webrtc')"
+                 onloadstart="handleVideoLoadStart(this, 'webrtc')"
+                 oncanplay="handleVideoCanPlay(this, 'webrtc')"></video>
           
           <!-- Stream Status Overlay -->
           <div id="streamStatusText" class="stream-status-overlay">
@@ -1238,6 +1244,15 @@
   </div>
   
   <script>
+    // ===== ICONS =====
+    const Icons = {
+      play: '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
+      pause: '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>',
+      rewind: '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg>',
+      forward: '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg>',
+      fullscreen: '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>'
+    };
+    
     // ===== REAL-TIME SYNCHRONIZATION VARIABLES =====
     let socket = null;
     let classId = null;
@@ -1355,14 +1370,46 @@
         }
       });
       
-      socket.on('disconnect', () => {
-        console.log('🔌 Disconnected from server');
+      socket.on('disconnect', (reason) => {
+        console.log('🔌 Disconnected from server:', reason);
         showStreamStatusOverlay('Connection lost - Reconnecting...');
         isStreamActive = false;
+        
+        // Clear any active timeouts
+        clearPauseTimeout();
+        
+        // Show reconnection status
+        setTimeout(() => {
+          if (!socket.connected) {
+            showStreamStatusOverlay('Reconnecting to server...');
+          }
+        }, 2000);
       });
       
       socket.on('connect_error', (error) => {
         console.error('❌ Socket.IO connection error:', error);
+        showStreamStatusOverlay('Connection error - Please refresh page');
+      });
+      
+      socket.on('reconnect', (attemptNumber) => {
+        console.log('🔄 Reconnected to server after', attemptNumber, 'attempts');
+        showNotification('Reconnected to server', 'success');
+        
+        // Rejoin the class room
+        if (classId) {
+          console.log('🔌 Rejoining class after reconnection:', classId);
+          socket.emit('student-join-class', { classId });
+          
+          // Check current stream state
+          setTimeout(() => {
+            checkStreamState();
+          }, 1000);
+        }
+      });
+      
+      socket.on('reconnect_error', (error) => {
+        console.error('❌ Reconnection failed:', error);
+        showStreamStatusOverlay('Reconnection failed - Please refresh page');
       });
       
       // Stream synchronization events
@@ -1398,41 +1445,33 @@
         // Regular time updates from instructor
         instructorTime = data.time;
         instructorPlaying = data.playing;
+        lastSyncTime = Date.now();
+        
+        // Calculate how far behind live we are
+        const video = document.getElementById('video');
+        if (video && video.currentTime) {
+          behindLiveSeconds = Math.max(0, instructorTime - video.currentTime);
+          isLiveSynced = behindLiveSeconds < 3;
+        }
+        
         updateLiveStatus();
         
         // Update timeline live edge
         if (window.enhancedTimeline) {
           window.enhancedTimeline.render();
         }
+        
+        // Auto-sync if too far behind (more than 5 seconds)
+        if (behindLiveSeconds > 5 && video && video.src) {
+          console.log(`🔄 Auto-syncing: ${behindLiveSeconds}s behind`);
+          video.currentTime = instructorTime;
+        }
       });
-      
       // Note: Removed duplicate stream:play and stream:pause handlers
       // The main handlers are defined above in the "Stream synchronization events" section
       
-      socket.on('stream:seek', (data) => {
-        console.log('⏭️ Instructor seeked video to:', data.time);
-        const video = document.getElementById('video');
-        const webrtcVideo = document.getElementById('webrtcVideo');
-        const activeVideo = video.style.display !== 'none' ? video : webrtcVideo;
-        
-        if (activeVideo && data.time !== undefined) {
-          activeVideo.currentTime = data.time;
-        }
-        
-        instructorTime = data.time;
-        updateLiveStatus();
-      });
       
-      // Test event to verify Socket.IO is working
-      socket.on('test-event', (data) => {
-        console.log('🧪 Test event received:', data);
-      });
-      
-      // Listen for any events (debugging)
-      socket.onAny((eventName, ...args) => {
-        console.log('📨 Socket.IO event received:', eventName, args);
-      });
-      
+      // Stream status updates
       socket.on('streamStatus', (data) => {
         console.log('📡 Stream status update received:', data);
         console.log('📡 Current video elements state:', {
@@ -1447,10 +1486,12 @@
         console.log('🧪 Test event received:', data);
       });
       
-      // Listen for any events (debugging)
-      socket.onAny((eventName, ...args) => {
-        console.log('📨 Socket.IO event received:', eventName, args);
-      });
+      // Listen for any events (debugging) - only in development
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        socket.onAny((eventName, ...args) => {
+          console.log('📨 Socket.IO event received:', eventName, args);
+        });
+      }
       
       // Handle current stream state for late joiners
       socket.on('stream:current-state', (data) => {
@@ -1461,6 +1502,39 @@
       socket.on('stream:no-state', (data) => {
         console.log('ℹ️ No active stream state available');
         showWaitingMessage();
+      });
+      
+      // Handle viewer count updates
+      socket.on('viewerCount', (data) => {
+        console.log('👥 Viewer count update:', data.count);
+        updateViewerCount(data.count);
+      });
+      
+      socket.on('viewer:count', (data) => {
+        console.log('👥 Viewer count update (alt):', data.count);
+        updateViewerCount(data.count);
+      });
+      
+      // Handle WebRTC events
+      socket.on('instructor-started-webrtc', (data) => {
+        console.log('🔴 Instructor started WebRTC stream:', data);
+        handleWebRTCStreamStart(data);
+      });
+      
+      socket.on('instructor-stopped-webrtc', (data) => {
+        console.log('⏹️ Instructor stopped WebRTC stream:', data);
+        handleWebRTCStreamStop(data);
+      });
+      
+      // Handle connection status
+      socket.on('stream:student-ready', (data) => {
+        console.log('✅ Student ready confirmation:', data);
+        showNotification('Connected to stream', 'success');
+      });
+      
+      socket.on('error', (data) => {
+        console.error('❌ Socket error:', data);
+        showNotification(data.message || 'Connection error', 'error');
       });
     }
     
@@ -1526,39 +1600,63 @@
     
     function handleInstructorPlay(data) {
       const video = document.getElementById('video');
+    const webrtcVideo = document.getElementById('webrtcVideo');
+      const activeVideo = video.style.display !== 'none' ? video : webrtcVideo;
+      
       instructorTime = data.time;
       instructorPlaying = true;
       
-      // Sync student video to instructor time
-      if (Math.abs(video.currentTime - instructorTime) > 1) {
-        video.currentTime = instructorTime;
-      }
-      
-      if (video.paused) {
-        video.play().catch(e => console.log('Autoplay prevented:', e));
+      // Only sync regular video (WebRTC can't be synced)
+      if (activeVideo === video && video.src) {
+          // Sync student video to instructor time
+        if (Math.abs(video.currentTime - instructorTime) > 1) {
+          console.log(`🔄 Syncing video: ${video.currentTime}s -> ${instructorTime}s`);
+          video.currentTime = instructorTime;
+        }
+        
+        if (video.paused) {
+          video.play().catch(e => console.log('Autoplay prevented:', e));
+        }
       }
       
       updatePlayPauseButton(false); // Show pause button
+      updateLiveStatus();
     }
     
     function handleInstructorPause(data) {
       const video = document.getElementById('video');
+    const webrtcVideo = document.getElementById('webrtcVideo');
+      const activeVideo = video.style.display !== 'none' ? video : webrtcVideo;
+      
       instructorTime = data.time;
       instructorPlaying = false;
       
-      // Sync student video to instructor time
-      video.currentTime = instructorTime;
-      video.pause();
+      // Only sync regular video (WebRTC can't be paused)
+      if (activeVideo === video && video.src) {
+        // Sync student video to instructor time
+        console.log(`⏸️ Pausing and syncing video to: ${instructorTime}s`);
+          video.currentTime = instructorTime;
+        video.pause();
+      }
       
       updatePlayPauseButton(true); // Show play button
+      updateLiveStatus();
     }
     
     function handleInstructorSeek(data) {
       const video = document.getElementById('video');
+      const webrtcVideo = document.getElementById('webrtcVideo');
+      const activeVideo = video.style.display !== 'none' ? video : webrtcVideo;
+      
       instructorTime = data.time;
       
-      // Force sync student to instructor time
-      video.currentTime = instructorTime;
+      // Only sync regular video (WebRTC can't be seeked)
+      if (activeVideo === video && video.src) {
+        console.log(`⏭️ Seeking video to: ${instructorTime}s`);
+        video.currentTime = instructorTime;
+      }
+      
+      updateLiveStatus();
     }
     
     function handleStreamStatusUpdate(data) {
@@ -1626,6 +1724,117 @@
         showStreamStatusOverlay('Stream paused by instructor');
       } else {
         console.log('❓ Unknown stream status:', data.status);
+      }
+    }
+    
+    // ===== ADDITIONAL WEBSOCKET HANDLERS =====
+    function handleWebRTCStreamStart(data) {
+      console.log('🔴 WebRTC stream started:', data);
+      const webrtcVideo = document.getElementById('webrtcVideo');
+      const video = document.getElementById('video');
+      
+      if (webrtcVideo) {
+        // Show WebRTC video, hide regular video
+        webrtcVideo.style.display = 'block';
+        if (video) video.style.display = 'none';
+        
+        updateStreamTypeIndicator('WebRTC Live Stream');
+        hideStreamStatusOverlay();
+        isStreamActive = true;
+        
+        // Update WebRTC status indicator
+        const webrtcStatus = document.getElementById('webrtcStatus');
+        if (webrtcStatus) {
+          webrtcStatus.style.display = 'flex';
+        }
+      }
+    }
+    
+    function handleWebRTCStreamStop(data) {
+      console.log('⏹️ WebRTC stream stopped:', data);
+      const webrtcVideo = document.getElementById('webrtcVideo');
+      const webrtcStatus = document.getElementById('webrtcStatus');
+      
+      if (webrtcVideo) {
+        webrtcVideo.style.display = 'none';
+      }
+      
+      if (webrtcStatus) {
+        webrtcStatus.style.display = 'none';
+      }
+      
+      showStreamStatusOverlay('WebRTC stream ended');
+      updateStreamTypeIndicator('Offline');
+      isStreamActive = false;
+    }
+    
+    function updateViewerCount(count) {
+      // Update viewer count display if element exists
+      const viewerCountEl = document.getElementById('viewerCount');
+      if (viewerCountEl) {
+        viewerCountEl.textContent = count;
+      }
+      
+      // Log for debugging
+      console.log('👥 Current viewers:', count);
+    }
+    
+    function updateStreamTypeIndicator(type) {
+      // Update stream type indicator if element exists
+      const streamTypeEl = document.getElementById('streamType');
+      if (streamTypeEl) {
+        streamTypeEl.textContent = type;
+      }
+      
+      // Update document title to reflect stream status
+      if (type === 'Offline') {
+        document.title = 'SMX Stream - Offline';
+      } else {
+        document.title = `SMX Stream - ${type}`;
+      }
+      
+      console.log('📡 Stream type updated:', type);
+    }
+    
+    // ===== VIDEO ERROR HANDLING =====
+    function handleVideoError(videoElement, type) {
+      console.error(`❌ Video error (${type}):`, videoElement.error);
+      
+      const errorCode = videoElement.error ? videoElement.error.code : 'unknown';
+      const errorMessage = getVideoErrorMessage(errorCode);
+      
+      showStreamStatusOverlay(`Video Error: ${errorMessage}`);
+      
+      // Try to recover after a delay
+      setTimeout(() => {
+        if (type === 'main' && videoElement.src) {
+          console.log('🔄 Attempting to reload main video...');
+          videoElement.load();
+        }
+      }, 3000);
+    }
+    
+    function handleVideoLoadStart(videoElement, type) {
+      console.log(`📺 Video loading started (${type})`);
+      if (type === 'main') {
+        showStreamStatusOverlay('Loading video stream...');
+      }
+    }
+    
+    function handleVideoCanPlay(videoElement, type) {
+      console.log(`📺 Video can play (${type})`);
+      if (type === 'main') {
+        hideStreamStatusOverlay();
+      }
+    }
+    
+    function getVideoErrorMessage(errorCode) {
+      switch (errorCode) {
+        case 1: return 'Video loading aborted';
+        case 2: return 'Network error while loading video';
+        case 3: return 'Video decoding error';
+        case 4: return 'Video format not supported';
+        default: return 'Unknown video error';
       }
     }
     
@@ -2493,6 +2702,11 @@
       pauseTimeout = setTimeout(() => {
         if (isStreamActive) {
           showStreamStatusOverlay('🔴 Instructor has paused the stream', true);
+          
+          // Start checking for stream recovery every 5 seconds after 30 seconds
+          setTimeout(() => {
+            startStreamRecoveryCheck();
+          }, 20000); // Additional 20 seconds = 30 total
         }
       }, 10000); // 10 seconds
     }
@@ -2502,6 +2716,28 @@
         clearTimeout(pauseTimeout);
         pauseTimeout = null;
       }
+      
+      if (window.streamRecoveryInterval) {
+        clearInterval(window.streamRecoveryInterval);
+        window.streamRecoveryInterval = null;
+      }
+    }
+    
+    function startStreamRecoveryCheck() {
+      if (window.streamRecoveryInterval) return; // Already running
+      
+      console.log('🔄 Starting stream recovery check...');
+      window.streamRecoveryInterval = setInterval(async () => {
+        console.log('🔄 Checking for stream recovery...');
+        await checkStreamState();
+        
+        // If stream is active again, clear the recovery check
+        if (isStreamActive) {
+          console.log('✅ Stream recovered, stopping recovery check');
+          clearInterval(window.streamRecoveryInterval);
+          window.streamRecoveryInterval = null;
+        }
+      }, 5000);
     }
     
     // Check stream state from server
@@ -2650,12 +2886,39 @@
     // ===== LIVE STATUS AND CLOCK DISPLAY =====
     function updateLiveStatus() {
       const video = document.getElementById('video');
-      const timeDiff = Math.abs(video.currentTime - instructorTime);
-      isLive = timeDiff < 3; // Within 3 seconds is considered "live"
+      const webrtcVideo = document.getElementById('webrtcVideo');
+      const activeVideo = video.style.display !== 'none' ? video : webrtcVideo;
+      
+      if (activeVideo === video && video.src && instructorTime > 0) {
+        const timeDiff = Math.abs(video.currentTime - instructorTime);
+        behindLiveSeconds = Math.max(0, instructorTime - video.currentTime);
+        isLive = timeDiff < 3; // Within 3 seconds is considered "live"
+        isLiveSynced = behindLiveSeconds < 2;
+      } else if (activeVideo === webrtcVideo) {
+        // For WebRTC, assume we're always live
+        isLive = true;
+        isLiveSynced = true;
+        behindLiveSeconds = 0;
+      }
       
       updateClockDisplay();
       updateSyncStatus();
       updateTimelineRestrictions();
+      updateBehindLiveIndicator();
+    }
+    
+    function updateBehindLiveIndicator() {
+      const indicator = document.getElementById('behindLiveIndicator');
+      const secondsSpan = document.getElementById('behindLiveSeconds');
+      
+      if (!indicator || !secondsSpan) return;
+      
+      if (behindLiveSeconds > 5) {
+        indicator.style.display = 'block';
+        secondsSpan.textContent = Math.floor(behindLiveSeconds);
+      } else {
+        indicator.style.display = 'none';
+      }
     }
     
     function updateTimelineRestrictions() {
@@ -5531,12 +5794,7 @@
       }
     }
 
-    function formatTime(seconds) {
-      if (isNaN(seconds)) return '0:00';
-      const mins = Math.floor(seconds / 60);
-      const secs = Math.floor(seconds % 60);
-      return `${mins}:${secs.toString().padStart(2, '0')}`;
-    }
+    // formatTime function is defined earlier in the file
 
     // Initialize advanced timeline
     setTimeout(() => {
@@ -5569,16 +5827,29 @@
         });
       }
     }, 1000);
-
-    const videoElement = document.getElementById('video');
-    const currentTimeDisplay = document.getElementById('currentTime');
-    const totalTimeDisplay = document.getElementById('totalTime');
-
-    // Play/Pause functionality for WebRTC
+    
+    // ===== GLOBAL VARIABLES =====
+    let isStreamActive = false;
+    let pauseTimeout = null;
+    let streamTimer = null;
+    
+    // ===== VIDEO CONTROL FUNCTIONS =====
     function togglePlayPause() {
+      const video = document.getElementById('video');
+      const webrtcVideo = document.getElementById('webrtcVideo');
+      const activeVideo = video.style.display !== 'none' ? video : webrtcVideo;
       const playPauseBtn = document.querySelector('.play-pause-btn');
       
-      if (streamTimer) {
+      if (activeVideo === video && video.src) {
+        // Regular video controls
+        if (video.paused) {
+          video.play().catch(e => console.log('Play prevented:', e));
+          playPauseBtn.innerHTML = Icons.pause;
+        } else {
+          video.pause();
+          playPauseBtn.innerHTML = Icons.play;
+        }
+      } else if (streamTimer) {
         // For WebRTC, we can't actually pause the stream, but we can pause our timer
         if (!streamTimer.isPaused) {
           streamTimer.pause();
@@ -5592,20 +5863,213 @@
       }
     }
 
-    // WebRTC stream uses its own timer-based time display updates
-    // Time display is handled by updateTimeDisplayForWebRTC() function
-
-    // Rewind functionality
     function rewindVideo() {
-      videoElement.currentTime -= 10;
+      const video = document.getElementById('video');
+      if (video.src) {
+        video.currentTime = Math.max(0, video.currentTime - 10);
+      }
     }
 
-    // Fast forward functionality
     function forwardVideo() {
-      videoElement.currentTime += 10;
+      const video = document.getElementById('video');
+      if (video.src) {
+        video.currentTime = Math.min(video.duration || 0, video.currentTime + 10);
+      }
     }
-
-
+    
+    function jumpToLive() {
+      const video = document.getElementById('video');
+      if (video.src && instructorTime) {
+        video.currentTime = instructorTime;
+        showNotification('Jumped to live edge', 'success');
+      }
+    }
+    
+    function toggleZoomMode() {
+      // Toggle timeline zoom functionality
+      if (zoomLevel === 1) {
+        zoomLevel = 2;
+        visibleDuration = 15;
+      } else {
+        zoomLevel = 1;
+        visibleDuration = 30;
+      }
+      
+      if (window.enhancedTimeline) {
+        window.enhancedTimeline.render();
+      }
+      
+      const btn = document.getElementById('zoomToggleBtn');
+      if (btn) {
+        btn.textContent = zoomLevel === 1 ? 'Zoom' : 'Zoom Out';
+      }
+    }
+    
+    function toggleFullscreen() {
+      const videoContainer = document.querySelector('.video-container');
+      
+      if (!document.fullscreenElement) {
+        videoContainer.requestFullscreen().catch(err => {
+          console.log('Fullscreen error:', err);
+        });
+      } else {
+        document.exitFullscreen();
+      }
+    }
+    
+    function updatePlayPauseButton(showPlay) {
+      const btn = document.querySelector('.play-pause-btn');
+      if (btn) {
+        btn.innerHTML = showPlay ? Icons.play : Icons.pause;
+      }
+    }
+    
+    // ===== NOTIFICATION SYSTEM =====
+    function showNotification(message, type = 'info') {
+      // Create notification element
+      const notification = document.createElement('div');
+      notification.className = `notification ${type}`;
+      notification.textContent = message;
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#22c55e' : type === 'error' ? '#ef4444' : '#3b82f6'};
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        z-index: 10000;
+        font-weight: 500;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        animation: slideIn 0.3s ease;
+      `;
+      
+      document.body.appendChild(notification);
+      
+      // Auto-remove after 3 seconds
+      setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => {
+          if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+          }
+        }, 300);
+      }, 3000);
+    }
+    
+    // ===== INITIALIZATION =====
+    function initializeApp() {
+      console.log('🚀 Initializing SMX Stream application...');
+      
+      // Extract classId from URL parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      classId = urlParams.get('classId') || urlParams.get('class') || 'demo-class';
+      console.log('📋 Class ID:', classId);
+      
+      // Detect user role
+      detectUserRole();
+      
+      // Initialize Socket.IO connection
+      initializeSocket();
+      
+      // Initialize enhanced timeline
+      if (document.getElementById('timelineCanvas')) {
+        window.enhancedTimeline = new EnhancedTimeline('timelineCanvas', 'video');
+      }
+      
+      // Initialize screenshot feature
+      initializeScreenshotFeature();
+      
+      // Initialize live edge enforcement for students
+      if (!isInstructor) {
+        initializeLiveEdgeEnforcement();
+      }
+      
+      // Show welcome modal
+      showWelcomeModal();
+      
+      // Set up video error handling
+      const video = document.getElementById('video');
+      const webrtcVideo = document.getElementById('webrtcVideo');
+      
+      if (video) {
+        video.addEventListener('error', (e) => {
+          console.error('❌ Video error:', e);
+          showStreamStatusOverlay('Video loading error - Please refresh');
+        });
+        
+        video.addEventListener('loadstart', () => {
+          console.log('📺 Video loading started');
+        });
+        
+        video.addEventListener('canplay', () => {
+          console.log('📺 Video can start playing');
+          hideStreamStatusOverlay();
+        });
+      }
+      
+      if (webrtcVideo) {
+        webrtcVideo.addEventListener('error', (e) => {
+          console.error('❌ WebRTC video error:', e);
+          showStreamStatusOverlay('WebRTC connection error');
+        });
+      }
+      
+      // Check for existing stream state
+      setTimeout(() => {
+        checkStreamState();
+      }, 2000);
+      
+      console.log('✅ SMX Stream application initialized');
+    }
+    
+    // ===== KEYBOARD SHORTCUTS =====
+    document.addEventListener('keydown', (e) => {
+      // Don't trigger shortcuts if user is typing in an input
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        return;
+      }
+      
+      switch (e.key.toLowerCase()) {
+        case ' ':
+        case 'k':
+          e.preventDefault();
+          togglePlayPause();
+          break;
+        case 'j':
+          e.preventDefault();
+          rewindVideo();
+          break;
+        case 'l':
+          e.preventDefault();
+          if (e.shiftKey) {
+            jumpToLive();
+          } else {
+            forwardVideo();
+          }
+          break;
+        case 'f':
+          e.preventDefault();
+          toggleFullscreen();
+          break;
+        case 'arrowleft':
+          e.preventDefault();
+          rewindVideo();
+          break;
+        case 'arrowright':
+          e.preventDefault();
+          forwardVideo();
+          break;
+      }
+    });
+    
+    // Initialize when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initializeApp);
+    } else {
+      initializeApp();
+    }
+    
   </script>
 </body>
 </html>
