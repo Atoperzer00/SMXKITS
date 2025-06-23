@@ -434,6 +434,20 @@
       justify-content: center;
     }
 
+    /* Force display when active - override any conflicting styles */
+    .slideshow-modal.active {
+      display: flex !important;
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      background: rgba(0, 0, 0, 0.95) !important;
+      z-index: 99999 !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+
     .slideshow-container {
       position: relative;
       max-width: 90vw;
@@ -704,6 +718,14 @@
           <button onclick="testSlideshow()" style="background: var(--primary-gradient); border: none; color: white; padding: 0.5rem 1rem; border-radius: 5px; margin-top: 1rem; margin-left: 1rem; cursor: pointer;">
             Test Slideshow
           </button>
+          <!-- Debug slideshow button -->
+          <button onclick="debugSlideshow()" style="background: #6366f1; border: none; color: white; padding: 0.5rem 1rem; border-radius: 5px; margin-top: 1rem; margin-left: 1rem; cursor: pointer;">
+            Debug Slideshow
+          </button>
+          <!-- Force show modal button -->
+          <button onclick="forceShowModal()" style="background: #dc2626; border: none; color: white; padding: 0.5rem 1rem; border-radius: 5px; margin-top: 1rem; margin-left: 1rem; cursor: pointer;">
+            Force Show Modal
+          </button>
         </div>
       </header>
 
@@ -940,14 +962,14 @@
       try {
         // Initialize slideshow images for Mission Reference 1
         slideImages = [
-          './images/Mission 1 Reference Product/1.jpg',
-          './images/Mission 1 Reference Product/2.jpg',
-          './images/Mission 1 Reference Product/3.jpg',
-          './images/Mission 1 Reference Product/4.jpg',
-          './images/Mission 1 Reference Product/5.jpg',
-          './images/Mission 1 Reference Product/6.jpg',
-          './images/Mission 1 Reference Product/7.jpg',
-          './images/Mission 1 Reference Product/8.jpg'
+          'images/Mission 1 Reference Product/1.jpg',
+          'images/Mission 1 Reference Product/2.jpg',
+          'images/Mission 1 Reference Product/3.jpg',
+          'images/Mission 1 Reference Product/4.jpg',
+          'images/Mission 1 Reference Product/5.jpg',
+          'images/Mission 1 Reference Product/6.jpg',
+          'images/Mission 1 Reference Product/7.jpg',
+          'images/Mission 1 Reference Product/8.jpg'
         ];
         
         console.log('Slideshow images initialized:', slideImages);
@@ -963,10 +985,19 @@
           return;
         }
         
-        // Show modal first
-        modal.classList.add('active');
+        // Force show modal with explicit styles
         modal.style.display = 'flex';
-        console.log('Modal active class added and display set to flex');
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.width = '100vw';
+        modal.style.height = '100vh';
+        modal.style.backgroundColor = 'rgba(0, 0, 0, 0.95)';
+        modal.style.zIndex = '99999';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+        modal.classList.add('active');
+        console.log('Modal styles applied and active class added');
         
         // Prevent body scrolling when modal is open
         document.body.style.overflow = 'hidden';
@@ -1177,6 +1208,37 @@
       }
     };
     
+    // Force show modal function for debugging
+    window.forceShowModal = function() {
+      console.log('=== Force Show Modal ===');
+      const modal = document.getElementById('slideshowModal');
+      if (modal) {
+        modal.style.display = 'flex';
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.width = '100vw';
+        modal.style.height = '100vh';
+        modal.style.backgroundColor = 'rgba(0, 0, 0, 0.95)';
+        modal.style.zIndex = '99999';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+        modal.classList.add('active');
+        
+        // Show a test image
+        const img = document.getElementById('slideshowImage');
+        const loader = document.getElementById('slideshowLoader');
+        if (img && loader) {
+          loader.style.display = 'none';
+          img.style.display = 'block';
+          img.src = 'images/Mission 1 Reference Product/1.jpg';
+          console.log('Modal forced to show with test image');
+        }
+      } else {
+        console.error('Modal not found!');
+      }
+    };
+    
     // Debug function for testing slideshow
     window.debugSlideshow = function() {
       console.log('=== Debug Slideshow Function ===');
@@ -1185,17 +1247,48 @@
       
       const modal = document.getElementById('slideshowModal');
       console.log('Modal element:', modal);
-      console.log('Modal display:', window.getComputedStyle(modal).display);
-      console.log('Modal classes:', modal.className);
+      console.log('Modal display:', modal ? window.getComputedStyle(modal).display : 'N/A');
+      console.log('Modal classes:', modal ? modal.className : 'N/A');
+      console.log('Modal style.display:', modal ? modal.style.display : 'N/A');
       
       const img = document.getElementById('slideshowImage');
       console.log('Image element:', img);
       console.log('Image src:', img ? img.src : 'N/A');
       console.log('Image display:', img ? window.getComputedStyle(img).display : 'N/A');
+      console.log('Image style.display:', img ? img.style.display : 'N/A');
       
       const loader = document.getElementById('slideshowLoader');
       console.log('Loader element:', loader);
       console.log('Loader display:', loader ? window.getComputedStyle(loader).display : 'N/A');
+      console.log('Loader style.display:', loader ? loader.style.display : 'N/A');
+      
+      // Test image loading
+      if (img) {
+        console.log('Testing image load...');
+        const testImg = new Image();
+        testImg.onload = function() {
+          console.log('✅ Test image loaded successfully');
+        };
+        testImg.onerror = function() {
+          console.error('❌ Test image failed to load');
+        };
+        testImg.src = 'images/Mission 1 Reference Product/1.jpg';
+      }
+      
+      // Force show modal for debugging
+      if (modal) {
+        console.log('Forcing modal to show...');
+        modal.style.display = 'flex';
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.width = '100vw';
+        modal.style.height = '100vh';
+        modal.style.backgroundColor = 'rgba(0, 0, 0, 0.95)';
+        modal.style.zIndex = '99999';
+        modal.classList.add('active');
+        console.log('Modal forced to show');
+      }
     };
 
     // openLink function already defined above, removing duplicate
@@ -1238,6 +1331,9 @@
       if (img && loader) {
         loader.style.display = 'none';
         img.style.display = 'block';
+        img.style.maxWidth = '90vw';
+        img.style.maxHeight = '80vh';
+        img.style.objectFit = 'contain';
         img.src = 'images/Mission 1 Reference Product/1.jpg';
         console.log('Image source set to:', img.src);
       }

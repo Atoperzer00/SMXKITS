@@ -502,7 +502,7 @@ io.on('connection', socket => {
   // Instructor joins class for WebRTC streaming
   socket.on('instructor-join-class', (data) => {
     const { classId } = data;
-    console.log(`🎓 Instructor joined WebRTC class: ${classId}`);
+    console.log(`🎓 Instructor joined class: ${classId} (Socket: ${socket.id})`);
     
     if (!webrtcRooms.has(classId)) {
       webrtcRooms.set(classId, { instructor: null, students: new Set() });
@@ -521,19 +521,26 @@ io.on('connection', socket => {
     socket.currentStreamRoom = streamRoomName;
     socket.isInstructor = true;
     
-    console.log(`👨‍🏫 Instructor also joined streaming room: ${streamRoomName}`);
+    console.log(`👨‍🏫 Instructor joined streaming room: ${streamRoomName}`);
     
     // Initialize viewer count for instructor
     const roomMembers = io.sockets.adapter.rooms.get(streamRoomName);
     const viewerCount = roomMembers ? roomMembers.size - 1 : 0; // Subtract instructor
-    console.log(`👥 Initial viewer count for ${streamRoomName}: ${viewerCount}`);
+    console.log(`👥 Viewer count for ${streamRoomName}: ${viewerCount}`);
     socket.emit('viewerCount', { count: viewerCount });
+    
+    // Send confirmation to instructor
+    socket.emit('stream:instructor-ready', {
+      message: 'Ready to broadcast to class',
+      classId: classId,
+      timestamp: new Date().toISOString()
+    });
   });
   
   // Student joins class for WebRTC streaming
   socket.on('student-join-class', (data) => {
     const { classId } = data;
-    console.log(`👤 Student joined WebRTC class: ${classId}`);
+    console.log(`👤 Student joined class: ${classId} (Socket: ${socket.id})`);
     
     if (!webrtcRooms.has(classId)) {
       webrtcRooms.set(classId, { instructor: null, students: new Set() });
@@ -552,7 +559,7 @@ io.on('connection', socket => {
     socket.currentStreamRoom = streamRoomName;
     socket.isInstructor = false;
     
-    console.log(`🎓 Student also joined streaming room: ${streamRoomName}`);
+    console.log(`🎓 Student joined streaming room: ${streamRoomName}`);
     
     // Notify instructor that a student joined
     if (room.instructor) {
@@ -565,10 +572,10 @@ io.on('connection', socket => {
     // Send current stream state to late joiner
     if (io.streamStates && io.streamStates.has(classId)) {
       const currentState = io.streamStates.get(classId);
-      console.log(`📥 Sending current stream state to late joiner:`, currentState);
+      console.log(`📥 Sending current stream state to student ${socket.id}:`, currentState);
       socket.emit('stream:current-state', currentState);
     } else {
-      console.log(`ℹ️ No active stream state for class: ${classId}`);
+      console.log(`ℹ️ No active stream state for class: ${classId}, sending no-state`);
       socket.emit('stream:no-state', { classId });
     }
     
@@ -584,11 +591,39 @@ io.on('connection', socket => {
     const { classId, mediaType } = data;
     console.log(`🔴 Instructor started WebRTC stream for class ${classId}: ${mediaType}`);
     
-    // Notify all students in the class
+    // Notify all students in the class via WebRTC socket
     socket.to(`webrtc:${classId}`).emit('instructor-started-webrtc', {
       classId: classId,
       mediaType: mediaType
     });
+    
+    // Also notify via regular streaming socket for status updates
+    socket.to(`class:${classId}`).emit('streamStatus', {
+      status: 'live',
+      source: 'webrtc',
+      mediaType: mediaType,
+      classId: classId
+    });
+  });
+
+  // Get existing students for peer connection setup
+  socket.on('get-existing-students', (data) => {
+    const { classId } = data;
+    console.log(`📋 Getting existing students for class ${classId}`);
+    
+    if (webrtcRooms.has(classId)) {
+      const room = webrtcRooms.get(classId);
+      const students = Array.from(room.students);
+      console.log(`👥 Found ${students.length} existing students:`, students);
+      
+      // Send each student as a "joined" event to trigger peer connection creation
+      students.forEach(studentId => {
+        socket.emit('student-joined', { 
+          studentId: studentId,
+          classId: classId 
+        });
+      });
+    }
   });
   
   // Instructor stops WebRTC streaming
@@ -760,15 +795,88 @@ io.on('connection', socket => {
   
   // Instructor stream control events
   socket.on('stream:init', (data) => {
-    if (!socket.currentStreamRoom) return;
+    const classId = socket.classId;
+    if (!classId) {
+      console.warn('⚠️ No classId for stream:init from socket:', socket.id);
+      return;
+    }
     
-    console.log('🎬 Stream initialized by instructor:', data);
-    socket.to(socket.currentStreamRoom).emit('stream:init', {
+    if (!socket.isInstructor) {
+      console.warn('⚠️ Non-instructor trying to init stream:', socket.id);
+      return;
+    }
+    
+    console.log('🎬 Stream initialized by instructor for class:', classId);
+    console.log('📋 Stream data:', data);
+    
+    // Store stream state
+    if (!io.streamStates) {
+      io.streamStates = new Map();
+    }
+    
+    const streamState = {
       streamUrl: data.streamUrl,
       startTime: data.startTime || new Date().toISOString(),
       currentTime: data.currentTime || 0,
-      playing: data.playing || false
+      playing: data.playing || false,
+      filename: data.filename,
+      lastUpdate: new Date().toISOString()
+    };
+    
+    io.streamStates.set(classId, streamState);
+    console.log('💾 Stored stream state for class:', classId);
+    
+    // Broadcast to all students in the class
+    const roomName = `class:${classId}`;
+    const roomMembers = io.sockets.adapter.rooms.get(roomName);
+    const memberCount = roomMembers ? roomMembers.size : 0;
+    
+    console.log(`📡 Broadcasting stream:init to room: ${roomName} (${memberCount} members)`);
+    socket.to(roomName).emit('stream:init', streamState);
+    
+    // Also send as streamStatus for compatibility
+    socket.to(roomName).emit('streamStatus', {
+      status: 'live',
+      source: 'upload',
+      streamUrl: data.streamUrl,
+      filename: data.filename
     });
+    
+    console.log('✅ Stream broadcast completed');
+  });
+  
+  // Handle streamStatus events from instructor (for compatibility)
+  socket.on('streamStatus', (data) => {
+    const classId = socket.classId;
+    if (!classId || !socket.isInstructor) {
+      console.warn('⚠️ streamStatus from non-instructor or no classId');
+      return;
+    }
+    
+    console.log('📡 Instructor sent streamStatus:', data);
+    
+    // Broadcast to all students in the class
+    const roomName = `class:${classId}`;
+    socket.to(roomName).emit('streamStatus', data);
+    
+    // Also update stream state if it's a live status
+    if (data.status === 'live' && data.streamUrl) {
+      if (!io.streamStates) {
+        io.streamStates = new Map();
+      }
+      
+      const streamState = {
+        streamUrl: data.streamUrl,
+        startTime: new Date().toISOString(),
+        currentTime: 0,
+        playing: true,
+        filename: data.filename,
+        lastUpdate: new Date().toISOString()
+      };
+      
+      io.streamStates.set(classId, streamState);
+      console.log('💾 Stored stream state for class:', classId);
+    }
   });
   
   // Initialize stream states if not exists

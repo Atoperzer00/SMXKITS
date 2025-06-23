@@ -815,6 +815,12 @@
             </select>
           </div>
 
+          <!-- Stream Source Tabs -->
+          <div class="stream-source-tabs">
+            <button class="source-tab active" id="fileTab">📁 File Upload</button>
+            <button class="source-tab" id="liveTab">📹 Live Stream</button>
+          </div>
+
           <!-- Video Preview -->
           <div class="video-preview-container" id="videoPreview">
             <div class="video-placeholder">
@@ -927,6 +933,8 @@
       console.log('📄 DOM Content Loaded');
       loadClasses();
       setupEventListeners();
+      setupUnifiedEventListeners(); // FIX: Add missing button event listeners
+      initializeStreamingSocket(); // FIX: Initialize socket for both file and WebRTC streaming
     });
     
     // --- Load classes on page load ---
@@ -972,10 +980,10 @@
       currentClassId = classSelect.value;
       classLabel.textContent = classSelect.options[classSelect.selectedIndex].text;
       
-      // If WebRTC socket is connected and we're in live mode, join the new class room
-      if (socket && isLiveMode && currentClassId) {
+      // If socket is connected, join the new class room
+      if (socket && socket.connected && currentClassId) {
         socket.emit('instructor-join-class', { classId: currentClassId });
-        console.log('🏫 Joined WebRTC class room:', currentClassId);
+        console.log('🏫 Joined class room:', currentClassId);
       }
     });
 
@@ -1712,61 +1720,16 @@
       document.getElementById('startCameraBtn').style.display = 'inline-block';
       document.getElementById('startScreenBtn').style.display = 'inline-block';
       
-      // Initialize Socket.IO for WebRTC
+      // Socket should already be initialized
       if (!socket) {
-        initializeWebRTCSocket();
+        console.error('❌ Socket not initialized for WebRTC mode');
+        initializeStreamingSocket();
       }
       
-      console.log('🔄 Switched to live streaming mode');
+      console.log('� Switched to live streaming mode');
     }
+    // WebRTC socket functionality is now integrated into the main streaming socket
     
-    function initializeWebRTCSocket() {
-      socket = io();
-      
-      socket.on('connect', () => {
-        console.log('🔌 WebRTC Socket connected');
-        if (currentClassId) {
-          socket.emit('instructor-join-class', { classId: currentClassId });
-          // Join streaming room for real-time sync
-          socket.emit('join-stream', { classId: currentClassId, streamKey: currentStreamKey });
-        }
-      });
-      
-      socket.on('disconnect', () => {
-        console.log('❌ WebRTC Socket disconnected');
-      });
-      
-      socket.on('student-joined', (data) => {
-        console.log('👤 Student joined:', data.studentId);
-        if (isStreaming && localStream) {
-          createPeerConnection(data.studentId);
-        }
-      });
-      
-      socket.on('student-left', (data) => {
-        console.log('👋 Student left:', data.studentId);
-        if (peerConnections.has(data.studentId)) {
-          peerConnections.get(data.studentId).close();
-          peerConnections.delete(data.studentId);
-        }
-      });
-      
-      socket.on('webrtc-answer', async (data) => {
-        console.log('📡 Received answer from student:', data.from);
-        const pc = peerConnections.get(data.from);
-        if (pc) {
-          await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
-        }
-      });
-      
-      socket.on('webrtc-ice-candidate', async (data) => {
-        console.log('🧊 Received ICE candidate from student:', data.from);
-        const pc = peerConnections.get(data.from);
-        if (pc) {
-          await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-        }
-      });
-    }
     
     async function startCamera() {
       try {
@@ -1883,6 +1846,9 @@
           classId: currentClassId,
           mediaType: localStream.getVideoTracks()[0].label.includes('screen') ? 'Screen Share' : 'Camera'
         });
+        
+        // Create peer connections for existing students
+        socket.emit('get-existing-students', { classId: currentClassId });
         
         console.log('✅ WebRTC live stream started');
       } catch (error) {
@@ -2004,11 +1970,6 @@
     
     // ===== STREAMING SOCKET INITIALIZATION =====
     function initializeStreamingSocket() {
-      if (!currentClassId) {
-        console.log('❌ No class selected for streaming');
-        return;
-      }
-      
       if (!socket) {
         socket = io();
         console.log('🔌 Initializing streaming socket');
@@ -2017,10 +1978,11 @@
       socket.on('connect', () => {
         console.log('✅ Streaming socket connected');
         
-        // Join the class streaming room (instructor)
-        socket.emit('instructor-join-class', { classId: currentClassId });
-        
-        console.log(`🏫 Instructor joined class streaming room: ${currentClassId}`);
+        // Join the class streaming room if class is selected
+        if (currentClassId) {
+          socket.emit('instructor-join-class', { classId: currentClassId });
+          console.log(`🏫 Instructor joined class streaming room: ${currentClassId}`);
+        }
       });
       
       socket.on('disconnect', () => {
@@ -2036,9 +1998,41 @@
           viewerCountInfo.textContent = data.count || 0;
         }
       });
+
+      // WebRTC event handlers
+      socket.on('student-joined', (data) => {
+        console.log('👤 Student joined:', data.studentId);
+        if (isStreaming && localStream) {
+          createPeerConnection(data.studentId);
+        }
+      });
       
-      // If already connected, join immediately
-      if (socket.connected) {
+      socket.on('student-left', (data) => {
+        console.log('👋 Student left:', data.studentId);
+        if (peerConnections.has(data.studentId)) {
+          peerConnections.get(data.studentId).close();
+          peerConnections.delete(data.studentId);
+        }
+      });
+      
+      socket.on('webrtc-answer', async (data) => {
+        console.log('📡 Received answer from student:', data.from);
+        const pc = peerConnections.get(data.from);
+        if (pc) {
+          await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+        }
+      });
+      
+      socket.on('webrtc-ice-candidate', async (data) => {
+        console.log('🧊 Received ICE candidate from student:', data.from);
+        const pc = peerConnections.get(data.from);
+        if (pc) {
+          await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+        }
+      });
+      
+      // If already connected and class is selected, join immediately
+      if (socket.connected && currentClassId) {
         socket.emit('instructor-join-class', { classId: currentClassId });
         console.log(`🏫 Instructor joined class streaming room: ${currentClassId}`);
       }
@@ -2214,6 +2208,17 @@
       if (stopMediaBtn) {
         stopMediaBtn.addEventListener('click', stopLiveMedia);
       }
+
+      // Stream mode tabs
+      const fileTab = document.getElementById('fileTab');
+      const liveTab = document.getElementById('liveTab');
+      
+      if (fileTab) {
+        fileTab.addEventListener('click', switchToFileMode);
+      }
+      if (liveTab) {
+        liveTab.addEventListener('click', switchToLiveMode);
+      }
       
       // File upload handling
       const fileDrop = document.getElementById('fileDrop');
@@ -2335,26 +2340,36 @@
         // Update UI
         setStatus('live');
         
-        // Join class room for instructor first
+        // Initialize stream synchronization
+        initializeStreamSync();
+        
+        // Ensure instructor is in the class room and then broadcast stream
         if (socket) {
+          // First ensure instructor is in the class room
           socket.emit('instructor-join-class', { 
             classId: currentClassId, 
             mode: 'file' 
           });
-        }
-        
-        // Initialize stream synchronization
-        initializeStreamSync();
-        
-        // Send initial stream state to students
-        if (socket) {
-          socket.emit('stream:init', {
-            streamUrl: previewVideo.src,
-            startTime: new Date().toISOString(),
-            currentTime: previewVideo.currentTime || 0,
-            playing: !previewVideo.paused,
-            filename: window.currentUploadedVideo?.originalName || 'uploaded-video.mp4'
-          });
+          
+          // Wait a moment for room join, then send stream init
+          setTimeout(() => {
+            console.log('📡 Broadcasting stream:init to students...');
+            socket.emit('stream:init', {
+              streamUrl: previewVideo.src,
+              startTime: new Date().toISOString(),
+              currentTime: previewVideo.currentTime || 0,
+              playing: !previewVideo.paused,
+              filename: window.currentUploadedVideo?.originalName || 'uploaded-video.mp4'
+            });
+            
+            // Also send streamStatus for compatibility
+            socket.emit('streamStatus', {
+              status: 'live',
+              source: 'upload',
+              streamUrl: previewVideo.src,
+              filename: window.currentUploadedVideo?.originalName || 'uploaded-video.mp4'
+            });
+          }, 500);
         }
         
         // Start stream synchronization
@@ -2410,21 +2425,17 @@
       loadClasses();
       setupUnifiedEventListeners();
       setupEventListeners(); // File upload listeners
-      initializeWebRTCSocket();
+      initializeStreamingSocket(); // Initialize main streaming socket
+      initializeWebRTCSocket(); // Initialize WebRTC socket (same socket, different events)
     });
     
     // Load classes immediately if DOM is already ready
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', () => {
-        loadClasses();
-        setupUnifiedEventListeners();
-        setupEventListeners();
-        initializeWebRTCSocket();
-      });
-    } else {
+    if (document.readyState !== 'loading') {
+      console.log('🚀 DOM already loaded - Initializing Stream Mode immediately');
       loadClasses();
       setupUnifiedEventListeners();
       setupEventListeners();
+      initializeStreamingSocket();
       initializeWebRTCSocket();
     }
 
