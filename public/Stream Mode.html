@@ -1086,7 +1086,7 @@
               
               // Optionally open SMXStream-new.html in a new tab
               if (confirm('Stream is now live! Would you like to open the viewer in a new tab?')) {
-                window.open(`/SMXStream-new.html?classId=${currentClassId}`, '_blank');
+                window.open(`/SMXStream-new.html?class=${currentClassId}&role=instructor`, '_blank');
               }
             }
           } else if (status === 'offline') {
@@ -1860,11 +1860,23 @@
         document.getElementById('streamStatus').className = 'status-badge status-live';
         document.getElementById('streamStatusInfo').textContent = 'Live (WebRTC)';
         
-        // Notify server and students
+        // Notify server and students using the SMXStream-new.html compatible events
+        const streamRoom = `class:${currentClassId}`;
+        
+        // Emit stream started event for SMXStream-new.html
+        socket.emit('stream:started', { 
+          room: streamRoom,
+          mediaType: localStream.getVideoTracks()[0].label.includes('screen') ? 'Screen Share' : 'Camera'
+        });
+        
+        // Also emit the legacy WebRTC event
         socket.emit('instructor-start-webrtc', { 
           classId: currentClassId,
           mediaType: localStream.getVideoTracks()[0].label.includes('screen') ? 'Screen Share' : 'Camera'
         });
+        
+        // Join the instructor to the streaming room
+        socket.emit('instructor-join-class', { classId: currentClassId });
         
         // Create peer connections for existing students
         socket.emit('get-existing-students', { classId: currentClassId });
@@ -2011,6 +2023,16 @@
       // Listen for viewer count updates
       socket.on('viewerCount', (data) => {
         console.log('👥 Viewer count update:', data.count);
+        document.getElementById('viewerCount').textContent = data.count || 0;
+        const viewerCountInfo = document.getElementById('viewerCountInfo');
+        if (viewerCountInfo) {
+          viewerCountInfo.textContent = data.count || 0;
+        }
+      });
+      
+      // Also listen for the new viewer count format from SMXStream-new.html
+      socket.on('viewer:count', (data) => {
+        console.log('👥 Viewer count update (new format):', data.count);
         document.getElementById('viewerCount').textContent = data.count || 0;
         const viewerCountInfo = document.getElementById('viewerCountInfo');
         if (viewerCountInfo) {
@@ -2687,7 +2709,7 @@
             setStatus('live');
             
             // Open SMXStream-new.html in a new tab with class ID
-            window.open(`/SMXStream-new.html?classId=${currentClassId}`, '_blank');
+            window.open(`/SMXStream-new.html?class=${currentClassId}&role=instructor`, '_blank');
           } else {
             // File needs to be uploaded first
             alert('This file needs to be uploaded to the server first. Please click "View" to load it, then click "Upload to Server".');
@@ -2753,7 +2775,7 @@
         setStatus('live');
         
         // Open SMXStream-new.html in a new tab with class ID
-        window.open(`/SMXStream-new.html?classId=${currentClassId}`, '_blank');
+        window.open(`/SMXStream-new.html?class=${currentClassId}&role=instructor`, '_blank');
         return;
       }
       
@@ -2784,7 +2806,7 @@
         setStatus('live');
         
         // Open SMXStream-new.html in a new tab with class ID
-        window.open(`/SMXStream-new.html?classId=${currentClassId}`, '_blank');
+        window.open(`/SMXStream-new.html?class=${currentClassId}&role=instructor`, '_blank');
         return;
       }
       
