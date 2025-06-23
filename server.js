@@ -605,6 +605,11 @@ io.on('connection', socket => {
   // Track connected viewers
   const activeStreamRooms = new Set();
   
+  // Initialize stream states if not exists
+  if (!io.streamStates) {
+    io.streamStates = new Map();
+  }
+  
   // ===== WEBRTC HANDLERS =====
   // Track WebRTC connections
   const webrtcRooms = new Map(); // classId -> { instructor: socketId, students: Set<socketId> }
@@ -638,6 +643,7 @@ io.on('connection', socket => {
     const viewerCount = roomMembers ? roomMembers.size - 1 : 0; // Subtract instructor
     console.log(`👥 Viewer count for ${streamRoomName}: ${viewerCount}`);
     socket.emit('viewerCount', { count: viewerCount });
+    socket.emit('viewer:count', { count: viewerCount });
     
     // Send confirmation to instructor
     socket.emit('stream:instructor-ready', {
@@ -700,7 +706,25 @@ io.on('connection', socket => {
     const roomMembers = io.sockets.adapter.rooms.get(streamRoomName);
     const viewerCount = roomMembers ? roomMembers.size - 1 : 0; // Subtract instructor
     console.log(`👥 Updated viewer count for ${streamRoomName}: ${viewerCount}`);
-    io.to(streamRoomName).emit('viewerCount', { count: viewerCount });
+    
+    // Send viewer count to instructor specifically
+    if (room.instructor) {
+      const instructorSocket = io.sockets.sockets.get(room.instructor);
+      if (instructorSocket) {
+        instructorSocket.emit('viewerCount', { count: viewerCount });
+        instructorSocket.emit('viewer:count', { count: viewerCount });
+      }
+    }
+    
+    // Send current stream state to new student if available
+    if (io.streamStates && io.streamStates.has(classId)) {
+      const currentState = io.streamStates.get(classId);
+      console.log('📡 Sending current stream state to new student:', currentState);
+      socket.emit('stream:current-state', currentState);
+    } else {
+      console.log('📭 No active stream state for class:', classId);
+      socket.emit('stream:no-state', { classId });
+    }
   });
   
   // Instructor starts WebRTC streaming
@@ -1153,12 +1177,15 @@ io.on('connection', socket => {
   }
   
   socket.on('stream:play', (data) => {
-    if (!socket.currentStreamRoom || !socket.isInstructor) return;
+    const classId = data.classId || socket.classId;
+    if (!classId || !socket.isInstructor) {
+      console.warn('⚠️ Invalid stream:play request from socket:', socket.id);
+      return;
+    }
     
-    console.log('▶️ Instructor played stream at:', data.time);
+    console.log('▶️ Instructor played stream at:', data.time, 'for class:', classId);
     
     // Update stream state
-    const classId = socket.classId;
     const state = io.streamStates.get(classId) || {};
     const updatedState = {
       ...state,
@@ -1169,19 +1196,26 @@ io.on('connection', socket => {
     };
     io.streamStates.set(classId, updatedState);
     
-    socket.to(socket.currentStreamRoom).emit('stream:play', {
+    // Broadcast to class room
+    const roomName = `class:${classId}`;
+    socket.to(roomName).emit('stream:play', {
       time: data.time,
       timestamp: new Date().toISOString()
     });
+    
+    console.log(`📡 Broadcasted stream:play to room: ${roomName}`);
   });
   
   socket.on('stream:pause', (data) => {
-    if (!socket.currentStreamRoom || !socket.isInstructor) return;
+    const classId = data.classId || socket.classId;
+    if (!classId || !socket.isInstructor) {
+      console.warn('⚠️ Invalid stream:pause request from socket:', socket.id);
+      return;
+    }
     
-    console.log('⏸️ Instructor paused stream at:', data.time);
+    console.log('⏸️ Instructor paused stream at:', data.time, 'for class:', classId);
     
     // Update stream state
-    const classId = socket.classId;
     const state = io.streamStates.get(classId) || {};
     const updatedState = {
       ...state,
@@ -1192,19 +1226,26 @@ io.on('connection', socket => {
     };
     io.streamStates.set(classId, updatedState);
     
-    socket.to(socket.currentStreamRoom).emit('stream:pause', {
+    // Broadcast to class room
+    const roomName = `class:${classId}`;
+    socket.to(roomName).emit('stream:pause', {
       time: data.time,
       timestamp: new Date().toISOString()
     });
+    
+    console.log(`📡 Broadcasted stream:pause to room: ${roomName}`);
   });
   
   socket.on('stream:seek', (data) => {
-    if (!socket.currentStreamRoom || !socket.isInstructor) return;
+    const classId = data.classId || socket.classId;
+    if (!classId || !socket.isInstructor) {
+      console.warn('⚠️ Invalid stream:seek request from socket:', socket.id);
+      return;
+    }
     
-    console.log('⏭️ Instructor seeked to:', data.time);
+    console.log('⏭️ Instructor seeked stream to:', data.time, 'for class:', classId);
     
     // Update stream state
-    const classId = socket.classId;
     const state = io.streamStates.get(classId) || {};
     const updatedState = {
       ...state,
@@ -1214,22 +1255,26 @@ io.on('connection', socket => {
     };
     io.streamStates.set(classId, updatedState);
     
-    socket.to(socket.currentStreamRoom).emit('stream:seek', {
+    // Broadcast to class room
+    const roomName = `class:${classId}`;
+    socket.to(roomName).emit('stream:seek', {
       time: data.time,
       timestamp: new Date().toISOString()
     });
+    
+    console.log(`📡 Broadcasted stream:seek to room: ${roomName}`);
   });
   
   // Throttled time updates (max once every 500ms)
   socket.on('stream:time', (data) => {
-    if (!socket.currentStreamRoom || !socket.isInstructor) return;
+    const classId = data.classId || socket.classId;
+    if (!classId || !socket.isInstructor) return;
     
     const now = Date.now();
     if (now - socket.lastTimeUpdate < 500) return; // Throttle to 500ms
     socket.lastTimeUpdate = now;
     
     // Update stream state
-    const classId = data.classId || socket.classId;
     const state = io.streamStates.get(classId) || {};
     const updatedState = {
       ...state,
@@ -1240,7 +1285,9 @@ io.on('connection', socket => {
     };
     io.streamStates.set(classId, updatedState);
     
-    socket.to(socket.currentStreamRoom).emit('stream:time', {
+    // Broadcast to class room
+    const roomName = `class:${classId}`;
+    socket.to(roomName).emit('stream:time', {
       time: data.time,
       playing: data.playing,
       timestamp: new Date().toISOString()

@@ -1406,42 +1406,8 @@
         }
       });
       
-      // ===== NATIVE VIDEO EVENT LISTENERS (STUDENT SIDE) =====
-      socket.on('stream:play', (data) => {
-        console.log('📹 Instructor played video');
-        const video = document.getElementById('video');
-        const webrtcVideo = document.getElementById('webrtcVideo');
-        const activeVideo = video.style.display !== 'none' ? video : webrtcVideo;
-        
-        if (activeVideo && activeVideo.paused) {
-          activeVideo.play().catch(e => console.log('Autoplay prevented:', e));
-        }
-        
-        if (data.time !== undefined) {
-          activeVideo.currentTime = data.time;
-        }
-        
-        instructorPlaying = true;
-        updateLiveStatus();
-      });
-      
-      socket.on('stream:pause', (data) => {
-        console.log('⏸️ Instructor paused video');
-        const video = document.getElementById('video');
-        const webrtcVideo = document.getElementById('webrtcVideo');
-        const activeVideo = video.style.display !== 'none' ? video : webrtcVideo;
-        
-        if (activeVideo && !activeVideo.paused) {
-          activeVideo.pause();
-        }
-        
-        if (data.time !== undefined) {
-          activeVideo.currentTime = data.time;
-        }
-        
-        instructorPlaying = false;
-        updateLiveStatus();
-      });
+      // Note: Removed duplicate stream:play and stream:pause handlers
+      // The main handlers are defined above in the "Stream synchronization events" section
       
       socket.on('stream:seek', (data) => {
         console.log('⏭️ Instructor seeked video to:', data.time);

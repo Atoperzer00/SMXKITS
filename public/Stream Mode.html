@@ -1209,6 +1209,7 @@
         console.log('📹 Video play event - broadcasting to students');
         if (socket && currentClassId) {
           socket.emit('stream:play', {
+            classId: currentClassId,
             time: previewVideo.currentTime,
             timestamp: new Date().toISOString()
           });
@@ -1220,6 +1221,7 @@
         console.log('⏸️ Video pause event - broadcasting to students');
         if (socket && currentClassId) {
           socket.emit('stream:pause', {
+            classId: currentClassId,
             time: previewVideo.currentTime,
             timestamp: new Date().toISOString()
           });
@@ -1231,6 +1233,7 @@
         console.log('⏭️ Video seek event - broadcasting to students');
         if (socket && currentClassId) {
           socket.emit('stream:seek', {
+            classId: currentClassId,
             time: previewVideo.currentTime,
             timestamp: new Date().toISOString()
           });
@@ -1244,6 +1247,7 @@
         if (now - lastTimeUpdate > 100) { // Send every 100ms, server will throttle to 500ms
           if (socket && currentClassId) {
             socket.emit('stream:time', {
+              classId: currentClassId,
               time: previewVideo.currentTime,
               playing: !previewVideo.paused,
               timestamp: new Date().toISOString()
