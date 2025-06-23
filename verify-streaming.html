@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Streaming</title>
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <h1>Streaming Verification</h1>
+  <div id="status">Testing...</div>
+  <div id="log"></div>
+
+  <script>
+    const log = (msg) => {
+      document.getElementById('log').innerHTML += `<div>${new Date().toLocaleTimeString()}: ${msg}</div>`;
+      console.log(msg);
+    };
+
+    const socket = io();
+    
+    socket.on('connect', () => {
+      log('✅ Connected: ' + socket.id);
+      
+      // Test instructor join
+      socket.emit('instructor-join-class', { classId: 'test123' });
+    });
+
+    socket.on('stream:instructor-ready', (data) => {
+      log('✅ Instructor ready received');
+      document.getElementById('status').innerHTML = '✅ Streaming system is working!';
+      
+      // Test stream init
+      socket.emit('stream:init', {
+        classId: 'test123',
+        streamUrl: 'test.mp4',
+        filename: 'test.mp4',
+        startTime: new Date().toISOString(),
+        currentTime: 0,
+        playing: false
+      });
+    });
+
+    socket.on('viewerCount', (data) => {
+      log('✅ Viewer count: ' + data.count);
+    });
+
+    socket.on('connect_error', (error) => {
+      log('❌ Connection error: ' + error.message);
+      document.getElementById('status').innerHTML = '❌ Connection failed';
+    });
+  </script>
+</body>
+</html>

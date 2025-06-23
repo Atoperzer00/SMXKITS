@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stream Functionality Test</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #1a1a2e; color: white; }
+    .test-section { margin: 20px 0; padding: 15px; background: #333; border-radius: 5px; }
+    button { background: #ff6b35; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+    .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+    .success { background: #10b981; }
+    .error { background: #ef4444; }
+    .info { background: #3b82f6; }
+    input { padding: 8px; margin: 5px; border-radius: 3px; border: 1px solid #555; background: #444; color: white; }
+    .log { background: #222; padding: 10px; border-radius: 5px; margin: 10px 0; font-family: monospace; max-height: 300px; overflow-y: auto; }
+  </style>
+</head>
+<body>
+  <h1>🧪 Stream Functionality Test</h1>
+  
+  <div class="test-section">
+    <h3>Connection Test</h3>
+    <input type="text" id="testClassId" placeholder="Class ID" value="test123">
+    <button onclick="testConnection()">Test Connection</button>
+    <div id="connectionStatus" class="status info">Not connected</div>
+  </div>
+
+  <div class="test-section">
+    <h3>Instructor Test</h3>
+    <button onclick="testInstructorFlow()">Test Full Instructor Flow</button>
+    <div id="instructorStatus" class="status info">Ready to test</div>
+  </div>
+
+  <div class="test-section">
+    <h3>Student Test</h3>
+    <button onclick="testStudentFlow()">Test Student Flow</button>
+    <div id="studentStatus" class="status info">Ready to test</div>
+  </div>
+
+  <div class="test-section">
+    <h3>Test Log</h3>
+    <button onclick="clearLog()">Clear Log</button>
+    <div id="testLog" class="log"></div>
+  </div>
+
+  <script>
+    let socket = null;
+    let testClassId = 'test123';
+
+    function log(message, type = 'info') {
+      const logDiv = document.getElementById('testLog');
+      const timestamp = new Date().toLocaleTimeString();
+      const color = type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6';
+      logDiv.innerHTML += `<div style="color: ${color}">${timestamp}: ${message}</div>`;
+      logDiv.scrollTop = logDiv.scrollHeight;
+      console.log(message);
+    }
+
+    function clearLog() {
+      document.getElementById('testLog').innerHTML = '';
+    }
+
+    function updateStatus(elementId, message, type) {
+      const element = document.getElementById(elementId);
+      element.textContent = message;
+      element.className = `status ${type}`;
+    }
+
+    function testConnection() {
+      testClassId = document.getElementById('testClassId').value || 'test123';
+      
+      if (socket) {
+        socket.disconnect();
+      }
+
+      log('🔌 Testing Socket.IO connection...');
+      updateStatus('connectionStatus', 'Connecting...', 'info');
+
+      socket = io();
+
+      socket.on('connect', () => {
+        log('✅ Socket connected successfully: ' + socket.id, 'success');
+        updateStatus('connectionStatus', 'Connected: ' + socket.id, 'success');
+      });
+
+      socket.on('disconnect', () => {
+        log('❌ Socket disconnected', 'error');
+        updateStatus('connectionStatus', 'Disconnected', 'error');
+      });
+
+      socket.on('connect_error', (error) => {
+        log('❌ Connection error: ' + error.message, 'error');
+        updateStatus('connectionStatus', 'Connection failed', 'error');
+      });
+
+      // Set up event listeners for testing
+      socket.on('stream:instructor-ready', (data) => {
+        log('👨‍🏫 Instructor ready event received', 'success');
+      });
+
+      socket.on('stream:student-ready', (data) => {
+        log('👤 Student ready event received', 'success');
+      });
+
+      socket.on('viewerCount', (data) => {
+        log('👥 Viewer count received: ' + data.count, 'success');
+      });
+
+      socket.on('stream:init', (data) => {
+        log('🎬 Stream init received: ' + JSON.stringify(data), 'success');
+      });
+
+      socket.on('stream:play', (data) => {
+        log('▶️ Stream play received', 'success');
+      });
+
+      socket.on('stream:pause', (data) => {
+        log('⏸️ Stream pause received', 'success');
+      });
+    }
+
+    function testInstructorFlow() {
+      if (!socket || !socket.connected) {
+        log('❌ Please test connection first', 'error');
+        return;
+      }
+
+      log('🧪 Testing instructor flow...', 'info');
+      updateStatus('instructorStatus', 'Testing...', 'info');
+
+      // Step 1: Join as instructor
+      log('1️⃣ Joining as instructor for class: ' + testClassId);
+      socket.emit('instructor-join-class', { classId: testClassId });
+
+      // Step 2: Initialize stream after a delay
+      setTimeout(() => {
+        log('2️⃣ Initializing stream...');
+        socket.emit('stream:init', {
+          classId: testClassId,
+          streamUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
+          filename: 'test_video.mp4',
+          startTime: new Date().toISOString(),
+          currentTime: 0,
+          playing: false
+        });
+      }, 1000);
+
+      // Step 3: Test play command
+      setTimeout(() => {
+        log('3️⃣ Testing play command...');
+        socket.emit('stream:play', {
+          classId: testClassId,
+          time: 0,
+          timestamp: new Date().toISOString()
+        });
+      }, 2000);
+
+      // Step 4: Test pause command
+      setTimeout(() => {
+        log('4️⃣ Testing pause command...');
+        socket.emit('stream:pause', {
+          classId: testClassId,
+          time: 5,
+          timestamp: new Date().toISOString()
+        });
+        
+        updateStatus('instructorStatus', 'Instructor flow completed', 'success');
+      }, 3000);
+    }
+
+    function testStudentFlow() {
+      if (!socket || !socket.connected) {
+        log('❌ Please test connection first', 'error');
+        return;
+      }
+
+      log('🧪 Testing student flow...', 'info');
+      updateStatus('studentStatus', 'Testing...', 'info');
+
+      // Join as student
+      log('👤 Joining as student for class: ' + testClassId);
+      socket.emit('student-join-class', { classId: testClassId });
+
+      setTimeout(() => {
+        updateStatus('studentStatus', 'Student flow completed', 'success');
+      }, 2000);
+    }
+
+    // Auto-connect on page load
+    window.addEventListener('load', () => {
+      setTimeout(testConnection, 500);
+    });
+  </script>
+</body>
+</html>
