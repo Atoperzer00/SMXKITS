@@ -744,45 +744,8 @@
         // Show admin controls if user is admin
         checkAdminAccess();
         
-        // Set up periodic sync check for real-time updates (every 10 seconds, silent)
-        setInterval(async () => {
-          try {
-            // Try to get fresh data from API (silent check)
-            const response = await fetch('/api/typing-tests');
-            if (response.ok) {
-              const result = await response.json();
-              if (result.success && result.data) {
-                // Compare with current data
-                const currentDataStr = JSON.stringify(typingModules);
-                const newDataStr = JSON.stringify(result.data.modules);
-                
-                if (currentDataStr !== newDataStr) {
-                  console.log('📥 New typing test data detected, updating silently...');
-                  typingModules = result.data.modules;
-                  moduleNames = result.data.moduleNames;
-                  
-                  // Update localStorage cache
-                  localStorage.setItem('smx_typing_tests', JSON.stringify(result.data));
-                  localStorage.setItem('smx_typing_tests_timestamp', Date.now().toString());
-                  
-                  // Re-render modules and update progress
-                  renderModules();
-                  updateProgressDisplay();
-                  
-                  // Only show notification if user is not actively typing
-                  if (document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'INPUT') {
-                    showSyncIndicator('📥 Content updated from admin');
-                  }
-                }
-              }
-            }
-          } catch (error) {
-            // Silent error handling - don't spam console
-            if (error.message.includes('fetch')) {
-              console.warn('⚠️ Sync check failed (network issue)');
-            }
-          }
-        }, 10000); // Check every 10 seconds
+        // Auto-sync disabled - use manual "Refresh Content" button instead
+        // This prevents constant overwrites of admin changes
         
         console.log('Keyboard Training System - Ready!');
       } catch (error) {
@@ -1555,72 +1518,14 @@
       }
     }
 
-    // Listen for storage changes from other tabs (like edit-typing-tests.html)
-    window.addEventListener('storage', async function(e) {
-      console.log('Storage event detected:', e.key, e.newValue);
-      if (e.key === 'smx_typing_tests' || e.key === 'smx_typing_tests_update_trigger') {
-        console.log('Typing tests updated from another tab, refreshing...');
-        await reloadTypingData();
-        showSyncIndicator('✓ Content updated from another tab');
-      }
-    });
+    // Storage event listener disabled - use manual refresh instead
+    // This prevents automatic overwrites of admin changes
     
-    // Listen for custom event from same tab (edit-typing-tests.html)
-    window.addEventListener('typingTestsUpdated', function(e) {
-      console.log('Custom typingTestsUpdated event received:', e.detail);
-      const data = e.detail.data;
-      
-      // Handle new format with module names
-      if (data.modules && data.moduleNames) {
-        console.log('Using data from event (new format)');
-        typingModules = data.modules;
-        moduleNames = data.moduleNames;
-      } else {
-        console.log('Using data from event (old format)');
-        // Fallback for old format
-        typingModules = data;
-      }
-      
-      console.log('Rendering modules from event data...');
-      renderModules();
-      updateProgressDisplay();
-      console.log('Modules updated from custom event');
-      
-      // Show sync indicator
-      showSyncIndicator('✓ Content updated from edit page');
-    });
+    // Custom event listener disabled - use manual refresh instead
+    // This prevents automatic overwrites of admin changes
 
-    // Listen for BroadcastChannel messages (modern browsers)
-    if (typeof BroadcastChannel !== 'undefined') {
-      const channel = new BroadcastChannel('smx_typing_updates');
-      channel.addEventListener('message', async function(e) {
-        console.log('BroadcastChannel message received:', e.data);
-        if (e.data.type === 'typing_tests_updated') {
-          console.log('Typing tests updated via BroadcastChannel, refreshing...');
-          await reloadTypingData();
-          showSyncIndicator('✓ Content updated via BroadcastChannel');
-        }
-      });
-      console.log('BroadcastChannel listener set up');
-    } else {
-      console.log('BroadcastChannel not supported in this browser');
-    }
-
-    // Polling fallback for older browsers or edge cases (reduced frequency)
-    let lastUpdateTimestamp = localStorage.getItem('smx_typing_tests_timestamp') || '0';
-    setInterval(async function() {
-      const currentTimestamp = localStorage.getItem('smx_typing_tests_timestamp') || '0';
-      if (currentTimestamp !== lastUpdateTimestamp) {
-        console.log('Typing tests updated detected via polling, refreshing...');
-        lastUpdateTimestamp = currentTimestamp;
-        await reloadTypingData();
-        // Only show notification if significant time has passed
-        const timeDiff = Date.now() - parseInt(currentTimestamp);
-        if (timeDiff > 5000) { // Only show if update is more than 5 seconds old
-          showSyncIndicator('✓ Content updated');
-        }
-      }
-    }, 5000); // Check every 5 seconds instead of 1 second
+    // BroadcastChannel and polling listeners disabled - use manual refresh instead
+    // This prevents automatic overwrites of admin changes
     
     // Test function to check current typing data
     window.checkTypingData = function() {

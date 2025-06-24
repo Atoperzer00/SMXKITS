@@ -429,20 +429,24 @@
       <div class="dashboard-header">
         <div>
           <h1 class="dashboard-title">Edit Typing Tests</h1>
-          <p style="color: var(--text-secondary); font-size: 1.1rem; margin-top: 0.5rem;">Customize typing test content for all trainees. Changes will be immediately available in the typing trainer.</p>
-          <div style="background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 10px; padding: 1rem; margin-top: 1rem;">
-            <p style="color: #ffc107; margin: 0; font-weight: 600;">
-              <i class="fas fa-exclamation-triangle" style="margin-right: 0.5rem;"></i>
-              <strong>Global Changes:</strong> All modifications are saved to the database and will be visible to ALL users immediately. Changes affect every student and instructor using the typing trainer.
+          <p style="color: var(--text-secondary); font-size: 1.1rem; margin-top: 0.5rem;">Customize typing test content for all trainees. Use "Save All Changes" to save to database, then "Sync to Students" to push changes live.</p>
+          <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 10px; padding: 1rem; margin-top: 1rem;">
+            <p style="color: #22c55e; margin: 0; font-weight: 600;">
+              <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>
+              <strong>New Workflow:</strong> 1) Make your edits 2) Click "Save All Changes" to save to database 3) Click "Sync to Students" when ready to push changes to all users. This prevents accidental overwrites while you're editing.
             </p>
           </div>
         </div>
       </div>
       
       <div style="margin-bottom: 2rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-        <button onclick="saveAllChanges()" class="btn btn-success" title="Save all changes to database for all users">
+        <button onclick="saveAllChanges()" class="btn btn-success" title="Save all changes to database">
           <i class="fas fa-save" style="margin-right: 0.5rem;"></i>
           Save All Changes
+        </button>
+        <button onclick="syncToStudents()" class="btn" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white;" title="Push saved changes to all students immediately">
+          <i class="fas fa-broadcast-tower" style="margin-right: 0.5rem;"></i>
+          Sync to Students
         </button>
         <button onclick="addModule()" class="btn btn-primary">
           <i class="fas fa-plus" style="margin-right: 0.5rem;"></i>
@@ -633,29 +637,14 @@
           const timestamp = Date.now().toString();
           localStorage.setItem('smx_typing_tests_timestamp', timestamp);
           
-          // Trigger events for real-time updates
-          window.dispatchEvent(new CustomEvent('typingTestsUpdated', {
-            detail: { data: data }
-          }));
-          
-          // Use BroadcastChannel for cross-tab communication
-          if (typeof BroadcastChannel !== 'undefined') {
-            const channel = new BroadcastChannel('smx_typing_updates');
-            channel.postMessage({
-              type: 'typing_tests_updated',
-              data: data,
-              timestamp: Date.now()
-            });
-            channel.close();
-          }
-          
-          localStorage.setItem('smx_typing_tests_update_trigger', timestamp);
+          // Auto-sync events disabled - use "Sync to Students" button instead
+          // This prevents automatic overwrites while admins are still editing
           
           console.log('=== Typing tests saved successfully ===');
-          showSyncIndicator('✅ Saved to database & synced globally');
+          showSyncIndicator('✅ Saved to database (use "Sync to Students" to push changes)');
           
           // Show success message to user
-          alert('✅ Changes saved successfully!\n\nAll users will see the updated content immediately.\nThe keyboard training page will automatically refresh with your changes.');
+          alert('✅ Changes saved to database!\n\nUse the "Sync to Students" button when you\'re ready to push changes to all users.');
           
           return true;
         } else {
@@ -1349,6 +1338,45 @@
           alert('Failed to reset to defaults: ' + error.message);
           showSyncIndicator('❌ Reset failed', true);
         }
+      }
+    }
+    
+    // Sync to Students function - manually push changes to all users
+    async function syncToStudents() {
+      try {
+        console.log('📡 Syncing changes to all students...');
+        const data = await getTypingTests();
+        
+        // Trigger all sync mechanisms to push changes to students
+        window.dispatchEvent(new CustomEvent('typingTestsUpdated', {
+          detail: { data: data }
+        }));
+        
+        // Use BroadcastChannel for cross-tab communication
+        if (typeof BroadcastChannel !== 'undefined') {
+          const channel = new BroadcastChannel('smx_typing_updates');
+          channel.postMessage({
+            type: 'typing_tests_updated',
+            data: data,
+            timestamp: Date.now()
+          });
+          channel.close();
+        }
+        
+        // Update trigger for polling fallback
+        const timestamp = Date.now().toString();
+        localStorage.setItem('smx_typing_tests_update_trigger', timestamp);
+        
+        console.log('✅ Changes synced to all students');
+        showSyncIndicator('✅ Changes pushed to all students successfully');
+        
+        // Show success message
+        alert('✅ Changes synced to all students!\n\nAll users will now see your updated content immediately.');
+        
+      } catch (error) {
+        console.error('❌ Error syncing to students:', error);
+        alert('Failed to sync changes: ' + error.message);
+        showSyncIndicator('❌ Sync failed', true);
       }
     }
     

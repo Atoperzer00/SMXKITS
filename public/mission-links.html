@@ -863,6 +863,11 @@
     console.log('=== Script started - Defining critical functions v2 ===');
     console.log('Document ready state:', document.readyState);
     
+    // CRITICAL: Define slideshow global variables FIRST to avoid temporal dead zone
+    let slideImages = [];
+    let currentSlideIndex = 0;
+    console.log('✅ Slideshow variables initialized:', { slideImages, currentSlideIndex });
+    
     // Define openLink function immediately
     function openLink(url, name) {
       console.log('Opening link:', name, 'URL:', url);
@@ -940,6 +945,9 @@
           alert('Error: Slideshow system not properly initialized.');
           return;
         }
+        
+        console.log('✅ slideImages is properly defined:', slideImages);
+        console.log('✅ currentSlideIndex is properly defined:', currentSlideIndex);
 
         // SAFELY assign the array - clear existing and push new items
         slideImages.length = 0;
@@ -1187,9 +1195,7 @@
     let selectedStudents = [];
     let classStudents = [];
     
-    // Slideshow global variables
-    let slideImages = [];
-    let currentSlideIndex = 0;
+    // Slideshow global variables moved to top of script
     
     // Test function to verify image accessibility
     window.testImageAccess = function() {
