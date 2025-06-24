@@ -586,14 +586,14 @@
             <div class="config-item">
               <label>WebSocket Connection</label>
               <div class="config-value">
-                <span id="obsWebSocketUrl">ws://localhost:4455</span>
+                <span id="obsWebSocketUrl">ws://198.211.107.134:4455</span>
                 <button class="config-btn" id="testConnectionBtn">Test</button>
               </div>
             </div>
             <div class="config-item">
               <label>RTMP Server URL</label>
               <div class="config-value">
-                <span id="rtmpServerUrl">rtmp://localhost:1935/live</span>
+                <span id="rtmpServerUrl">rtmp://198.211.107.134/live</span>
                 <button class="config-btn" id="copyRtmpBtn">Copy</button>
               </div>
             </div>
@@ -651,9 +651,9 @@
     let streamStartTime = null;
     let streamDurationInterval = null;
     
-    const OBS_WEBSOCKET_URL = 'ws://localhost:4455';
-    const RTMP_SERVER_URL = 'rtmp://localhost:1935/live';
-    const HLS_BASE_URL = 'http://localhost:8888/hls';
+    const OBS_WEBSOCKET_URL = 'ws://198.211.107.134:4455';
+    const RTMP_SERVER_URL = 'rtmp://198.211.107.134/live';
+    const HLS_BASE_URL = 'http://198.211.107.134:8888/hls';
 
     // Auto-detect class ID from URL parameters or localStorage
     function initializeClassId() {
@@ -845,6 +845,16 @@
           // Show HLS preview
           showHLSPreview();
           
+          // Notify students via Socket.IO (frontend status only)
+          if (typeof io !== 'undefined' && socket) {
+            socket.emit('stream:start', {
+              classId: currentClassId,
+              streamKey: streamKey,
+              status: 'live'
+            });
+            console.log('📡 Notified students: stream started');
+          }
+          
         } else {
           throw new Error('Failed to start stream on server');
         }
@@ -887,6 +897,15 @@
           // Hide HLS preview
           hideHLSPreview();
           
+          // Notify students via Socket.IO (frontend status only)
+          if (typeof io !== 'undefined' && socket) {
+            socket.emit('stream:stop', {
+              classId: currentClassId,
+              status: 'offline'
+            });
+            console.log('📡 Notified students: stream stopped');
+          }
+          
         } else {
           throw new Error('Failed to stop stream on server');
         }
@@ -900,10 +919,11 @@
     async function generateStreamKey() {
       if (!currentClassId) return;
       
-      streamKey = `class_${currentClassId}_${Date.now()}`;
+      // Stream key is simply the class ID
+      streamKey = currentClassId;
       document.getElementById('currentStreamKey').textContent = streamKey;
       updateConnectionStatus('streamKeyStatus', 'Generated', 'connected');
-      addLogEntry('🔑 Stream key generated: ' + streamKey, 'success');
+      addLogEntry('🔑 Stream key set to class ID: ' + streamKey, 'success');
       
       return streamKey;
     }
@@ -1212,6 +1232,11 @@
     // Initialize everything when page loads
     document.addEventListener('DOMContentLoaded', () => {
       console.log('🚀 OBS Stream Mode initialized');
+      
+      // Initialize URLs in the UI
+      document.getElementById('obsWebSocketUrl').textContent = OBS_WEBSOCKET_URL;
+      document.getElementById('rtmpServerUrl').textContent = RTMP_SERVER_URL;
+      
       loadClasses();
       setupOBSEventListeners();
       initializeStreamingSocket();
@@ -1219,6 +1244,7 @@
       // Show initial status
       addLogEntry('🎥 OBS Stream Mode ready', 'success');
       addLogEntry('📋 Select a class and connect to OBS to begin', 'info');
+      addLogEntry('🌐 Using DigitalOcean server: 198.211.107.134', 'info');
     });
   </script>
 </body>

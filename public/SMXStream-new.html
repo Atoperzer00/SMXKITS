@@ -1209,9 +1209,15 @@
           
           <!-- Video Overlay Controls - Bottom Center -->
           <div class="video-controls-overlay">
-            <!-- Rewind Button -->
-            <button class="video-control-btn rewind-btn" onclick="rewindVideo()" title="Rewind 10s">
-              ⏪
+            <!-- Rewind Buttons -->
+            <button class="video-control-btn rewind-btn" onclick="rewindVideo(30)" title="Rewind 30s">
+              ⏪ 30s
+            </button>
+            <button class="video-control-btn rewind-btn" onclick="rewindVideo(60)" title="Rewind 1m">
+              ⏪ 1m
+            </button>
+            <button class="video-control-btn rewind-btn" onclick="rewindVideo(300)" title="Rewind 5m">
+              ⏪ 5m
             </button>
             
             <!-- Play/Pause Button -->
@@ -1219,9 +1225,9 @@
               ⏸
             </button>
             
-            <!-- Fast Forward Button -->
-            <button class="video-control-btn forward-btn" onclick="forwardVideo()" title="Forward 10s">
-              ⏩
+            <!-- Go Live Button -->
+            <button class="video-control-btn go-live-btn" onclick="jumpToLive()" title="Go Live">
+              🔴 LIVE
             </button>
           </div>
           
@@ -1364,6 +1370,81 @@
     let liveEdgeTime = 0; // Current live edge timestamp
     let isAtLiveEdge = true; // Whether viewer is at live edge
     let bufferInfo = { start: 0, end: 0 }; // Buffer information
+
+    // ===== UTILITY FUNCTIONS =====
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+
+    function hideLoadingSpinner() {
+      const loading = document.getElementById('loading');
+      if (loading) loading.style.display = 'none';
+    }
+
+    function showErrorMessage(title, message) {
+      console.error(`${title}: ${message}`);
+      // You can implement a proper error display here
+      alert(`${title}: ${message}`);
+    }
+
+    // ===== CLEAN HLS INITIALIZATION (AS SPECIFIED) =====
+    function initializeCleanHLS() {
+      const classId = getQueryParam('classId');
+      if (!classId) {
+        console.error('❌ No classId parameter found');
+        showErrorMessage('Missing Class ID', 'Please access this page with a valid class ID parameter.');
+        return null;
+      }
+      
+      const video = document.getElementById('hlsVideo');
+      if (!video) {
+        console.error('❌ hlsVideo element not found');
+        return null;
+      }
+      
+      console.log('🎬 Initializing clean HLS for class:', classId);
+      
+      // Create HLS instance with optimized settings
+      const hls = new Hls({
+        enableWorker: true,
+        lowLatencyMode: true,
+        backBufferLength: 90,
+        maxBufferLength: 300, // 5 minute buffer
+        maxMaxBufferLength: 600,
+        liveSyncDurationCount: 3,
+        liveMaxLatencyDurationCount: 10
+      });
+      
+      // Load HLS stream
+      const streamUrl = `http://198.211.107.134:8888/hls/${classId}.m3u8`;
+      hls.loadSource(streamUrl);
+      hls.attachMedia(video);
+      
+      // Handle HLS events
+      hls.on(Hls.Events.MANIFEST_PARSED, function() {
+        console.log('✅ HLS stream loaded for class:', classId);
+        video.play().catch(e => console.log('🔇 Autoplay prevented:', e));
+        isStreamActive = true;
+        hideLoadingSpinner();
+      });
+      
+      hls.on(Hls.Events.ERROR, function(event, data) {
+        console.error('❌ HLS Error:', data);
+        if (data.fatal) {
+          console.log('💥 Fatal HLS error, retrying...');
+          hls.destroy();
+          setTimeout(() => initializeCleanHLS(), 5000); // Retry after 5 seconds
+        }
+      });
+      
+      // Store references
+      hlsInstance = hls;
+      currentVideo = video;
+      hlsUrl = streamUrl;
+      
+      return hls;
+    }
     
     // ===== ENHANCED TIMELINE VARIABLES =====
     let timelineCanvas = null;
@@ -1443,6 +1524,44 @@
     };
 
     // ===== HLS STREAMING INITIALIZATION =====
+    // Simple HLS initialization as per specification
+    function initializeSimpleHLS(classId) {
+      const video = document.getElementById('hlsVideo');
+      if (!video) {
+        console.error('❌ HLS video element not found');
+        return;
+      }
+      
+      if (Hls.isSupported()) {
+        const hls = new Hls({
+          enableWorker: true,
+          lowLatencyMode: true,
+          backBufferLength: 300, // 5 minutes rewind buffer
+          debug: false
+        });
+        
+        const hlsUrl = `http://198.211.107.134:8888/hls/${classId}.m3u8`;
+        console.log('📡 Loading HLS stream:', hlsUrl);
+        
+        hls.loadSource(hlsUrl);
+        hls.attachMedia(video);
+        
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          console.log('✅ HLS manifest loaded, starting playback');
+          video.play().catch(e => console.log('Autoplay prevented:', e));
+        });
+        
+        return hls;
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        // Native HLS support (Safari)
+        video.src = `http://198.211.107.134:8888/hls/${classId}.m3u8`;
+        video.play().catch(e => console.log('Autoplay prevented:', e));
+      } else {
+        console.error('❌ HLS not supported in this browser');
+      }
+    }
+
+    // Full HLS initialization with advanced features
     async function initializeHLSStream(streamData) {
       try {
         console.log('🎬 Initializing HLS stream with data:', streamData);
@@ -1460,9 +1579,9 @@
         // Construct HLS URL based on class ID or stream key
         const classId = streamData.classId || getCurrentClassId();
         if (classId) {
-          hlsUrl = `http://localhost:8888/hls/${classId}.m3u8`;
+          hlsUrl = `http://198.211.107.134:8888/hls/${classId}.m3u8`;
         } else if (streamKey) {
-          hlsUrl = `http://localhost:8888/hls/${streamKey}.m3u8`;
+          hlsUrl = `http://198.211.107.134:8888/hls/${streamKey}.m3u8`;
         } else {
           throw new Error('No class ID or stream key available for HLS URL');
         }
@@ -2442,7 +2561,7 @@
       // Initialize HLS stream with class-based URL
       const streamData = {
         classId: classId,
-        streamUrl: `http://localhost:8888/hls/${classId}.m3u8`,
+        streamUrl: `http://198.211.107.134:8888/hls/${classId}.m3u8`,
         type: 'hls'
       };
       
@@ -3876,12 +3995,24 @@
       showNotification('Playback is controlled by the instructor', 'warning');
     }
     
-    function rewindVideo() {
-      // Students can rewind but not past instructor time
-      const video = document.getElementById('video');
-      const newTime = Math.max(0, video.currentTime - 10);
+    function rewindVideo(seconds = 10) {
+      // HLS rewind functionality - shift video currentTime as specified
+      const video = document.getElementById('hlsVideo') || document.getElementById('video');
+      if (!video || !video.duration) {
+        console.warn('⚠️ No video available for rewind');
+        return;
+      }
       
-      if (newTime <= instructorTime + 2) { // 2 second buffer
+      const newTime = Math.max(0, video.currentTime - seconds);
+      video.currentTime = newTime;
+      
+      console.log(`⏪ Rewound ${seconds}s to ${newTime.toFixed(1)}s`);
+      
+      // Show rewind notification
+      const timeLabel = seconds >= 60 ? Math.floor(seconds/60) + 'm' : seconds + 's';
+      if (typeof showNotification === 'function') {
+        showNotification(`Rewound ${timeLabel}`, 'info');
+      }
         video.currentTime = newTime;
       } else {
         showNotification('Cannot rewind past instructor position', 'warning');
@@ -3923,9 +4054,19 @@
     }
     
     function jumpToLive() {
-      const video = document.getElementById('video');
-      video.currentTime = instructorTime;
-      updateLiveStatus();
+      // Jump to the end of HLS buffer (live edge) as specified
+      const video = document.getElementById('hlsVideo') || document.getElementById('video');
+      if (video && video.duration) {
+        // Jump to end of buffer (live edge)
+        video.currentTime = video.duration;
+        console.log('🔴 Jumped to LIVE edge:', video.duration);
+        
+        // Show notification
+        if (typeof showNotification === 'function') {
+          showNotification('Jumped to LIVE', 'success');
+        }
+        showNotification('Jumped to LIVE', 'success');
+      }
     }
     
     // ===== UTILITY FUNCTIONS =====
@@ -4441,7 +4582,7 @@
         
         // Test 3: Check HLS server
         try {
-          const hlsTestUrl = `http://127.0.0.1:8888/live/${streamKey}/index.m3u8`;
+          const hlsTestUrl = `http://198.211.107.134:8888/hls/${streamKey}.m3u8`;
           const hlsResponse = await fetch(hlsTestUrl, { method: 'HEAD' });
           results.hlsServer = hlsResponse.ok;
           console.log(hlsResponse.ok ? '✅ HLS server responding' : '❌ HLS server not responding');
@@ -4582,7 +4723,7 @@
         updateChecklistItem('studentEnrollment', checklist.studentEnrollment);
         
         // 5. Streaming Infrastructure Check
-        const hlsServerUrl = process.env.HLS_SERVER_URL || 'http://127.0.0.1:8888';
+        const hlsServerUrl = process.env.HLS_SERVER_URL || 'http://198.211.107.134:8888';
         try {
           const infraResponse = await fetch(`${hlsServerUrl}/health`, { method: 'HEAD' });
           if (infraResponse.ok) {
@@ -4958,10 +5099,7 @@
     const timeline = document.getElementById('timeline');
     const progress = document.getElementById('progress');
     
-    // WebRTC Variables
-    let peerConnection = null;
-    let webrtcSocket = null;
-    let isWebRTCMode = false;
+    // HLS-Only Variables (WebRTC removed)
     let classId = null;
     
     // Stream Timer for WebRTC (since WebRTC doesn't have reliable currentTime)
@@ -5027,29 +5165,20 @@
       };
     }
     
-    // Get current time for either WebRTC or regular video
+    // HLS-only video control functions
     function getCurrentTime() {
-      if (isWebRTCMode && streamTimer) {
-        return streamTimer.currentTime;
-      }
-      return video.currentTime || 0;
+      const video = document.getElementById('hlsVideo') || document.getElementById('video');
+      return video ? video.currentTime || 0 : 0;
     }
-    
-    // Get duration for either WebRTC or regular video
     function getDuration() {
-      if (isWebRTCMode) {
-        return streamDuration;
-      }
-      return video.duration || 0;
+      const video = document.getElementById('hlsVideo') || document.getElementById('video');
+    
+      return video ? video.duration || 0 : 0;
     }
     
-    // Set current time for either WebRTC or regular video
     function setCurrentTime(time) {
-      if (isWebRTCMode && streamTimer) {
-        // For WebRTC, we can't actually seek, but we can adjust our timer
-        // This is mainly for UI purposes
-        streamTimer.setTime(time);
-      } else {
+      const video = document.getElementById('hlsVideo') || document.getElementById('video');
+      if (video) {
         video.currentTime = time;
       }
     }
@@ -5183,28 +5312,27 @@
       });
       
       webrtcSocket.on('webrtc-ice-candidate', async (data) => {
-        console.log('🧊 Received ICE candidate from instructor');
+        console.log('📡 Received ICE candidate from instructor');
         if (peerConnection) {
           await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
         }
       });
     }
     
-    async function handleWebRTCOffer(offer) {
-      try {
-        console.log('🔗 Creating WebRTC peer connection...');
-        
-        peerConnection = new RTCPeerConnection({
-          iceServers: [
-            { urls: 'stun:stun.l.google.com:19302' },
-            { urls: 'stun:stun1.l.google.com:19302' }
-          ]
-        });
+    // WebRTC functions removed - HLS-only implementation
+    function handleStreamOffer(streamData) {
+  console.log('🎬 Handling HLS stream offer:', streamData);
+      
+      // Initialize HLS stream instead of WebRTC
+      if (streamData.classId)stream notification:', data);
+      
+      if (data.type === 'stream:start') {
+    initializeCleanHLS();
         
         // Handle incoming stream
         peerConnection.ontrack = (event) => {
           console.log('📺 Received WebRTC stream:', event.streams[0]);
-          console.log('📺 Stream tracks:', event.streams[0].getTracks());
+      console.log('📺 Stream tracks:', event.streams[0].getTracks());
           
           webrtcVideo.srcObject = event.streams[0];
           
@@ -5216,10 +5344,20 @@
             console.log('✅ WebRTC video playing');
             loading.style.display = 'none';
           }).catch(error => {
-            console.error('❌ WebRTC video play failed:', error);
+            console.error('❌ WebRTC video play failed:', error);⏹️ Stream stopped');
+        if (hlsInstance) {
+          hlsInstance.destroy();
+          hlsInstance = null;
+        }
             // Try to play with user interaction
             webrtcVideo.muted = true;
-            webrtcVideo.play().then(() => {
+            webrtcVideo.play().then(() => {Initialize HLS stream for the class
+          setTimeout(() => {
+            initializeCleanHLS();
+          }, 1000);
+        }updateStreamTypeIndicator('🔴 HLS Live Stream');
+      console.log('✅ HLS mode initialized');
+    }
               console.log('✅ WebRTC video playing (muted)');
               loading.style.display = 'none';
             }).catch(e => {
@@ -5269,56 +5407,34 @@
       }
     }
     
-    function switchToWebRTCMode() {
-      console.log('🔄 Switching to WebRTC mode');
-      isWebRTCMode = true;
+    // WebRTC functions removed - HLS only
+    function initializeHLSMode() {
+      console.log('🎬 Initializing HLS-only mode');
       
-      // Initialize stream timer
-      if (!streamTimer) {
-        streamTimer = createStreamTimer();
-        console.log('⏱️ Stream timer initialized');
+      const hlsVideo = document.getElementById('hlsVideo');
+      const regularVideo = document.getElementById('video');
+      
+      if (hlsVideo) {
+        hlsVideo.style.display = 'block';
+        hlsVideo.autoplay = true;
+        hlsVideo.playsInline = true;
+        hlsVideo.controls = false; // Use custom controls
+        currentVideo = hlsVideo;
       }
       
-      // Hide regular video and show WebRTC video
-      video.style.display = 'none';
-      webrtcVideo.style.display = 'block';
-      
-      // Configure WebRTC video element
-      webrtcVideo.autoplay = true;
-      webrtcVideo.playsInline = true;
-      webrtcVideo.controls = false; // Remove controls for custom timeline
-      
-      // Show timeline for WebRTC mode
-      document.getElementById('timeline').style.display = 'block';
-      
-      updateStreamTypeIndicator('Live WebRTC Stream');
-      
-      // Show WebRTC status indicator
-      const webrtcStatus = document.getElementById('webrtcStatus');
-      if (webrtcStatus) {
-        webrtcStatus.style.display = 'block';
+      if (regularVideo) {
+        regularVideo.style.display = 'none';
       }
-      
-      // Start updating WebRTC timeline
-      startWebRTCTimelineUpdates();
-      
-      // Initialize timeline for WebRTC
-      initializeWebRTCTimeline();
-      
-      console.log('✅ Switched to WebRTC mode - video element visible:', webrtcVideo.style.display);
+      updateStreamTypeIndicator('🔴 HLS Live Stream');
+      console.log('✅ HLS mode initialized');
     }
-    
-    function switchToFileMode() {
-      console.log('🔄 Switching to file mode');
-      isWebRTCMode = false;
-      
-      // Stop stream timer
-      if (streamTimer) {
-        streamTimer = null;
+      // Show timeline
+      const timeline = document.getElementById('timeline');
+      if (timeline) {
+        timeline.style.display = 'block';
       }
       
-      webrtcVideo.style.display = 'none';
-      video.style.display = 'block';
+      
       
       // Show file-based controls
       document.getElementById('timeline').style.display = 'block';
@@ -5697,7 +5813,7 @@
                 video.play().catch(e => console.log('Video autoplay prevented:', e));
               } else {
                 // Switch to live HLS stream
-                const newStreamUrl = `http://127.0.0.1:8888/live/${streamKey}/index.m3u8`;
+                const newStreamUrl = `http://198.211.107.134:8888/hls/${streamKey}.m3u8`;
                 if (hlsInstance) {
                   hlsInstance.loadSource(newStreamUrl);
                 } else if (Hls.isSupported()) {
@@ -6412,31 +6528,27 @@
       }
     }
 
-    function rewindVideo() {
-      if (isWebRTCMode && streamTimer) {
-        // For WebRTC, adjust the timer (UI feedback only)
-        const newTime = Math.max(0, streamTimer.currentTime - 10);
-        streamTimer.setTime(newTime);
-        scrubberCentered = false; // Allow free movement after user interaction
-        console.log(`⏪ WebRTC rewind to ${formatTime(newTime)}`);
-      } else {
-        // For regular video
-        const video = document.getElementById('video');
-        video.currentTime = Math.max(0, video.currentTime - 10);
+    function rewindVideoClean(seconds = 10) {
+      // Clean HLS rewind functionality - shift video currentTime as specified
+      const video = document.getElementById('hlsVideo') || document.getElementById('video');
+      if (video && video.duration) {
+        const newTime = Math.max(0, video.currentTime - seconds);
+        video.currentTime = newTime;
+        console.log(`⏪ HLS rewind ${seconds}s to ${newTime.toFixed(1)}s`);
+        
+        const timeLabel = seconds >= 60 ? Math.floor(seconds/60) + 'm' : seconds + 's';
+        if (typeof showNotification === 'function') {
+          showNotification(`Rewound ${timeLabel}`, 'info');
+        }
       }
     }
 
     function forwardVideo() {
-      if (isWebRTCMode && streamTimer) {
-        // For WebRTC, adjust the timer (UI feedback only)
-        const newTime = Math.min(streamDuration, streamTimer.currentTime + 10);
-        streamTimer.setTime(newTime);
-        scrubberCentered = false; // Allow free movement after user interaction
-        console.log(`⏩ WebRTC forward to ${formatTime(newTime)}`);
-      } else {
-        // For regular video
-        const video = document.getElementById('video');
-        video.currentTime = Math.min(video.duration || 0, video.currentTime + 10);
+      // Clean HLS forward functionality
+      const video = document.getElementById('hlsVideo') || document.getElementById('video');
+      if (video && video.duration) {
+        video.currentTime = Math.min(video.duration, video.currentTime + 10);
+        console.log(`⏩ HLS forward 10s to ${video.currentTime.toFixed(1)}s`);
       }
     }
 
@@ -6529,10 +6641,12 @@
       }
     }
 
-    function rewindVideo() {
-      const video = document.getElementById('video');
-      if (video.src) {
-        video.currentTime = Math.max(0, video.currentTime - 10);
+    function rewindVideo(seconds = 10) {
+      const video = document.getElementById('hlsVideo') || document.getElementById('video');
+      if (video && video.duration) {
+        const newTime = Math.max(0, video.currentTime - seconds);
+        video.currentTime = newTime;
+        console.log(`⏪ Rewind ${seconds}s to ${newTime.toFixed(1)}s`);
       }
     }
 
@@ -6544,9 +6658,11 @@
     }
     
     function jumpToLive() {
-      const video = document.getElementById('video');
-      if (video.src && instructorTime) {
-        video.currentTime = instructorTime;
+      // Jump to live edge of HLS stream
+      const video = document.getElementById('hlsVideo') || document.getElementById('video');
+      if (video && video.duration) {
+        video.currentTime = video.duration;
+        console.log('🔴 Jumped to live edge:', video.duration);
         showNotification('Jumped to live edge', 'success');
       }
     }
@@ -6674,6 +6790,14 @@
         
         // Set as current video
         currentVideo = hlsVideo;
+      }
+      
+      // Initialize clean HLS streaming (as specified)
+      if (classId && classId !== 'demo-class') {
+        console.log('🎬 Initializing clean HLS for class:', classId);
+        setTimeout(() => {
+          initializeCleanHLS();
+        }, 1000);
       }
       
       // Check for existing stream state
