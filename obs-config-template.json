@@ -1,0 +1,16 @@
+{
+  "obs-websocket": {
+    "ServerEnabled": true,
+    "ServerPort": 4455,
+    "ServerPassword": "",
+    "AlertsEnabled": true,
+    "AuthRequired": false
+  },
+  "output": {
+    "Mode": "Advanced",
+    "streaming": {
+      "server": "rtmp://localhost:1935/live",
+      "key": "class_{{CLASS_ID}}"
+    }
+  }
+}

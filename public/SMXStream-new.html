@@ -879,15 +879,89 @@
       border: 1px solid rgba(255, 255, 255, 0.2);
     }
     
-    /* WebRTC Video Styling */
-    #webrtcVideo {
+    /* Enhanced Stream Controls */
+    .stream-controls-overlay {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      border-radius: 0;
-      object-fit: cover;
+      bottom: 80px;
+      left: 20px;
+      right: 20px;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.3s ease;
+      z-index: 10;
+    }
+    
+    .stream-controls-overlay.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    .rewind-controls {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    
+    .rewind-btn, .live-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    
+    .rewind-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+    }
+    
+    .live-btn {
+      background: rgba(239, 68, 68, 0.8);
+      border-color: rgba(239, 68, 68, 0.9);
+    }
+    
+    .live-btn:hover {
+      background: rgba(239, 68, 68, 0.9);
+    }
+    
+    .live-btn.active {
+      background: rgba(239, 68, 68, 1);
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+      animation: pulse 2s infinite;
+    }
+    
+    .timeline-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      font-family: 'Courier New', monospace;
+      font-size: 0.875rem;
+      color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .buffer-info {
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.6);
+      margin-top: 0.25rem;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
     }
     
     /* Notification Animations */
@@ -1094,10 +1168,14 @@
                  onerror="handleVideoError(this, 'main')"
                  onloadstart="handleVideoLoadStart(this, 'main')"
                  oncanplay="handleVideoCanPlay(this, 'main')"></video>
-          <video id="webrtcVideo" autoplay playsinline muted style="display:block; width:100%; height:100%; background:#000;"
-                 onerror="handleVideoError(this, 'webrtc')"
-                 onloadstart="handleVideoLoadStart(this, 'webrtc')"
-                 oncanplay="handleVideoCanPlay(this, 'webrtc')"></video>
+          <video id="hlsVideo" controls autoplay muted style="display:block; width:100%; height:100%; background:#000;"
+                 onerror="handleVideoError(this, 'hls')"
+                 onloadstart="handleVideoLoadStart(this, 'hls')"
+                 oncanplay="handleVideoCanPlay(this, 'hls')"
+                 ontimeupdate="handleTimeUpdate(this)"
+                 onplay="handlePlayStateChange(true)"
+                 onpause="handlePlayStateChange(false)"
+                 onseeked="handleSeek(this)"></video>
           
           <!-- Stream Status Overlay -->
           <div id="streamStatusText" class="stream-status-overlay">
@@ -1105,12 +1183,20 @@
           </div>
           
           <div class="loading-spinner" id="loading"></div>
-          <div class="stream-type-indicator" id="streamTypeIndicator">WebRTC Stream</div>
-          <div class="webrtc-status" id="webrtcStatus" style="display:none; position:absolute; top:60px; right:20px; background:rgba(139, 92, 246, 0.9); color:white; padding:8px 12px; border-radius:6px; font-size:12px; font-weight:600; display:flex; align-items:center; gap:6px;">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="color: #ff4757;">
-              <circle cx="12" cy="12" r="10"></circle>
-            </svg>
-            LIVE WebRTC
+          <div class="stream-type-indicator" id="streamTypeIndicator">🔴 HLS Live Stream</div>
+          
+          <!-- Enhanced Stream Controls -->
+          <div class="stream-controls-overlay" id="streamControls" style="display:none;">
+            <div class="rewind-controls">
+              <button class="rewind-btn" onclick="rewindStream(30)">⏪ 30s</button>
+              <button class="rewind-btn" onclick="rewindStream(60)">⏪ 1m</button>
+              <button class="rewind-btn" onclick="rewindStream(300)">⏪ 5m</button>
+              <button class="live-btn" onclick="goToLive()" id="liveBtn">🔴 LIVE</button>
+            </div>
+            <div class="timeline-info" id="timelineInfo">
+              <span id="currentTimeDisplay">00:00</span> / <span id="durationDisplay">LIVE</span>
+              <span id="bufferInfo" class="buffer-info"></span>
+            </div>
           </div>
           
           <!-- Sync Status Indicator -->
@@ -1267,6 +1353,18 @@
     let canSeekAhead = false; // Students cannot seek ahead of instructor
     let isInstructor = false; // Track if current user is instructor
     
+    // ===== HLS STREAMING VARIABLES =====
+    let hlsInstance = null;
+    let currentVideo = null; // Reference to active video element
+    let streamKey = null;
+    let isStreamActive = false;
+    let hlsUrl = null;
+    let rewindBuffer = 300; // 5 minutes rewind buffer in seconds
+    let streamTimer = null; // Custom timer for HLS streams
+    let liveEdgeTime = 0; // Current live edge timestamp
+    let isAtLiveEdge = true; // Whether viewer is at live edge
+    let bufferInfo = { start: 0, end: 0 }; // Buffer information
+    
     // ===== ENHANCED TIMELINE VARIABLES =====
     let timelineCanvas = null;
     let timelineCtx = null;
@@ -1344,6 +1442,562 @@
       zoomOut: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><path d="M21 21l-4.35-4.35"></path><line x1="8" y1="11" x2="14" y2="11"></line></svg>`
     };
 
+    // ===== HLS STREAMING INITIALIZATION =====
+    async function initializeHLSStream(streamData) {
+      try {
+        console.log('🎬 Initializing HLS stream with data:', streamData);
+        
+        // Set current video element to HLS video
+        currentVideo = hlsVideo;
+        
+        // Hide other video elements
+        if (video) video.style.display = 'none';
+        if (webrtcVideo) webrtcVideo.style.display = 'none';
+        
+        // Show HLS video element
+        hlsVideo.style.display = 'block';
+        
+        // Construct HLS URL based on class ID or stream key
+        const classId = streamData.classId || getCurrentClassId();
+        if (classId) {
+          hlsUrl = `http://localhost:8888/hls/${classId}.m3u8`;
+        } else if (streamKey) {
+          hlsUrl = `http://localhost:8888/hls/${streamKey}.m3u8`;
+        } else {
+          throw new Error('No class ID or stream key available for HLS URL');
+        }
+        console.log('📡 HLS URL:', hlsUrl);
+        
+        // Initialize HLS.js
+        if (Hls.isSupported()) {
+          console.log('✅ HLS.js is supported');
+          
+          // Destroy existing instance if any
+          if (hlsInstance) {
+            hlsInstance.destroy();
+          }
+          
+          // Create new HLS instance with optimized settings
+          hlsInstance = new Hls({
+            enableWorker: true,
+            lowLatencyMode: true,
+            backBufferLength: rewindBuffer, // Allow rewind buffer
+            maxBufferLength: 30, // Keep buffer reasonable for live
+            maxMaxBufferLength: 60,
+            liveSyncDurationCount: 3,
+            liveMaxLatencyDurationCount: 10,
+            debug: false
+          });
+          
+          // Load the HLS stream
+          hlsInstance.loadSource(hlsUrl);
+          hlsInstance.attachMedia(hlsVideo);
+          
+          // Handle HLS events
+          hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
+            console.log('📋 HLS manifest parsed');
+            hlsVideo.play().catch(e => console.log('🔇 HLS autoplay prevented:', e));
+            isStreamActive = true;
+            
+            // Initialize stream timer
+            initializeStreamTimer();
+            
+            // Update UI
+            updateStreamTypeIndicator('HLS Live Stream');
+            loading.style.display = 'none';
+          });
+          
+          hlsInstance.on(Hls.Events.ERROR, function(event, data) {
+            console.error('❌ HLS error:', event, data);
+            
+            if (data.fatal) {
+              switch(data.type) {
+                case Hls.ErrorTypes.NETWORK_ERROR:
+                  console.log('🔄 Network error, attempting to recover...');
+                  hlsInstance.startLoad();
+                  break;
+                case Hls.ErrorTypes.MEDIA_ERROR:
+                  console.log('🔄 Media error, attempting to recover...');
+                  hlsInstance.recoverMediaError();
+                  break;
+                default:
+                  console.error('💥 Fatal HLS error, destroying instance');
+                  hlsInstance.destroy();
+                  hlsInstance = null;
+                  // Retry connection after 5 seconds
+                  setTimeout(() => {
+                    console.log('🔄 Retrying HLS connection...');
+                    initializeHLSStream(streamData);
+                  }, 5000);
+                  break;
+              }
+            }
+          });
+          
+          hlsInstance.on(Hls.Events.LEVEL_LOADED, function(event, data) {
+            console.log('📊 HLS level loaded:', data.details);
+            // Update live edge information
+            if (data.details.live) {
+              liveEdgeTime = data.details.totalduration || 0;
+              isLive = true;
+            }
+          });
+          
+        } else if (hlsVideo.canPlayType('application/vnd.apple.mpegurl')) {
+          // Native HLS support (Safari)
+          console.log('✅ Native HLS support detected');
+          hlsVideo.src = hlsUrl;
+          hlsVideo.addEventListener('loadedmetadata', function() {
+            hlsVideo.play().catch(e => console.log('🔇 Native HLS autoplay prevented:', e));
+            isStreamActive = true;
+            initializeStreamTimer();
+            updateStreamTypeIndicator('HLS Live Stream (Native)');
+            loading.style.display = 'none';
+          });
+        } else {
+          console.error('❌ HLS is not supported in this browser');
+          showErrorMessage('Browser Not Supported', 'Your browser does not support HLS streaming. Please use a modern browser like Chrome, Firefox, or Safari.');
+          return;
+        }
+        
+        // Add video event listeners
+        hlsVideo.addEventListener('canplay', function() {
+          console.log('▶️ HLS video can play');
+          loading.style.display = 'none';
+        });
+        
+        hlsVideo.addEventListener('waiting', function() {
+          console.log('⏳ HLS video waiting for data');
+          loading.style.display = 'block';
+        });
+        
+        hlsVideo.addEventListener('playing', function() {
+          console.log('▶️ HLS video playing');
+          loading.style.display = 'none';
+        });
+        
+        hlsVideo.addEventListener('error', function(e) {
+          console.error('❌ HLS video error:', e);
+          loading.style.display = 'block';
+        });
+        
+        // Add timeline interaction for HLS
+        setupHLSTimeline();
+        
+        // Show enhanced stream controls
+        showStreamControls();
+        
+      } catch (error) {
+        console.error('❌ Error initializing HLS stream:', error);
+        showErrorMessage('Stream Error', 'Failed to initialize the live stream. Please refresh the page and try again.');
+      }
+    }
+    
+    // ===== ENHANCED HLS FUNCTIONS =====
+    function rewindStream(seconds) {
+      if (!hlsVideo || !hlsVideo.duration) {
+        console.warn('Cannot rewind: video not ready');
+        return;
+      }
+      
+      const currentTime = hlsVideo.currentTime;
+      const newTime = Math.max(0, currentTime - seconds);
+      const minSeekTime = Math.max(0, hlsVideo.duration - rewindBuffer);
+      
+      if (newTime >= minSeekTime) {
+        hlsVideo.currentTime = newTime;
+        isAtLiveEdge = false;
+        updateLiveButton();
+        console.log(`⏪ Rewound ${seconds}s to ${formatTime(newTime)}`);
+      } else {
+        console.warn(`Cannot rewind ${seconds}s: would exceed buffer limit`);
+        showNotification(`Cannot rewind ${seconds}s - buffer limit reached`);
+      }
+    }
+    
+    function goToLive() {
+      if (!hlsVideo || !hlsVideo.duration) {
+        console.warn('Cannot go to live: video not ready');
+        return;
+      }
+      
+      // Seek to the live edge (end of buffer)
+      hlsVideo.currentTime = hlsVideo.duration;
+      isAtLiveEdge = true;
+      updateLiveButton();
+      console.log('🔴 Jumped to live edge');
+    }
+    
+    function updateLiveButton() {
+      const liveBtn = document.getElementById('liveBtn');
+      if (liveBtn) {
+        if (isAtLiveEdge) {
+          liveBtn.classList.add('active');
+          liveBtn.textContent = '🔴 LIVE';
+        } else {
+          liveBtn.classList.remove('active');
+          liveBtn.textContent = '📺 GO LIVE';
+        }
+      }
+    }
+    
+    function showStreamControls() {
+      const streamControls = document.getElementById('streamControls');
+      if (streamControls) {
+        streamControls.style.display = 'flex';
+        setTimeout(() => {
+          streamControls.classList.add('visible');
+        }, 100);
+      }
+    }
+    
+    function hideStreamControls() {
+      const streamControls = document.getElementById('streamControls');
+      if (streamControls) {
+        streamControls.classList.remove('visible');
+        setTimeout(() => {
+          streamControls.style.display = 'none';
+        }, 300);
+      }
+    }
+    
+    function handleTimeUpdate(video) {
+      if (!video || !video.duration) return;
+      
+      const currentTime = video.currentTime;
+      const duration = video.duration;
+      
+      // Update time displays
+      updateTimeDisplays(currentTime, duration);
+      
+      // Update buffer info
+      updateBufferInfo(video);
+      
+      // Check if at live edge
+      const liveThreshold = 3; // seconds
+      isAtLiveEdge = (duration - currentTime) < liveThreshold;
+      updateLiveButton();
+      
+      // Update timeline
+      updateTimelineDisplay();
+    }
+    
+    function handlePlayStateChange(isPlaying) {
+      console.log(`🎵 Play state changed: ${isPlaying ? 'playing' : 'paused'}`);
+      
+      if (isPlaying) {
+        showStreamControls();
+      }
+    }
+    
+    function handleSeek(video) {
+      if (!video) return;
+      
+      const currentTime = video.currentTime;
+      const duration = video.duration;
+      
+      console.log(`🎯 Seeked to: ${formatTime(currentTime)}`);
+      
+      // Check if still at live edge after seek
+      const liveThreshold = 3;
+      isAtLiveEdge = (duration - currentTime) < liveThreshold;
+      updateLiveButton();
+      
+      // Update displays
+      updateTimeDisplays(currentTime, duration);
+    }
+    
+    function updateTimeDisplays(currentTime, duration) {
+      const currentTimeDisplay = document.getElementById('currentTimeDisplay');
+      const durationDisplay = document.getElementById('durationDisplay');
+      
+      if (currentTimeDisplay) {
+        currentTimeDisplay.textContent = formatTime(currentTime);
+      }
+      
+      if (durationDisplay) {
+        if (isLive && isAtLiveEdge) {
+          durationDisplay.textContent = 'LIVE';
+        } else {
+          durationDisplay.textContent = formatTime(duration);
+        }
+      }
+    }
+    
+    function updateBufferInfo(video) {
+      if (!video.buffered || video.buffered.length === 0) return;
+      
+      const buffered = video.buffered;
+      const currentTime = video.currentTime;
+      
+      // Find the buffer range that contains current time
+      for (let i = 0; i < buffered.length; i++) {
+        const start = buffered.start(i);
+        const end = buffered.end(i);
+        
+        if (currentTime >= start && currentTime <= end) {
+          bufferInfo = { start, end };
+          
+          const bufferAhead = end - currentTime;
+          const bufferBehind = currentTime - start;
+          
+          const bufferInfoEl = document.getElementById('bufferInfo');
+          if (bufferInfoEl) {
+            bufferInfoEl.textContent = `Buffer: ${formatTime(bufferBehind)} / ${formatTime(bufferAhead)}`;
+          }
+          break;
+        }
+      }
+    }
+    
+    function formatTime(seconds) {
+      if (!seconds || isNaN(seconds)) return '00:00';
+      
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      const secs = Math.floor(seconds % 60);
+      
+      if (hours > 0) {
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      } else {
+        return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      }
+    }
+    
+    function showNotification(message, type = 'info') {
+      // Create notification element
+      const notification = document.createElement('div');
+      notification.className = `notification ${type}`;
+      notification.textContent = message;
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        z-index: 1000;
+        font-size: 0.875rem;
+        font-weight: 500;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+      `;
+      
+      document.body.appendChild(notification);
+      
+      // Animate in
+      setTimeout(() => {
+        notification.style.transform = 'translateX(0)';
+      }, 100);
+      
+      // Remove after 3 seconds
+      setTimeout(() => {
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+          document.body.removeChild(notification);
+        }, 300);
+      }, 3000);
+    }
+    
+    // ===== HLS STREAM TIMER =====
+    function initializeStreamTimer() {
+      if (streamTimer) {
+        clearInterval(streamTimer.interval);
+      }
+      
+      streamTimer = {
+        startTime: Date.now(),
+        currentTime: 0,
+        interval: null,
+        
+        start: function() {
+          this.interval = setInterval(() => {
+            if (isStreamActive && hlsVideo && !hlsVideo.paused) {
+              this.currentTime = (Date.now() - this.startTime) / 1000;
+              updateTimelineDisplay();
+            }
+          }, 100);
+        },
+        
+        setTime: function(time) {
+          if (hlsVideo && hlsVideo.duration) {
+            // For HLS, we can seek within the available buffer
+            const maxSeekTime = Math.min(time, hlsVideo.duration);
+            const minSeekTime = Math.max(0, hlsVideo.duration - rewindBuffer);
+            
+            if (time >= minSeekTime && time <= maxSeekTime) {
+              hlsVideo.currentTime = time;
+              this.currentTime = time;
+              console.log(`⏯️ HLS seek to: ${formatTime(time)}`);
+            } else {
+              console.log(`⚠️ Seek time ${formatTime(time)} outside allowed range [${formatTime(minSeekTime)}, ${formatTime(maxSeekTime)}]`);
+            }
+          }
+        },
+        
+        getCurrentTime: function() {
+          return hlsVideo ? hlsVideo.currentTime : this.currentTime;
+        },
+        
+        getDuration: function() {
+          return hlsVideo ? hlsVideo.duration : 0;
+        }
+      };
+      
+      streamTimer.start();
+    }
+    
+    // ===== HLS TIMELINE SETUP =====
+    function setupHLSTimeline() {
+      if (!timeline || !hlsVideo) return;
+      
+      // Timeline click handler for HLS seeking
+      timeline.addEventListener('click', function(e) {
+        if (!hlsVideo.duration) return;
+        
+        const rect = timeline.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const timelineWidth = rect.width;
+        
+        // Calculate seek time based on available buffer
+        const maxSeekTime = hlsVideo.duration;
+        const minSeekTime = Math.max(0, hlsVideo.duration - rewindBuffer);
+        const seekRange = maxSeekTime - minSeekTime;
+        
+        const clickProgress = clickX / timelineWidth;
+        const seekTime = minSeekTime + (clickProgress * seekRange);
+        
+        if (streamTimer) {
+          streamTimer.setTime(seekTime);
+        }
+        
+        console.log(`🎯 HLS timeline clicked: seeking to ${formatTime(seekTime)}`);
+      });
+      
+      // Timeline hover for time preview
+      timeline.addEventListener('mousemove', function(e) {
+        if (!hlsVideo.duration) return;
+        
+        const rect = timeline.getBoundingClientRect();
+        const hoverX = e.clientX - rect.left;
+        const timelineWidth = rect.width;
+        
+        const maxSeekTime = hlsVideo.duration;
+        const minSeekTime = Math.max(0, hlsVideo.duration - rewindBuffer);
+        const seekRange = maxSeekTime - minSeekTime;
+        
+        const hoverProgress = hoverX / timelineWidth;
+        const hoverTime = minSeekTime + (hoverProgress * seekRange);
+        
+        // Show time tooltip
+        if (thumbnailPreview && thumbnailTime) {
+          thumbnailTime.textContent = formatTime(hoverTime);
+          thumbnailPreview.style.left = hoverX + 'px';
+          thumbnailPreview.style.display = 'block';
+        }
+      });
+      
+      timeline.addEventListener('mouseleave', function() {
+        if (thumbnailPreview) {
+          thumbnailPreview.style.display = 'none';
+        }
+      });
+    }
+    
+    // ===== TIMELINE DISPLAY UPDATE =====
+    function updateTimelineDisplay() {
+      if (!hlsVideo || !scrubber || !timeline) return;
+      
+      const currentTime = hlsVideo.currentTime;
+      const duration = hlsVideo.duration;
+      
+      if (duration > 0) {
+        // For HLS, show progress within the rewind buffer
+        const maxTime = duration;
+        const minTime = Math.max(0, duration - rewindBuffer);
+        const seekableRange = maxTime - minTime;
+        
+        if (seekableRange > 0) {
+          const progress = Math.max(0, Math.min(1, (currentTime - minTime) / seekableRange));
+          scrubber.style.left = (progress * 100) + '%';
+          
+          // Update timeline track if it exists
+          const timelineTrack = timeline.querySelector('.timeline-track');
+          if (timelineTrack) {
+            timelineTrack.style.width = (progress * 100) + '%';
+          }
+        }
+      }
+    }
+    
+    // ===== HLS STREAM STATUS HANDLER =====
+    function handleHLSStreamStatusUpdate(data) {
+      console.log('🎬 HLS stream status update:', data);
+      
+      if (data.status === 'live') {
+        console.log('🔴 Stream is now LIVE');
+        
+        // Hide waiting message
+        hideStreamStatusOverlay();
+        loading.style.display = 'none';
+        
+        // Initialize or restart HLS stream
+        if (streamKey && hlsUrl) {
+          if (hlsInstance) {
+            console.log('🔄 Restarting existing HLS stream');
+            hlsInstance.loadSource(hlsUrl);
+          } else {
+            console.log('🆕 Starting new HLS stream');
+            initializeHLSStream({ streamKey: streamKey });
+          }
+        }
+        
+        isStreamActive = true;
+        updateStreamTypeIndicator('🔴 LIVE - HLS Stream');
+        
+      } else if (data.status === 'offline') {
+        console.log('⏹️ Stream is now OFFLINE');
+        
+        // Stop HLS stream
+        if (hlsInstance) {
+          hlsInstance.destroy();
+          hlsInstance = null;
+        }
+        
+        // Clear video
+        if (hlsVideo) {
+          hlsVideo.src = '';
+          hlsVideo.load();
+        }
+        
+        isStreamActive = false;
+        showWaitingMessage();
+        updateStreamTypeIndicator('⏸️ Stream Offline');
+        
+      } else if (data.status === 'paused') {
+        console.log('⏸️ Stream is PAUSED');
+        
+        if (hlsVideo) {
+          hlsVideo.pause();
+        }
+        
+        updateStreamTypeIndicator('⏸️ Stream Paused');
+      }
+      
+      // Handle stream URL changes
+      if (data.streamUrl && data.streamUrl !== hlsUrl) {
+        console.log('🔄 Stream URL changed:', data.streamUrl);
+        hlsUrl = data.streamUrl;
+        
+        if (hlsInstance && isStreamActive) {
+          hlsInstance.loadSource(hlsUrl);
+        }
+      }
+    }
+    
     // ===== SOCKET.IO INITIALIZATION =====
     function initializeSocket() {
       if (typeof io === 'undefined') {
@@ -1474,11 +2128,7 @@
       // Stream status updates
       socket.on('streamStatus', (data) => {
         console.log('📡 Stream status update received:', data);
-        console.log('📡 Current video elements state:', {
-          video: document.getElementById('video')?.style.display,
-          webrtcVideo: document.getElementById('webrtcVideo')?.style.display
-        });
-        handleStreamStatusUpdate(data);
+        handleHLSStreamStatusUpdate(data);
       });
       
       // Test event to verify Socket.IO is working
@@ -1515,15 +2165,26 @@
         updateViewerCount(data.count);
       });
       
-      // Handle WebRTC events
+      // Handle HLS Stream events
+      socket.on('stream:started', (data) => {
+        console.log('🔴 Stream started:', data);
+        handleStreamStarted(data);
+      });
+      
+      socket.on('stream:ended', (data) => {
+        console.log('⏹️ Stream ended:', data);
+        handleStreamEnded(data);
+      });
+      
+      // Legacy WebRTC event handlers (for backward compatibility)
       socket.on('instructor-started-webrtc', (data) => {
-        console.log('🔴 Instructor started WebRTC stream:', data);
-        handleWebRTCStreamStart(data);
+        console.log('🔴 Legacy WebRTC event - converting to HLS:', data);
+        handleStreamStarted(data);
       });
       
       socket.on('instructor-stopped-webrtc', (data) => {
-        console.log('⏹️ Instructor stopped WebRTC stream:', data);
-        handleWebRTCStreamStop(data);
+        console.log('⏹️ Legacy WebRTC event - converting to HLS:', data);
+        handleStreamEnded(data);
       });
       
       // Handle connection status
@@ -1542,18 +2203,25 @@
     function handleStreamInit(data) {
       console.log('🎬 Handling stream initialization:', data);
       
-      const video = document.getElementById('video');
-      const webrtcVideo = document.getElementById('webrtcVideo');
+      // Check if this is an HLS stream
+      if (data.streamUrl && data.streamUrl.includes('.m3u8')) {
+        console.log('📺 Setting up HLS stream:', data.streamUrl);
+        
+        // Initialize HLS stream
+        const streamData = {
+          classId: data.classId || getCurrentClassId(),
+          streamUrl: data.streamUrl,
+          type: 'hls'
+        };
+        
+        initializeHLSStream(streamData);
+        return;
+      }
       
-      if (data.streamUrl) {
-        console.log('📺 Setting up video stream:', data.streamUrl);
-        
-        // Hide WebRTC video and show regular video
-        if (webrtcVideo) {
-          webrtcVideo.style.display = 'none';
-          console.log('🔄 Hidden WebRTC video');
-        }
-        
+      // Legacy video stream handling (for backward compatibility)
+      const video = document.getElementById('video');
+      if (data.streamUrl && video) {
+        console.log('📺 Setting up legacy video stream:', data.streamUrl);
         video.style.display = 'block';
         video.src = data.streamUrl;
         
@@ -1599,23 +2267,34 @@
     }
     
     function handleInstructorPlay(data) {
+      const hlsVideo = document.getElementById('hlsVideo');
       const video = document.getElementById('video');
-    const webrtcVideo = document.getElementById('webrtcVideo');
-      const activeVideo = video.style.display !== 'none' ? video : webrtcVideo;
+      
+      // Use HLS video if available, otherwise fall back to regular video
+      const activeVideo = (hlsVideo && hlsVideo.style.display !== 'none') ? hlsVideo : video;
       
       instructorTime = data.time;
       instructorPlaying = true;
       
-      // Only sync regular video (WebRTC can't be synced)
-      if (activeVideo === video && video.src) {
-          // Sync student video to instructor time
-        if (Math.abs(video.currentTime - instructorTime) > 1) {
-          console.log(`🔄 Syncing video: ${video.currentTime}s -> ${instructorTime}s`);
-          video.currentTime = instructorTime;
+      // Sync video to instructor time (HLS streams support seeking within buffer)
+      if (activeVideo && activeVideo.src) {
+        // For HLS, only sync if within seekable range
+        if (activeVideo === hlsVideo && hlsVideo.duration) {
+          const minSeekTime = Math.max(0, hlsVideo.duration - rewindBuffer);
+          if (instructorTime >= minSeekTime && Math.abs(hlsVideo.currentTime - instructorTime) > 2) {
+            console.log(`🔄 Syncing HLS video: ${hlsVideo.currentTime}s -> ${instructorTime}s`);
+            hlsVideo.currentTime = instructorTime;
+          }
+        } else if (activeVideo === video) {
+          // Legacy video sync
+          if (Math.abs(video.currentTime - instructorTime) > 1) {
+            console.log(`🔄 Syncing video: ${video.currentTime}s -> ${instructorTime}s`);
+            video.currentTime = instructorTime;
+          }
         }
         
-        if (video.paused) {
-          video.play().catch(e => console.log('Autoplay prevented:', e));
+        if (activeVideo.paused) {
+          activeVideo.play().catch(e => console.log('Autoplay prevented:', e));
         }
       }
       
@@ -1624,19 +2303,30 @@
     }
     
     function handleInstructorPause(data) {
+      const hlsVideo = document.getElementById('hlsVideo');
       const video = document.getElementById('video');
-    const webrtcVideo = document.getElementById('webrtcVideo');
-      const activeVideo = video.style.display !== 'none' ? video : webrtcVideo;
+      
+      // Use HLS video if available, otherwise fall back to regular video
+      const activeVideo = (hlsVideo && hlsVideo.style.display !== 'none') ? hlsVideo : video;
       
       instructorTime = data.time;
       instructorPlaying = false;
       
-      // Only sync regular video (WebRTC can't be paused)
-      if (activeVideo === video && video.src) {
-        // Sync student video to instructor time
+      // Sync and pause video
+      if (activeVideo && activeVideo.src) {
         console.log(`⏸️ Pausing and syncing video to: ${instructorTime}s`);
+        
+        // For HLS, only sync if within seekable range
+        if (activeVideo === hlsVideo && hlsVideo.duration) {
+          const minSeekTime = Math.max(0, hlsVideo.duration - rewindBuffer);
+          if (instructorTime >= minSeekTime) {
+            hlsVideo.currentTime = instructorTime;
+          }
+        } else if (activeVideo === video) {
           video.currentTime = instructorTime;
-        video.pause();
+        }
+        
+        activeVideo.pause();
       }
       
       updatePlayPauseButton(true); // Show play button
@@ -1644,16 +2334,27 @@
     }
     
     function handleInstructorSeek(data) {
+      const hlsVideo = document.getElementById('hlsVideo');
       const video = document.getElementById('video');
-      const webrtcVideo = document.getElementById('webrtcVideo');
-      const activeVideo = video.style.display !== 'none' ? video : webrtcVideo;
+      
+      // Use HLS video if available, otherwise fall back to regular video
+      const activeVideo = (hlsVideo && hlsVideo.style.display !== 'none') ? hlsVideo : video;
       
       instructorTime = data.time;
       
-      // Only sync regular video (WebRTC can't be seeked)
-      if (activeVideo === video && video.src) {
+      // Sync video to instructor seek position
+      if (activeVideo && activeVideo.src) {
         console.log(`⏭️ Seeking video to: ${instructorTime}s`);
-        video.currentTime = instructorTime;
+        
+        // For HLS, only seek if within seekable range
+        if (activeVideo === hlsVideo && hlsVideo.duration) {
+          const minSeekTime = Math.max(0, hlsVideo.duration - rewindBuffer);
+          if (instructorTime >= minSeekTime) {
+            hlsVideo.currentTime = instructorTime;
+          }
+        } else if (activeVideo === video) {
+          video.currentTime = instructorTime;
+        }
       }
       
       updateLiveStatus();
@@ -1727,45 +2428,62 @@
       }
     }
     
-    // ===== ADDITIONAL WEBSOCKET HANDLERS =====
-    function handleWebRTCStreamStart(data) {
-      console.log('🔴 WebRTC stream started:', data);
-      const webrtcVideo = document.getElementById('webrtcVideo');
-      const video = document.getElementById('video');
+    // ===== HLS STREAM SOCKET HANDLERS =====
+    function handleStreamStarted(data) {
+      console.log('🔴 HLS stream started:', data);
       
-      if (webrtcVideo) {
-        // Show WebRTC video, hide regular video
-        webrtcVideo.style.display = 'block';
-        if (video) video.style.display = 'none';
-        
-        updateStreamTypeIndicator('WebRTC Live Stream');
-        hideStreamStatusOverlay();
-        isStreamActive = true;
-        
-        // Update WebRTC status indicator
-        const webrtcStatus = document.getElementById('webrtcStatus');
-        if (webrtcStatus) {
-          webrtcStatus.style.display = 'flex';
-        }
+      // Extract class ID from the data or current context
+      const classId = data.classId || getCurrentClassId();
+      if (!classId) {
+        console.error('❌ No class ID available for stream');
+        return;
       }
+      
+      // Initialize HLS stream with class-based URL
+      const streamData = {
+        classId: classId,
+        streamUrl: `http://localhost:8888/hls/${classId}.m3u8`,
+        type: 'hls'
+      };
+      
+      initializeHLSStream(streamData);
+      showStreamStatusOverlay('🔴 Live Stream Started');
+      
+      // Hide status overlay after stream starts
+      setTimeout(() => {
+        hideStreamStatusOverlay();
+      }, 2000);
     }
     
-    function handleWebRTCStreamStop(data) {
-      console.log('⏹️ WebRTC stream stopped:', data);
-      const webrtcVideo = document.getElementById('webrtcVideo');
-      const webrtcStatus = document.getElementById('webrtcStatus');
+    function handleStreamEnded(data) {
+      console.log('⏹️ HLS stream ended:', data);
       
-      if (webrtcVideo) {
-        webrtcVideo.style.display = 'none';
+      // Stop HLS instance
+      if (hlsInstance) {
+        hlsInstance.destroy();
+        hlsInstance = null;
       }
       
-      if (webrtcStatus) {
-        webrtcStatus.style.display = 'none';
+      // Hide video and show status
+      const hlsVideo = document.getElementById('hlsVideo');
+      if (hlsVideo) {
+        hlsVideo.style.display = 'none';
+        hlsVideo.src = '';
       }
       
-      showStreamStatusOverlay('WebRTC stream ended');
-      updateStreamTypeIndicator('Offline');
+      // Hide stream controls
+      hideStreamControls();
+      
+      // Update status
       isStreamActive = false;
+      updateStreamTypeIndicator('Stream Ended');
+      showStreamStatusOverlay('Stream has ended');
+    }
+    
+    function getCurrentClassId() {
+      // Try to get class ID from URL parameters or localStorage
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('classId') || localStorage.getItem('currentClassId');
     }
     
     function updateViewerCount(count) {
@@ -4912,63 +5630,11 @@
           return;
         }
 
-        // Handle different stream sources
-        if (currentSource === 'upload' && data.session && data.session.uploadFilename) {
-          // For uploaded videos, use direct video URL
-          const videoUrl = `/api/stream/video/${data.session.uploadFilename}`;
-          console.log('📹 Loading uploaded video:', videoUrl);
-          console.log('📁 Upload filename:', data.session.uploadFilename);
-          
-          // Use direct video playback for uploaded files
-          video.src = videoUrl;
-          video.load();
-          
-          video.addEventListener('loadstart', () => console.log('🔄 Video load started'));
-          video.addEventListener('loadeddata', () => console.log('✅ Video data loaded'));
-          video.addEventListener('canplay', () => console.log('▶️ Video can play'));
-          video.addEventListener('error', (e) => console.error('❌ Video error:', e));
-          
-          video.play().catch(e => console.log('🔇 Video autoplay prevented:', e));
-          
-        } else {
-          // For live streams, use HLS
-          const streamUrl = `http://127.0.0.1:8888/live/${streamKey}/index.m3u8`;
-          console.log('Loading HLS stream:', streamUrl);
-          
-          // Initialize HLS.js
-          if (Hls.isSupported()) {
-            hlsInstance = new Hls({
-              enableWorker: true,
-              lowLatencyMode: true,
-              backBufferLength: 90
-            });
-            hlsInstance.loadSource(streamUrl);
-            hlsInstance.attachMedia(video);
-            hlsInstance.on(Hls.Events.MANIFEST_PARSED, function() {
-              video.play();
-            });
-          
-          // Generate thumbnails when video metadata is loaded
-          video.addEventListener('loadedmetadata', function() {
-            generateThumbnails();
-          }, { once: true });
-
-            hlsInstance.on(Hls.Events.ERROR, function(event, data) {
-              console.error('HLS error:', data);
-              if (data.fatal) {
-                setTimeout(() => fetchClassInfo(), 5000); // Retry after 5 seconds
-              }
-            });
-          } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            video.src = streamUrl;
-            video.addEventListener('loadedmetadata', function() {
-              video.play();
-              generateThumbnails();
-            });
-          } else {
-            console.error('HLS is not supported in this browser');
-          }
-        }
+        // Get stream key from class data
+        streamKey = data.streamKey;
+        
+        // Initialize HLS streaming
+        await initializeHLSStream(data);
         
         video.addEventListener('canplay', function() {
           loading.style.display = 'none';
@@ -5988,31 +6654,26 @@
       // Show welcome modal
       showWelcomeModal();
       
-      // Set up video error handling
-      const video = document.getElementById('video');
-      const webrtcVideo = document.getElementById('webrtcVideo');
+      // Set up HLS video error handling
+      const hlsVideo = document.getElementById('hlsVideo');
       
-      if (video) {
-        video.addEventListener('error', (e) => {
-          console.error('❌ Video error:', e);
-          showStreamStatusOverlay('Video loading error - Please refresh');
+      if (hlsVideo) {
+        hlsVideo.addEventListener('error', (e) => {
+          console.error('❌ HLS video error:', e);
+          showStreamStatusOverlay('Stream loading error - Please refresh');
         });
         
-        video.addEventListener('loadstart', () => {
-          console.log('📺 Video loading started');
+        hlsVideo.addEventListener('loadstart', () => {
+          console.log('📺 HLS video loading started');
         });
         
-        video.addEventListener('canplay', () => {
-          console.log('📺 Video can start playing');
+        hlsVideo.addEventListener('canplay', () => {
+          console.log('📺 HLS video can start playing');
           hideStreamStatusOverlay();
         });
-      }
-      
-      if (webrtcVideo) {
-        webrtcVideo.addEventListener('error', (e) => {
-          console.error('❌ WebRTC video error:', e);
-          showStreamStatusOverlay('WebRTC connection error');
-        });
+        
+        // Set as current video
+        currentVideo = hlsVideo;
       }
       
       // Check for existing stream state

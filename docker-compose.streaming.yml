@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # NGINX with RTMP module for streaming
+  nginx-rtmp:
+    image: tiangolo/nginx-rtmp
+    container_name: smx-nginx-rtmp
+    ports:
+      - "1935:1935"  # RTMP port for OBS
+      - "8888:8888"  # HLS delivery port
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./data/hls:/var/www/hls
+      - ./data/recordings:/var/recordings
+      - ./nginx/stat.xsl:/var/www/html/stat.xsl
+    restart: unless-stopped
+    networks:
+      - smx-streaming
+
+  # Redis for session management and caching
+  redis:
+    image: redis:7-alpine
+    container_name: smx-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./data/redis:/data
+    restart: unless-stopped
+    networks:
+      - smx-streaming
+
+  # Node.js application (your existing app)
+  app:
+    build: .
+    container_name: smx-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=redis://redis:6379
+      - HLS_BASE_URL=http://localhost:8888/hls
+      - RTMP_BASE_URL=rtmp://nginx-rtmp:1935/live
+    volumes:
+      - .:/app
+      - /app/node_modules
+    depends_on:
+      - redis
+      - nginx-rtmp
+    restart: unless-stopped
+    networks:
+      - smx-streaming
+
+  # FFmpeg for stream processing (optional)
+  ffmpeg:
+    image: jrottenberg/ffmpeg:4.4-alpine
+    container_name: smx-ffmpeg
+    volumes:
+      - ./data/recordings:/recordings
+      - ./data/hls:/hls
+    restart: "no"
+    networks:
+      - smx-streaming
+
+networks:
+  smx-streaming:
+    driver: bridge
+
+volumes:
+  hls-data:
+  recordings-data:
+  redis-data:
