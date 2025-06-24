@@ -105,7 +105,7 @@
       }
       .feed-panel {
         width: 100%;
-        padding: 36px 10px 22px 20px; /* Reduced right padding for mobile to expand to edge */
+        padding: 36px 20px 22px 20px; /* Adjust padding for mobile */
       }
       .bubble {
         min-width: 200px;
@@ -287,8 +287,7 @@
       overflow: hidden; /* Prevent overflow */
       min-width: 0; /* Prevents flex item from overflowing */
       height: calc(100vh - 58px); /* Ensure main panel takes remaining viewport height */
-      width: 100%; /* Use full available width */
-      max-width: none; /* Remove width restriction to allow full expansion */
+      max-width: 100vw; /* Extend to full viewport width */
     }
     
     .top-bar {
@@ -321,15 +320,13 @@
       flex-grow: 1;
       overflow-y: auto;
       overflow-x: hidden; /* Prevent horizontal overflow */
-      padding: 36px 20px 22px 80px; /* Reduced right padding to expand to screen edge */
+      padding: 36px 40px 22px 80px; /* Reduced left padding since sidebar is wider */
       background: transparent;
       display: flex;
       flex-direction: column;
       gap: 28px;
       min-height: calc(100vh - 58px); /* Use min-height instead of fixed height */
       width: 100%; /* Extend to full available width */
-      max-width: 100%; /* Ensure it doesn't exceed container */
-      box-sizing: border-box; /* Include padding in width calculation */
       scrollbar-width: thin;
       scrollbar-color: var(--accent) transparent;
       scroll-behavior: smooth; /* Enable smooth scrolling */
@@ -357,10 +354,9 @@
     
     .callout-card {
       width: 100%;
-      max-width: 100%;
+      max-width: none;
       transform: none !important;
-      border-radius: 8px;
-      overflow: hidden; /* Prevent content from overflowing */
+      border-radius: 0;
     }
     .bubble:hover {
       box-shadow: var(--shadow-hover), inset 0 1px 0 rgba(255, 255, 255, 0.15);
@@ -1049,10 +1045,9 @@
       word-break: break-word;
       white-space: pre-line;
       min-height: auto;
-      width: 100%; /* Use full available width */
-      max-width: 100%; /* Ensure it doesn't exceed container */
+      width: calc(100vw - 720px); /* Extend to viewport width with buffer */
+      max-width: calc(100vw - 720px); /* Extend to viewport width with buffer */
       box-sizing: border-box;
-      overflow-wrap: break-word; /* Ensure long words break properly */
     }
     
     .callout-card.qc-orange { border-color: var(--qc-orange); }
@@ -1147,16 +1142,12 @@
       position: relative;
       width: 100%;
       margin-bottom: 8px;
-      overflow: hidden; /* Prevent overflow from wrapper */
-      box-sizing: border-box;
     }
     
     /* Ensure proper positioning context for external elements */
     .callout-wrapper .callout-card {
       margin-left: 30px; /* Space for checkbox */
-      margin-right: 20px; /* Reduced right margin to expand more */
-      width: calc(100% - 50px); /* Account for left and right margins */
-      max-width: calc(100% - 50px);
+      margin-right: 0;
     }
 
     /* Classic Menu and QC Buttons */
