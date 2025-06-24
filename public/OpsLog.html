@@ -319,7 +319,7 @@
       flex: 1;
       flex-grow: 1;
       overflow-y: auto;
-      overflow-x: auto; /* Allow horizontal scrolling */
+      overflow-x: hidden; /* Prevent horizontal scrolling */
       padding: 36px 40px 22px 80px; /* Reduced left padding since sidebar is wider */
       background: transparent;
       display: flex;
@@ -345,18 +345,18 @@
       position: relative;
       transition: var(--transition);
       min-width: 500px;
-      max-width: 100%; /* Extend to full available width */
-      width: 100%; /* Extend to full available width */
+      max-width: calc(100% - 40px); /* Small buffer on the right */
+      width: calc(100% - 40px); /* Extend to right with buffer */
       word-break: break-word;
       white-space: pre-line;
       font-size: 1.06em;
     }
     
     .callout-card {
-      width: 100%;
-      max-width: none;
+      width: calc(100% - 40px); /* Match bubble width with buffer */
+      max-width: calc(100% - 40px);
       transform: none !important;
-      border-radius: 0;
+      border-radius: 20px; /* Match bubble border-radius */
     }
     .bubble:hover {
       box-shadow: var(--shadow-hover), inset 0 1px 0 rgba(255, 255, 255, 0.15);
