@@ -105,7 +105,7 @@
       }
       .feed-panel {
         width: 100%;
-        padding: 36px 20px 22px 20px; /* Adjust padding for mobile */
+        padding: 36px 10px 22px 20px; /* Reduced right padding for mobile to expand to edge */
       }
       .bubble {
         min-width: 200px;
@@ -287,7 +287,8 @@
       overflow: hidden; /* Prevent overflow */
       min-width: 0; /* Prevents flex item from overflowing */
       height: calc(100vh - 58px); /* Ensure main panel takes remaining viewport height */
-      max-width: 100vw; /* Extend to full viewport width */
+      width: 100%; /* Use full available width */
+      max-width: none; /* Remove width restriction to allow full expansion */
     }
     
     .top-bar {
@@ -320,7 +321,7 @@
       flex-grow: 1;
       overflow-y: auto;
       overflow-x: hidden; /* Prevent horizontal overflow */
-      padding: 36px 40px 22px 80px; /* Reduced left padding since sidebar is wider */
+      padding: 36px 20px 22px 80px; /* Reduced right padding to expand to screen edge */
       background: transparent;
       display: flex;
       flex-direction: column;
@@ -1153,9 +1154,9 @@
     /* Ensure proper positioning context for external elements */
     .callout-wrapper .callout-card {
       margin-left: 30px; /* Space for checkbox */
-      margin-right: 40px; /* Space for right margin */
-      width: calc(100% - 70px); /* Account for left and right margins */
-      max-width: calc(100% - 70px);
+      margin-right: 20px; /* Reduced right margin to expand more */
+      width: calc(100% - 50px); /* Account for left and right margins */
+      max-width: calc(100% - 50px);
     }
 
     /* Classic Menu and QC Buttons */
