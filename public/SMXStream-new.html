@@ -1416,8 +1416,17 @@
         liveMaxLatencyDurationCount: 10
       });
       
-      // Load HLS stream
-      const streamUrl = `http://198.211.107.134:8888/hls/${classId}.m3u8`;
+      // Load HLS stream - Check if using YouTube for testing
+      let streamUrl;
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        // For local testing, try YouTube embed first, then HLS
+        streamUrl = `http://localhost:8888/hls/${classId}.m3u8`;
+      } else {
+        // Production HLS
+        streamUrl = `http://198.211.107.134:8888/hls/${classId}.m3u8`;
+      }
+      
+      console.log('🎬 Loading stream URL:', streamUrl);
       hls.loadSource(streamUrl);
       hls.attachMedia(video);
       

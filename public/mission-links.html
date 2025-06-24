@@ -932,10 +932,18 @@
     // Define slideshow functions immediately
     function openSlideshowViewer() {
       console.log('=== openSlideshowViewer called ===');
-      
+
       try {
-        // Initialize slideshow images for Mission Reference 1
-        slideImages = [
+        // Verify slideImages is available
+        if (typeof slideImages === 'undefined') {
+          console.error('slideImages is not defined at the global level');
+          alert('Error: Slideshow system not properly initialized.');
+          return;
+        }
+
+        // SAFELY assign the array - clear existing and push new items
+        slideImages.length = 0;
+        slideImages.push(
           'images/Mission 1 Reference Product/1.jpg',
           'images/Mission 1 Reference Product/2.jpg',
           'images/Mission 1 Reference Product/3.jpg',
@@ -944,33 +952,33 @@
           'images/Mission 1 Reference Product/6.jpg',
           'images/Mission 1 Reference Product/7.jpg',
           'images/Mission 1 Reference Product/8.jpg'
-        ];
-        
+        );
+
         console.log('Slideshow images initialized:', slideImages);
         
         currentSlideIndex = 0;
-        
+
         const modal = document.getElementById('slideshowModal');
         if (!modal) {
           console.error('Modal element not found!');
           alert('Error: Slideshow modal not found.');
           return;
         }
-        
+
         console.log('Opening slideshow modal...');
-        
+
         // Show the modal
         modal.classList.add('active');
         modal.style.display = 'flex';
-        
+
         // Prevent body scrolling when modal is open
         document.body.style.overflow = 'hidden';
-        
+
         // Update slide image after modal is shown
         setTimeout(() => {
           updateSlideImage();
         }, 100);
-        
+
       } catch (error) {
         console.error('Error in openSlideshowViewer:', error);
         alert('Error opening slideshow viewer: ' + error.message);

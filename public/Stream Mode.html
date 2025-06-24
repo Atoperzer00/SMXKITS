@@ -651,9 +651,19 @@
     let streamStartTime = null;
     let streamDurationInterval = null;
     
-    const OBS_WEBSOCKET_URL = 'ws://198.211.107.134:4455';
-    const RTMP_SERVER_URL = 'rtmp://198.211.107.134/live';
-    const HLS_BASE_URL = 'http://198.211.107.134:8888/hls';
+    // TESTING WITH YOUTUBE LIVE (Recommended for immediate testing)
+    const OBS_WEBSOCKET_URL = 'ws://localhost:4455';
+    const RTMP_SERVER_URL = 'rtmp://a.rtmp.youtube.com/live2';
+    const HLS_BASE_URL = 'https://www.youtube.com/embed'; // Will show YouTube embed
+    
+    // LOCAL TESTING (Requires Docker/RTMP server)
+    // const RTMP_SERVER_URL = 'rtmp://localhost/live';
+    // const HLS_BASE_URL = 'http://localhost:8888/hls';
+    
+    // PRODUCTION: Use when DigitalOcean server is deployed
+    // const OBS_WEBSOCKET_URL = 'ws://198.211.107.134:4455';
+    // const RTMP_SERVER_URL = 'rtmp://198.211.107.134/live';
+    // const HLS_BASE_URL = 'http://198.211.107.134:8888/hls';
 
     // Auto-detect class ID from URL parameters or localStorage
     function initializeClassId() {

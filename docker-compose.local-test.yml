@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  # Local NGINX RTMP Server for Testing
+  nginx-rtmp-local:
+    image: tiangolo/nginx-rtmp
+    container_name: smx-nginx-rtmp-local
+    ports:
+      - "1935:1935"  # RTMP ingestion
+      - "8888:8080"  # HLS delivery (mapped to 8888 for consistency)
+    volumes:
+      - ./nginx-local.conf:/etc/nginx/nginx.conf:ro
+      - hls-data-local:/var/www/html/hls
+    restart: unless-stopped
+    networks:
+      - smx-local
+
+  # Redis for session management (optional for testing)
+  redis-local:
+    image: redis:7-alpine
+    container_name: smx-redis-local
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - smx-local
+
+volumes:
+  hls-data-local:
+
+networks:
+  smx-local:
+    driver: bridge
