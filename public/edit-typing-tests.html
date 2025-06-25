@@ -378,11 +378,23 @@
         console.log(`💾 Saving module ${moduleIndex}...`);
         
         const token = localStorage.getItem('token');
+        console.log('🔑 Token check:', token ? 'Token exists' : 'No token found');
         if (!token) {
           alert('Please log in again.');
           window.location.href = '/login.html';
           return;
         }
+        
+        // Prepare data for saving
+        const saveData = {
+          modules: typingModules,
+          moduleNames: moduleNames
+        };
+        console.log('📤 Sending data:', {
+          modulesCount: saveData.modules.length,
+          moduleNamesCount: saveData.moduleNames.length,
+          firstModulePractices: saveData.modules[0]?.length || 0
+        });
         
         // Save to API
         const response = await fetch('/api/typing-tests', {
@@ -391,23 +403,25 @@
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify({
-            modules: typingModules,
-            moduleNames: moduleNames
-          })
+          body: JSON.stringify(saveData)
         });
         
         if (response.ok) {
           const result = await response.json();
+          console.log('✅ Save response:', result);
           if (result.success) {
             // Emit socket event to update training page
             socket.emit('typing-modules-updated', { modules: typingModules });
             
             showNotification(`✅ Module ${moduleIndex + 1} saved!`);
             console.log(`✅ Module ${moduleIndex} saved and broadcasted`);
+          } else {
+            throw new Error(result.message || 'Save failed');
           }
         } else {
-          throw new Error('Save failed');
+          const errorText = await response.text();
+          console.error('❌ Save failed - Status:', response.status, 'Response:', errorText);
+          throw new Error(`Save failed: ${response.status} - ${errorText}`);
         }
       } catch (error) {
         console.error('❌ Save error:', error);

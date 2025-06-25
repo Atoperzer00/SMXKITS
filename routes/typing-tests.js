@@ -29,11 +29,14 @@ router.get('/', async (req, res) => {
 });
 
 // PUT /api/typing-tests - Update typing test configuration (Admin only)
-router.put('/', auth, async (req, res) => {
+router.put('/', auth(['admin']), async (req, res) => {
   try {
     console.log('📝 Updating typing test configuration...');
-    console.log('User role:', req.user.role);
-    console.log('User ID:', req.user.id);
+    console.log('User role:', req.user?.role);
+    console.log('User ID:', req.user?.id);
+    console.log('Request body keys:', Object.keys(req.body));
+    console.log('Modules count:', req.body.modules?.length);
+    console.log('Module names count:', req.body.moduleNames?.length);
     
     // Check if user is admin
     if (req.user.role !== 'admin') {
@@ -111,7 +114,7 @@ router.put('/', auth, async (req, res) => {
 });
 
 // POST /api/typing-tests/reset - Reset to default configuration (Admin only)
-router.post('/reset', auth, async (req, res) => {
+router.post('/reset', auth(['admin']), async (req, res) => {
   try {
     console.log('🔄 Resetting typing test configuration to defaults...');
     
