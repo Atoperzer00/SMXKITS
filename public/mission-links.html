@@ -499,6 +499,11 @@
       object-fit: contain;
       border-radius: 10px;
       transition: opacity 0.3s ease;
+      opacity: 0;
+    }
+
+    #slideshowImage.visible {
+      opacity: 1 !important;
     }
 
     .slide-counter {
@@ -1025,6 +1030,7 @@
         // Show loader
         loader.style.display = 'flex';
         img.style.display = 'none';
+        img.classList.remove('visible');
         
         // Update slide counter
         currentSlideSpan.textContent = currentSlideIndex + 1;
@@ -1038,6 +1044,7 @@
           console.log('✅ Image loaded successfully:', imagePath);
           loader.style.display = 'none';
           img.style.display = 'block';
+          img.classList.add('visible');
         };
         
         // Handle image loading errors
