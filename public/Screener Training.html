@@ -440,6 +440,112 @@
       display: none !important;
     }
 
+    /* Welcome Section */
+    .welcome-section {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .welcome-card {
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      padding: 3rem;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+      max-width: 800px;
+      width: 100%;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .welcome-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--primary-gradient);
+      opacity: 0.05;
+      z-index: -1;
+    }
+
+    .welcome-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .welcome-icon {
+      font-size: 3rem;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .welcome-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin: 0;
+    }
+
+    .welcome-content {
+      margin-bottom: 2rem;
+    }
+
+    .welcome-text {
+      font-size: 1.1rem;
+      line-height: 1.8;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+      text-align: left;
+    }
+
+    .welcome-text.highlight {
+      color: var(--text-accent);
+      font-weight: 600;
+      text-align: center;
+      font-size: 1.2rem;
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background: var(--glass-bg);
+      border-radius: 10px;
+      border: 1px solid var(--glass-border);
+    }
+
+    .welcome-footer {
+      display: flex;
+      justify-content: center;
+    }
+
+    .instruction-badge {
+      background: var(--secondary-gradient);
+      color: white;
+      padding: 1rem 2rem;
+      border-radius: 50px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
     /* Responsive Design */
     @media (max-width: 1024px) {
       .training-layout {
@@ -457,6 +563,39 @@
         flex-direction: column;
         min-width: auto;
         max-width: 95%;
+      }
+      
+      .welcome-card {
+        padding: 2rem;
+        margin: 1rem;
+      }
+      
+      .welcome-title {
+        font-size: 2rem;
+      }
+      
+      .welcome-text {
+        font-size: 1rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .welcome-header {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      
+      .welcome-icon {
+        font-size: 2rem;
+      }
+      
+      .welcome-title {
+        font-size: 1.5rem;
+      }
+      
+      .instruction-badge {
+        padding: 0.75rem 1.5rem;
+        font-size: 0.9rem;
       }
     }
   </style>
@@ -480,6 +619,39 @@
     
     <!-- Right Content Area -->
     <main class="training-content">
+      <!-- Welcome Information -->
+      <div class="welcome-section" id="welcome-section">
+        <div class="welcome-card">
+          <div class="welcome-header">
+            <i class="fas fa-video welcome-icon"></i>
+            <h2 class="welcome-title">Welcome to Screener Training</h2>
+          </div>
+          <div class="welcome-content">
+            <p class="welcome-text">
+              Screener Training helps you practice writing formatted calls based on video surveillance.
+            </p>
+            <p class="welcome-text">
+              Start by choosing a module and selecting a practice scenario. You'll see a short surveillance video.
+            </p>
+            <p class="welcome-text">
+              Then, write your SITREP in the text box provided. Use clear format based on what you observed.
+            </p>
+            <p class="welcome-text">
+              When you submit, you'll see your callout side-by-side with a reference answer for comparison. You can pause, play, or zoom the video to help your analysis.
+            </p>
+            <p class="welcome-text highlight">
+              This tool builds skills in observation, reporting, and situational awareness.
+            </p>
+          </div>
+          <div class="welcome-footer">
+            <div class="instruction-badge">
+              <i class="fas fa-arrow-left"></i>
+              Select a module to begin training
+            </div>
+          </div>
+        </div>
+      </div>
+      
       <!-- Instruction Header -->
       <div class="instruction-header hidden" id="instruction-header">
         <p class="instruction-text">Create a SITREP for the Named Area of Interest, NAI-078</p>
@@ -554,8 +726,10 @@
 
     // Initialize the application
     function init() {
+      console.log('Initializing Screener Training application');
       renderModules();
       setupVideoControls();
+      console.log('Application initialized');
     }
 
     // Render modules in sidebar
@@ -636,6 +810,13 @@
     function showTrainingInterface() {
       console.log('Showing training interface for Module', currentModule, 'Practice', currentPractice);
       
+      // Hide welcome section
+      const welcomeSection = document.getElementById('welcome-section');
+      if (welcomeSection) {
+        welcomeSection.classList.add('hidden');
+        console.log('Welcome section hidden');
+      }
+      
       const instructionHeader = document.getElementById('instruction-header');
       const videoSection = document.getElementById('video-section');
       const inputSection = document.getElementById('input-section');
@@ -665,7 +846,8 @@
       video = document.getElementById('training-video');
       if (video) {
         video.load();
-        console.log('Video loaded');
+        setupVideoEventListeners();
+        console.log('Video loaded and event listeners setup');
       } else {
         console.error('Video element not found');
       }
@@ -685,35 +867,50 @@
       const playPauseBtn = document.getElementById('play-pause-btn');
       const progressBar = document.getElementById('progress-bar');
       
-      playPauseBtn.addEventListener('click', togglePlayPause);
+      if (playPauseBtn) {
+        playPauseBtn.addEventListener('click', togglePlayPause);
+      }
       
-      // Update progress bar
-      document.addEventListener('DOMContentLoaded', () => {
-        const video = document.getElementById('training-video');
-        if (video) {
-          video.addEventListener('timeupdate', updateProgress);
-          video.addEventListener('loadedmetadata', () => {
-            video.currentTime = 0;
-          });
-        }
-      });
+      // Setup video container for mouse wheel zoom
+      const videoContainer = document.querySelector('.video-container');
+      if (videoContainer) {
+        videoContainer.addEventListener('wheel', (e) => {
+          e.preventDefault();
+          const delta = e.deltaY > 0 ? -0.1 : 0.1;
+          zoomVideo(delta);
+        });
+      }
     }
 
     // Toggle play/pause
     function togglePlayPause() {
-      if (!video) return;
+      if (!video) {
+        console.error('Video not initialized');
+        return;
+      }
       
       const playPauseBtn = document.getElementById('play-pause-btn');
-      const icon = playPauseBtn.querySelector('i');
+      const icon = playPauseBtn ? playPauseBtn.querySelector('i') : null;
       
-      if (video.paused) {
-        video.play();
-        icon.className = 'fas fa-pause';
-        isPlaying = true;
-      } else {
-        video.pause();
-        icon.className = 'fas fa-play';
-        isPlaying = false;
+      if (!icon) {
+        console.error('Play/pause button or icon not found');
+        return;
+      }
+      
+      try {
+        if (video.paused) {
+          video.play();
+          icon.className = 'fas fa-pause';
+          isPlaying = true;
+          console.log('Video playing');
+        } else {
+          video.pause();
+          icon.className = 'fas fa-play';
+          isPlaying = false;
+          console.log('Video paused');
+        }
+      } catch (error) {
+        console.error('Error toggling video playback:', error);
       }
     }
 
@@ -736,17 +933,17 @@
       video.style.transform = `scale(${currentZoom})`;
     }
 
-    // Handle mouse wheel zoom
-    document.addEventListener('DOMContentLoaded', () => {
-      const videoContainer = document.querySelector('.video-container');
-      if (videoContainer) {
-        videoContainer.addEventListener('wheel', (e) => {
-          e.preventDefault();
-          const delta = e.deltaY > 0 ? -0.1 : 0.1;
-          zoomVideo(delta);
+    // Setup video event listeners when video is loaded
+    function setupVideoEventListeners() {
+      const video = document.getElementById('training-video');
+      if (video) {
+        video.addEventListener('timeupdate', updateProgress);
+        video.addEventListener('loadedmetadata', () => {
+          video.currentTime = 0;
         });
+        console.log('Video event listeners setup');
       }
-    });
+    }
 
     // Submit SITREP
     function submitSitrep() {
@@ -799,6 +996,34 @@
         closeFeedback();
       }
     });
+
+    // Show welcome section
+    function showWelcomeSection() {
+      // Hide training interface
+      document.getElementById('instruction-header').classList.add('hidden');
+      document.getElementById('video-section').classList.add('hidden');
+      document.getElementById('input-section').classList.add('hidden');
+      
+      // Show welcome section
+      const welcomeSection = document.getElementById('welcome-section');
+      if (welcomeSection) {
+        welcomeSection.classList.remove('hidden');
+      }
+      
+      // Reset active states
+      document.querySelectorAll('.practice-button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.querySelectorAll('.tool-card').forEach(card => {
+        card.classList.remove('active');
+      });
+      document.querySelectorAll('.practices-list').forEach(list => {
+        list.classList.remove('active');
+      });
+      
+      currentModule = null;
+      currentPractice = null;
+    }
 
     // Navigation
     function goBack() {
