@@ -320,20 +320,14 @@
     }
 
     .feed-panel {
-      flex: 1;
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      right: 0;
+      left: 400px; /* Adjust based on how wide your left panel is */
       overflow-y: auto;
-      margin: 0;
-      padding: 36px 0px 22px 20px;
-      background: transparent;
-      display: flex;
-      flex-direction: column;
-      gap: 28px;
-      width: 100%; /* Extend to full available width */
-      scrollbar-width: thin;
-      scrollbar-color: var(--accent) transparent;
-      scroll-behavior: smooth; /* Enable smooth scrolling */
-      /* Ensure scrollbar is always at the right edge */
-      position: relative;
+      padding: 36px 20px 22px 20px;
+      box-sizing: border-box;
     }
 
     /* Enhanced scrollbar styling for consistent positioning */
