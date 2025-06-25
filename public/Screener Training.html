@@ -587,7 +587,7 @@
       let practicesHTML = '';
       for (let p = 1; p <= 10; p++) {
         practicesHTML += `
-          <button class="practice-button" onclick="selectPractice(${moduleNum}, ${p})">
+          <button class="practice-button" onclick="selectPractice(${moduleNum}, ${p}, this)">
             Practice ${p}
           </button>
         `;
@@ -614,7 +614,8 @@
     }
 
     // Select a practice
-    function selectPractice(moduleNum, practiceNum) {
+    function selectPractice(moduleNum, practiceNum, buttonElement) {
+      console.log('selectPractice called with:', moduleNum, practiceNum);
       currentModule = moduleNum;
       currentPractice = practiceNum;
       
@@ -622,7 +623,10 @@
       document.querySelectorAll('.practice-button').forEach(btn => {
         btn.classList.remove('active');
       });
-      event.target.classList.add('active');
+      if (buttonElement) {
+        buttonElement.classList.add('active');
+        console.log('Button marked as active');
+      }
       
       // Show training interface
       showTrainingInterface();
@@ -630,16 +634,50 @@
 
     // Show the training interface
     function showTrainingInterface() {
-      document.getElementById('instruction-header').classList.remove('hidden');
-      document.getElementById('video-section').classList.remove('hidden');
-      document.getElementById('input-section').classList.remove('hidden');
+      console.log('Showing training interface for Module', currentModule, 'Practice', currentPractice);
+      
+      const instructionHeader = document.getElementById('instruction-header');
+      const videoSection = document.getElementById('video-section');
+      const inputSection = document.getElementById('input-section');
+      
+      if (instructionHeader) {
+        instructionHeader.classList.remove('hidden');
+        console.log('Instruction header shown');
+      } else {
+        console.error('Instruction header element not found');
+      }
+      
+      if (videoSection) {
+        videoSection.classList.remove('hidden');
+        console.log('Video section shown');
+      } else {
+        console.error('Video section element not found');
+      }
+      
+      if (inputSection) {
+        inputSection.classList.remove('hidden');
+        console.log('Input section shown');
+      } else {
+        console.error('Input section element not found');
+      }
       
       // Initialize video
       video = document.getElementById('training-video');
-      video.load();
+      if (video) {
+        video.load();
+        console.log('Video loaded');
+      } else {
+        console.error('Video element not found');
+      }
       
       // Clear previous input
-      document.getElementById('sitrep-textarea').value = '';
+      const textarea = document.getElementById('sitrep-textarea');
+      if (textarea) {
+        textarea.value = '';
+        console.log('Textarea cleared');
+      } else {
+        console.error('Textarea element not found');
+      }
     }
 
     // Setup video controls
