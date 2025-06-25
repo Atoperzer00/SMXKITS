@@ -253,6 +253,7 @@
   <script>
     let socket = null;
     let typingModules = [];
+    let moduleNames = [];
 
     // Initialize the application
     document.addEventListener('DOMContentLoaded', async function() {
@@ -280,6 +281,7 @@
           const result = await response.json();
           if (result.success && result.data) {
             typingModules = result.data.modules || [];
+            moduleNames = result.data.moduleNames || [];
             console.log(`✅ Loaded ${typingModules.length} modules`);
             return;
           }
@@ -318,6 +320,14 @@
           ]
         ];
         
+        moduleNames = [
+          'Module 1: Basic Typing',
+          'Module 2: Numbers and Symbols', 
+          'Module 3: Military Terminology',
+          'Module 4: POL Basic Descriptors',
+          'Module 5: POL SITREP Format'
+        ];
+        
         console.log(`Using ${typingModules.length} default modules`);
       }
     }
@@ -326,14 +336,6 @@
     function renderEditor() {
       const container = document.getElementById('modules-container');
       container.innerHTML = '';
-      
-      const moduleNames = [
-        'Module 1: Basic Typing',
-        'Module 2: Numbers and Symbols', 
-        'Module 3: Military Terminology',
-        'Module 4: POL Basic Descriptors',
-        'Module 5: POL SITREP Format'
-      ];
       
       typingModules.forEach((practices, moduleIndex) => {
         const moduleDiv = document.createElement('div');
@@ -390,7 +392,8 @@
             'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
-            modules: typingModules
+            modules: typingModules,
+            moduleNames: moduleNames
           })
         });
         
@@ -420,6 +423,7 @@
         'New practice text 3'
       ];
       typingModules.push(newModule);
+      moduleNames.push(`Module ${typingModules.length}: New Module`);
       renderEditor();
     }
 
