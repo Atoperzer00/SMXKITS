@@ -558,6 +558,13 @@ app.post('/api/stream/state/:classId', async (req, res) => {
 io.on('connection', socket => {
   console.log('🔌 New socket connection established');
   
+  // ===== TYPING MODULES HANDLERS =====
+  socket.on('typing-modules-updated', (data) => {
+    console.log('📝 Typing modules updated, broadcasting to all clients');
+    // Broadcast to all connected clients except sender
+    socket.broadcast.emit('typing-modules-updated', data);
+  });
+
   // ===== OPSLOG HANDLERS =====
   socket.on('join_room', roomId => {
     console.log(`👤 User joined OpsLog room: ${roomId}`);

@@ -6,6 +6,7 @@
   <title>Edit Typing Tests - Admin Controls</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="/socket.io/socket.io.js"></script>
   <style>
     :root {
       --primary-gradient: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
@@ -429,48 +430,24 @@
       <div class="dashboard-header">
         <div>
           <h1 class="dashboard-title">Edit Typing Tests</h1>
-          <p style="color: var(--text-secondary); font-size: 1.1rem; margin-top: 0.5rem;">Customize typing test content for all trainees. Use "Save All Changes" to save to database, then "Sync to Students" to push changes live.</p>
+          <p style="color: var(--text-secondary); font-size: 1.1rem; margin-top: 0.5rem;">Customize typing test content for all trainees. Each module has its own save button that instantly updates the training page.</p>
           <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 10px; padding: 1rem; margin-top: 1rem;">
             <p style="color: #22c55e; margin: 0; font-weight: 600;">
               <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>
-              <strong>New Workflow:</strong> 1) Make your edits 2) Click "Save All Changes" to save to database 3) Click "Sync to Students" when ready to push changes to all users. This prevents accidental overwrites while you're editing.
+              <strong>Simple Workflow:</strong> 1) Edit the content 2) Click "Save Module" to save and instantly update the training page for all users.
             </p>
           </div>
         </div>
       </div>
       
       <div style="margin-bottom: 2rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
-        <button onclick="saveAllChanges()" class="btn btn-success" title="Save all changes to database">
-          <i class="fas fa-save" style="margin-right: 0.5rem;"></i>
-          Save All Changes
-        </button>
-        <button onclick="syncToStudents()" class="btn" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white;" title="Push saved changes to all students immediately">
-          <i class="fas fa-broadcast-tower" style="margin-right: 0.5rem;"></i>
-          Sync to Students
-        </button>
         <button onclick="addModule()" class="btn btn-primary">
           <i class="fas fa-plus" style="margin-right: 0.5rem;"></i>
           Add New Module
         </button>
-        <button onclick="testRealTimeSync()" class="btn" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white;" title="Test if changes sync to keyboard training page">
-          <i class="fas fa-sync" style="margin-right: 0.5rem;"></i>
-          Test Sync
-        </button>
-        <button onclick="forceRefreshFromDatabase()" class="btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;" title="Force refresh from database, clearing cache">
-          <i class="fas fa-database" style="margin-right: 0.5rem;"></i>
-          Refresh from DB
-        </button>
-        <button onclick="window.testSaveLoadCycle()" class="btn" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white;" title="Test if save/load cycle works correctly">
-          <i class="fas fa-vial" style="margin-right: 0.5rem;"></i>
-          Test Save/Load
-        </button>
-        <button onclick="resetToDefaults()" class="btn btn-danger" title="Reset all content to synchronized defaults">
-          <i class="fas fa-undo" style="margin-right: 0.5rem;"></i>
-          Reset to Defaults
-        </button>
         <span style="color: var(--text-secondary); font-size: 0.9rem;">
           <i class="fas fa-info-circle" style="margin-right: 0.3rem;"></i>
-          Changes auto-save globally for all users
+          Each module has its own save button. Changes update the training page instantly.
         </span>
       </div>
       
@@ -482,135 +459,89 @@
     style="top:0;left:0;">Save changes</button>
   <span id="savedMsg" class="saved-msg absolute z-50 hidden fade-in">Saved!</span>
   <script>
-    // API-based data management
-    const NUM_MODULES = 5, PRACTICES_PER_MODULE = 20;
+    // Simple socket-based editor
+    let socket = null;
+    let typingModules = [];
     
-    // Load typing tests from API
-    async function getTypingTests() {
+    // Initialize the application
+    document.addEventListener('DOMContentLoaded', async function() {
+      console.log('Edit Typing Tests - Initializing...');
+      
+      // Initialize socket
+      socket = io();
+      
+      socket.on('connect', () => {
+        console.log('✅ Socket connected:', socket.id);
+      });
+      
+      // Load initial data
+      await loadTypingModules();
+      renderEditor();
+    });
+
+    // Load typing modules from API
+    async function loadTypingModules() {
       try {
-        console.log('📚 Fetching typing tests from API...');
+        console.log('📚 Loading typing modules...');
         const response = await fetch('/api/typing-tests');
         
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.data) {
+            typingModules = result.data.modules || [];
+            console.log(`✅ Loaded ${typingModules.length} modules`);
+            return;
+          }
         }
         
-        const result = await response.json();
-        
-        if (result.success) {
-          console.log('✅ Typing tests loaded from API successfully');
-          
-          // Update localStorage cache with fresh data from API
-          localStorage.setItem('smx_typing_tests', JSON.stringify(result.data));
-          localStorage.setItem('smx_typing_tests_timestamp', Date.now().toString());
-          
-          return result.data;
-        } else {
-          throw new Error(result.message || 'Failed to load typing tests');
-        }
+        throw new Error('Failed to load from API');
       } catch (error) {
-        console.error('❌ Error loading typing tests from API:', error);
+        console.warn('⚠️ Using default modules:', error.message);
         
-        // Only use localStorage as absolute fallback if API is completely unavailable
-        console.log('🔄 API unavailable, falling back to localStorage...');
-        let d = localStorage.getItem('smx_typing_tests');
-        if (d) {
-          const data = JSON.parse(d);
-          // Check if it's the new format with module names
-          if (data.modules && data.moduleNames) {
-            return data;
-          } else {
-            // Convert old format to new format
-            return {
-              modules: data,
-              moduleNames: [
-                'Module 1: Basic Typing',
-                'Module 2: Numbers and Symbols',
-                'Module 3: Military Terminology',
-                'Module 4: POL Basic Descriptors',
-                'Module 5: POL SITREP Format'
-              ]
-            };
-          }
-        }
-        
-        // Create default structure if both API and localStorage fail
-        console.log('🏗️ Creating default structure...');
-        const modules = Array.from({length: NUM_MODULES}, (_, m) => {
-          const moduleTexts = [];
-          for (let p = 0; p < PRACTICES_PER_MODULE; p++) {
-            // Add some sample content for the first few practices of each module
-            if (p < 3) {
-              switch (m) {
-                case 0: // Basic Typing
-                  moduleTexts[p] = p === 0 ? 'The quick brown fox jumps over the lazy dog. This sentence contains every letter of the alphabet.' :
-                                  p === 1 ? 'Practice makes perfect. Keep typing to improve your speed and accuracy with consistent daily training.' :
-                                  'Touch typing is a skill that will serve you well throughout your career and personal computing tasks.';
-                  break;
-                case 1: // Numbers and Symbols
-                  moduleTexts[p] = p === 0 ? '1234567890 !@#$%^&*() The numbers and symbols are important for data entry and programming tasks.' :
-                                  p === 1 ? 'Email addresses like user@example.com require symbol typing skills for professional communication.' :
-                                  'Special characters: ~`!@#$%^&*()_+-={}[]|\\:";\'<>?,./ are used in coding and technical writing.';
-                  break;
-                case 2: // Military Terminology
-                  moduleTexts[p] = p === 0 ? 'Military ranks: Private, Corporal, Sergeant, Lieutenant, Captain, Major, Colonel, General.' :
-                                  p === 1 ? 'Military time: 0600 hours, 1200 hours, 1800 hours, 2400 hours for precise time coordination.' :
-                                  'NATO phonetic alphabet: Alpha, Bravo, Charlie, Delta, Echo, Foxtrot, Golf, Hotel, India, Juliet.';
-                  break;
-                case 3: // POL Basic Descriptors
-                  moduleTexts[p] = p === 0 ? 'One adult male in dark traditional wear. Two adult females in light clothing observed at location.' :
-                                  p === 1 ? 'Personnel count: Three adult males, one adult female, two children observed entering the compound.' :
-                                  'Description: Individual wearing dark jacket, light pants, carrying backpack, proceeding north.';
-                  break;
-                case 4: // POL SITREP Format
-                  moduleTexts[p] = p === 0 ? 'SITREP: At 0630Z, one adult male departed E gate on red motorcycle, rode S out of FOV 0635Z. SLANT 1/0/0' :
-                                  p === 1 ? 'SITREP: At 0745Z, white sedan entered compound through W gate, parked E side. SLANT 1/0/0' :
-                                  'SITREP: At 0900Z, two adult males on foot entered compound, proceeded to building A. SLANT 2/0/0';
-                  break;
-                default:
-                  moduleTexts[p] = `Module ${m+1} Practice ${p+1}: Sample typing text for practice.`;
-              }
-            } else {
-              moduleTexts[p] = `Module ${m+1} Practice ${p+1}: Enter typing text here.`;
-            }
-          }
-          return moduleTexts;
-        });
-        
-        return {
-          modules: modules,
-          moduleNames: [
-            'Module 1: Basic Typing',
-            'Module 2: Numbers and Symbols',
-            'Module 3: Military Terminology',
-            'Module 4: POL Basic Descriptors',
-            'Module 5: POL SITREP Format'
+        // Use default modules
+        typingModules = [
+          [
+            'The quick brown fox jumps over the lazy dog. This sentence contains every letter of the alphabet.',
+            'Practice makes perfect. Keep typing to improve your speed and accuracy with consistent daily training.',
+            'Touch typing is a skill that will serve you well throughout your career and personal computing tasks.'
+          ],
+          [
+            '1234567890 !@#$%^&*() The numbers and symbols are important for data entry and programming tasks.',
+            'Email addresses like user@example.com require symbol typing skills for professional communication.',
+            'Special characters: ~`!@#$%^&*()_+-={}[]|\\:";\'<>?,./ are used in coding and technical writing.'
+          ],
+          [
+            'Military ranks: Private, Corporal, Sergeant, Lieutenant, Captain, Major, Colonel, General.',
+            'Military time: 0600 hours, 1200 hours, 1800 hours, 2400 hours for precise time coordination.',
+            'NATO phonetic alphabet: Alpha, Bravo, Charlie, Delta, Echo, Foxtrot, Golf, Hotel, India, Juliet.'
+          ],
+          [
+            'One adult male in dark traditional wear. Two adult females in light clothing observed at location.',
+            'Personnel count: Three adult males, one adult female, two children observed entering the compound.',
+            'Description: Individual wearing dark jacket, light pants, carrying backpack, proceeding north.'
+          ],
+          [
+            'SITREP: At 0630Z, one adult male departed E gate on red motorcycle, rode S out of FOV 0635Z. SLANT 1/0/0',
+            'SITREP: At 0745Z, white sedan entered compound through W gate, parked E side. SLANT 1/0/0',
+            'SITREP: At 0900Z, two adult males on foot entered compound, proceeded to building A. SLANT 2/0/0'
           ]
-        };
+        ];
+        console.log(`Using ${typingModules.length} default modules`);
       }
     }
-    async function saveTypingTests(data) {
-      console.log('=== Saving Typing Tests ===');
-      console.log('Data to save:', data);
-      
-      // Validate data structure
-      if (!data || !data.modules || !data.moduleNames) {
-        console.error('Invalid data structure for saving:', data);
-        alert('Error: Invalid data structure. Cannot save.');
-        return false;
-      }
-      
+    // Save a single module
+    async function saveModule(moduleIndex) {
       try {
-        // Get authentication token
+        console.log(`💾 Saving module ${moduleIndex}...`);
+        
         const token = localStorage.getItem('token');
         if (!token) {
-          console.error('No authentication token found');
-          alert('Authentication required. Please log in again.');
+          alert('Please log in again.');
           window.location.href = '/login.html';
-          return false;
+          return;
         }
         
-        console.log('📤 Sending data to API...');
+        // Save to API
         const response = await fetch('/api/typing-tests', {
           method: 'PUT',
           headers: {
@@ -618,185 +549,112 @@
             'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
-            modules: data.modules,
-            moduleNames: data.moduleNames
+            modules: typingModules
           })
         });
         
-        const result = await response.json();
-        
-        if (!response.ok) {
-          throw new Error(result.message || `HTTP error! status: ${response.status}`);
-        }
-        
-        if (result.success) {
-          console.log('✅ Data saved to database successfully');
-          
-          // Update localStorage cache with the saved data
-          localStorage.setItem('smx_typing_tests', JSON.stringify(data));
-          const timestamp = Date.now().toString();
-          localStorage.setItem('smx_typing_tests_timestamp', timestamp);
-          
-          // Auto-sync events disabled - use "Sync to Students" button instead
-          // This prevents automatic overwrites while admins are still editing
-          
-          console.log('=== Typing tests saved successfully ===');
-          showSyncIndicator('✅ Saved to database (use "Sync to Students" to push changes)');
-          
-          // Show success message to user
-          alert('✅ Changes saved to database!\n\nUse the "Sync to Students" button when you\'re ready to push changes to all users.');
-          
-          return true;
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            // Emit socket event to update training page
+            socket.emit('typing-modules-updated', { modules: typingModules });
+            
+            showNotification(`✅ Module ${moduleIndex + 1} saved!`);
+            console.log(`✅ Module ${moduleIndex} saved and broadcasted`);
+          }
         } else {
-          throw new Error(result.message || 'Failed to save typing tests');
+          throw new Error('Save failed');
         }
-        
       } catch (error) {
-        console.error('❌ Error saving typing tests:', error);
-        
-        // Fallback to localStorage if API fails
-        console.log('🔄 Falling back to localStorage...');
-        try {
-          localStorage.setItem('smx_typing_tests', JSON.stringify(data));
-          const timestamp = Date.now().toString();
-          localStorage.setItem('smx_typing_tests_timestamp', timestamp);
-          
-          showSyncIndicator('⚠️ Saved locally only (API unavailable)', true);
-          return true;
-        } catch (localError) {
-          console.error('❌ Even localStorage save failed:', localError);
-          alert('Error saving data: ' + error.message);
-          showSyncIndicator('❌ Save failed', true);
-          return false;
-        }
+        console.error('❌ Save error:', error);
+        showNotification('❌ Save failed', true);
       }
     }
     
-    // Show sync status indicator
-    function showSyncIndicator(message, isError = false) {
-      // Remove existing indicator
-      const existing = document.getElementById('syncIndicator');
-      if (existing) {
-        existing.remove();
-      }
+    // Show notification
+    function showNotification(message, isError = false) {
+      const existing = document.getElementById('notification');
+      if (existing) existing.remove();
       
-      // Create new indicator
-      const indicator = document.createElement('div');
-      indicator.id = 'syncIndicator';
-      indicator.textContent = message;
-      indicator.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: ${isError ? '#ef4444' : '#22c55e'};
-        color: white;
-        padding: 12px 20px;
-        border-radius: 10px;
-        font-weight: 600;
-        z-index: 1000;
+      const notification = document.createElement('div');
+      notification.id = 'notification';
+      notification.textContent = message;
+      notification.style.cssText = `
+        position: fixed; top: 20px; right: 20px; z-index: 1000;
+        background: ${isError ? '#ef4444' : '#22c55e'}; color: white;
+        padding: 12px 20px; border-radius: 10px; font-weight: 600;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        animation: slideIn 0.3s ease-out;
       `;
       
-      // Add animation keyframes if not already added
-      if (!document.getElementById('syncIndicatorStyles')) {
-        const style = document.createElement('style');
-        style.id = 'syncIndicatorStyles';
-        style.textContent = `
-          @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-          }
-          @keyframes slideOut {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(100%); opacity: 0; }
-          }
-        `;
-        document.head.appendChild(style);
-      }
+      document.body.appendChild(notification);
       
-      document.body.appendChild(indicator);
-      
-      // Auto-remove after 3 seconds
       setTimeout(() => {
-        if (indicator.parentNode) {
-          indicator.style.animation = 'slideOut 0.3s ease-in';
-          setTimeout(() => {
-            if (indicator.parentNode) {
-              indicator.remove();
-            }
-          }, 300);
+        if (notification.parentNode) {
+          notification.remove();
         }
       }, 3000);
     }
-    // Render accordion
-    async function renderEditor() {
-      try {
-        console.log('🎨 Rendering editor...');
-        const data = await getTypingTests();
-        const modules = data.modules;
-        const moduleNames = data.moduleNames;
-        const cont = document.getElementById('modules-accordion');
-        cont.innerHTML = '';
+    // Render the editor
+    function renderEditor() {
+      const container = document.getElementById('modules-accordion');
+      container.innerHTML = '';
+      
+      const moduleNames = [
+        'Module 1: Basic Typing',
+        'Module 2: Numbers and Symbols', 
+        'Module 3: Military Terminology',
+        'Module 4: POL Basic Descriptors',
+        'Module 5: POL SITREP Format'
+      ];
+      
+      typingModules.forEach((practices, moduleIndex) => {
+        const moduleDiv = document.createElement('div');
+        moduleDiv.className = 'module-accordion';
         
-        console.log(`📊 Rendering ${modules.length} modules`);
-        
-        modules.forEach((practices, mIdx) => {
-        // Module wrapper
-        const modWrap = document.createElement('div');
-        modWrap.className = "module-accordion";
-        
-        // Module header
-        const head = document.createElement('div');
-        head.className = "module-header";
-        
-        let moduleTitle = moduleNames[mIdx] || `Module ${mIdx + 1}`;
-        
-        head.innerHTML = `
-          <div style="display: flex; align-items: center; gap: 1rem;">
-            <i class="fas fa-keyboard" style="color: var(--text-accent);"></i>
-            <input type="text" 
-                   value="${moduleTitle}" 
-                   class="module-name-input" 
-                   data-module="${mIdx}"
-                   style="font-size: 1.3rem; font-weight: 600; background: transparent; border: 2px solid transparent; color: var(--text-primary); padding: 0.25rem 0.5rem; border-radius: 5px; transition: var(--transition);"
-                   onblur="saveModuleName(${mIdx}, this.value)"
-                   onkeydown="if(event.key==='Enter') this.blur()"
-                   onfocus="this.style.borderColor='var(--text-accent)'; this.style.background='rgba(255,255,255,0.05)'"
-                   onblur="this.style.borderColor='transparent'; this.style.background='transparent'"
-            />
+        moduleDiv.innerHTML = `
+          <div class="module-header">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+              <i class="fas fa-keyboard" style="color: var(--text-accent);"></i>
+              <h3>${moduleNames[moduleIndex] || `Module ${moduleIndex + 1}`}</h3>
+            </div>
+            <button onclick="saveModule(${moduleIndex})" class="btn btn-success" style="margin-left: auto;">
+              <i class="fas fa-save" style="margin-right: 0.5rem;"></i>
+              Save Module
+            </button>
           </div>
-          <div style="display: flex; align-items: center; gap: 1rem;">
-            <button onclick="saveModule(${mIdx})" class="btn btn-success" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
-              <i class="fas fa-save" style="margin-right: 0.5rem;"></i>Save Module
-            </button>
-            <button onclick="deleteModule(${mIdx})" class="btn btn-danger" style="padding: 0.5rem 1rem; font-size: 0.9rem;">
-              <i class="fas fa-trash" style="margin-right: 0.5rem;"></i>Delete Module
-            </button>
-            <i class="fas fa-chevron-down" style="transition: var(--transition); font-size: 1.2rem;"></i>
+          <div class="module-content">
+            ${practices.map((practice, practiceIndex) => `
+              <div class="practice-item">
+                <label>Practice ${practiceIndex + 1}:</label>
+                <textarea 
+                  onchange="updatePractice(${moduleIndex}, ${practiceIndex}, this.value)"
+                  rows="3"
+                  style="width: 100%; margin-top: 0.5rem; padding: 0.5rem; border-radius: 5px; border: 1px solid var(--glass-border); background: var(--glass-bg); color: var(--text-primary);"
+                >${practice}</textarea>
+              </div>
+            `).join('')}
           </div>
         `;
         
-        // Practices container
-        const pCont = document.createElement('div');
-        pCont.className = "module-content";
-        
-        // Add practice button
-        const addPracticeBtn = document.createElement('button');
-        addPracticeBtn.className = "btn btn-success";
-        addPracticeBtn.innerHTML = '<i class="fas fa-plus" style="margin-right: 0.5rem;"></i>Add New Practice';
-        addPracticeBtn.onclick = () => addPractice(mIdx);
-        addPracticeBtn.style.marginBottom = '2rem';
-        pCont.appendChild(addPracticeBtn);
-        
-        practices.forEach((txt, pIdx) => {
-          const prWrap = document.createElement('div');
-          prWrap.className = "practice-item";
-          
-          const practiceHeader = document.createElement('div');
-          practiceHeader.className = "practice-header";
-          practiceHeader.innerHTML = `
-            <div class="practice-title">
+        container.appendChild(moduleDiv);
+      });
+    }
+    
+    // Update practice text
+    function updatePractice(moduleIndex, practiceIndex, value) {
+      typingModules[moduleIndex][practiceIndex] = value;
+    }
+    
+    // Add new module
+    function addModule() {
+      const newModule = [
+        'New practice text 1',
+        'New practice text 2', 
+        'New practice text 3'
+      ];
+      typingModules.push(newModule);
+      renderEditor();
+    }
               <i class="fas fa-edit" style="margin-right: 0.5rem;"></i>Practice ${pIdx+1}
             </div>
             <button onclick="deletePractice(${mIdx}, ${pIdx})" class="btn btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">
