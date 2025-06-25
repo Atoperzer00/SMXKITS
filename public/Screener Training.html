@@ -891,7 +891,7 @@
       // Setup video container for mouse wheel zoom
       const videoContainer = document.querySelector('.video-container');
       if (videoContainer) {
-        videoContainer.addEventListener('wheel', (e) => {
+        videoContainer.addEventListener('wheel', function(e) {
           e.preventDefault();
           const delta = e.deltaY > 0 ? -0.1 : 0.1;
           zoomVideo(delta);
@@ -947,7 +947,7 @@
       currentZoom += delta;
       currentZoom = Math.max(0.5, Math.min(3, currentZoom)); // Limit zoom between 0.5x and 3x
       
-      video.style.transform = `scale(${currentZoom})`;
+      video.style.transform = 'scale(' + currentZoom + ')';
     }
 
     // Setup video event listeners when video is loaded
@@ -955,7 +955,7 @@
       const video = document.getElementById('training-video');
       if (video) {
         video.addEventListener('timeupdate', updateProgress);
-        video.addEventListener('loadedmetadata', () => {
+        video.addEventListener('loadedmetadata', function() {
           video.currentTime = 0;
         });
         console.log('Video event listeners setup');
@@ -984,7 +984,7 @@
       overlay.classList.add('active');
       
       // Auto-close after 10 seconds
-      setTimeout(() => {
+      setTimeout(function() {
         closeFeedback();
       }, 10000);
     }
@@ -1007,7 +1007,7 @@
     }
 
     // Close feedback when clicking outside
-    document.addEventListener('click', (e) => {
+    document.addEventListener('click', function(e) {
       const overlay = document.getElementById('feedback-overlay');
       if (e.target === overlay) {
         closeFeedback();
@@ -1048,7 +1048,10 @@
     }
 
     // Initialize when DOM is loaded
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('DOM loaded, initializing...');
+      init();
+    });
   </script>
 </body>
 </html>
