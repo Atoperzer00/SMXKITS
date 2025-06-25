@@ -804,57 +804,82 @@
 
     // Select a practice
     function selectPractice(moduleNum, practiceNum, buttonElement) {
-      console.log('selectPractice called with:', moduleNum, practiceNum);
+      console.log('=== SELECT PRACTICE CALLED ===');
+      console.log('Module:', moduleNum, 'Practice:', practiceNum);
+      console.log('Button element:', buttonElement);
+      
       currentModule = moduleNum;
       currentPractice = practiceNum;
       
       // Update active practice button
       const allPracticeButtons = document.querySelectorAll('.practice-button');
+      console.log('Found practice buttons:', allPracticeButtons.length);
+      
       allPracticeButtons.forEach(function(btn) {
         btn.classList.remove('active');
       });
       
       if (buttonElement) {
         buttonElement.classList.add('active');
-        console.log('Button marked as active');
+        console.log('Button marked as active:', buttonElement.textContent);
+      } else {
+        console.error('No button element provided!');
       }
       
       // Show training interface
+      console.log('About to call showTrainingInterface...');
       showTrainingInterface();
     }
 
     // Show the training interface
     function showTrainingInterface() {
-      console.log('Showing training interface for Module', currentModule, 'Practice', currentPractice);
+      console.log('=== SHOWING TRAINING INTERFACE ===');
+      console.log('Module:', currentModule, 'Practice:', currentPractice);
       
       // Hide welcome section
       const welcomeSection = document.getElementById('welcome-section');
+      console.log('Welcome section element:', welcomeSection);
       if (welcomeSection) {
+        console.log('Welcome section classes before:', welcomeSection.className);
         welcomeSection.classList.add('hidden');
-        console.log('Welcome section hidden');
+        console.log('Welcome section classes after:', welcomeSection.className);
+        console.log('Welcome section style display:', window.getComputedStyle(welcomeSection).display);
+      } else {
+        console.error('Welcome section element not found!');
       }
       
       const instructionHeader = document.getElementById('instruction-header');
       const videoSection = document.getElementById('video-section');
       const inputSection = document.getElementById('input-section');
       
+      console.log('Found elements:');
+      console.log('- Instruction header:', instructionHeader);
+      console.log('- Video section:', videoSection);
+      console.log('- Input section:', inputSection);
+      
       if (instructionHeader) {
+        console.log('Instruction header classes before:', instructionHeader.className);
         instructionHeader.classList.remove('hidden');
-        console.log('Instruction header shown');
+        console.log('Instruction header classes after:', instructionHeader.className);
+        console.log('Instruction header display:', window.getComputedStyle(instructionHeader).display);
       } else {
         console.error('Instruction header element not found');
       }
       
       if (videoSection) {
+        console.log('Video section classes before:', videoSection.className);
         videoSection.classList.remove('hidden');
-        console.log('Video section shown');
+        console.log('Video section classes after:', videoSection.className);
+        console.log('Video section display:', window.getComputedStyle(videoSection).display);
       } else {
         console.error('Video section element not found');
       }
       
       if (inputSection) {
+        console.log('Input section classes before:', inputSection.className);
         inputSection.classList.remove('hidden');
-        console.log('Input section shown');
+        console.log('Input section classes after:', inputSection.className);
+        console.log('Input section display:', window.getComputedStyle(inputSection).display);
       } else {
         console.error('Input section element not found');
       }
@@ -1047,10 +1072,34 @@
       window.location.href = 'dashboard.html';
     }
 
+    // Test function to manually show training interface
+    function testShowTraining() {
+      console.log('TEST: Manually showing training interface');
+      currentModule = 1;
+      currentPractice = 1;
+      showTrainingInterface();
+    }
+
     // Initialize when DOM is loaded
     document.addEventListener('DOMContentLoaded', function() {
       console.log('DOM loaded, initializing...');
       init();
+      
+      // Add test button for debugging
+      setTimeout(function() {
+        console.log('Adding test button for debugging');
+        const testBtn = document.createElement('button');
+        testBtn.textContent = 'TEST: Show Training';
+        testBtn.style.position = 'fixed';
+        testBtn.style.top = '10px';
+        testBtn.style.right = '10px';
+        testBtn.style.zIndex = '9999';
+        testBtn.style.background = 'red';
+        testBtn.style.color = 'white';
+        testBtn.style.padding = '10px';
+        testBtn.onclick = testShowTraining;
+        document.body.appendChild(testBtn);
+      }, 1000);
     });
   </script>
 </body>
