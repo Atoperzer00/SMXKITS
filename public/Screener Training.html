@@ -735,19 +735,40 @@
     // Render modules in sidebar
     function renderModules() {
       const container = document.getElementById('modules-container');
+      if (!container) {
+        console.error('modules-container not found');
+        return;
+      }
+      
       container.innerHTML = '';
       
       for (let i = 1; i <= 5; i++) {
         const moduleCard = document.createElement('div');
         moduleCard.className = 'tool-card';
-        moduleCard.innerHTML = `
-          <div class="tool-title">Module ${i}</div>
-          <div class="practices-list" id="practices-${i}">
-            ${generatePractices(i)}
-          </div>
-        `;
         
-        moduleCard.addEventListener('click', (e) => {
+        const moduleTitle = document.createElement('div');
+        moduleTitle.className = 'tool-title';
+        moduleTitle.textContent = 'Module ' + i;
+        
+        const practicesList = document.createElement('div');
+        practicesList.className = 'practices-list';
+        practicesList.id = 'practices-' + i;
+        
+        // Generate practices
+        for (let p = 1; p <= 10; p++) {
+          const practiceBtn = document.createElement('button');
+          practiceBtn.className = 'practice-button';
+          practiceBtn.textContent = 'Practice ' + p;
+          practiceBtn.onclick = function() {
+            selectPractice(i, p, this);
+          };
+          practicesList.appendChild(practiceBtn);
+        }
+        
+        moduleCard.appendChild(moduleTitle);
+        moduleCard.appendChild(practicesList);
+        
+        moduleCard.addEventListener('click', function(e) {
           if (e.target.classList.contains('practice-button')) return;
           toggleModule(i);
         });
@@ -756,35 +777,29 @@
       }
     }
 
-    // Generate practices for a module
-    function generatePractices(moduleNum) {
-      let practicesHTML = '';
-      for (let p = 1; p <= 10; p++) {
-        practicesHTML += `
-          <button class="practice-button" onclick="selectPractice(${moduleNum}, ${p}, this)">
-            Practice ${p}
-          </button>
-        `;
-      }
-      return practicesHTML;
-    }
-
     // Toggle module expansion
     function toggleModule(moduleNum) {
-      const practicesList = document.getElementById(`practices-${moduleNum}`);
+      const practicesList = document.getElementById('practices-' + moduleNum);
+      if (!practicesList) {
+        console.error('Practices list not found for module', moduleNum);
+        return;
+      }
+      
       const moduleCard = practicesList.closest('.tool-card');
       
       // Close all other modules
-      document.querySelectorAll('.practices-list').forEach(list => {
-        if (list.id !== `practices-${moduleNum}`) {
+      const allPracticesLists = document.querySelectorAll('.practices-list');
+      allPracticesLists.forEach(function(list) {
+        if (list.id !== 'practices-' + moduleNum) {
           list.classList.remove('active');
-          list.closest('.tool-card').classList.remove('active');
+          const card = list.closest('.tool-card');
+          if (card) card.classList.remove('active');
         }
       });
       
       // Toggle current module
       practicesList.classList.toggle('active');
-      moduleCard.classList.toggle('active');
+      if (moduleCard) moduleCard.classList.toggle('active');
     }
 
     // Select a practice
@@ -794,9 +809,11 @@
       currentPractice = practiceNum;
       
       // Update active practice button
-      document.querySelectorAll('.practice-button').forEach(btn => {
+      const allPracticeButtons = document.querySelectorAll('.practice-button');
+      allPracticeButtons.forEach(function(btn) {
         btn.classList.remove('active');
       });
+      
       if (buttonElement) {
         buttonElement.classList.add('active');
         console.log('Button marked as active');
