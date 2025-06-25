@@ -324,7 +324,7 @@
       flex-grow: 1;
       overflow-y: auto;
       overflow-x: hidden; /* Prevent horizontal scrolling */
-      padding: 36px 0px 22px 80px; /* Remove right padding to allow scrollbar at edge */
+      padding: 36px 0px 22px 20px; /* was 80px originally */
       background: transparent;
       display: flex;
       flex-direction: column;
@@ -377,18 +377,18 @@
       position: relative;
       transition: var(--transition);
       min-width: 500px;
-      max-width: calc(100% - 60px); /* Increased buffer for scrollbar space */
-      width: calc(100% - 60px); /* Extend to right with buffer for scrollbar */
-      margin-right: 40px; /* Ensure space for scrollbar */
+      max-width: 100%;
+      width: 100%;
+      margin-right: 0;
       word-break: break-word;
       white-space: pre-line;
       font-size: 1.06em;
     }
     
     .callout-card {
-      width: calc(100% - 60px); /* Match bubble width with buffer for scrollbar */
-      max-width: calc(100% - 60px);
-      margin-right: 40px; /* Ensure space for scrollbar */
+      width: 100%;
+      max-width: 100%;
+      margin-right: 0;
       transform: none !important;
       border-radius: 20px; /* Match bubble border-radius */
     }
