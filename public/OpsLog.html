@@ -1062,17 +1062,17 @@
       border: 2px solid var(--qc-orange);
       border-radius: 8px;
       padding: 16px 24px;
-      margin-bottom: 8px;
+      margin-bottom: 12px;
       margin-left: 30px; /* Make room for external checkbox */
-      margin-right: 10px; /* Reduce right margin for smaller spacing */
+      margin-right: 30px; /* Add proper right buffer */
       font-size: 1.2em;
       line-height: 1.4;
       color: var(--bubble-text);
       word-break: break-word;
       white-space: pre-line;
       min-height: auto;
-      width: calc(100vw - 650px); /* Adjust width calculation for new positioning */
-      max-width: calc(100vw - 650px); /* Adjust width calculation for new positioning */
+      width: calc(100% - 60px); /* Account for left and right margins */
+      max-width: calc(100% - 60px); /* Account for left and right margins */
       box-sizing: border-box;
     }
     
@@ -1166,14 +1166,14 @@
     /* Callout wrapper to handle external elements */
     .callout-wrapper {
       position: relative;
-      width: 85%;
-      margin-bottom: 8px;
+      width: 100%;
+      margin-bottom: 16px;
     }
     
     /* Ensure proper positioning context for external elements */
     .callout-wrapper .callout-card {
       margin-left: 30px; /* Space for checkbox */
-      margin-right: 0;
+      margin-right: 30px; /* Proper right buffer */
     }
 
     /* Classic Menu and QC Buttons */
