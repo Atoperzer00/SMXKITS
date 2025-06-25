@@ -105,16 +105,20 @@
       }
       .feed-panel {
         width: 100%;
-        padding: 36px 20px 22px 20px; /* Adjust padding for mobile */
+        padding: 36px 0px 22px 20px; /* Remove right padding for scrollbar positioning */
+        margin-right: 0;
+        padding-right: 0;
       }
       .bubble {
         min-width: 200px;
-        max-width: 100%;
-        width: 100%;
+        max-width: calc(100% - 40px);
+        width: calc(100% - 40px);
+        margin-right: 20px; /* Space for scrollbar on mobile */
       }
       .callout-card {
-        width: 100%;
-        max-width: 100%;
+        width: calc(100% - 40px);
+        max-width: calc(100% - 40px);
+        margin-right: 20px; /* Space for scrollbar on mobile */
       }
       .top-bar {
         position: fixed;
@@ -320,7 +324,7 @@
       flex-grow: 1;
       overflow-y: auto;
       overflow-x: hidden; /* Prevent horizontal scrolling */
-      padding: 36px 40px 22px 80px; /* Reduced left padding since sidebar is wider */
+      padding: 36px 0px 22px 80px; /* Remove right padding to allow scrollbar at edge */
       background: transparent;
       display: flex;
       flex-direction: column;
@@ -330,6 +334,34 @@
       scrollbar-width: thin;
       scrollbar-color: var(--accent) transparent;
       scroll-behavior: smooth; /* Enable smooth scrolling */
+      /* Ensure scrollbar is always at the right edge */
+      position: relative;
+      margin-right: 0;
+      padding-right: 0;
+    }
+
+    /* Enhanced scrollbar styling for consistent positioning */
+    .feed-panel::-webkit-scrollbar {
+      width: 12px;
+      position: absolute;
+      right: 0;
+    }
+
+    .feed-panel::-webkit-scrollbar-track {
+      background: transparent;
+      border-radius: 6px;
+    }
+
+    .feed-panel::-webkit-scrollbar-thumb {
+      background: var(--accent);
+      border-radius: 6px;
+      border: 2px solid transparent;
+      background-clip: content-box;
+    }
+
+    .feed-panel::-webkit-scrollbar-thumb:hover {
+      background: #28dd6c;
+      background-clip: content-box;
     }
 
     /* Log Bubbles */
@@ -345,16 +377,18 @@
       position: relative;
       transition: var(--transition);
       min-width: 500px;
-      max-width: calc(100% - 40px); /* Small buffer on the right */
-      width: calc(100% - 40px); /* Extend to right with buffer */
+      max-width: calc(100% - 60px); /* Increased buffer for scrollbar space */
+      width: calc(100% - 60px); /* Extend to right with buffer for scrollbar */
+      margin-right: 40px; /* Ensure space for scrollbar */
       word-break: break-word;
       white-space: pre-line;
       font-size: 1.06em;
     }
     
     .callout-card {
-      width: calc(100% - 40px); /* Match bubble width with buffer */
-      max-width: calc(100% - 40px);
+      width: calc(100% - 60px); /* Match bubble width with buffer for scrollbar */
+      max-width: calc(100% - 60px);
+      margin-right: 40px; /* Ensure space for scrollbar */
       transform: none !important;
       border-radius: 20px; /* Match bubble border-radius */
     }
