@@ -40,34 +40,11 @@
       min-height: 100vh;
     }
 
-    /* Animated background particles */
-    body::before {
-      content: '';
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: 
-        radial-gradient(circle at 20% 80%, rgba(255, 107, 53, 0.3) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(247, 147, 30, 0.15) 0%, transparent 50%),
-        radial-gradient(circle at 40% 40%, rgba(255, 140, 66, 0.1) 0%, transparent 50%);
-      z-index: -1;
-      animation: float 20s ease-in-out infinite;
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0px) rotate(0deg); }
-      33% { transform: translateY(-20px) rotate(1deg); }
-      66% { transform: translateY(10px) rotate(-1deg); }
-    }
-
     .admin-layout {
       display: flex;
       min-height: 100vh;
     }
 
-    /* Sidebar Redesign */
     .admin-sidebar {
       width: 280px;
       background: rgba(15, 20, 25, 0.95);
@@ -76,96 +53,54 @@
       display: flex;
       flex-direction: column;
       padding: 2rem 0;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .admin-sidebar::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(180deg, rgba(255, 107, 53, 0.1) 0%, transparent 100%);
-      z-index: -1;
     }
 
     .admin-logo {
       width: 200px;
       margin: 0 auto 3rem;
       filter: drop-shadow(0 10px 30px rgba(255, 107, 53, 0.3));
-      transition: var(--transition);
     }
 
-    .admin-logo:hover {
-      transform: scale(1.05);
-      filter: drop-shadow(0 15px 40px rgba(255, 107, 53, 0.5));
-    }
-
-    .admin-nav {
-      list-style: none;
-      padding: 0 1rem;
-    }
-
-    .admin-nav li {
-      margin-bottom: 0.5rem;
-      padding: 1rem 1.5rem;
+    .nav-item {
+      margin: 0.5rem 1.5rem;
       border-radius: 15px;
-      cursor: pointer;
-      transition: var(--transition);
-      position: relative;
       overflow: hidden;
-      font-weight: 500;
+    }
+
+    .nav-link {
       display: flex;
       align-items: center;
-      gap: 12px;
-    }
-
-    .admin-nav li::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: var(--primary-gradient);
+      padding: 1rem 1.5rem;
+      color: var(--text-secondary);
+      text-decoration: none;
       transition: var(--transition);
-      z-index: -1;
+      background: var(--glass-bg);
+      border: 1px solid transparent;
     }
 
-    .admin-nav li:hover::before,
-    .admin-nav li.active::before {
-      left: 0;
+    .nav-link:hover, .nav-link.active {
+      color: var(--text-primary);
+      background: var(--primary-gradient);
+      border-color: var(--text-accent);
+      box-shadow: 0 8px 25px rgba(255, 107, 53, 0.3);
     }
 
-    .admin-nav li:hover,
-    .admin-nav li.active {
-      color: white;
-      transform: translateX(5px);
-      box-shadow: 0 10px 25px rgba(255, 107, 53, 0.3);
+    .nav-link i {
+      margin-right: 1rem;
+      font-size: 1.2rem;
+      width: 20px;
+      text-align: center;
     }
 
-    /* Main Content Area */
-    .admin-content {
+    .admin-main {
       flex: 1;
       padding: 2rem;
-      background: transparent;
       overflow-y: auto;
     }
 
-    /* Header Section */
     .dashboard-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
       margin-bottom: 3rem;
-      padding: 2rem;
-      background: var(--glass-bg);
-      backdrop-filter: blur(20px);
-      border-radius: var(--border-radius);
-      border: 1px solid var(--glass-border);
-      box-shadow: var(--shadow-primary);
+      text-align: center;
     }
 
     .dashboard-title {
@@ -175,38 +110,42 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      margin: 0;
-      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
     }
 
-    .section-title {
-      font-size: 2rem;
-      font-weight: 700;
-      margin-bottom: 1.5rem;
-      color: var(--text-accent);
+    .module-card {
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      margin-bottom: 2rem;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+    }
+
+    .module-header {
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 1rem;
+      margin-bottom: 2rem;
     }
 
-    .section-title::before {
-      content: '';
-      width: 4px;
-      height: 40px;
-      background: var(--accent-gradient);
-      border-radius: 2px;
+    .module-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
     }
 
     .btn {
-      padding: 0.75rem 1.5rem;
-      border-radius: 10px;
+      padding: 0.8rem 2rem;
       border: none;
+      border-radius: 10px;
       font-weight: 600;
       cursor: pointer;
       transition: var(--transition);
+      font-size: 1rem;
       text-decoration: none;
-      display: inline-block;
-      text-align: center;
+      display: inline-flex;
+      align-items: center;
     }
 
     .btn-primary {
@@ -214,107 +153,37 @@
       color: white;
     }
 
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 25px rgba(255, 107, 53, 0.3);
-    }
-
     .btn-success {
       background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
       color: white;
     }
 
-    .btn-success:hover {
+    .btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 10px 25px rgba(34, 197, 94, 0.3);
-    }
-
-    .btn-danger {
-      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-      color: white;
-    }
-
-    .btn-danger:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
-    }
-
-    .btn-warning {
-      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-      color: white;
-    }
-
-    .btn-warning:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 25px rgba(245, 158, 11, 0.3);
-    }
-
-    .module-accordion {
-      background: var(--glass-bg);
-      backdrop-filter: blur(20px);
-      border-radius: var(--border-radius);
-      border: 1px solid var(--glass-border);
-      box-shadow: var(--shadow-primary);
-      margin-bottom: 1.5rem;
-      overflow: hidden;
-    }
-
-    .module-header {
-      padding: 1.5rem 2rem;
-      background: var(--card-gradient);
-      cursor: pointer;
-      transition: var(--transition);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--glass-border);
-    }
-
-    .module-header:hover {
-      background: rgba(255, 107, 53, 0.1);
-    }
-
-    .module-content {
-      padding: 2rem;
-      display: none;
-    }
-
-    .module-content.show {
-      display: block;
+      box-shadow: 0 8px 25px rgba(255, 107, 53, 0.4);
     }
 
     .practice-item {
-      margin-bottom: 2rem;
-      padding: 1.5rem;
-      background: var(--card-gradient);
-      border-radius: 15px;
-      border: 1px solid var(--glass-border);
+      margin-bottom: 1.5rem;
     }
 
-    .practice-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1rem;
-    }
-
-    .practice-title {
-      font-size: 1.2rem;
+    .practice-label {
+      display: block;
+      margin-bottom: 0.5rem;
       font-weight: 600;
       color: var(--text-accent);
     }
 
     .practice-textarea {
       width: 100%;
-      min-height: 120px;
+      min-height: 80px;
       padding: 1rem;
-      border-radius: 10px;
-      background: rgba(255, 255, 255, 0.05);
       border: 2px solid var(--glass-border);
+      border-radius: 10px;
+      background: var(--glass-bg);
       color: var(--text-primary);
-      font-family: 'Inter', sans-serif;
+      font-family: 'Courier New', monospace;
       font-size: 1rem;
-      line-height: 1.5;
       resize: vertical;
       transition: var(--transition);
     }
@@ -322,150 +191,72 @@
     .practice-textarea:focus {
       outline: none;
       border-color: var(--text-accent);
-      box-shadow: 0 0 0 3px rgba(255, 167, 38, 0.1);
+      box-shadow: 0 0 20px rgba(255, 167, 38, 0.3);
     }
 
-    .logout-btn {
-      margin-top: auto;
-      padding: 1rem 1.5rem;
-      background: rgba(220, 38, 38, 0.2);
-      color: #fca5a5;
-      border-radius: 15px;
-      cursor: pointer;
-      transition: var(--transition);
+    .controls {
       display: flex;
-      align-items: center;
-      gap: 12px;
-      font-weight: 500;
-      margin-left: 1rem;
-      margin-right: 1rem;
-    }
-
-    .logout-btn:hover {
-      background: rgba(220, 38, 38, 0.3);
-      transform: translateX(5px);
-    }
-
-    .fade-in { 
-      animation: fade-in .2s cubic-bezier(.4,0,.2,1); 
-    }
-    
-    @keyframes fade-in { 
-      from { opacity: 0; transform: translateY(12px);} 
-      to {opacity:1; transform:translateY(0);} 
-    }
-    
-    .save-bubble {
-      box-shadow: 0 4px 24px rgba(34, 197, 94, 0.3), 0 2px 8px rgba(0, 0, 0, 0.4);
-      background: rgba(34, 197, 94, 0.95);
-      color: white;
-      padding: 0.75rem 1.5rem;
-      border-radius: 10px;
-      font-weight: 600;
-      border: none;
-      cursor: pointer;
-      transition: var(--transition);
-    }
-    
-    .save-bubble:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 30px rgba(34, 197, 94, 0.4), 0 4px 12px rgba(0, 0, 0, 0.5);
-    }
-    
-    .saved-msg {
-      background: #22c55e;
-      color: #fff;
-      border-radius: 0.75rem;
-      font-weight: bold;
-      padding: 0.5rem 1.2rem;
-      box-shadow: 0 4px 20px rgba(34, 197, 94, 0.3);
-      margin-left: 0.5rem;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      justify-content: center;
     }
   </style>
 </head>
 <body>
-  <!-- Authentication Check -->
-  <script>
-    // Check if user is authenticated and has admin role
-    const token = localStorage.getItem('token');
-    const role = localStorage.getItem('role');
-    
-    if (!token || !role) {
-      // No authentication found, redirect to login
-      window.location.replace('/login.html');
-    } else if (role !== 'admin') {
-      // User is authenticated but doesn't have admin privileges
-      alert('Access denied. Administrator privileges required.');
-      window.location.replace('/dashboard.html');
-    }
-  </script>
-
   <div class="admin-layout">
     <!-- Sidebar -->
     <aside class="admin-sidebar">
-      <img src="SMXKITS.png" alt="SMXKITS Logo" class="admin-logo" />
-      <ul class="admin-nav">
-        <li onclick="window.location.href='admin-dashboard.html'">
-          <i class="fas fa-home"></i>
-          Admin Dashboard
-        </li>
-        <li class="active">
-          <i class="fas fa-edit"></i>
-          Edit Typing Tests
-        </li>
-        <li onclick="window.location.href='users-roles.html'">
-          <i class="fas fa-users"></i>
-          Users & Roles
-        </li>
-      </ul>
-      <div class="logout-btn" onclick="logout();">
-        <i class="fas fa-sign-out-alt"></i>
-        Logout
-      </div>
-    </aside>
-    
-    <!-- Main Content -->
-    <main class="admin-content">
-      <!-- Header Section -->
-      <div class="dashboard-header">
-        <div>
-          <h1 class="dashboard-title">Edit Typing Tests</h1>
-          <p style="color: var(--text-secondary); font-size: 1.1rem; margin-top: 0.5rem;">Customize typing test content for all trainees. Each module has its own save button that instantly updates the training page.</p>
-          <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 10px; padding: 1rem; margin-top: 1rem;">
-            <p style="color: #22c55e; margin: 0; font-weight: 600;">
-              <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>
-              <strong>Simple Workflow:</strong> 1) Edit the content 2) Click "Save Module" to save and instantly update the training page for all users.
-            </p>
-          </div>
+      <img src="smx-logo.png" alt="SMX KITS Logo" class="admin-logo">
+      
+      <nav>
+        <div class="nav-item">
+          <a href="dashboard.html" class="nav-link">
+            <i class="fas fa-tachometer-alt"></i>Dashboard
+          </a>
         </div>
+        <div class="nav-item">
+          <a href="edit-typing-tests-simple.html" class="nav-link active">
+            <i class="fas fa-keyboard"></i>Edit Typing Tests
+          </a>
+        </div>
+        <div class="nav-item">
+          <a href="keyboard-training.html" class="nav-link">
+            <i class="fas fa-graduation-cap"></i>Keyboard Training
+          </a>
+        </div>
+        <div class="nav-item">
+          <a href="#" onclick="logout()" class="nav-link">
+            <i class="fas fa-sign-out-alt"></i>Logout
+          </a>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+      <div class="dashboard-header">
+        <h1 class="dashboard-title">Edit Typing Tests</h1>
+        <p style="color: var(--text-secondary); font-size: 1.1rem;">Simple editor with instant updates via socket connection.</p>
       </div>
       
-      <div style="margin-bottom: 2rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+      <div class="controls">
         <button onclick="addModule()" class="btn btn-primary">
           <i class="fas fa-plus" style="margin-right: 0.5rem;"></i>
           Add New Module
         </button>
-        <span style="color: var(--text-secondary); font-size: 0.9rem;">
-          <i class="fas fa-info-circle" style="margin-right: 0.3rem;"></i>
-          Each module has its own save button. Changes update the training page instantly.
-        </span>
       </div>
       
-      <div id="modules-accordion"></div>
+      <div id="modules-container"></div>
     </main>
   </div>
-  <!-- Save Bubble (hidden by default, appears next to edited textarea) -->
-  <button id="saveBubble" class="save-bubble px-6 py-2 rounded-xl text-lg font-bold absolute z-40 fade-in hidden transition"
-    style="top:0;left:0;">Save changes</button>
-  <span id="savedMsg" class="saved-msg absolute z-50 hidden fade-in">Saved!</span>
+
   <script>
-    // Simple socket-based editor
     let socket = null;
     let typingModules = [];
-    
+
     // Initialize the application
     document.addEventListener('DOMContentLoaded', async function() {
-      console.log('Edit Typing Tests - Initializing...');
+      console.log('Simple Edit Typing Tests - Initializing...');
       
       // Initialize socket
       socket = io();
@@ -526,9 +317,59 @@
             'SITREP: At 0900Z, two adult males on foot entered compound, proceeded to building A. SLANT 2/0/0'
           ]
         ];
+        
         console.log(`Using ${typingModules.length} default modules`);
       }
     }
+
+    // Render the editor
+    function renderEditor() {
+      const container = document.getElementById('modules-container');
+      container.innerHTML = '';
+      
+      const moduleNames = [
+        'Module 1: Basic Typing',
+        'Module 2: Numbers and Symbols', 
+        'Module 3: Military Terminology',
+        'Module 4: POL Basic Descriptors',
+        'Module 5: POL SITREP Format'
+      ];
+      
+      typingModules.forEach((practices, moduleIndex) => {
+        const moduleDiv = document.createElement('div');
+        moduleDiv.className = 'module-card';
+        
+        moduleDiv.innerHTML = `
+          <div class="module-header">
+            <h3 class="module-title">${moduleNames[moduleIndex] || `Module ${moduleIndex + 1}`}</h3>
+            <button onclick="saveModule(${moduleIndex})" class="btn btn-success">
+              <i class="fas fa-save" style="margin-right: 0.5rem;"></i>
+              Save Module
+            </button>
+          </div>
+          <div class="practices">
+            ${practices.map((practice, practiceIndex) => `
+              <div class="practice-item">
+                <label class="practice-label">Practice ${practiceIndex + 1}:</label>
+                <textarea 
+                  class="practice-textarea"
+                  onchange="updatePractice(${moduleIndex}, ${practiceIndex}, this.value)"
+                  rows="3"
+                >${practice}</textarea>
+              </div>
+            `).join('')}
+          </div>
+        `;
+        
+        container.appendChild(moduleDiv);
+      });
+    }
+
+    // Update practice text
+    function updatePractice(moduleIndex, practiceIndex, value) {
+      typingModules[moduleIndex][practiceIndex] = value;
+    }
+
     // Save a single module
     async function saveModule(moduleIndex) {
       try {
@@ -570,7 +411,18 @@
         showNotification('❌ Save failed', true);
       }
     }
-    
+
+    // Add new module
+    function addModule() {
+      const newModule = [
+        'New practice text 1',
+        'New practice text 2', 
+        'New practice text 3'
+      ];
+      typingModules.push(newModule);
+      renderEditor();
+    }
+
     // Show notification
     function showNotification(message, isError = false) {
       const existing = document.getElementById('notification');
@@ -594,919 +446,7 @@
         }
       }, 3000);
     }
-    // Render the editor
-    function renderEditor() {
-      const container = document.getElementById('modules-accordion');
-      container.innerHTML = '';
-      
-      const moduleNames = [
-        'Module 1: Basic Typing',
-        'Module 2: Numbers and Symbols', 
-        'Module 3: Military Terminology',
-        'Module 4: POL Basic Descriptors',
-        'Module 5: POL SITREP Format'
-      ];
-      
-      typingModules.forEach((practices, moduleIndex) => {
-        const moduleDiv = document.createElement('div');
-        moduleDiv.className = 'module-accordion';
-        
-        moduleDiv.innerHTML = `
-          <div class="module-header">
-            <div style="display: flex; align-items: center; gap: 1rem;">
-              <i class="fas fa-keyboard" style="color: var(--text-accent);"></i>
-              <h3>${moduleNames[moduleIndex] || `Module ${moduleIndex + 1}`}</h3>
-            </div>
-            <button onclick="saveModule(${moduleIndex})" class="btn btn-success" style="margin-left: auto;">
-              <i class="fas fa-save" style="margin-right: 0.5rem;"></i>
-              Save Module
-            </button>
-          </div>
-          <div class="module-content">
-            ${practices.map((practice, practiceIndex) => `
-              <div class="practice-item">
-                <label>Practice ${practiceIndex + 1}:</label>
-                <textarea 
-                  onchange="updatePractice(${moduleIndex}, ${practiceIndex}, this.value)"
-                  rows="3"
-                  style="width: 100%; margin-top: 0.5rem; padding: 0.5rem; border-radius: 5px; border: 1px solid var(--glass-border); background: var(--glass-bg); color: var(--text-primary);"
-                >${practice}</textarea>
-              </div>
-            `).join('')}
-          </div>
-        `;
-        
-        container.appendChild(moduleDiv);
-      });
-    }
-    
-    // Update practice text
-    function updatePractice(moduleIndex, practiceIndex, value) {
-      typingModules[moduleIndex][practiceIndex] = value;
-    }
-    
-    // Add new module
-    function addModule() {
-      const newModule = [
-        'New practice text 1',
-        'New practice text 2', 
-        'New practice text 3'
-      ];
-      typingModules.push(newModule);
-      renderEditor();
-    }
-              <i class="fas fa-edit" style="margin-right: 0.5rem;"></i>Practice ${pIdx+1}
-            </div>
-            <button onclick="deletePractice(${mIdx}, ${pIdx})" class="btn btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">
-              <i class="fas fa-trash" style="margin-right: 0.3rem;"></i>Delete
-            </button>
-          `;
-          
-          const textarea = document.createElement('textarea');
-          textarea.className = "practice-textarea";
-          textarea.setAttribute('data-module', mIdx);
-          textarea.setAttribute('data-practice', pIdx);
-          textarea.rows = 4;
-          textarea.value = txt || "";
-          textarea.placeholder = "Enter typing practice text here...";
-          
-          prWrap.appendChild(practiceHeader);
-          prWrap.appendChild(textarea);
-          pCont.appendChild(prWrap);
-        });
-        
-        // Accordion expand/collapse
-        head.addEventListener('click', (e) => {
-          // Don't toggle if clicking on the input field
-          if (e.target.classList.contains('module-name-input')) return;
-          
-          const isOpen = pCont.classList.contains('show');
-          pCont.classList.toggle('show');
-          const chevron = head.querySelector('.fa-chevron-down');
-          if (isOpen) {
-            chevron.style.transform = 'rotate(0deg)';
-          } else {
-            chevron.style.transform = 'rotate(180deg)';
-          }
-        });
-        
-        modWrap.appendChild(head);
-        modWrap.appendChild(pCont);
-        cont.appendChild(modWrap);
-      });
-      
-      console.log('✅ Editor rendered successfully');
-    } catch (error) {
-      console.error('❌ Error rendering editor:', error);
-      const cont = document.getElementById('modules-accordion');
-      cont.innerHTML = `
-        <div style="padding: 2rem; text-align: center; color: var(--text-secondary);">
-          <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 1rem; color: #ef4444;"></i>
-          <h3>Error Loading Typing Tests</h3>
-          <p>Failed to load typing test data. Please refresh the page or contact support.</p>
-          <button onclick="location.reload()" class="btn btn-primary" style="margin-top: 1rem;">
-            <i class="fas fa-refresh" style="margin-right: 0.5rem;"></i>Refresh Page
-          </button>
-        </div>
-      `;
-    }
-  }
-    // Show/hide save bubble, track edits
-    let currentEditing = null;
-    document.addEventListener('focusin', function(e) {
-      if (e.target.matches('.practice-textarea')) {
-        const box = e.target;
-        currentEditing = box;
-        const rect = box.getBoundingClientRect();
-        const saveBubble = document.getElementById('saveBubble');
-        saveBubble.style.top = (window.scrollY + rect.top + rect.height/2 - 22) + 'px';
-        saveBubble.style.left = (window.scrollX + rect.right + 18) + 'px';
-        saveBubble.classList.remove('hidden');
-        saveBubble.classList.add('fade-in');
-        saveBubble.disabled = true;
-        saveBubble.style.opacity = 0.65;
-      }
-    });
-    // Auto-save timeout
-    let autoSaveTimeout;
-    
-    document.addEventListener('input', function(e) {
-      if (e.target.matches('.practice-textarea')) {
-        document.getElementById('saveBubble').disabled = false;
-        document.getElementById('saveBubble').style.opacity = 1;
-        
-        // Clear existing timeout
-        if (autoSaveTimeout) {
-          clearTimeout(autoSaveTimeout);
-        }
-        
-        // Set new timeout for auto-save (2 seconds after user stops typing)
-        autoSaveTimeout = setTimeout(async () => {
-          console.log('Auto-saving after user stopped typing...');
-          const mod = parseInt(e.target.dataset.module);
-          const prac = parseInt(e.target.dataset.practice);
-          
-          if (!isNaN(mod) && !isNaN(prac)) {
-            try {
-              console.log(`🔄 Auto-saving Module ${mod}, Practice ${prac}...`);
-              let data = await getTypingTests();
-              
-              if (data.modules && data.modules[mod] && data.modules[mod][prac] !== undefined) {
-                const oldValue = data.modules[mod][prac];
-                const newValue = e.target.value;
-                
-                if (oldValue !== newValue) {
-                  console.log(`📝 Content changed for Module ${mod}, Practice ${prac}`);
-                  console.log(`Old: "${oldValue.substring(0, 50)}..."`);
-                  console.log(`New: "${newValue.substring(0, 50)}..."`);
-                  
-                  data.modules[mod][prac] = newValue;
-                  const saveSuccess = await saveTypingTests(data);
-                  
-                  if (saveSuccess) {
-                    console.log(`✅ Auto-saved Module ${mod}, Practice ${prac} successfully`);
-                    
-                    // Show brief auto-save indicator
-                    const indicator = document.createElement('span');
-                    indicator.textContent = ' ✓ Saved';
-                    indicator.style.color = '#22c55e';
-                    indicator.style.fontSize = '0.9em';
-                    indicator.style.marginLeft = '0.5rem';
-                    indicator.style.fontWeight = 'bold';
-                    e.target.parentNode.appendChild(indicator);
-                    
-                    setTimeout(() => {
-                      if (indicator.parentNode) {
-                        indicator.parentNode.removeChild(indicator);
-                      }
-                    }, 2000);
-                  } else {
-                    throw new Error('Save operation returned false');
-                  }
-                } else {
-                  console.log(`ℹ️ No changes detected for Module ${mod}, Practice ${prac}`);
-                }
-              } else {
-                console.error(`❌ Invalid data structure for Module ${mod}, Practice ${prac}`);
-              }
-            } catch (error) {
-              console.error('❌ Auto-save failed:', error);
-              
-              // Show error indicator
-              const errorIndicator = document.createElement('span');
-              errorIndicator.textContent = ' ❌ Save failed';
-              errorIndicator.style.color = '#ef4444';
-              errorIndicator.style.fontSize = '0.9em';
-              errorIndicator.style.marginLeft = '0.5rem';
-              errorIndicator.style.fontWeight = 'bold';
-              e.target.parentNode.appendChild(errorIndicator);
-              
-              setTimeout(() => {
-                if (errorIndicator.parentNode) {
-                  errorIndicator.parentNode.removeChild(errorIndicator);
-                }
-              }, 3000);
-            }
-          }
-        }, 2000);
-      }
-    });
-    document.addEventListener('focusout', function(e) {
-      if (e.target.matches('.practice-textarea')) {
-        setTimeout(() => {
-          if (document.activeElement !== document.getElementById('saveBubble')) {
-            document.getElementById('saveBubble').classList.add('hidden');
-          }
-        }, 120);
-      }
-    });
-    // Save module name
-    async function saveModuleName(moduleIdx, newName) {
-      try {
-        let data = await getTypingTests();
-        data.moduleNames[moduleIdx] = newName;
-        await saveTypingTests(data);
-      } catch (error) {
-        console.error('Error saving module name:', error);
-        alert('Failed to save module name. Please try again.');
-      }
-    }
-    
-    // Save changes
-    document.getElementById('saveBubble').addEventListener('click', async function() {
-      console.log('Save button clicked');
-      if (!currentEditing) {
-        console.log('No current editing element found');
-        return;
-      }
-      
-      const mod = parseInt(currentEditing.dataset.module);
-      const prac = parseInt(currentEditing.dataset.practice);
-      
-      if (isNaN(mod) || isNaN(prac)) {
-        console.error('Invalid module or practice index:', { mod, prac });
-        alert('Error: Invalid module or practice index');
-        return;
-      }
-      
-      console.log(`Saving Module ${mod}, Practice ${prac}`);
-      console.log('Current text:', currentEditing.value);
-      
-      try {
-        let data = await getTypingTests();
-        
-        if (!data.modules || !data.modules[mod] || data.modules[mod][prac] === undefined) {
-          console.error('Invalid data structure or indices:', { 
-            hasModules: !!data.modules, 
-            moduleExists: !!(data.modules && data.modules[mod]),
-            practiceExists: !!(data.modules && data.modules[mod] && data.modules[mod][prac] !== undefined)
-          });
-          alert('Error: Invalid data structure. Please refresh the page.');
-          return;
-        }
-        
-        data.modules[mod][prac] = currentEditing.value;
-        const saveSuccess = await saveTypingTests(data);
-        
-        if (saveSuccess) {
-          console.log('✅ Data saved successfully');
-          
-          // Animate "Saved!" msg
-          const rect = currentEditing.getBoundingClientRect();
-          const msg = document.getElementById('savedMsg');
-          msg.style.top = (window.scrollY + rect.top + rect.height/2 - 20) + 'px';
-          msg.style.left = (window.scrollX + rect.right + 22) + 'px';
-          msg.innerText = "Saved!";
-          msg.classList.remove('hidden');
-          setTimeout(()=>msg.classList.add('hidden'), 1100);
-        }
-        
-      } catch (error) {
-        console.error('❌ Error saving:', error);
-        alert('Failed to save changes. Please try again.');
-      }
-      
-      // Hide bubble after save attempt
-      setTimeout(()=>document.getElementById('saveBubble').classList.add('hidden'), 600);
-    });
-    
-    // Add new module
-    async function addModule() {
-      try {
-        let data = await getTypingTests();
-        const newModuleNum = data.modules.length + 1;
-        const newModule = Array.from({length: PRACTICES_PER_MODULE}, (_, p) => `Module ${newModuleNum} Practice ${p + 1}: Enter typing text here.`);
-        data.modules.push(newModule);
-        data.moduleNames.push(`Module ${newModuleNum}`);
-        await saveTypingTests(data);
-        await renderEditor();
-      } catch (error) {
-        console.error('Error adding module:', error);
-        alert('Failed to add new module. Please try again.');
-      }
-    }
-    
-    // Delete module
-    async function deleteModule(moduleIdx) {
-      if (confirm('Are you sure you want to delete this entire module? This action cannot be undone.')) {
-        try {
-          let data = await getTypingTests();
-          data.modules.splice(moduleIdx, 1);
-          data.moduleNames.splice(moduleIdx, 1);
-          await saveTypingTests(data);
-          await renderEditor();
-        } catch (error) {
-          console.error('Error deleting module:', error);
-          alert('Failed to delete module. Please try again.');
-        }
-      }
-    }
-    
-    // Add new practice to a module
-    async function addPractice(moduleIdx) {
-      try {
-        let data = await getTypingTests();
-        if (data.modules[moduleIdx]) {
-          const practiceNum = data.modules[moduleIdx].length + 1;
-          const moduleName = data.moduleNames[moduleIdx] || `Module ${moduleIdx + 1}`;
-          data.modules[moduleIdx].push(`${moduleName} Practice ${practiceNum}: Enter typing text here.`);
-          await saveTypingTests(data);
-          await renderEditor();
-        }
-      } catch (error) {
-        console.error('Error adding practice:', error);
-        alert('Failed to add new practice. Please try again.');
-      }
-    }
-    
-    // Delete practice from a module
-    async function deletePractice(moduleIdx, practiceIdx) {
-      if (confirm('Are you sure you want to delete this practice? This action cannot be undone.')) {
-        try {
-          let data = await getTypingTests();
-          if (data.modules[moduleIdx] && data.modules[moduleIdx][practiceIdx] !== undefined) {
-            data.modules[moduleIdx].splice(practiceIdx, 1);
-            await saveTypingTests(data);
-            await renderEditor();
-          }
-        } catch (error) {
-          console.error('Error deleting practice:', error);
-          alert('Failed to delete practice. Please try again.');
-        }
-      }
-    }
-    
-    // Save entire module (all practices in a module)
-    async function saveModule(moduleIdx) {
-      console.log(`Saving entire module ${moduleIdx}`);
-      
-      try {
-        let data = await getTypingTests();
-        
-        // Get all textareas for this module
-        const moduleTextareas = document.querySelectorAll(`textarea[data-module="${moduleIdx}"]`);
-        let changesMade = false;
-        
-        moduleTextareas.forEach(textarea => {
-          const practiceIdx = parseInt(textarea.dataset.practice);
-          if (!isNaN(practiceIdx) && data.modules[moduleIdx] && data.modules[moduleIdx][practiceIdx] !== undefined) {
-            if (data.modules[moduleIdx][practiceIdx] !== textarea.value) {
-              data.modules[moduleIdx][practiceIdx] = textarea.value;
-              changesMade = true;
-            }
-          }
-        });
-        
-        if (changesMade) {
-          await saveTypingTests(data);
-          
-          // Show success message
-          const moduleHeader = document.querySelector(`[data-module="${moduleIdx}"]`).closest('.module-accordion').querySelector('.module-header');
-          const tempMsg = document.createElement('span');
-          tempMsg.textContent = ' ✓ Saved!';
-          tempMsg.style.color = '#22c55e';
-          tempMsg.style.fontWeight = 'bold';
-          tempMsg.style.marginLeft = '1rem';
-          moduleHeader.appendChild(tempMsg);
-          
-          setTimeout(() => {
-            if (tempMsg.parentNode) {
-              tempMsg.parentNode.removeChild(tempMsg);
-            }
-          }, 2000);
-          
-          console.log(`Module ${moduleIdx} saved successfully`);
-        } else {
-          console.log(`No changes detected in module ${moduleIdx}`);
-        }
-      } catch (error) {
-        console.error('Error saving module:', error);
-        alert('Failed to save module. Please try again.');
-      }
-    }
-    
-    // Save all changes function - collects all textarea values and saves them
-    async function saveAllChanges() {
-      console.log('🔄 Saving all changes...');
-      
-      try {
-        // Get current data structure
-        let data = await getTypingTests();
-        let changesMade = false;
-        
-        // Get all textareas and update the data structure
-        const allTextareas = document.querySelectorAll('.practice-textarea');
-        console.log(`📝 Found ${allTextareas.length} text areas to check`);
-        
-        allTextareas.forEach(textarea => {
-          const moduleIdx = parseInt(textarea.dataset.module);
-          const practiceIdx = parseInt(textarea.dataset.practice);
-          
-          if (!isNaN(moduleIdx) && !isNaN(practiceIdx)) {
-            if (data.modules[moduleIdx] && data.modules[moduleIdx][practiceIdx] !== undefined) {
-              if (data.modules[moduleIdx][practiceIdx] !== textarea.value) {
-                console.log(`📝 Updating Module ${moduleIdx}, Practice ${practiceIdx}`);
-                data.modules[moduleIdx][practiceIdx] = textarea.value;
-                changesMade = true;
-              }
-            }
-          }
-        });
-        
-        // Also check for module name changes
-        const moduleNameInputs = document.querySelectorAll('input[data-module-name]');
-        moduleNameInputs.forEach(input => {
-          const moduleIdx = parseInt(input.dataset.moduleIndex);
-          if (!isNaN(moduleIdx) && data.moduleNames[moduleIdx] !== input.value) {
-            console.log(`📝 Updating Module ${moduleIdx} name to: ${input.value}`);
-            data.moduleNames[moduleIdx] = input.value;
-            changesMade = true;
-          }
-        });
-        
-        if (changesMade) {
-          console.log('💾 Changes detected, saving to database...');
-          const saveSuccess = await saveTypingTests(data);
-          
-          if (saveSuccess) {
-            console.log('✅ All changes saved successfully');
-            showSyncIndicator('✅ All changes saved globally for all users');
-            
-            // Show success message
-            const successMsg = document.createElement('div');
-            successMsg.innerHTML = `
-              <div style="
-                position: fixed; 
-                top: 20px; 
-                right: 20px; 
-                background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); 
-                color: white; 
-                padding: 1rem 1.5rem; 
-                border-radius: 10px; 
-                box-shadow: 0 10px 25px rgba(34, 197, 94, 0.3);
-                z-index: 1000;
-                font-weight: 600;
-              ">
-                <i class="fas fa-check-circle" style="margin-right: 0.5rem;"></i>
-                All changes saved successfully!<br>
-                <small style="opacity: 0.9;">Available to all users immediately</small>
-              </div>
-            `;
-            document.body.appendChild(successMsg);
-            
-            setTimeout(() => {
-              if (successMsg.parentNode) {
-                successMsg.parentNode.removeChild(successMsg);
-              }
-            }, 4000);
-          } else {
-            throw new Error('Save operation failed');
-          }
-        } else {
-          console.log('ℹ️ No changes detected');
-          showSyncIndicator('ℹ️ No changes to save');
-          
-          const infoMsg = document.createElement('div');
-          infoMsg.innerHTML = `
-            <div style="
-              position: fixed; 
-              top: 20px; 
-              right: 20px; 
-              background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); 
-              color: white; 
-              padding: 1rem 1.5rem; 
-              border-radius: 10px; 
-              box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
-              z-index: 1000;
-              font-weight: 600;
-            ">
-              <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>
-              No changes to save
-            </div>
-          `;
-          document.body.appendChild(infoMsg);
-          
-          setTimeout(() => {
-            if (infoMsg.parentNode) {
-              infoMsg.parentNode.removeChild(infoMsg);
-            }
-          }, 2000);
-        }
-        
-      } catch (error) {
-        console.error('❌ Error saving all changes:', error);
-        showSyncIndicator('❌ Save failed', true);
-        
-        const errorMsg = document.createElement('div');
-        errorMsg.innerHTML = `
-          <div style="
-            position: fixed; 
-            top: 20px; 
-            right: 20px; 
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); 
-            color: white; 
-            padding: 1rem 1.5rem; 
-            border-radius: 10px; 
-            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
-            z-index: 1000;
-            font-weight: 600;
-          ">
-            <i class="fas fa-exclamation-triangle" style="margin-right: 0.5rem;"></i>
-            Failed to save changes<br>
-            <small style="opacity: 0.9;">${error.message}</small>
-          </div>
-        `;
-        document.body.appendChild(errorMsg);
-        
-        setTimeout(() => {
-          if (errorMsg.parentNode) {
-            errorMsg.parentNode.removeChild(errorMsg);
-          }
-        }, 5000);
-      }
-    }
-    
-    // Reset to defaults function
-    async function resetToDefaults() {
-      if (confirm('Are you sure you want to reset all typing tests to default content? This will permanently delete all custom content and cannot be undone.')) {
-        try {
-          console.log('🔄 Resetting to defaults...');
-          
-          // Get authentication token
-          const token = localStorage.getItem('token');
-          if (!token) {
-            alert('Authentication required. Please log in again.');
-            window.location.href = '/login.html';
-            return;
-          }
-          
-          const response = await fetch('/api/typing-tests/reset', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          });
-          
-          const result = await response.json();
-          
-          if (!response.ok) {
-            throw new Error(result.message || `HTTP error! status: ${response.status}`);
-          }
-          
-          if (result.success) {
-            console.log('✅ Reset to defaults successful');
-            
-            // Clear localStorage cache
-            localStorage.removeItem('smx_typing_tests');
-            localStorage.removeItem('smx_typing_tests_timestamp');
-            localStorage.removeItem('smx_typing_tests_update_trigger');
-            
-            // Reload the editor
-            await renderEditor();
-            
-            showSyncIndicator('✅ Reset to defaults successful');
-            alert('Typing tests have been reset to default content successfully.');
-          } else {
-            throw new Error(result.message || 'Failed to reset to defaults');
-          }
-          
-        } catch (error) {
-          console.error('❌ Error resetting to defaults:', error);
-          alert('Failed to reset to defaults: ' + error.message);
-          showSyncIndicator('❌ Reset failed', true);
-        }
-      }
-    }
-    
-    // Sync to Students function - manually push changes to all users
-    async function syncToStudents() {
-      try {
-        console.log('📡 Syncing changes to all students...');
-        const data = await getTypingTests();
-        
-        // Trigger all sync mechanisms to push changes to students
-        window.dispatchEvent(new CustomEvent('typingTestsUpdated', {
-          detail: { data: data }
-        }));
-        
-        // Use BroadcastChannel for cross-tab communication
-        if (typeof BroadcastChannel !== 'undefined') {
-          const channel = new BroadcastChannel('smx_typing_updates');
-          channel.postMessage({
-            type: 'typing_tests_updated',
-            data: data,
-            timestamp: Date.now()
-          });
-          channel.close();
-        }
-        
-        // Update trigger for polling fallback
-        const timestamp = Date.now().toString();
-        localStorage.setItem('smx_typing_tests_update_trigger', timestamp);
-        
-        console.log('✅ Changes synced to all students');
-        showSyncIndicator('✅ Changes pushed to all students successfully');
-        
-        // Show success message
-        alert('✅ Changes synced to all students!\n\nAll users will now see your updated content immediately.');
-        
-      } catch (error) {
-        console.error('❌ Error syncing to students:', error);
-        alert('Failed to sync changes: ' + error.message);
-        showSyncIndicator('❌ Sync failed', true);
-      }
-    }
-    
-    // Test real-time sync function
-    async function testRealTimeSync() {
-      try {
-        console.log('🧪 Testing real-time sync...');
-        const data = await getTypingTests();
-        
-        // Trigger all sync mechanisms
-        window.dispatchEvent(new CustomEvent('typingTestsUpdated', {
-          detail: { data: data }
-        }));
-        
-        if (typeof BroadcastChannel !== 'undefined') {
-          const channel = new BroadcastChannel('smx_typing_updates');
-          channel.postMessage({
-            type: 'typing_tests_updated',
-            data: data,
-            timestamp: Date.now()
-          });
-          channel.close();
-        }
-        
-        const timestamp = Date.now().toString();
-        localStorage.setItem('smx_typing_tests_update_trigger', timestamp);
-        
-        console.log('✅ Sync test completed');
-        showSyncIndicator('✅ Sync test successful - check keyboard training page');
-        
-      } catch (error) {
-        console.error('❌ Sync test failed:', error);
-        showSyncIndicator('❌ Sync test failed', true);
-      }
-    }
-    
-    // Test function to verify data sync
-    window.testDataSync = async function() {
-      console.log('=== Testing Data Sync ===');
-      try {
-        const data = await getTypingTests();
-        console.log('Current data from API:', data);
-        
-        // Trigger the custom event manually
-        window.dispatchEvent(new CustomEvent('typingTestsUpdated', {
-          detail: { data: data }
-        }));
-        
-        console.log('Custom event dispatched');
-      } catch (error) {
-        console.error('Data sync test failed:', error);
-      }
-    };
-    
-    // Debug function to check sync status
-    window.debugSync = async function() {
-      console.log('=== Debug Sync Status ===');
-      console.log('localStorage smx_typing_tests:', localStorage.getItem('smx_typing_tests'));
-      console.log('localStorage smx_typing_tests_timestamp:', localStorage.getItem('smx_typing_tests_timestamp'));
-      console.log('localStorage smx_typing_tests_update_trigger:', localStorage.getItem('smx_typing_tests_update_trigger'));
-      
-      try {
-        const data = await getTypingTests();
-        console.log('Parsed data:', data);
-        console.log('Data structure valid:', !!(data && data.modules && data.moduleNames));
-        
-        // Test all sync mechanisms
-        console.log('Testing sync mechanisms...');
-        await saveTypingTests(data);
-      } catch (error) {
-        console.error('Debug sync failed:', error);
-      }
-    };
-    
-    // Force sync function for troubleshooting
-    window.forceSync = async function() {
-      console.log('=== Force Sync ===');
-      try {
-        const data = await getTypingTests();
-        await saveTypingTests(data);
-        alert('Sync forced! Check the keyboard training page to see if changes appear.');
-      } catch (error) {
-        console.error('Force sync failed:', error);
-        alert('Force sync failed: ' + error.message);
-      }
-    };
-    
-    // Check sync status between pages
-    window.checkSyncStatus = async function() {
-      console.log('=== Checking Sync Status ===');
-      
-      try {
-        const data = await getTypingTests();
-        if (!data.modules) {
-          console.error('No typing test data found');
-          return;
-        }
-        
-        console.log('Current data structure:');
-        console.log('- Modules:', data.modules.length);
-        console.log('- Module names:', data.moduleNames ? data.moduleNames.length : 'None');
-        
-        data.modules.forEach((module, moduleIndex) => {
-          console.log(`Module ${moduleIndex + 1}: ${module.length} practices`);
-          module.forEach((practice, practiceIndex) => {
-            if (practiceIndex < 3) { // Show first 3 practices
-              console.log(`  Practice ${practiceIndex + 1}: "${practice.substring(0, 50)}..."`);
-            }
-          });
-        });
-        
-        console.log('Timestamp:', localStorage.getItem('smx_typing_tests_timestamp'));
-        console.log('Update trigger:', localStorage.getItem('smx_typing_tests_update_trigger'));
-      } catch (error) {
-        console.error('Check sync status failed:', error);
-      }
-    };
-    
-    // Force refresh from database, clearing cache
-    async function forceRefreshFromDatabase() {
-      console.log('🔄 Force refreshing from database...');
-      
-      try {
-        // Clear localStorage cache first
-        localStorage.removeItem('smx_typing_tests');
-        localStorage.removeItem('smx_typing_tests_timestamp');
-        localStorage.removeItem('smx_typing_tests_update_trigger');
-        
-        console.log('🗑️ Cache cleared, fetching fresh data from database...');
-        
-        // Force fetch from API (no fallback to localStorage)
-        const response = await fetch('/api/typing-tests');
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const result = await response.json();
-        
-        if (result.success) {
-          console.log('✅ Fresh data loaded from database');
-          
-          // Update cache with fresh data
-          localStorage.setItem('smx_typing_tests', JSON.stringify(result.data));
-          localStorage.setItem('smx_typing_tests_timestamp', Date.now().toString());
-          
-          // Re-render the editor with fresh data
-          await renderEditor();
-          
-          showSyncIndicator('✅ Refreshed from database');
-          alert('Successfully refreshed from database. All changes now reflect the current database state.');
-        } else {
-          throw new Error(result.message || 'Failed to load from database');
-        }
-        
-      } catch (error) {
-        console.error('❌ Error refreshing from database:', error);
-        showSyncIndicator('❌ Database refresh failed', true);
-        alert('Failed to refresh from database: ' + error.message);
-      }
-    };
-    
-    // Initial render
-    document.addEventListener('DOMContentLoaded', async function() {
-      console.log('🚀 Initializing typing tests editor...');
-      
-      // Force fresh data from API on page load to avoid cache issues
-      try {
-        console.log('🔄 Forcing fresh data load from API...');
-        await forceRefreshFromDatabase();
-      } catch (error) {
-        console.warn('⚠️ Failed to force refresh, falling back to normal load:', error);
-        await renderEditor();
-      }
-      
-      console.log('✅ Editor initialized successfully');
-      
-      // Set up periodic sync check (every 60 seconds, silent)
-      setInterval(async () => {
-        try {
-          // Silent check for updates from other admins
-          const currentData = await getTypingTests();
-          
-          // Compare with what's currently displayed
-          const allTextareas = document.querySelectorAll('.practice-textarea');
-          let needsUpdate = false;
-          
-          allTextareas.forEach(textarea => {
-            const moduleIdx = parseInt(textarea.dataset.module);
-            const practiceIdx = parseInt(textarea.dataset.practice);
-            
-            if (!isNaN(moduleIdx) && !isNaN(practiceIdx)) {
-              if (currentData.modules[moduleIdx] && currentData.modules[moduleIdx][practiceIdx] !== undefined) {
-                // Only update if the textarea is not currently being edited
-                if (document.activeElement !== textarea && 
-                    currentData.modules[moduleIdx][practiceIdx] !== textarea.value) {
-                  needsUpdate = true;
-                }
-              }
-            }
-          });
-          
-          if (needsUpdate) {
-            console.log('📥 Updates detected from other admins, refreshing editor...');
-            await renderEditor();
-            showSyncIndicator('📥 Updated by another admin');
-          }
-        } catch (error) {
-          // Silent error handling
-          console.warn('⚠️ Sync check failed:', error.message);
-        }
-      }, 60000); // Check every 60 seconds
-    });
-    
-    // Debug function to test the save/load cycle
-    window.testSaveLoadCycle = async function() {
-      console.log('=== Testing Save/Load Cycle ===');
-      
-      try {
-        // 1. Load current data
-        console.log('1. Loading current data...');
-        const currentData = await getTypingTests();
-        console.log('Current data loaded:', currentData.modules.length, 'modules');
-        
-        // 2. Modify first practice
-        const originalText = currentData.modules[0][0];
-        const testText = `TEST SAVE/LOAD: ${new Date().toISOString()}`;
-        currentData.modules[0][0] = testText;
-        console.log('2. Modified first practice to:', testText);
-        
-        // 3. Save to database
-        console.log('3. Saving to database...');
-        const saveResult = await saveTypingTests(currentData);
-        if (!saveResult) {
-          throw new Error('Save failed');
-        }
-        console.log('3. Save successful');
-        
-        // 4. Clear cache and reload
-        console.log('4. Clearing cache and reloading...');
-        localStorage.removeItem('smx_typing_tests');
-        localStorage.removeItem('smx_typing_tests_timestamp');
-        
-        const reloadedData = await getTypingTests();
-        console.log('4. Reloaded data from API');
-        
-        // 5. Verify the change persisted
-        if (reloadedData.modules[0][0] === testText) {
-          console.log('✅ SUCCESS: Change persisted in database');
-          alert('✅ Test PASSED: Save/Load cycle working correctly!');
-        } else {
-          console.log('❌ FAILED: Change did not persist');
-          console.log('Expected:', testText);
-          console.log('Got:', reloadedData.modules[0][0]);
-          alert('❌ Test FAILED: Change did not persist in database');
-        }
-        
-        // 6. Restore original text
-        console.log('6. Restoring original text...');
-        reloadedData.modules[0][0] = originalText;
-        await saveTypingTests(reloadedData);
-        console.log('6. Original text restored');
-        
-        // 7. Re-render editor
-        await renderEditor();
-        
-      } catch (error) {
-        console.error('❌ Test failed:', error);
-        alert('❌ Test FAILED: ' + error.message);
-      }
-    };
-    
+
     // Logout function
     function logout() {
       localStorage.removeItem('token');
