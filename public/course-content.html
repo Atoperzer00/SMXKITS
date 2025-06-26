@@ -295,6 +295,11 @@
       box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
     }
 
+    .module-select option {
+      background: #1a1a2e;
+      color: #000000;
+    }
+
     /* Instructor Notes */
     .instructor-notes {
       background: var(--glass-bg);
@@ -596,31 +601,7 @@
         </div>
       </div>
       
-      <!-- Additional Resources -->
-      <div class="resources-section">
-        <h2 class="section-title">
-          <i class="fas fa-folder-open"></i>
-          Additional Resources
-        </h2>
-        <div class="resources-grid">
-          <div class="resource-card" onclick="window.open('#', '_blank')">
-            <i class="fas fa-file-pdf resource-icon"></i>
-            <span>mIRC Configuration Manual</span>
-          </div>
-          <div class="resource-card" onclick="window.open('#', '_blank')">
-            <i class="fas fa-video resource-icon"></i>
-            <span>Setup Demonstration Video</span>
-          </div>
-          <div class="resource-card" onclick="window.open('#', '_blank')">
-            <i class="fas fa-tools resource-icon"></i>
-            <span>Troubleshooting Guide</span>
-          </div>
-          <div class="resource-card" onclick="window.open('#', '_blank')">
-            <i class="fas fa-shield-alt resource-icon"></i>
-            <span>Security Best Practices</span>
-          </div>
-        </div>
-      </div>
+
     </main>
   </div>
 
@@ -770,23 +751,55 @@
       function updateSlideDisplay() {
         const module = modules[currentModule];
         const slideFileName = module.slides[currentSlide - 1];
-        // Properly encode the URL to handle spaces
-        const encodedPath = encodeURI(`${module.basePath}${slideFileName}`);
-        currentSlideEl.src = encodedPath;
-        currentSlideNumEl.textContent = currentSlide;
         
-        // Update button states
-        prevBtn.disabled = currentSlide === 1;
-        nextBtn.disabled = currentSlide === module.slideCount;
+        // Build the path with proper encoding
+        const rawPath = `${module.basePath}${slideFileName}`;
         
-        // Add loading state
-        currentSlideEl.style.opacity = '0.5';
+        // Try different encoding methods
+        const paths = [
+          rawPath.replace(/ /g, '%20'),  // Manual space encoding
+          encodeURI(rawPath),            // Standard URI encoding
+          rawPath                        // Raw path (browser might handle it)
+        ];
+        
+        console.log('=== Slide Display Debug ===');
+        console.log('Module:', currentModule);
+        console.log('Slide:', currentSlide);
+        console.log('Raw path:', rawPath);
+        console.log('Trying paths:', paths);
+        
+        let pathIndex = 0;
+        
+        function tryNextPath() {
+          if (pathIndex < paths.length) {
+            const currentPath = paths[pathIndex];
+            console.log(`Trying path ${pathIndex + 1}:`, currentPath);
+            currentSlideEl.src = currentPath;
+            pathIndex++;
+          } else {
+            console.error('❌ All paths failed for slide:', slideFileName);
+            currentSlideEl.style.opacity = '1';
+          }
+        }
+        
         currentSlideEl.onload = function() {
           this.style.opacity = '1';
+          console.log('✅ Image loaded successfully:', this.src);
         };
         
-        // Debug: log the path being used
-        console.log('Loading slide:', encodedPath);
+        currentSlideEl.onerror = function() {
+          console.log(`❌ Path failed: ${this.src}`);
+          tryNextPath();
+        };
+        
+        // Start with the first path
+        currentSlideEl.style.opacity = '0.5';
+        tryNextPath();
+        
+        // Update UI
+        currentSlideNumEl.textContent = currentSlide;
+        prevBtn.disabled = currentSlide === 1;
+        nextBtn.disabled = currentSlide === module.slideCount;
       }
     });
 
