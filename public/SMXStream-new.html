@@ -1394,7 +1394,7 @@
       alert(`${title}: ${message}`);
     }
 
-    // ===== CLEAN HLS INITIALIZATION (AS SPECIFIED) =====
+    // ===== AUTO-POLLING HLS INITIALIZATION =====
     function initializeCleanHLS() {
       const classId = getQueryParam('classId');
       if (!classId) {
@@ -1409,7 +1409,56 @@
         return null;
       }
       
-      console.log('🎬 Initializing clean HLS for class:', classId);
+      console.log('🎬 Initializing HLS with auto-polling for class:', classId);
+      
+      // Determine stream URL
+      let streamUrl;
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        streamUrl = `http://localhost/hls/${classId}.m3u8`;
+      } else {
+        streamUrl = `http://198.211.107.134/hls/${classId}.m3u8`;
+      }
+      
+      console.log('🔍 Stream URL:', streamUrl);
+      
+      // Show loading spinner while waiting for stream
+      showLoadingSpinner();
+      
+      // Start waiting for stream with auto-polling
+      waitForStream(streamUrl, video, classId);
+      
+      return null; // Will return HLS instance once stream is available
+    }
+    
+    // ===== AUTO-POLLING STREAM DETECTION =====
+    function waitForStream(streamUrl, videoElement, classId) {
+      console.log('⏳ Checking for stream availability...');
+      
+      fetch(streamUrl, { 
+        method: 'HEAD',
+        cache: 'no-cache',
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      })
+      .then(res => {
+        if (res.ok) {
+          console.log('✅ Stream is available! Loading HLS...');
+          loadStream(streamUrl, videoElement, classId);
+        } else {
+          console.log(`⏳ Stream not ready (${res.status}), retrying in 3 seconds...`);
+          setTimeout(() => waitForStream(streamUrl, videoElement, classId), 3000);
+        }
+      })
+      .catch(error => {
+        console.log('⏳ Stream not available yet, retrying in 3 seconds...', error.message);
+        setTimeout(() => waitForStream(streamUrl, videoElement, classId), 3000);
+      });
+    }
+    
+    // ===== LOAD STREAM ONCE AVAILABLE =====
+    function loadStream(streamUrl, videoElement, classId) {
+      console.log('🎬 Loading HLS stream for class:', classId);
       
       // Create HLS instance with optimized settings
       const hls = new Hls({
@@ -1422,40 +1471,96 @@
         liveMaxLatencyDurationCount: 10
       });
       
-      // Load HLS stream - Check if using YouTube for testing
-      let streamUrl;
-      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        // For local testing, try YouTube embed first, then HLS
-        streamUrl = `http://localhost:8888/hls/${classId}.m3u8`;
-      } else {
-        // Production HLS
-        streamUrl = `http://198.211.107.134:8888/hls/${classId}.m3u8`;
-      }
-      
-      console.log('🎬 Loading stream URL:', streamUrl);
       hls.loadSource(streamUrl);
-      hls.attachMedia(video);
+      hls.attachMedia(videoElement);
       
       // Handle HLS events
       hls.on(Hls.Events.MANIFEST_PARSED, function() {
-        console.log('✅ HLS stream loaded for class:', classId);
-        video.play().catch(e => console.log('🔇 Autoplay prevented:', e));
+        console.log('✅ HLS stream loaded and parsed for class:', classId);
+        videoElement.play().catch(e => console.log('🔇 Autoplay prevented:', e));
         isStreamActive = true;
         hideLoadingSpinner();
+        
+        // Show success notification
+        showNotification('Stream Connected', 'Live stream is now playing!', 'success');
       });
       
       hls.on(Hls.Events.ERROR, function(event, data) {
         console.error('❌ HLS Error:', data);
         if (data.fatal) {
-          console.log('💥 Fatal HLS error, retrying...');
+          console.log('💥 Fatal HLS error, restarting stream detection...');
           hls.destroy();
-          setTimeout(() => initializeCleanHLS(), 5000); // Retry after 5 seconds
+          isStreamActive = false;
+          showLoadingSpinner();
+          
+          // Restart the polling process
+          setTimeout(() => waitForStream(streamUrl, videoElement, classId), 5000);
         }
+      });
+      
+      // Handle stream end/disconnect
+      hls.on(Hls.Events.BUFFER_APPENDING_ERROR, function() {
+        console.log('📡 Stream may have ended, checking...');
+        setTimeout(() => {
+          if (videoElement.readyState === 0) {
+            console.log('🔄 Stream disconnected, restarting detection...');
+            hls.destroy();
+            isStreamActive = false;
+            showLoadingSpinner();
+            waitForStream(streamUrl, videoElement, classId);
+          }
+        }, 2000);
       });
       
       // Store references
       hlsInstance = hls;
-      currentVideo = video;
+      currentVideo = videoElement;
+      hlsUrl = streamUrl;
+      
+      return hls;
+    }
+      
+      // Handle HLS events
+      hls.on(Hls.Events.MANIFEST_PARSED, function() {
+        console.log('✅ HLS stream loaded and parsed for class:', classId);
+        videoElement.play().catch(e => console.log('🔇 Autoplay prevented:', e));
+        isStreamActive = true;
+        hideLoadingSpinner();
+        
+        // Show success notification
+        showNotification('Stream Connected', 'Live stream is now playing!', 'success');
+      });
+      
+      hls.on(Hls.Events.ERROR, function(event, data) {
+        console.error('❌ HLS Error:', data);
+        if (data.fatal) {
+          console.log('💥 Fatal HLS error, restarting stream detection...');
+          hls.destroy();
+          isStreamActive = false;
+          showLoadingSpinner();
+          
+          // Restart the polling process
+          setTimeout(() => waitForStream(streamUrl, videoElement, classId), 5000);
+        }
+      });
+      
+      // Handle stream end/disconnect
+      hls.on(Hls.Events.BUFFER_APPENDING_ERROR, function() {
+        console.log('📡 Stream may have ended, checking...');
+        setTimeout(() => {
+          if (videoElement.readyState === 0) {
+            console.log('🔄 Stream disconnected, restarting detection...');
+            hls.destroy();
+            isStreamActive = false;
+            showLoadingSpinner();
+            waitForStream(streamUrl, videoElement, classId);
+          }
+        }, 2000);
+      });
+      
+      // Store references
+      hlsInstance = hls;
+      currentVideo = videoElement;
       hlsUrl = streamUrl;
       
       return hls;
@@ -1555,7 +1660,7 @@
           debug: false
         });
         
-        const hlsUrl = `http://198.211.107.134:8888/hls/${classId}.m3u8`;
+        const hlsUrl = `http://198.211.107.134/hls/${classId}.m3u8`;
         console.log('📡 Loading HLS stream:', hlsUrl);
         
         hls.loadSource(hlsUrl);
@@ -1569,7 +1674,7 @@
         return hls;
       } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
         // Native HLS support (Safari)
-        video.src = `http://198.211.107.134:8888/hls/${classId}.m3u8`;
+        video.src = `http://198.211.107.134/hls/${classId}.m3u8`;
         video.play().catch(e => console.log('Autoplay prevented:', e));
       } else {
         console.error('❌ HLS not supported in this browser');
@@ -1594,9 +1699,9 @@
         // Construct HLS URL based on class ID or stream key
         const classId = streamData.classId || getCurrentClassId();
         if (classId) {
-          hlsUrl = `http://198.211.107.134:8888/hls/${classId}.m3u8`;
+          hlsUrl = `http://198.211.107.134/hls/${classId}.m3u8`;
         } else if (streamKey) {
-          hlsUrl = `http://198.211.107.134:8888/hls/${streamKey}.m3u8`;
+          hlsUrl = `http://198.211.107.134/hls/${streamKey}.m3u8`;
         } else {
           throw new Error('No class ID or stream key available for HLS URL');
         }
@@ -1841,6 +1946,74 @@
       updateTimeDisplays(currentTime, duration);
     }
     
+    // ===== LOADING SPINNER FUNCTIONS =====
+    function showLoadingSpinner() {
+      const videoContainer = document.querySelector('.video-container');
+      if (!videoContainer) return;
+      
+      // Remove existing spinner if any
+      const existingSpinner = videoContainer.querySelector('.loading-spinner');
+      if (existingSpinner) {
+        existingSpinner.remove();
+      }
+      
+      // Create loading spinner overlay
+      const spinnerOverlay = document.createElement('div');
+      spinnerOverlay.className = 'loading-spinner';
+      spinnerOverlay.style.cssText = `
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        color: white;
+      `;
+      
+      spinnerOverlay.innerHTML = `
+        <div style="
+          width: 50px;
+          height: 50px;
+          border: 4px solid rgba(255, 255, 255, 0.3);
+          border-top: 4px solid #ffa726;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+          margin-bottom: 1rem;
+        "></div>
+        <div style="font-size: 1.1rem; font-weight: 500;">Waiting for stream...</div>
+        <div style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.7); margin-top: 0.5rem;">
+          The instructor will start streaming shortly
+        </div>
+      `;
+      
+      // Add CSS animation if not already present
+      if (!document.querySelector('#spinner-styles')) {
+        const style = document.createElement('style');
+        style.id = 'spinner-styles';
+        style.textContent = `
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+      
+      videoContainer.appendChild(spinnerOverlay);
+    }
+    
+    function hideLoadingSpinner() {
+      const spinner = document.querySelector('.loading-spinner');
+      if (spinner) {
+        spinner.remove();
+      }
+    }
+    
     function updateTimeDisplays(currentTime, duration) {
       const currentTimeDisplay = document.getElementById('currentTimeDisplay');
       const durationDisplay = document.getElementById('durationDisplay');
@@ -1934,6 +2107,74 @@
           document.body.removeChild(notification);
         }, 300);
       }, 3000);
+    }
+    
+    // ===== LOADING SPINNER FUNCTIONS =====
+    function showLoadingSpinner() {
+      const videoContainer = document.querySelector('.video-container');
+      if (!videoContainer) return;
+      
+      // Remove existing spinner if any
+      const existingSpinner = videoContainer.querySelector('.loading-spinner');
+      if (existingSpinner) {
+        existingSpinner.remove();
+      }
+      
+      // Create loading spinner overlay
+      const spinnerOverlay = document.createElement('div');
+      spinnerOverlay.className = 'loading-spinner';
+      spinnerOverlay.style.cssText = `
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        color: white;
+      `;
+      
+      spinnerOverlay.innerHTML = `
+        <div style="
+          width: 50px;
+          height: 50px;
+          border: 4px solid rgba(255, 255, 255, 0.3);
+          border-top: 4px solid #ffa726;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+          margin-bottom: 1rem;
+        "></div>
+        <div style="font-size: 1.1rem; font-weight: 500;">Waiting for stream...</div>
+        <div style="font-size: 0.9rem; color: rgba(255, 255, 255, 0.7); margin-top: 0.5rem;">
+          The instructor will start streaming shortly
+        </div>
+      `;
+      
+      // Add CSS animation if not already present
+      if (!document.querySelector('#spinner-styles')) {
+        const style = document.createElement('style');
+        style.id = 'spinner-styles';
+        style.textContent = `
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+      
+      videoContainer.appendChild(spinnerOverlay);
+    }
+    
+    function hideLoadingSpinner() {
+      const spinner = document.querySelector('.loading-spinner');
+      if (spinner) {
+        spinner.remove();
+      }
     }
     
     // ===== HLS STREAM TIMER =====
@@ -2576,7 +2817,7 @@
       // Initialize HLS stream with class-based URL
       const streamData = {
         classId: classId,
-        streamUrl: `http://198.211.107.134:8888/hls/${classId}.m3u8`,
+        streamUrl: `http://198.211.107.134/hls/${classId}.m3u8`,
         type: 'hls'
       };
       
@@ -4597,7 +4838,7 @@
         
         // Test 3: Check HLS server
         try {
-          const hlsTestUrl = `http://198.211.107.134:8888/hls/${streamKey}.m3u8`;
+          const hlsTestUrl = `http://198.211.107.134/hls/${streamKey}.m3u8`;
           const hlsResponse = await fetch(hlsTestUrl, { method: 'HEAD' });
           results.hlsServer = hlsResponse.ok;
           console.log(hlsResponse.ok ? '✅ HLS server responding' : '❌ HLS server not responding');
@@ -4738,7 +4979,7 @@
         updateChecklistItem('studentEnrollment', checklist.studentEnrollment);
         
         // 5. Streaming Infrastructure Check
-        const hlsServerUrl = process.env.HLS_SERVER_URL || 'http://198.211.107.134:8888';
+        const hlsServerUrl = process.env.HLS_SERVER_URL || 'http://198.211.107.134';
         try {
           const infraResponse = await fetch(`${hlsServerUrl}/health`, { method: 'HEAD' });
           if (infraResponse.ok) {
@@ -5828,7 +6069,7 @@
                 video.play().catch(e => console.log('Video autoplay prevented:', e));
               } else {
                 // Switch to live HLS stream
-                const newStreamUrl = `http://198.211.107.134:8888/hls/${streamKey}.m3u8`;
+                const newStreamUrl = `http://198.211.107.134/hls/${streamKey}.m3u8`;
                 if (hlsInstance) {
                   hlsInstance.loadSource(newStreamUrl);
                 } else if (Hls.isSupported()) {
