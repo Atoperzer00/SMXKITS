@@ -1856,6 +1856,10 @@
     
     try {
       console.log("Log form submitted");
+      console.log("Form element:", form);
+      console.log("Form ID:", form.id);
+      console.log("Form has elements:", !!form.elements);
+      console.log("Number of form elements:", form.elements.length);
       
       // Use form.elements to avoid conflicts with duplicate field names on page
       const data = {
@@ -1884,9 +1888,15 @@
       
       // Debug: Check form elements directly
       console.log('Direct form element values:');
+      console.log('SLANT element exists:', !!form.elements.slant);
       console.log('SLANT element value:', form.elements.slant?.value);
+      console.log('Vehicles element exists:', !!form.elements.vehicles);
       console.log('Vehicles element value:', form.elements.vehicles?.value);
+      console.log('Target Status element exists:', !!form.elements.targetStatus);
       console.log('Target Status element value:', form.elements.targetStatus?.value);
+      
+      // Additional debugging - check all form elements
+      console.log('All form elements:', Array.from(form.elements).map(el => el.name + ': ' + el.value));
       
       // Additional debugging - check form elements directly
       console.log('Form elements check:');
