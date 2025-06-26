@@ -280,6 +280,9 @@ const calloutSchema = new mongoose.Schema({
   females: Number,
   children: Number,
   iaNotes: String,
+  slant: String,
+  vehicles: Number,
+  targetStatus: String,
   follow: {
     name: String,
     stage: String,
