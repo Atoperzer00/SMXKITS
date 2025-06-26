@@ -1792,7 +1792,6 @@ io.on('connection', socket => {
           console.log(`🧹 Cleaned up empty viewer tracking for class ${classId}`);
         }
       }
-      }
     }
     
     // If we have user data, update their status to offline
