@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stream Demo - SMXKITS</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --primary: #0c0c0c;
+      --secondary: #1a1a2e;
+      --tertiary: #16213e;
+      --accent: #ffa726;
+      --accent-hover: #ff9800;
+      --accent-light: rgba(255, 167, 38, 0.1);
+      --success: #4caf50;
+      --error: #f44336;
+      --text-primary: #ffffff;
+      --text-secondary: #b8c5d6;
+      --border-light: rgba(255, 255, 255, 0.1);
+      --glass: rgba(255, 255, 255, 0.05);
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      --border-radius: 16px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .demo-container {
+      max-width: 800px;
+      width: 100%;
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-light);
+      border-radius: var(--border-radius);
+      padding: 3rem;
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+
+    .demo-header {
+      margin-bottom: 3rem;
+    }
+
+    .demo-header h1 {
+      font-size: 3rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent) 0%, #ff9800 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1rem;
+    }
+
+    .demo-header p {
+      color: var(--text-secondary);
+      font-size: 1.2rem;
+      line-height: 1.6;
+    }
+
+    .demo-section {
+      margin-bottom: 2rem;
+      padding: 2rem;
+      background: var(--tertiary);
+      border-radius: 12px;
+      border: 1px solid var(--border-light);
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .demo-links {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .demo-link {
+      display: block;
+      padding: 1.5rem;
+      background: var(--glass);
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      text-decoration: none;
+      color: var(--text-primary);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .demo-link::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 167, 38, 0.1), transparent);
+      transition: var(--transition);
+    }
+
+    .demo-link:hover::before {
+      left: 100%;
+    }
+
+    .demo-link:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+      border-color: var(--accent);
+    }
+
+    .link-icon {
+      font-size: 2rem;
+      color: var(--accent);
+      margin-bottom: 1rem;
+    }
+
+    .link-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .link-description {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .viewer-examples {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .example-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.5rem;
+      background: var(--glass);
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      text-decoration: none;
+      color: var(--text-primary);
+      transition: var(--transition);
+    }
+
+    .example-link:hover {
+      background: var(--accent-light);
+      border-color: var(--accent);
+    }
+
+    .example-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .example-icon {
+      color: var(--accent);
+    }
+
+    .example-details {
+      text-align: left;
+    }
+
+    .example-title {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .example-class {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      font-family: monospace;
+    }
+
+    .external-icon {
+      color: var(--text-secondary);
+    }
+
+    .instructions {
+      background: var(--accent-light);
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    .instructions h3 {
+      color: var(--accent);
+      margin-bottom: 1rem;
+    }
+
+    .instructions ol {
+      text-align: left;
+      padding-left: 1.5rem;
+    }
+
+    .instructions li {
+      margin-bottom: 0.5rem;
+      color: var(--text-secondary);
+    }
+
+    .code-snippet {
+      background: var(--primary);
+      border: 1px solid var(--border-light);
+      border-radius: 6px;
+      padding: 1rem;
+      font-family: 'Consolas', monospace;
+      font-size: 0.9rem;
+      color: var(--accent);
+      margin: 1rem 0;
+      overflow-x: auto;
+    }
+
+    @media (max-width: 768px) {
+      .demo-links {
+        grid-template-columns: 1fr;
+      }
+      
+      .demo-header h1 {
+        font-size: 2rem;
+      }
+      
+      .demo-container {
+        padding: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-container">
+    <div class="demo-header">
+      <h1>Stream Demo</h1>
+      <p>Test the complete OBS → RTMP → HLS → FMV Viewer flow</p>
+    </div>
+
+    <div class="demo-links">
+      <a href="/Stream Mode.html" class="demo-link">
+        <div class="link-icon">
+          <i class="fas fa-broadcast-tower"></i>
+        </div>
+        <div class="link-title">Stream Mode</div>
+        <div class="link-description">Instructor interface for OBS streaming</div>
+      </a>
+
+      <a href="/smxstream-viewer.html?classId=demo" class="demo-link">
+        <div class="link-icon">
+          <i class="fas fa-tv"></i>
+        </div>
+        <div class="link-title">FMV Viewer</div>
+        <div class="link-description">Student viewing interface</div>
+      </a>
+    </div>
+
+    <div class="demo-section">
+      <div class="section-title">
+        <i class="fas fa-users"></i>
+        Example Viewer Links
+      </div>
+      
+      <div class="viewer-examples">
+        <a href="/smxstream-viewer.html?classId=alpha05" class="example-link">
+          <div class="example-info">
+            <div class="example-icon">
+              <i class="fas fa-play-circle"></i>
+            </div>
+            <div class="example-details">
+              <div class="example-title">Alpha Class Stream</div>
+              <div class="example-class">classId=alpha05</div>
+            </div>
+          </div>
+          <div class="external-icon">
+            <i class="fas fa-external-link-alt"></i>
+          </div>
+        </a>
+
+        <a href="/smxstream-viewer.html?classId=beta12" class="example-link">
+          <div class="example-info">
+            <div class="example-icon">
+              <i class="fas fa-play-circle"></i>
+            </div>
+            <div class="example-details">
+              <div class="example-title">Beta Class Stream</div>
+              <div class="example-class">classId=beta12</div>
+            </div>
+          </div>
+          <div class="external-icon">
+            <i class="fas fa-external-link-alt"></i>
+          </div>
+        </a>
+
+        <a href="/smxstream-viewer.html?classId=gamma99" class="example-link">
+          <div class="example-info">
+            <div class="example-icon">
+              <i class="fas fa-play-circle"></i>
+            </div>
+            <div class="example-details">
+              <div class="example-title">Gamma Class Stream</div>
+              <div class="example-class">classId=gamma99</div>
+            </div>
+          </div>
+          <div class="external-icon">
+            <i class="fas fa-external-link-alt"></i>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <div class="demo-section">
+      <div class="section-title">
+        <i class="fas fa-cogs"></i>
+        How It Works
+      </div>
+      
+      <div class="instructions">
+        <h3>Complete Flow:</h3>
+        <ol>
+          <li><strong>Instructor:</strong> Opens Stream Mode and selects a class</li>
+          <li><strong>OBS Setup:</strong> Connects to OBS Studio v31+ via WebSocket</li>
+          <li><strong>RTMP Stream:</strong> OBS streams to <code>rtmp://198.211.107.134/live/&lt;classId&gt;</code></li>
+          <li><strong>HLS Conversion:</strong> Server transcodes RTMP to HLS chunks</li>
+          <li><strong>Student Access:</strong> Students visit viewer with <code>?classId=&lt;classId&gt;</code></li>
+          <li><strong>Auto-Connect:</strong> Viewer automatically detects and plays HLS stream</li>
+          <li><strong>Real-time Updates:</strong> Socket.IO handles viewer tracking and notifications</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="demo-section">
+      <div class="section-title">
+        <i class="fas fa-code"></i>
+        Technical Details
+      </div>
+      
+      <p style="margin-bottom: 1rem; color: var(--text-secondary);">
+        The system uses the following technology stack:
+      </p>
+      
+      <div class="code-snippet">
+OBS Studio → RTMP → DigitalOcean Server → HLS → Student Browser
+      </div>
+      
+      <div style="text-align: left; color: var(--text-secondary); font-size: 0.9rem;">
+        <p><strong>Server:</strong> 198.211.107.134 (DigitalOcean)</p>
+        <p><strong>RTMP Endpoint:</strong> rtmp://198.211.107.134/live/</p>
+        <p><strong>HLS Endpoint:</strong> http://198.211.107.134/hls/</p>
+        <p><strong>WebSocket:</strong> Real-time viewer tracking and notifications</p>
+        <p><strong>Video Player:</strong> HLS.js with automatic quality switching</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

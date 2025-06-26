@@ -57,11 +57,68 @@ const tempUpload = multer({
   storage: tempStorage,
   limits: { fileSize: 500 * 1024 * 1024 }, // 500MB limit
   fileFilter: (req, file, cb) => {
-    if (file.mimetype === 'video/mp4') {
+    if (file.mimetype.startsWith('video/')) {
       cb(null, true);
     } else {
-      cb(new Error('Only MP4 files are allowed for streaming'));
+      cb(new Error('Only video files are allowed for streaming'));
     }
+  }
+});
+
+// Video upload for streaming
+router.post('/upload-video', auth(['admin', 'instructor']), tempUpload.single('video'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No video file uploaded' });
+    }
+
+    const { classId } = req.body;
+    
+    if (!classId) {
+      return res.status(400).json({ error: 'Class ID is required' });
+    }
+
+    // Check if user has access to this class
+    const classObj = await Class.findById(classId);
+    
+    if (!classObj) {
+      return res.status(404).json({ error: 'Class not found' });
+    }
+    
+    if (req.user.role !== 'admin' && 
+        !classObj.instructors.includes(req.user.id) && 
+        classObj.instructorId?.toString() !== req.user.id) {
+      return res.status(403).json({ error: 'Not authorized for this class' });
+    }
+
+    // Move file to permanent location
+    const permanentDir = path.join(__dirname, '..', 'uploads', 'streaming');
+    if (!fs.existsSync(permanentDir)) {
+      fs.mkdirSync(permanentDir, { recursive: true });
+    }
+
+    const permanentPath = path.join(permanentDir, req.file.filename);
+    fs.renameSync(req.file.path, permanentPath);
+
+    // TODO: Here you would typically:
+    // 1. Upload to DigitalOcean Spaces
+    // 2. Trigger HLS transcoding
+    // 3. Return the streaming URL
+    
+    // For now, return the local path for OBS to use
+    res.json({
+      success: true,
+      videoPath: permanentPath,
+      filename: req.file.filename,
+      originalName: req.file.originalname,
+      size: req.file.size,
+      // In production, this would be the DigitalOcean URL
+      streamUrl: `/uploads/streaming/${req.file.filename}`
+    });
+
+  } catch (error) {
+    console.error('❌ Error uploading video:', error);
+    res.status(500).json({ error: 'Server error uploading video' });
   }
 });
 
@@ -97,7 +154,75 @@ router.get('/key/:classId', auth(['admin', 'instructor']), async (req, res) => {
   }
 });
 
-// Stream control - Start stream
+// Stream control - Start stream (updated for new modes)
+router.post('/start', auth(['admin', 'instructor']), async (req, res) => {
+  const { classId, streamKey, rtmpUrl, streamMode } = req.body;
+  
+  try {
+    const classObj = await Class.findById(classId);
+    
+    if (!classObj) {
+      return res.status(404).json({ error: 'Class not found' });
+    }
+    
+    // Check if user is an instructor for this class
+    if (req.user.role !== 'admin' && 
+        !classObj.instructors.includes(req.user.id) && 
+        classObj.instructorId?.toString() !== req.user.id) {
+      return res.status(403).json({ error: 'Not authorized for this class' });
+    }
+    
+    // Update class status
+    classObj.streamStatus = 'live';
+    classObj.currentStreamSource = streamMode || 'webcam';
+    
+    await classObj.save();
+    
+    // Create or update stream session
+    let session = await StreamSession.findOne({ 
+      classId: classObj._id, 
+      status: { $ne: 'offline' } 
+    });
+    
+    if (!session) {
+      session = new StreamSession({
+        classId: classObj._id,
+        status: 'live',
+        startedAt: new Date(),
+        currentSource: streamMode || 'webcam',
+        streamMode: streamMode
+      });
+    } else {
+      session.status = 'live';
+      session.currentSource = streamMode || 'webcam';
+      session.streamMode = streamMode;
+    }
+    
+    await session.save();
+    
+    // Notify connected clients
+    const io = req.app.get('io');
+    io.to(`stream:${streamKey}`).emit('streamStatus', { 
+      status: 'live',
+      source: streamMode,
+      streamMode: streamMode
+    });
+    
+    res.json({ 
+      status: 'live',
+      session,
+      streamMode: streamMode,
+      streamUrl: process.env.HLS_SERVER_URL 
+        ? `${process.env.HLS_SERVER_URL}/live/${streamKey}/index.m3u8`
+        : `http://localhost:8888/live/${streamKey}/index.m3u8`
+    });
+  } catch (error) {
+    console.error('❌ Error starting stream:', error);
+    res.status(500).json({ error: 'Server error starting stream' });
+  }
+});
+
+// Legacy route for backward compatibility
 router.post('/start/:classId', auth(['admin', 'instructor']), async (req, res) => {
   try {
     const classObj = await Class.findById(req.params.classId);
@@ -229,7 +354,54 @@ router.post('/pause/:classId', auth(['admin', 'instructor']), async (req, res) =
   }
 });
 
-// Stream control - Stop stream
+// Stream control - Stop stream (updated)
+router.post('/stop', auth(['admin', 'instructor']), async (req, res) => {
+  const { classId } = req.body;
+  
+  try {
+    const classObj = await Class.findById(classId);
+    
+    if (!classObj) {
+      return res.status(404).json({ error: 'Class not found' });
+    }
+    
+    // Check if user is an instructor for this class
+    if (req.user.role !== 'admin' && 
+        !classObj.instructors.includes(req.user.id) && 
+        classObj.instructorId?.toString() !== req.user.id) {
+      return res.status(403).json({ error: 'Not authorized for this class' });
+    }
+    
+    // Update class status
+    classObj.streamStatus = 'offline';
+    await classObj.save();
+    
+    // Update session
+    const session = await StreamSession.findOne({ 
+      classId: classObj._id, 
+      status: { $ne: 'offline' } 
+    });
+    
+    if (session) {
+      session.status = 'offline';
+      session.endedAt = new Date();
+      await session.save();
+    }
+    
+    // Notify connected clients
+    const io = req.app.get('io');
+    if (classObj.streamKey) {
+      io.to(`stream:${classObj.streamKey}`).emit('streamStatus', { status: 'offline' });
+    }
+    
+    res.json({ status: 'offline' });
+  } catch (error) {
+    console.error('❌ Error stopping stream:', error);
+    res.status(500).json({ error: 'Server error stopping stream' });
+  }
+});
+
+// Legacy route for backward compatibility  
 router.post('/stop/:classId', auth(['admin', 'instructor']), async (req, res) => {
   try {
     const classObj = await Class.findById(req.params.classId);

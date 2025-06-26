@@ -620,6 +620,222 @@ io.on('connection', socket => {
     io.streamStates = new Map();
   }
   
+  // Initialize viewer tracking if not exists
+  if (!io.viewerTracking) {
+    io.viewerTracking = new Map(); // classId -> Set of viewerIds
+  }
+  
+  // Initialize viewer tracking if not exists
+  if (!io.viewerTracking) {
+    io.viewerTracking = new Map(); // classId -> Set of viewerIds
+  }
+  
+  // ===== FMV VIEWER HANDLERS =====
+  // Handle viewer joining stream
+  socket.on('join-stream', (data) => {
+    const { classId, viewerId } = data;
+    console.log(`📺 Viewer ${viewerId} joining stream for class: ${classId}`);
+    
+    // Join stream room
+    const streamRoom = `stream:${classId}`;
+    socket.join(streamRoom);
+    
+    // Track viewer
+    if (!io.viewerTracking.has(classId)) {
+      io.viewerTracking.set(classId, new Set());
+    }
+    io.viewerTracking.get(classId).add(viewerId);
+    
+    // Store viewer info on socket
+    socket.viewerId = viewerId;
+    socket.streamClassId = classId;
+    socket.streamRoom = streamRoom;
+    
+    // Update viewer count for instructors
+    const viewerCount = io.viewerTracking.get(classId).size;
+    io.to(streamRoom).emit('viewer-count', { classId, count: viewerCount });
+    
+    console.log(`👥 Viewer count for ${classId}: ${viewerCount}`);
+  });
+  
+  // Handle viewer actively watching (when video starts playing)
+  socket.on('viewer-joined', (data) => {
+    const { classId, viewerId } = data;
+    console.log(`▶️ Viewer ${viewerId} started watching class: ${classId}`);
+    
+    // Notify instructors in Stream Mode
+    const instructorRoom = `class:${classId}`;
+    io.to(instructorRoom).emit('viewer-joined', { 
+      viewerId, 
+      classId,
+      timestamp: new Date().toISOString()
+    });
+  });
+  
+  // Handle viewer leaving
+  socket.on('viewer-left', (data) => {
+    const { classId, viewerId } = data;
+    console.log(`📺 Viewer ${viewerId} left stream for class: ${classId}`);
+    
+    // Remove from tracking
+    if (io.viewerTracking.has(classId)) {
+      io.viewerTracking.get(classId).delete(viewerId);
+      
+      // Update viewer count
+      const viewerCount = io.viewerTracking.get(classId).size;
+      const streamRoom = `stream:${classId}`;
+      io.to(streamRoom).emit('viewer-count', { classId, count: viewerCount });
+      
+      // Notify instructors
+      const instructorRoom = `class:${classId}`;
+      io.to(instructorRoom).emit('viewer-left', { 
+        viewerId, 
+        classId,
+        timestamp: new Date().toISOString()
+      });
+      
+      console.log(`👥 Updated viewer count for ${classId}: ${viewerCount}`);
+    }
+  });
+  
+  // Handle stream status changes (from Stream Mode)
+  socket.on('stream:start', (data) => {
+    const { classId, streamKey, status, streamMode } = data;
+    console.log(`🔴 Stream started for class ${classId} (mode: ${streamMode})`);
+    
+    // Notify all viewers in the stream room
+    const streamRoom = `stream:${classId}`;
+    io.to(streamRoom).emit('stream-live', { 
+      classId, 
+      streamKey, 
+      status,
+      streamMode,
+      timestamp: new Date().toISOString()
+    });
+  });
+  
+  socket.on('stream:stop', (data) => {
+    const { classId, status } = data;
+    console.log(`⏹️ Stream stopped for class ${classId}`);
+    
+    // Notify all viewers in the stream room
+    const streamRoom = `stream:${classId}`;
+    io.to(streamRoom).emit('stream-offline', { 
+      classId, 
+      status,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Clear viewer tracking for this class
+    if (io.viewerTracking.has(classId)) {
+      io.viewerTracking.delete(classId);
+      console.log(`🧹 Cleared viewer tracking for class ${classId}`);
+    }
+  });
+  
+  // ===== FMV VIEWER HANDLERS =====
+  // Handle viewer joining stream
+  socket.on('join-stream', (data) => {
+    const { classId, viewerId } = data;
+    console.log(`📺 Viewer ${viewerId} joining stream for class: ${classId}`);
+    
+    // Join stream room
+    const streamRoom = `stream:${classId}`;
+    socket.join(streamRoom);
+    
+    // Track viewer
+    if (!io.viewerTracking.has(classId)) {
+      io.viewerTracking.set(classId, new Set());
+    }
+    io.viewerTracking.get(classId).add(viewerId);
+    
+    // Store viewer info on socket
+    socket.viewerId = viewerId;
+    socket.streamClassId = classId;
+    socket.streamRoom = streamRoom;
+    
+    // Update viewer count for instructors
+    const viewerCount = io.viewerTracking.get(classId).size;
+    io.to(streamRoom).emit('viewer-count', { classId, count: viewerCount });
+    
+    console.log(`👥 Viewer count for ${classId}: ${viewerCount}`);
+  });
+  
+  // Handle viewer actively watching (when video starts playing)
+  socket.on('viewer-joined', (data) => {
+    const { classId, viewerId } = data;
+    console.log(`▶️ Viewer ${viewerId} started watching class: ${classId}`);
+    
+    // Notify instructors in Stream Mode
+    const instructorRoom = `class:${classId}`;
+    io.to(instructorRoom).emit('viewer-joined', { 
+      viewerId, 
+      classId,
+      timestamp: new Date().toISOString()
+    });
+  });
+  
+  // Handle viewer leaving
+  socket.on('viewer-left', (data) => {
+    const { classId, viewerId } = data;
+    console.log(`📺 Viewer ${viewerId} left stream for class: ${classId}`);
+    
+    // Remove from tracking
+    if (io.viewerTracking.has(classId)) {
+      io.viewerTracking.get(classId).delete(viewerId);
+      
+      // Update viewer count
+      const viewerCount = io.viewerTracking.get(classId).size;
+      const streamRoom = `stream:${classId}`;
+      io.to(streamRoom).emit('viewer-count', { classId, count: viewerCount });
+      
+      // Notify instructors
+      const instructorRoom = `class:${classId}`;
+      io.to(instructorRoom).emit('viewer-left', { 
+        viewerId, 
+        classId,
+        timestamp: new Date().toISOString()
+      });
+      
+      console.log(`👥 Updated viewer count for ${classId}: ${viewerCount}`);
+    }
+  });
+  
+  // Handle stream status changes (from Stream Mode)
+  socket.on('stream:start', (data) => {
+    const { classId, streamKey, status, streamMode } = data;
+    console.log(`🔴 Stream started for class ${classId} (mode: ${streamMode})`);
+    
+    // Notify all viewers in the stream room
+    const streamRoom = `stream:${classId}`;
+    io.to(streamRoom).emit('stream-live', { 
+      classId, 
+      streamKey, 
+      status,
+      streamMode,
+      timestamp: new Date().toISOString()
+    });
+  });
+  
+  socket.on('stream:stop', (data) => {
+    const { classId, status } = data;
+    console.log(`⏹️ Stream stopped for class ${classId}`);
+    
+    // Notify all viewers in the stream room
+    const streamRoom = `stream:${classId}`;
+    io.to(streamRoom).emit('stream-offline', { 
+      classId, 
+      status,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Clear viewer tracking for this class
+    if (io.viewerTracking.has(classId)) {
+      io.viewerTracking.delete(classId);
+      console.log(`🧹 Cleared viewer tracking for class ${classId}`);
+    }
+  });
+  
   // ===== WEBRTC HANDLERS =====
   // Track WebRTC connections
   const webrtcRooms = new Map(); // classId -> { instructor: socketId, students: Set<socketId> }
@@ -1540,6 +1756,42 @@ io.on('connection', socket => {
           console.log(`👥 Updated viewer count after disconnect for ${socket.currentStreamRoom}: ${viewerCount}`);
           io.to(socket.currentStreamRoom).emit('viewerCount', { count: viewerCount });
         }
+      }
+    }
+    
+    // Handle FMV viewer disconnection
+    if (socket.viewerId && socket.streamClassId) {
+      const classId = socket.streamClassId;
+      const viewerId = socket.viewerId;
+      
+      console.log(`📺 FMV Viewer ${viewerId} disconnected from class: ${classId}`);
+      
+      // Remove from viewer tracking
+      if (io.viewerTracking && io.viewerTracking.has(classId)) {
+        io.viewerTracking.get(classId).delete(viewerId);
+        
+        // Update viewer count
+        const viewerCount = io.viewerTracking.get(classId).size;
+        const streamRoom = `stream:${classId}`;
+        io.to(streamRoom).emit('viewer-count', { classId, count: viewerCount });
+        
+        // Notify instructors in Stream Mode
+        const instructorRoom = `class:${classId}`;
+        io.to(instructorRoom).emit('viewer-left', { 
+          viewerId, 
+          classId,
+          reason: 'disconnected',
+          timestamp: new Date().toISOString()
+        });
+        
+        console.log(`👥 Updated FMV viewer count for ${classId}: ${viewerCount}`);
+        
+        // Clean up empty viewer tracking
+        if (io.viewerTracking.get(classId).size === 0) {
+          io.viewerTracking.delete(classId);
+          console.log(`🧹 Cleaned up empty viewer tracking for class ${classId}`);
+        }
+      }
       }
     }
     
