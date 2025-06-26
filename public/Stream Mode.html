@@ -872,7 +872,52 @@
             <button class="btn btn-danger btn-full" id="stopClassStreamBtn" disabled>
               ⏹️ Stop Stream
             </button>
-            
+            // Detect OBS WebSocket version
+    function detectOBSVersion() {
+      if (!obsWebSocket || obsWebSocket.readyState !== WebSocket.OPEN) {
+        return;
+      }
+      
+      // Try v5 first (OBS v28+)
+      try {
+        const helloMessage = {
+          op: 1, // Hello
+          d: {
+            rpcVersion: 1
+          }
+        };
+        console.log('📤 Sending v5 Hello message:', helloMessage);
+        obsWebSocket.send(JSON.stringify(helloMessage));
+        
+        // Set a timeout to fallback to v4 if no response
+        setTimeout(() => {
+          if (!obsWebSocketVersion) {
+            console.log('🔄 No v5 response, trying v4...');
+            sendOBSRequestV4('GetVersion');
+          }
+        }, 2000);
+      } catch (error) {
+        console.log('🔄 v5 failed, trying v4:', error);
+        sendOBSRequestV4('GetVersion');
+      }
+    }
+    
+    // Send OBS request (auto-detects version)
+    function sendOBSRequest(requestType, requestData = {}) {
+      if (!obsWebSocket || obsWebSocket.readyState !== WebSocket.OPEN) {
+        console.error('❌ OBS WebSocket not connected');
+        return;
+      }
+      
+      if (obsWebSocketVersion === 5) {
+        return sendOBSRequestV5(requestType, requestData);
+      } else {
+        return sendOBSRequestV4(requestType, requestData);
+      }
+    }
+    
+    // Send OBS WebSocket v4 request
+    function sendOBSRequestV4(requestType, requestData = {}) {
             <!-- Live Source Switching -->
             <div class="source-switching" id="sourceSwitching" style="display:none;">
               <div class="switch-title">🔄 Switch Source:</div>
@@ -893,7 +938,135 @@
 
       <!-- Right: OBS Configuration and Status -->
       <div class="right-panel">
-        <div class="panel-section">
+         return request['message-id'];
+    }
+    
+    // Send OBS WebSocket v5 request
+    function sendOBSRequestV5(requestType, requestData = {}) {
+      const requestId = `req_${requestIdCounter++}`;
+      const request = {
+        op: 6, // Request
+        d: {
+          requestType: requestType,
+          requestId: requestId,
+          requestData: requestData
+        }
+      };
+      
+      console.log('📤 Sending OBS v5 request:', request);
+      obsWebSocket.send(JSON.stringify(request));
+      return requestId;
+    }
+    
+    function handleOBSMessage(data) {
+      console.log('📥 OBS message received:', data);
+      
+      // Handle OBS WebSocket v5 messages
+      if (data.op !== undefined) {
+        switch (data.op) {
+          case 0: // Hello
+            console.log('📋 OBS v5 Hello received');
+            obsWebSocketVersion = 5;
+            addLogEntry('✅ OBS WebSocket v5 detected', 'success');
+            
+            // Send Identify message
+            const identifyMessage = {
+              op: 1, // Identify
+              d: {
+                rpcVersion: 1,
+                eventSubscriptions: 33 // Subscribe to stream events
+              }
+            };
+            obsWebSocket.send(JSON.stringify(identifyMessage));
+            break;
+            
+          case 2: // Identified
+            console.log('✅ OBS v5 Identified');
+            addLogEntry('✅ OBS WebSocket v5 connection established', 'success');
+            updateOBSStatus('Connected (v5)', 'connected');
+            enableStreamControls();
+            sendOBSRequest('GetVersion');
+            break;
+            
+          case 7: // RequestResponse
+            handleOBSV5Response(data.d);
+            break;
+            
+          case 5: // Event
+            handleOBSV5Event(data.d);
+            break;
+            
+          default:
+            console.log('📥 Unknown OBS v5 op code:', data.op);
+        }
+      }
+      // Handle OBS WebSocket v4 messages
+      else if (data['message-id'] || data['request-type']) {
+        obsWebSocketVersion = 4;
+        addLogEntry('✅ OBS WebSocket v4 detected', 'success');
+        updateOBSStatus('Connected (v4)', 'connected');
+        enableStreamControls();
+        
+        if (data['message-id']) {
+          // Response to a request
+          if (data.status === 'ok') {
+            addLogEntry(`✅ OBS v4: ${data['request-type']} successful`, 'success');
+          } else {
+            addLogEntry(`❌ OBS v4: ${data['request-type']} failed - ${data.error}`, 'error');
+          }
+        } else {
+          // Event from OBS
+          handleOBSV4Event(data);
+        }
+      }
+      else {
+        console.log('📥 Unknown OBS message format:', data);
+      }
+    }
+    
+    function enableStreamControls() {
+      // Enable stream controls
+      document.getElementById('startClassStreamBtn').disabled = !currentClassId;
+      document.getElementById('configureObsBtn').disabled = false;
+    }
+    
+    function handleOBSV5Response(responseData) {
+      console.log('📥 OBS v5 Response:', responseData);
+      
+      if (responseData.requestStatus && responseData.requestStatus.result) {
+        addLogEntry(`✅ OBS v5: ${responseData.requestType} successful`, 'success');
+        
+        // Handle specific responses
+        if (responseData.requestType === 'GetVersion') {
+          addLogEntry(`📋 OBS Version: ${responseData.responseData.obsVersion}`, 'info');
+        }
+      } else {
+        const error = responseData.requestStatus ? responseData.requestStatus.comment : 'Unknown error';
+        addLogEntry(`❌ OBS v5: ${responseData.requestType} failed - ${error}`, 'error');
+      }
+    }
+    
+    function handleOBSV5Event(eventData) {
+      console.log('📥 OBS v5 Event:', eventData);
+      
+      switch (eventData.eventType) {
+        case 'StreamStateChanged':
+          if (eventData.eventData.outputActive) {
+            addLogEntry('🔴 OBS v5: v4: Stream started', 'success');
+            updateStreamStatus('live');
+          } else {
+            addLogEntry('⏹️ OBS v5: v4: Stream stopped', 'info');
+            updateStreamStatus('offline');
+          }
+          break;
+        default:
+          console.log('📥 Unhandled OBS v5 event:', eventData.eventType);
+      }
+    }
+    
+
+    
+    function handleOBSV4 <div class="panel-section">
           <div class="section-title">🔧 OBS Studio Configuration</div>
           <div class="obs-config-panel" id="obsConfigPanel">
             <div class="config-item">
@@ -997,7 +1170,31 @@
     // ===== OBS STUDIO v31+ COMPATIBLE STREAM MODE =====
     // This version uses OBS WebSocket 5+ protocol for compatibility with OBS v31 and later
     // Requires obs-websocket-js@5.0.6 library loaded above
-    
+    if (obsWebSocketVersion === 5) {
+        // OBS WebSocket v5 - Set stream service settings
+        const streamServiceSettings = {
+          streamServiceType: 'rtmp_custom',
+          streamServiceSettings: {
+            server: RTMP_SERVER_URL,
+            key: streamKey
+          }
+        };
+        
+        sendOBSRequest('SetStreamServiceSettings', streamServiceSettings);
+        addLogEntry('⚙️ OBS v5: Stream service configured', 'info');
+      } else {
+        // OBS WebSocket v4 - Set output settings
+        const outputSettings = {
+          'output-name': 'SMX_RTMP_Output',
+          'output-settings': {
+            'server': RTMP_SERVER_URL,
+            'key': streamKey
+          }
+        };
+        
+        sendOBSRequest('SetOutputSettings', outputSettings);
+        addLogEntry('⚙️ OBS v4: RTMP output configured', 'info');
+      }
     // --- Configuration ---
     const apiBaseUrl = '/api';
     let currentClassId = null;
