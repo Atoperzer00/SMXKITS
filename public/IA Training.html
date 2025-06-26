@@ -1123,10 +1123,37 @@
       window.location.href = 'dashboard.html';
     }
 
+    // Test function to manually show training interface
+    function testShowTraining() {
+      console.log('TEST: Manually showing training interface');
+      currentModule = 1;
+      currentPractice = 1;
+      showTrainingInterface();
+    }
+
     // Initialize when DOM is loaded
     document.addEventListener('DOMContentLoaded', function() {
       console.log('DOM loaded, initializing...');
       init();
+      
+      // Add test button for debugging
+      setTimeout(function() {
+        console.log('Adding test button for debugging');
+        const testBtn = document.createElement('button');
+        testBtn.textContent = 'TEST: Show Training';
+        testBtn.style.position = 'fixed';
+        testBtn.style.top = '10px';
+        testBtn.style.right = '10px';
+        testBtn.style.zIndex = '9999';
+        testBtn.style.background = 'red';
+        testBtn.style.color = 'white';
+        testBtn.style.padding = '10px';
+        testBtn.style.borderRadius = '5px';
+        testBtn.style.border = 'none';
+        testBtn.style.cursor = 'pointer';
+        testBtn.onclick = testShowTraining;
+        document.body.appendChild(testBtn);
+      }, 1000);
     });
   </script>
 </body>
