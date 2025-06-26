@@ -842,7 +842,7 @@
     /* Group selection checkbox */
     .bubble-select-checkbox {
       position: absolute;
-      left: -38px;
+      left: -25px;
       top: 62px;
       width: 24px;
       height: 24px;
@@ -1221,13 +1221,13 @@
     }
     
     .menu-btn {
-      left: -38px;
+      left: -25px;
       top: 6px;
       line-height: 1;
     }
     
     .qc-btn {
-      left: -38px;
+      left: -25px;
       top: 34px;
     }
     
@@ -2253,7 +2253,10 @@
       html += `<span> <strong>Location:</strong> ${(data.location || 'Not specified').toUpperCase()}</span>`;
       html += `<div style="text-align: right; font-size: 12px;">`;
       html += `<div> ${(data.mgrs || 'Not specified').toUpperCase()}</div>`;
-      html += `<div>S: ${(data.slant || 'N/A').toUpperCase()}     V: ${data.vehicles !== undefined ? data.vehicles : '0'}</div>`;
+      // Debug: Log SLANT and vehicles values
+      console.log('SLANT value for display:', data.slant, 'Type:', typeof data.slant);
+      console.log('Vehicles value for display:', data.vehicles, 'Type:', typeof data.vehicles);
+      html += `<div>S: ${(data.slant && data.slant.trim() !== '' ? data.slant : 'N/A').toUpperCase()}     V: ${data.vehicles !== undefined && data.vehicles !== null ? data.vehicles : '0'}</div>`;
       html += `</div>`;
       html += `</div>`;
       
@@ -2269,7 +2272,8 @@
       }
       
       // Target Status - styled to match follow display
-      if (data.targetStatus) {
+      console.log('Target Status value for display:', data.targetStatus, 'Type:', typeof data.targetStatus);
+      if (data.targetStatus && data.targetStatus.trim() !== '') {
         const statusClass = data.targetStatus === 'ON TARGET' ? 'target-status-on' : 'target-status-off';
         html += `<div class="target-status-display">`;
         html += `<div class="target-status-header">`;
@@ -2277,6 +2281,8 @@
         html += `<span class="target-status-value ${statusClass}">${data.targetStatus}</span>`;
         html += `</div>`;
         html += `</div>`;
+      } else {
+        console.log('Target Status is empty or undefined, not displaying');
       }
       
       // Follow section - name on left, stage on right, ID below
