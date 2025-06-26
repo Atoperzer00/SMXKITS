@@ -1855,11 +1855,22 @@
     }
     
     try {
-      console.log("Log form submitted");
+      console.log("=== FORM SUBMISSION DEBUG ===");
       console.log("Form element:", form);
       console.log("Form ID:", form.id);
       console.log("Form has elements:", !!form.elements);
       console.log("Number of form elements:", form.elements.length);
+      
+      // Test specific elements
+      console.log("Testing element access:");
+      console.log("- zulu element:", form.elements.zulu);
+      console.log("- zulu value:", form.elements.zulu?.value);
+      console.log("- slant element:", form.elements.slant);
+      console.log("- slant value:", form.elements.slant?.value);
+      console.log("- vehicles element:", form.elements.vehicles);
+      console.log("- vehicles value:", form.elements.vehicles?.value);
+      console.log("- targetStatus element:", form.elements.targetStatus);
+      console.log("- targetStatus value:", form.elements.targetStatus?.value);
       
       // Use form.elements to avoid conflicts with duplicate field names on page
       const data = {
