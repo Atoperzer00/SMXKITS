@@ -546,7 +546,7 @@
       
       <!-- Slide Viewer -->
       <div class="slide-container">
-        <img id="currentSlide" class="slide-image" src="INTRODUCTION TO FMV/SLIDE 1.jpg" alt="Current Slide" />
+        <img id="currentSlide" class="slide-image" src="" alt="Current Slide" />
         <div class="slide-controls">
           <button id="prevSlide" class="slide-control-btn">
             <i class="fas fa-chevron-left"></i>
@@ -663,7 +663,7 @@
         },
         f3ead: {
           title: 'F3EAD',
-          slideCount: 20,
+          slideCount: 37,
           basePath: 'F3EAD/F3EAD/',
           slides: [
             'SLIDE 1.jpg',
@@ -685,7 +685,24 @@
             'SLIDE 17.jpg',
             'SLIDE 18.jpg',
             'SLIDE 19.jpg',
-            'SLIDE 20.jpg'
+            'SLIDE 20.jpg',
+            'SLIDE 21.jpg',
+            'SLIDE 22.jpg',
+            'SLIDE 23.jpg',
+            'SLIDE 24.jpg',
+            'SLIDE 25.jpg',
+            'SLIDE 26.jpg',
+            'SLIDE 27.jpg',
+            'SLIDE 28.jpg',
+            'SLIDE 29.jpg',
+            'SLIDE 30.jpg',
+            'SLIDE 31.jpg',
+            'SLIDE 32.jpg',
+            'SLIDE 33.jpg',
+            'SLIDE 34.jpg',
+            'SLIDE 35.jpg',
+            'SLIDE 36.jpg',
+            'SLIDE 37.jpg'
           ]
         }
       };
@@ -753,7 +770,9 @@
       function updateSlideDisplay() {
         const module = modules[currentModule];
         const slideFileName = module.slides[currentSlide - 1];
-        currentSlideEl.src = `${module.basePath}${slideFileName}`;
+        // Properly encode the URL to handle spaces
+        const encodedPath = encodeURI(`${module.basePath}${slideFileName}`);
+        currentSlideEl.src = encodedPath;
         currentSlideNumEl.textContent = currentSlide;
         
         // Update button states
@@ -765,6 +784,9 @@
         currentSlideEl.onload = function() {
           this.style.opacity = '1';
         };
+        
+        // Debug: log the path being used
+        console.log('Loading slide:', encodedPath);
       }
     });
 
