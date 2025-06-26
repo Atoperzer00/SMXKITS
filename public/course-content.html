@@ -525,7 +525,7 @@
     <main class="course-content">
       <!-- Header -->
       <div class="course-header">
-        <h1 class="course-title">mIRC Setup & Overview</h1>
+        <h1 class="course-title">INTRODUCTION TO FMV</h1>
         <div class="user-info">
           <div class="user-avatar" id="userAvatar">S</div>
           <span id="studentName">Student</span>
@@ -539,16 +539,14 @@
           Select Training Module
         </label>
         <select id="moduleSelect" class="module-select">
-          <option value="mirc">mIRC Setup and Overview</option>
-          <option value="module2">Advanced mIRC Configuration</option>
-          <option value="module3">Network Operations</option>
-          <option value="module4">Troubleshooting Guide</option>
+          <option value="fmv">INTRODUCTION TO FMV</option>
+          <option value="f3ead">F3EAD</option>
         </select>
       </div>
       
       <!-- Slide Viewer -->
       <div class="slide-container">
-        <img id="currentSlide" class="slide-image" src="MIRC PRESENTATION/mIRC SETUP AND OVERVIEW 01.jpg" alt="Current Slide" />
+        <img id="currentSlide" class="slide-image" src="INTRODUCTION TO FMV/SLIDE 1.jpg" alt="Current Slide" />
         <div class="slide-controls">
           <button id="prevSlide" class="slide-control-btn">
             <i class="fas fa-chevron-left"></i>
@@ -556,7 +554,7 @@
           </button>
           <div class="slide-counter">
             <i class="fas fa-images"></i>
-            Slide <span id="currentSlideNum">1</span> of <span id="totalSlides">9</span>
+            Slide <span id="currentSlideNum">1</span> of <span id="totalSlides">20</span>
           </div>
           <button id="nextSlide" class="slide-control-btn">
             Next
@@ -576,24 +574,24 @@
         </div>
         <div class="notes-content" id="notesContent">
           <div class="note-item">
-            <div class="note-title">Slide 1: Introduction to mIRC</div>
-            <div class="note-text">Emphasize the importance of proper mIRC configuration for secure military communications. Highlight the key features that make mIRC suitable for tactical operations.</div>
+            <div class="note-title">Slide 1</div>
+            <div class="note-text">Instructor notes will go here</div>
           </div>
           <div class="note-item">
-            <div class="note-title">Slide 2: Installation Requirements</div>
-            <div class="note-text">Ensure students understand system requirements and security protocols. Mention the importance of using approved versions only in operational environments.</div>
+            <div class="note-title">Slide 2</div>
+            <div class="note-text">Instructor notes will go here</div>
           </div>
           <div class="note-item">
-            <div class="note-title">Slide 3: Network Configuration</div>
-            <div class="note-text">Walk through each network setting carefully. Students often struggle with proxy configurations - be prepared to provide additional examples.</div>
+            <div class="note-title">Slide 3</div>
+            <div class="note-text">Instructor notes will go here</div>
           </div>
           <div class="note-item">
-            <div class="note-title">Slide 4: Security Settings</div>
-            <div class="note-text">Critical section - emphasize OPSEC considerations. Discuss the importance of encryption settings and secure channel management.</div>
+            <div class="note-title">Slide 4</div>
+            <div class="note-text">Instructor notes will go here</div>
           </div>
           <div class="note-item">
-            <div class="note-title">Common Issues & Solutions</div>
-            <div class="note-text">Be prepared to address connection timeouts, authentication failures, and firewall conflicts. Have backup slides ready for troubleshooting scenarios.</div>
+            <div class="note-title">Slide 5</div>
+            <div class="note-text">Instructor notes will go here</div>
           </div>
         </div>
       </div>
@@ -636,44 +634,64 @@
 
       // Slide configuration for different modules
       const modules = {
-        mirc: {
-          title: 'mIRC Setup and Overview',
-          slideCount: 9,
-          basePath: 'MIRC PRESENTATION/',
+        fmv: {
+          title: 'INTRODUCTION TO FMV',
+          slideCount: 20,
+          basePath: 'INTRODUCTION TO FMV/',
           slides: [
-            'mIRC SETUP AND OVERVIEW 01.jpg',
-            'mIRC SETUP AND OVERVIEW 02.jpg',
-            'mIRC SETUP AND OVERVIEW 03.jpg',
-            'mIRC SETUP AND OVERVIEW 04.jpg',
-            'mIRC SETUP AND OVERVIEW 05.jpg',
-            'mIRC SETUP AND OVERVIEW 06.jpg',
-            'mIRC SETUP AND OVERVIEW 07.jpg',
-            'mIRC SETUP AND OVERVIEW 08.jpg',
-            'mIRC SETUP AND OVERVIEW 09.jpg'
+            'SLIDE 1.jpg',
+            'SLIDE 2.jpg',
+            'SLIDE 3.jpg',
+            'SLIDE 4.jpg',
+            'SLIDE 5.jpg',
+            'SLIDE 6.jpg',
+            'SLIDE 7.jpg',
+            'SLIDE 8.jpg',
+            'SLIDE 9.jpg',
+            'SLIDE 10.jpg',
+            'SLIDE 11.jpg',
+            'SLIDE 12.jpg',
+            'SLIDE 13.jpg',
+            'SLIDE 14.jpg',
+            'SLIDE 15.jpg',
+            'SLIDE 16.jpg',
+            'SLIDE 17.jpg',
+            'SLIDE 18.jpg',
+            'SLIDE 19.jpg',
+            'SLIDE 20.jpg'
           ]
         },
-        module2: {
-          title: 'Advanced mIRC Configuration',
-          slideCount: 12,
-          basePath: 'slides/module2/',
-          slides: Array.from({length: 12}, (_, i) => `slide${i + 1}.jpg`)
-        },
-        module3: {
-          title: 'Network Operations',
-          slideCount: 15,
-          basePath: 'slides/module3/',
-          slides: Array.from({length: 15}, (_, i) => `slide${i + 1}.jpg`)
-        },
-        module4: {
-          title: 'Troubleshooting Guide',
-          slideCount: 8,
-          basePath: 'slides/module4/',
-          slides: Array.from({length: 8}, (_, i) => `slide${i + 1}.jpg`)
+        f3ead: {
+          title: 'F3EAD',
+          slideCount: 20,
+          basePath: 'F3EAD/F3EAD/',
+          slides: [
+            'SLIDE 1.jpg',
+            'SLIDE 2.jpg',
+            'SLIDE 3.jpg',
+            'SLIDE 4.jpg',
+            'SLIDE 5.jpg',
+            'SLIDE 6.jpg',
+            'SLIDE 7.jpg',
+            'SLIDE 8.jpg',
+            'SLIDE 9.jpg',
+            'SLIDE 10.jpg',
+            'SLIDE 11.jpg',
+            'SLIDE 12.jpg',
+            'SLIDE 13.jpg',
+            'SLIDE 14.jpg',
+            'SLIDE 15.jpg',
+            'SLIDE 16.jpg',
+            'SLIDE 17.jpg',
+            'SLIDE 18.jpg',
+            'SLIDE 19.jpg',
+            'SLIDE 20.jpg'
+          ]
         }
       };
 
       // Current state
-      let currentModule = 'mirc';
+      let currentModule = 'fmv';
       let currentSlide = 1;
       
       // DOM elements
