@@ -842,7 +842,7 @@
     /* Group selection checkbox */
     .bubble-select-checkbox {
       position: absolute;
-      left: -25px;
+      left: -15px;
       top: 62px;
       width: 24px;
       height: 24px;
@@ -1221,13 +1221,13 @@
     }
     
     .menu-btn {
-      left: -25px;
+      left: -15px;
       top: 6px;
       line-height: 1;
     }
     
     .qc-btn {
-      left: -25px;
+      left: -15px;
       top: 34px;
     }
     
@@ -1857,14 +1857,36 @@
     try {
       console.log("Log form submitted");
       
-      const formData = new FormData(form);
-      const data = Object.fromEntries(formData.entries());
+      // Use form.elements to avoid conflicts with duplicate field names on page
+      const data = {
+        classification: form.elements.classification?.value || '',
+        asset: form.elements.asset?.value || '',
+        sensor: form.elements.sensor?.value || '',
+        operation: form.elements.operation?.value || '',
+        countryCode: form.elements.countryCode?.value || '',
+        team: form.elements.team?.value || '',
+        zulu: form.elements.zulu?.value || '',
+        mgrs: form.elements.mgrs?.value || '',
+        location: form.elements.location?.value || '',
+        activity: form.elements.activity?.value || '',
+        iaNotes: form.elements.iaNotes?.value || '',
+        slant: form.elements.slant?.value || '',
+        vehicles: form.elements.vehicles?.value || '0',
+        targetStatus: form.elements.targetStatus?.value || ''
+      };
       
       // Debug: Log the form data to see what's being submitted
       console.log('Form data being submitted:', data);
+      console.log('Form ID:', form.id);
       console.log('SLANT value:', data.slant);
       console.log('Vehicles value:', data.vehicles);
       console.log('Target Status value:', data.targetStatus);
+      
+      // Debug: Check form elements directly
+      console.log('Direct form element values:');
+      console.log('SLANT element value:', form.elements.slant?.value);
+      console.log('Vehicles element value:', form.elements.vehicles?.value);
+      console.log('Target Status element value:', form.elements.targetStatus?.value);
       
       // Additional debugging - check form elements directly
       console.log('Form elements check:');
