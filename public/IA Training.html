@@ -4,136 +4,1130 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>IA Training - SMX KITS</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
-    .zoom-in { transform: scale(1.5); transition: transform .3s; }
-    .zoom-out { transform: scale(1); transition: transform .3s; }
-    .video-container { overflow: hidden; border-radius: 1rem; }
-    /* You can expand styling as needed */
+    :root {
+      --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      --dark-gradient: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 100%);
+      --card-gradient: linear-gradient(145deg, #16213e 0%, #0f1419 100%);
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --text-primary: #ffffff;
+      --text-secondary: #b8c5d6;
+      --text-accent: #64b5f6;
+      --shadow-primary: 0 20px 40px rgba(0, 0, 0, 0.3);
+      --shadow-hover: 0 30px 60px rgba(0, 0, 0, 0.4);
+      --border-radius: 20px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      --accent-color: #22c55e;
+      --input-bg: #252a33;
+      --input-border: #333c48;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--dark-gradient);
+      color: var(--text-primary);
+      overflow-x: hidden;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* Animated background particles */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.1) 0%, transparent 50%);
+      z-index: -1;
+      animation: float 20s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      33% { transform: translateY(-20px) rotate(1deg); }
+      66% { transform: translateY(10px) rotate(-1deg); }
+    }
+
+    .training-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Left Sidebar - Module Picker */
+    .module-sidebar {
+      width: 320px;
+      background: rgba(15, 20, 25, 0.95);
+      backdrop-filter: blur(20px);
+      border-right: 1px solid var(--glass-border);
+      display: flex;
+      flex-direction: column;
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .module-sidebar::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, rgba(102, 126, 234, 0.1) 0%, transparent 100%);
+      z-index: -1;
+    }
+
+    .sidebar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .sidebar-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .back-button {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      padding: 0.5rem 1rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .back-button:hover {
+      background: var(--accent-gradient);
+      color: white;
+      transform: translateX(-2px);
+    }
+
+    .tool-card {
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      padding: 1.5rem;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+
+    .tool-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--primary-gradient);
+      opacity: 0;
+      transition: var(--transition);
+    }
+
+    .tool-card:hover::before {
+      opacity: 0.1;
+    }
+
+    .tool-card:hover {
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: var(--shadow-hover);
+      border-color: rgba(102, 126, 234, 0.5);
+    }
+
+    .tool-card.active {
+      border-color: rgba(102, 126, 234, 0.8);
+      background: linear-gradient(145deg, #1a2a4e 0%, #0f1419 100%);
+    }
+
+    .tool-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+
+    .practices-list {
+      display: none;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--glass-border);
+    }
+
+    .practices-list.active {
+      display: block;
+    }
+
+    .practice-button {
+      display: block;
+      width: 100%;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: var(--transition);
+      margin-bottom: 0.5rem;
+      text-align: left;
+    }
+
+    .practice-button:hover {
+      background: var(--accent-gradient);
+      color: white;
+      transform: translateX(5px);
+    }
+
+    .practice-button.active {
+      background: var(--secondary-gradient);
+      color: white;
+    }
+
+    /* Middle Column - Input Form */
+    .input-sidebar {
+      width: 400px;
+      background: rgba(15, 20, 25, 0.95);
+      backdrop-filter: blur(20px);
+      border-right: 1px solid var(--glass-border);
+      display: flex;
+      flex-direction: column;
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .input-sidebar::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, rgba(34, 197, 94, 0.08) 0%, transparent 100%);
+      z-index: -1;
+    }
+
+    .input-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      height: 100%;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-accent);
+      margin-bottom: 0.5rem;
+    }
+
+    .form-input, .form-textarea {
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 10px;
+      padding: 0.75rem;
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      transition: var(--transition);
+    }
+
+    .form-input:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 120px;
+      flex: 1;
+    }
+
+    .submit-btn {
+      background: var(--accent-color);
+      border: none;
+      border-radius: 15px;
+      padding: 1rem 2rem;
+      color: white;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      margin-top: auto;
+    }
+
+    .submit-btn:hover {
+      background: #16a34a;
+      transform: translateY(-2px);
+      box-shadow: 0 15px 35px rgba(34, 197, 94, 0.4);
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Right Content Area */
+    .training-content {
+      flex: 1;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .instruction-header {
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      padding: 1.5rem;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+      text-align: center;
+    }
+
+    .instruction-text {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--text-accent);
+      margin: 0;
+    }
+
+    .video-section {
+      flex: 1;
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      padding: 1.5rem;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+      display: flex;
+      flex-direction: column;
+      min-height: 500px;
+    }
+
+    .video-container {
+      flex: 1;
+      position: relative;
+      background: #000;
+      border-radius: 15px;
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+
+    .training-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    .video-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      background: rgba(0, 0, 0, 0.8);
+      border-radius: 10px;
+    }
+
+    .play-pause-btn {
+      background: var(--accent-gradient);
+      border: none;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      color: white;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .play-pause-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 10px 25px rgba(79, 172, 254, 0.4);
+    }
+
+    .progress-container {
+      flex: 1;
+      margin: 0 1rem;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: var(--accent-gradient);
+      width: 0%;
+      transition: width 0.1s ease;
+    }
+
+    .zoom-controls {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .zoom-btn {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 0.5rem;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .zoom-btn:hover {
+      background: var(--primary-gradient);
+      color: white;
+    }
+
+    /* Welcome Section */
+    .welcome-section {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .welcome-card {
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      padding: 3rem;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+      max-width: 800px;
+      width: 100%;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .welcome-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--primary-gradient);
+      opacity: 0.05;
+      z-index: -1;
+    }
+
+    .welcome-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .welcome-icon {
+      font-size: 3rem;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .welcome-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin: 0;
+    }
+
+    .welcome-content {
+      margin-bottom: 2rem;
+    }
+
+    .welcome-text {
+      font-size: 1.1rem;
+      line-height: 1.8;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+      text-align: left;
+    }
+
+    .welcome-text.highlight {
+      color: var(--text-accent);
+      font-weight: 600;
+      text-align: center;
+      font-size: 1.2rem;
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background: var(--glass-bg);
+      border-radius: 10px;
+      border: 1px solid var(--glass-border);
+    }
+
+    .welcome-footer {
+      display: flex;
+      justify-content: center;
+    }
+
+    .instruction-badge {
+      background: var(--secondary-gradient);
+      color: white;
+      padding: 1rem 2rem;
+      border-radius: 50px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    /* Callout Comparison Overlay */
+    .callout-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .callout-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .callout-content {
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-hover);
+      max-width: 90%;
+      max-height: 90%;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      min-width: 800px;
+    }
+
+    .callout-card {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 15px;
+      padding: 1.5rem;
+      position: relative;
+    }
+
+    .callout-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .callout-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--text-accent);
+    }
+
+    .callout-type {
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .callout-type.user {
+      background: var(--secondary-gradient);
+      color: white;
+    }
+
+    .callout-type.instructor {
+      background: var(--accent-color);
+      color: white;
+    }
+
+    .callout-body {
+      color: var(--text-primary);
+      line-height: 1.6;
+      font-size: 1rem;
+    }
+
+    .close-overlay-btn {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      color: white;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .close-overlay-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: scale(1.1);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+      .training-layout {
+        flex-direction: column;
+      }
+      
+      .module-sidebar, .input-sidebar {
+        width: 100%;
+        height: auto;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+      
+      .callout-content {
+        min-width: auto;
+        max-width: 95%;
+      }
+    }
   </style>
 </head>
-<body class="bg-[#0f172a] text-white min-h-screen font-sans">
-  <div class="flex min-h-screen">
-    <!-- Sidebar (copy/adapted from OpsLog) -->
-    <aside class="w-80 bg-[#2b2b2b] rounded-3xl m-6 p-4 shadow-2xl flex flex-col" id="opsSidebar">
-      <div class="flex items-center mb-6 justify-between">
-        <div class="text-2xl font-bold">IA Training</div>
-        <button onclick="goBack()" class="text-zinc-400 hover:text-blue-400 text-lg">← Back</button>
+<body>
+  <div class="training-layout">
+    <!-- Left Sidebar - Module Picker -->
+    <aside class="module-sidebar">
+      <div class="sidebar-header">
+        <h1 class="sidebar-title">IA Training</h1>
+        <button class="back-button" onclick="goBack()">
+          <i class="fas fa-arrow-left"></i>
+          Back
+        </button>
       </div>
-      <!-- You can simplify fields for IA Training if needed -->
-      <form id="iaForm" class="flex-1 flex flex-col gap-2">
-        <label>IA Notes
-          <textarea name="iaNotes" rows="4" class="rounded-md bg-zinc-800/60 border border-zinc-700 p-2 text-white"></textarea>
-        </label>
-        <!-- Add more fields if desired -->
-        <button type="button" id="generateCall" class="mt-auto bg-green-500 hover:bg-green-700 text-white font-bold py-2 rounded-xl transition">
-          Generate Call
+      
+      <div id="modules-container">
+        <!-- Modules will be generated here -->
+      </div>
+    </aside>
+
+    <!-- Middle Column - Input Form -->
+    <aside class="input-sidebar hidden" id="input-sidebar">
+      <div class="sidebar-header">
+        <h2 class="sidebar-title">Ops Log</h2>
+      </div>
+      
+      <form class="input-form" id="ia-form">
+        <div class="form-group">
+          <label class="form-label">Date/Time</label>
+          <input type="text" class="form-input" id="datetime" placeholder="Enter date/time">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Location</label>
+          <input type="text" class="form-input" id="location" placeholder="Enter location">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Activity Type</label>
+          <select class="form-input" id="activity-type">
+            <option value="">Select activity type</option>
+            <option value="Movement">Movement</option>
+            <option value="Communication">Communication</option>
+            <option value="Vehicle">Vehicle Activity</option>
+            <option value="Personnel">Personnel Activity</option>
+            <option value="Equipment">Equipment Activity</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="form-textarea" id="description" placeholder="Enter detailed description of observed activity..."></textarea>
+        </div>
+        
+        <button type="button" class="submit-btn" id="submit-callout" onclick="submitCallout()">
+          Submit Callout
         </button>
       </form>
     </aside>
     
-    <!-- Main Content -->
-    <main class="flex-1 p-10">
-      <h1 class="text-3xl font-extrabold mb-6 text-white">IA Training Modules</h1>
-      <!-- Modules/Practices List -->
-      <div class="bg-zinc-900/90 rounded-3xl p-8 shadow-2xl mb-8">
-        <div class="font-semibold text-white text-lg mb-6">Modules</div>
-        <div id="modules-list" class="flex gap-6">
-          <!-- Modules rendered here by JS -->
+    <!-- Right Content Area -->
+    <main class="training-content">
+      <!-- Welcome Information -->
+      <div class="welcome-section" id="welcome-section">
+        <div class="welcome-card">
+          <div class="welcome-header">
+            <i class="fas fa-satellite-dish welcome-icon"></i>
+            <h2 class="welcome-title">Welcome to IA Training</h2>
+          </div>
+          <div class="welcome-content">
+            <p class="welcome-text">
+              IA Training helps you practice creating intelligence callouts based on imagery analysis.
+            </p>
+            <p class="welcome-text">
+              Start by choosing a module and selecting a practice scenario. You'll see imagery or video footage.
+            </p>
+            <p class="welcome-text">
+              Fill out the ops log form with your observations and analysis. Include details about activity, location, and significance.
+            </p>
+            <p class="welcome-text">
+              When you submit, you'll see your callout compared with an instructor-generated reference callout.
+            </p>
+            <p class="welcome-text highlight">
+              This tool builds skills in imagery analysis, intelligence reporting, and tactical awareness.
+            </p>
+          </div>
+          <div class="welcome-footer">
+            <div class="instruction-badge">
+              <i class="fas fa-arrow-left"></i>
+              Select a module to begin training
+            </div>
+          </div>
         </div>
       </div>
-      <!-- Practices for selected module -->
-      <div id="practices-list" class="mb-8"></div>
+      
+      <!-- Instruction Header -->
+      <div class="instruction-header hidden" id="instruction-header">
+        <p class="instruction-text">Analyze the imagery and create an intelligence callout for the observed activity.</p>
+      </div>
+      
+      <!-- Video Section -->
+      <div class="video-section hidden" id="video-section">
+        <div class="video-container">
+          <video id="training-video" class="training-video" loop muted>
+            <source src="demo-loop.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+          </video>
+        </div>
+        
+        <div class="video-controls">
+          <button class="play-pause-btn" id="play-pause-btn">
+            <i class="fas fa-play"></i>
+          </button>
+          
+          <div class="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+          </div>
+          
+          <div class="zoom-controls">
+            <button class="zoom-btn" onclick="zoomVideo(-0.1)">
+              <i class="fas fa-search-minus"></i>
+            </button>
+            <button class="zoom-btn" onclick="zoomVideo(0.1)">
+              <i class="fas fa-search-plus"></i>
+            </button>
+          </div>
+        </div>
+      </div>
     </main>
   </div>
   
-  <!-- Overlay: Video Player, Sidebar, and Callout Entry -->
-  <div id="iaOverlay" class="fixed inset-0 bg-[#10131b]/90 flex items-center justify-center z-50 hidden">
-    <div class="flex bg-zinc-900/95 rounded-2xl shadow-2xl overflow-hidden w-[1000px] max-w-full">
-      <!-- Left: Sidebar (same as left, with fewer fields if desired) -->
-      <div class="w-80 bg-[#23272e] p-6 flex flex-col">
-        <div class="text-lg font-bold mb-2">Ops Log (Demo)</div>
-        <textarea id="overlayIaNotes" rows="8" class="rounded-md bg-zinc-800/60 border border-zinc-700 p-2 text-white mb-4" placeholder="Write your call here..."></textarea>
-        <button onclick="generateCallout()" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 rounded-xl transition mt-auto">
-          Generate Call
-        </button>
-      </div>
-      <!-- Right: Video Player + Entry -->
-      <div class="flex-1 flex flex-col items-center justify-center p-8">
-        <div class="video-container w-[480px] h-[270px] mb-4 bg-black relative">
-          <video id="iaVideo" src="demo-loop.mp4" autoplay loop muted class="rounded-xl w-full h-full object-cover zoom-out"></video>
-          <button id="zoomBtn" class="absolute top-3 right-3 bg-zinc-800/70 rounded-lg px-3 py-1 text-xs text-white shadow" onclick="toggleZoom()">Toggle Zoom</button>
+  <!-- Callout Comparison Overlay -->
+  <div class="callout-overlay" id="callout-overlay">
+    <div class="callout-content">
+      <button class="close-overlay-btn" onclick="closeCalloutOverlay()">
+        <i class="fas fa-times"></i>
+      </button>
+      
+      <div class="callout-card">
+        <div class="callout-header">
+          <h3 class="callout-title">Your Callout</h3>
+          <span class="callout-type user">Student Generated</span>
         </div>
-        <textarea class="w-full bg-zinc-800/60 border border-zinc-700 rounded-lg p-2 text-white mb-2" rows="3" placeholder="Type a call or note here..."></textarea>
+        <div class="callout-body" id="user-callout">
+          <!-- User's callout will be displayed here -->
+        </div>
+      </div>
+      
+      <div class="callout-card">
+        <div class="callout-header">
+          <h3 class="callout-title">Instructor Callout</h3>
+          <span class="callout-type instructor">Reference</span>
+        </div>
+        <div class="callout-body" id="instructor-callout">
+          <!-- Instructor's reference callout will be displayed here -->
+        </div>
       </div>
     </div>
-    <!-- Close overlay -->
-    <button onclick="closeOverlay()" class="absolute top-6 right-8 bg-zinc-800/70 px-4 py-2 rounded-lg text-white font-bold text-xl hover:bg-red-700">✕</button>
   </div>
 
   <script>
-    // Render modules and practices dynamically
-    const NUM_MODULES = 5, PRACTICES_PER_MODULE = 10;
-    let currentModule = null, currentPractice = null;
+    // Global variables
+    let currentModule = null;
+    let currentPractice = null;
+    let currentZoom = 1;
+    let video = null;
+    let isPlaying = false;
+
+    // Sample instructor callouts for different modules/practices
+    const instructorCallouts = {
+      '1-1': 'CALLOUT: 1430Z - NAI-045: Observed 2x adult males in civilian attire conducting possible surveillance of compound entrance. Subjects maintained overwatch position for 15 minutes before departing via motorcycle. Vehicle description: Red Honda motorcycle, license obscured. Recommend continued monitoring of NAI-045 for pattern development.',
+      '1-2': 'CALLOUT: 1545Z - NAI-067: Detected unusual communication activity. Subject utilizing handheld radio device while positioned on rooftop. Multiple brief transmissions observed over 20-minute period. Possible coordination with off-site personnel. Recommend SIGINT collection on identified frequencies.',
+      '2-1': 'CALLOUT: 0830Z - NAI-089: Vehicle movement pattern indicates possible supply run. White pickup truck made 3x stops at predetermined locations, each lasting 5-7 minutes. Driver remained in vehicle while passenger conducted exchanges. Pattern consistent with logistics operation.',
+      'default': 'CALLOUT: Detailed intelligence assessment based on observed imagery. Analysis includes personnel count, activity description, equipment identification, and tactical significance. Recommend follow-up collection and continued monitoring.'
+    };
+
+    // Initialize the application
+    function init() {
+      console.log('Initializing IA Training application');
+      renderModules();
+      setupVideoControls();
+      console.log('Application initialized');
+    }
+
+    // Render modules in sidebar
     function renderModules() {
-      const modulesDiv = document.getElementById('modules-list');
-      modulesDiv.innerHTML = '';
-      for (let i = 1; i <= NUM_MODULES; i++) {
-        const btn = document.createElement('button');
-        btn.className = "bg-blue-800/80 hover:bg-blue-600 text-white rounded-xl px-6 py-3 font-bold text-lg shadow transition";
-        btn.textContent = "Module " + i;
-        btn.onclick = () => renderPractices(i);
-        modulesDiv.appendChild(btn);
+      const container = document.getElementById('modules-container');
+      if (!container) {
+        console.error('modules-container not found');
+        return;
+      }
+      
+      container.innerHTML = '';
+      
+      for (let i = 1; i <= 5; i++) {
+        const moduleCard = document.createElement('div');
+        moduleCard.className = 'tool-card';
+        
+        const moduleTitle = document.createElement('div');
+        moduleTitle.className = 'tool-title';
+        moduleTitle.textContent = 'Module ' + i;
+        
+        const practicesList = document.createElement('div');
+        practicesList.className = 'practices-list';
+        practicesList.id = 'practices-' + i;
+        
+        // Generate practices
+        for (let p = 1; p <= 10; p++) {
+          const practiceBtn = document.createElement('button');
+          practiceBtn.className = 'practice-button';
+          practiceBtn.textContent = 'Practice ' + p;
+          practiceBtn.onclick = function() {
+            selectPractice(i, p, this);
+          };
+          practicesList.appendChild(practiceBtn);
+        }
+        
+        moduleCard.appendChild(moduleTitle);
+        moduleCard.appendChild(practicesList);
+        
+        moduleCard.addEventListener('click', function(e) {
+          if (e.target.classList.contains('practice-button')) return;
+          toggleModule(i);
+        });
+        
+        container.appendChild(moduleCard);
       }
     }
-    function renderPractices(moduleNum) {
+
+    // Toggle module expansion
+    function toggleModule(moduleNum) {
+      const practicesList = document.getElementById('practices-' + moduleNum);
+      if (!practicesList) {
+        console.error('Practices list not found for module', moduleNum);
+        return;
+      }
+      
+      const moduleCard = practicesList.closest('.tool-card');
+      
+      // Close all other modules
+      const allPracticesLists = document.querySelectorAll('.practices-list');
+      allPracticesLists.forEach(function(list) {
+        if (list.id !== 'practices-' + moduleNum) {
+          list.classList.remove('active');
+          const card = list.closest('.tool-card');
+          if (card) card.classList.remove('active');
+        }
+      });
+      
+      // Toggle current module
+      practicesList.classList.toggle('active');
+      if (moduleCard) moduleCard.classList.toggle('active');
+    }
+
+    // Select a practice
+    function selectPractice(moduleNum, practiceNum, buttonElement) {
+      console.log('=== SELECT PRACTICE CALLED ===');
+      console.log('Module:', moduleNum, 'Practice:', practiceNum);
+      
       currentModule = moduleNum;
-      const practicesDiv = document.getElementById('practices-list');
-      practicesDiv.innerHTML = `<div class="font-semibold text-white text-lg mb-3">Practices for Module ${moduleNum}</div><div class="flex gap-4 flex-wrap">`;
-      for (let p = 1; p <= PRACTICES_PER_MODULE; p++) {
-        const btn = document.createElement('button');
-        btn.className = "bg-zinc-700/90 hover:bg-blue-600 text-white rounded-xl px-4 py-2 font-bold shadow transition mb-2";
-        btn.textContent = "Practice " + p;
-        btn.onclick = () => openOverlay(moduleNum, p);
-        practicesDiv.appendChild(btn);
+      currentPractice = practiceNum;
+      
+      // Update active practice button
+      const allPracticeButtons = document.querySelectorAll('.practice-button');
+      allPracticeButtons.forEach(function(btn) {
+        btn.classList.remove('active');
+      });
+      
+      if (buttonElement) {
+        buttonElement.classList.add('active');
       }
-      practicesDiv.innerHTML += '</div>';
+      
+      // Show training interface
+      showTrainingInterface();
     }
-    // Overlay controls
-    function openOverlay(module, practice) {
-      currentModule = module;
-      currentPractice = practice;
-      document.getElementById('iaOverlay').classList.remove('hidden');
-      // Optionally load a different video per module/practice
-      // document.getElementById('iaVideo').src = `video-mod${module}-prac${practice}.mp4`;
+
+    // Show the training interface
+    function showTrainingInterface() {
+      console.log('=== SHOWING TRAINING INTERFACE ===');
+      console.log('Module:', currentModule, 'Practice:', currentPractice);
+      
+      // Hide welcome section
+      const welcomeSection = document.getElementById('welcome-section');
+      if (welcomeSection) {
+        welcomeSection.classList.add('hidden');
+      }
+      
+      // Show input sidebar
+      const inputSidebar = document.getElementById('input-sidebar');
+      if (inputSidebar) {
+        inputSidebar.classList.remove('hidden');
+      }
+      
+      const instructionHeader = document.getElementById('instruction-header');
+      const videoSection = document.getElementById('video-section');
+      
+      if (instructionHeader) {
+        instructionHeader.classList.remove('hidden');
+      }
+      
+      if (videoSection) {
+        videoSection.classList.remove('hidden');
+      }
+      
+      // Initialize video
+      video = document.getElementById('training-video');
+      if (video) {
+        video.load();
+        setupVideoEventListeners();
+        console.log('Video loaded and event listeners setup');
+      }
+      
+      // Clear previous input
+      clearForm();
     }
-    function closeOverlay() {
-      document.getElementById('iaOverlay').classList.add('hidden');
+
+    // Clear form inputs
+    function clearForm() {
+      document.getElementById('datetime').value = '';
+      document.getElementById('location').value = '';
+      document.getElementById('activity-type').value = '';
+      document.getElementById('description').value = '';
     }
-    // Zoom button
-    function toggleZoom() {
-      const vid = document.getElementById('iaVideo');
-      if (vid.classList.contains('zoom-in')) {
-        vid.classList.remove('zoom-in');
-        vid.classList.add('zoom-out');
-      } else {
-        vid.classList.remove('zoom-out');
-        vid.classList.add('zoom-in');
+
+    // Setup video controls
+    function setupVideoControls() {
+      const playPauseBtn = document.getElementById('play-pause-btn');
+      
+      if (playPauseBtn) {
+        playPauseBtn.addEventListener('click', togglePlayPause);
+      }
+      
+      // Setup video container for mouse wheel zoom
+      const videoContainer = document.querySelector('.video-container');
+      if (videoContainer) {
+        videoContainer.addEventListener('wheel', function(e) {
+          e.preventDefault();
+          const delta = e.deltaY > 0 ? -0.1 : 0.1;
+          zoomVideo(delta);
+        });
       }
     }
-    // Demo: generate callout
-    function generateCallout() {
-      const note = document.getElementById('overlayIaNotes').value;
-      // Here, send to instructor grading (backend needed)
-      alert(`Sent for grading:\n\nIA TRAINING: Module ${currentModule}/Practice ${currentPractice}\n\n${note}`);
-      closeOverlay();
+
+    // Toggle play/pause
+    function togglePlayPause() {
+      if (!video) {
+        console.error('Video not initialized');
+        return;
+      }
+      
+      const playPauseBtn = document.getElementById('play-pause-btn');
+      const icon = playPauseBtn ? playPauseBtn.querySelector('i') : null;
+      
+      if (!icon) {
+        console.error('Play/pause button or icon not found');
+        return;
+      }
+      
+      try {
+        if (video.paused) {
+          video.play();
+          icon.className = 'fas fa-pause';
+          isPlaying = true;
+        } else {
+          video.pause();
+          icon.className = 'fas fa-play';
+          isPlaying = false;
+        }
+      } catch (error) {
+        console.error('Error toggling video playback:', error);
+      }
     }
+
+    // Update progress bar
+    function updateProgress() {
+      if (!video) return;
+      
+      const progressBar = document.getElementById('progress-bar');
+      const progress = (video.currentTime / video.duration) * 100;
+      progressBar.style.width = progress + '%';
+    }
+
+    // Zoom video function
+    function zoomVideo(delta) {
+      if (!video) return;
+      
+      currentZoom += delta;
+      currentZoom = Math.max(0.5, Math.min(3, currentZoom)); // Limit zoom between 0.5x and 3x
+      
+      video.style.transform = 'scale(' + currentZoom + ')';
+    }
+
+    // Setup video event listeners when video is loaded
+    function setupVideoEventListeners() {
+      const video = document.getElementById('training-video');
+      if (video) {
+        video.addEventListener('timeupdate', updateProgress);
+        video.addEventListener('loadedmetadata', function() {
+          video.currentTime = 0;
+        });
+      }
+    }
+
+    // Submit callout
+    function submitCallout() {
+      const datetime = document.getElementById('datetime').value.trim();
+      const location = document.getElementById('location').value.trim();
+      const activityType = document.getElementById('activity-type').value;
+      const description = document.getElementById('description').value.trim();
+      
+      if (!datetime || !location || !activityType || !description) {
+        alert('Please fill out all fields before submitting.');
+        return;
+      }
+      
+      // Create user callout
+      const userCallout = `${datetime} - ${location}: ${description} Activity Type: ${activityType}`;
+      
+      // Show callout comparison
+      showCalloutComparison(userCallout);
+    }
+
+    // Show callout comparison overlay
+    function showCalloutComparison(userCallout) {
+      const overlay = document.getElementById('callout-overlay');
+      const userCalloutDiv = document.getElementById('user-callout');
+      const instructorCalloutDiv = document.getElementById('instructor-callout');
+      
+      // Display user callout
+      userCalloutDiv.textContent = userCallout;
+      
+      // Get instructor callout based on current module/practice
+      const calloutKey = currentModule + '-' + currentPractice;
+      const instructorCallout = instructorCallouts[calloutKey] || instructorCallouts['default'];
+      instructorCalloutDiv.textContent = instructorCallout;
+      
+      overlay.classList.add('active');
+      
+      // Auto-close after 15 seconds
+      setTimeout(function() {
+        closeCalloutOverlay();
+      }, 15000);
+    }
+
+    // Close callout overlay
+    function closeCalloutOverlay() {
+      const overlay = document.getElementById('callout-overlay');
+      overlay.classList.remove('active');
+      
+      // Reset for next practice
+      clearForm();
+      if (video) {
+        video.currentTime = 0;
+        video.pause();
+        const playPauseBtn = document.getElementById('play-pause-btn');
+        const icon = playPauseBtn.querySelector('i');
+        icon.className = 'fas fa-play';
+        isPlaying = false;
+      }
+    }
+
+    // Close overlay when clicking outside
+    document.addEventListener('click', function(e) {
+      const overlay = document.getElementById('callout-overlay');
+      if (e.target === overlay) {
+        closeCalloutOverlay();
+      }
+    });
+
     // Navigation
     function goBack() {
-      window.location.href = '/dashboard.html';
+      window.location.href = 'dashboard.html';
     }
-    // Init
-    renderModules();
+
+    // Initialize when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('DOM loaded, initializing...');
+      init();
+    });
   </script>
 </body>
 </html>
