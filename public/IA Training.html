@@ -238,70 +238,187 @@
       z-index: -1;
     }
 
-    .input-form {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      height: 100%;
+    .sidebar-form-container {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-right: 8px;
+      margin-right: -8px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--accent-color) transparent;
+      scroll-behavior: smooth;
+      max-height: calc(100vh - 200px);
+    }
+    
+    .sidebar-form-container::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    .sidebar-form-container::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    .sidebar-form-container::-webkit-scrollbar-thumb {
+      background: var(--accent-color);
+      border-radius: 4px;
+    }
+    
+    .sidebar-form-container::-webkit-scrollbar-thumb:hover {
+      background: #28dd6c;
+    }
+
+    .form-title {
+      font-size: 1.2em;
+      font-weight: 600;
+      color: var(--accent-color);
+      letter-spacing: 1px;
+      margin-bottom: 12px;
     }
 
     .form-group {
       display: flex;
       flex-direction: column;
+      gap: 7px;
+      position: relative;
+      margin-bottom: 12px;
     }
 
-    .form-label {
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: var(--text-accent);
-      margin-bottom: 0.5rem;
+    .form-group-with-refresh {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      margin-bottom: 12px;
     }
-
-    .form-input, .form-textarea {
-      background: var(--input-bg);
-      border: 1px solid var(--input-border);
-      border-radius: 10px;
-      padding: 0.75rem;
-      color: var(--text-primary);
-      font-size: 0.9rem;
-      transition: var(--transition);
-    }
-
-    .form-input:focus, .form-textarea:focus {
-      outline: none;
-      border-color: var(--accent-color);
-      box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
-    }
-
-    .form-textarea {
-      resize: vertical;
-      min-height: 120px;
+    
+    .form-group-with-refresh .form-group {
       flex: 1;
     }
 
-    .submit-btn {
+    .refresh-btn {
+      width: 20px;
+      height: 20px;
+      background: rgba(35, 39, 46, 0.7);
+      border: 1px solid var(--input-border);
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: var(--text-primary);
+      transition: all 0.2s, transform 0.2s ease;
+      margin-bottom: 1px;
+      flex-shrink: 0;
+    }
+    
+    .refresh-btn:hover {
       background: var(--accent-color);
+      border-color: var(--accent-color);
+      color: white;
+    }
+
+    label {
+      font-size: 0.97em;
+      color: #c2cbd1;
+      font-weight: 500;
+    }
+
+    input, select, textarea {
+      background: var(--card-gradient);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      color: #f5f6f7;
+      border: 1px solid var(--glass-border);
+      border-radius: 15px;
+      font-size: 1.08em;
+      padding: 14px 18px;
+      outline: none;
+      box-shadow: var(--shadow-primary), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      transition: var(--transition);
+      min-height: 44px;
+      font-family: inherit;
+      margin-bottom: 1px;
+      width: 100%;
+      resize: none;
+      box-sizing: border-box;
+      position: relative;
+    }
+    
+    select option {
+      background: #ffffff;
+      color: #000000;
+      padding: 8px;
+    }
+    
+    select {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      background-size: 16px;
+      padding-right: 40px;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent-color);
+      background: rgba(34, 197, 94, 0.05);
+      box-shadow: var(--shadow-hover), 0 0 0 2px rgba(34, 197, 94, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+
+    textarea {
+      min-height: 70px;
+      max-height: 350px;
+      overflow: auto;
+      resize: vertical;
+      line-height: 1.6;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    ::placeholder {
+      color: #9fa8ac;
+      opacity: 0.85;
+      font-size: 0.98em;
+    }
+
+    .submit-btn {
+      background: linear-gradient(135deg, var(--accent-color), #28dd6c);
+      color: #fff;
+      font-weight: 600;
       border: none;
       border-radius: 15px;
-      padding: 1rem 2rem;
-      color: white;
-      font-size: 1rem;
-      font-weight: 600;
+      font-size: 1.13em;
+      padding: 16px 24px;
+      margin-top: 10px;
       cursor: pointer;
       transition: var(--transition);
-      margin-top: auto;
+      box-shadow: var(--shadow-primary);
+      position: relative;
+      z-index: 10;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      pointer-events: auto;
+      backdrop-filter: blur(10px);
+      width: 100%;
     }
 
-    .submit-btn:hover {
-      background: #16a34a;
-      transform: translateY(-2px);
-      box-shadow: 0 15px 35px rgba(34, 197, 94, 0.4);
+    .submit-btn:hover { 
+      background: linear-gradient(135deg, #28dd6c, #22c55e);
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-hover);
     }
 
-    .submit-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
+    .submit-btn:active {
+      transform: translateY(-1px);
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--input-border);
+      margin: 15px 0;
+      border-radius: 2px;
     }
 
     /* Right Content Area */
@@ -559,15 +676,33 @@
       display: flex;
       flex-direction: column;
       gap: 2rem;
-      min-width: 800px;
+      min-width: 1000px;
     }
 
+    /* OpsLog-style callout cards */
     .callout-card {
-      background: var(--glass-bg);
-      border: 1px solid var(--glass-border);
-      border-radius: 15px;
-      padding: 1.5rem;
       position: relative;
+      background: #141414;
+      border: 2px solid #ff9800;
+      border-radius: 8px;
+      padding: 16px 24px;
+      margin-bottom: 16px;
+      font-size: 1.2em;
+      line-height: 1.4;
+      color: #fafafa;
+      word-break: break-word;
+      white-space: pre-line;
+      min-height: auto;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .callout-card.student {
+      border-color: #ff9800; /* Orange for student */
+    }
+
+    .callout-card.instructor {
+      border-color: #22c55e; /* Green for instructor */
     }
 
     .callout-header {
@@ -576,7 +711,7 @@
       align-items: center;
       margin-bottom: 1rem;
       padding-bottom: 0.5rem;
-      border-bottom: 1px solid var(--glass-border);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     }
 
     .callout-title {
@@ -593,7 +728,7 @@
     }
 
     .callout-type.user {
-      background: var(--secondary-gradient);
+      background: #ff9800;
       color: white;
     }
 
@@ -603,29 +738,56 @@
     }
 
     .callout-body {
-      color: var(--text-primary);
+      color: #fafafa;
       line-height: 1.6;
       font-size: 1rem;
+    }
+
+    /* Callout content sections */
+    .callout-section {
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+    
+    .callout-section:last-child {
+      margin-bottom: 0;
+    }
+    
+    .callout-meta {
+      font-size: 10px;
+      color: #888;
+      margin-bottom: 4px;
+    }
+    
+    .callout-content {
+      margin-bottom: 6px;
     }
 
     .close-overlay-btn {
       position: absolute;
       top: 1rem;
       right: 1rem;
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(239, 68, 68, 0.9);
       border: none;
       border-radius: 50%;
       width: 40px;
       height: 40px;
       color: white;
-      font-size: 1.2rem;
+      font-size: 1.5rem;
       cursor: pointer;
       transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1001;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     }
 
     .close-overlay-btn:hover {
-      background: rgba(255, 255, 255, 0.2);
+      background: rgba(220, 38, 38, 0.9);
       transform: scale(1.1);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
     }
 
     .hidden {
@@ -675,38 +837,93 @@
         <h2 class="sidebar-title">Ops Log</h2>
       </div>
       
-      <form class="input-form" id="ia-form">
-        <div class="form-group">
-          <label class="form-label">Date/Time</label>
-          <input type="text" class="form-input" id="datetime" placeholder="Enter date/time">
-        </div>
-        
-        <div class="form-group">
-          <label class="form-label">Location</label>
-          <input type="text" class="form-input" id="location" placeholder="Enter location">
-        </div>
-        
-        <div class="form-group">
-          <label class="form-label">Activity Type</label>
-          <select class="form-input" id="activity-type">
-            <option value="">Select activity type</option>
-            <option value="Movement">Movement</option>
-            <option value="Communication">Communication</option>
-            <option value="Vehicle">Vehicle Activity</option>
-            <option value="Personnel">Personnel Activity</option>
-            <option value="Equipment">Equipment Activity</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label class="form-label">Description</label>
-          <textarea class="form-textarea" id="description" placeholder="Enter detailed description of observed activity..."></textarea>
-        </div>
-        
-        <button type="button" class="submit-btn" id="submit-callout" onclick="submitCallout()">
-          Submit Callout
-        </button>
-      </form>
+      <!-- Scrollable form container -->
+      <div class="sidebar-form-container">
+        <form id="ia-form" autocomplete="off" style="margin-top: 10px;">
+          <div class="form-title" style="font-size: 1.1em; margin-bottom: 12px;">Submit New Callout</div>
+          
+          <div class="form-group">
+            <label>Classification</label>
+            <select name="classification" required>
+              <option value="">Select</option>
+              <option>No Classification</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label>Asset Name</label>
+            <input type="text" name="asset" required/>
+          </div>
+          
+          <div class="form-group">
+            <label>Sensor</label>
+            <select name="sensor" required>
+              <option value="FMV">FMV</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label>Mission / Operation</label>
+            <input type="text" name="operation" required/>
+          </div>
+          
+          <div class="form-group">
+            <label>Country Code</label>
+            <input type="text" name="countryCode" maxlength="3"/>
+          </div>
+          
+          <div class="form-group-with-refresh">
+            <div class="form-group">
+              <label>Zulu Time</label>
+              <input type="text" name="zulu" required placeholder="HHMM" pattern="[0-9]{4}" maxlength="4" oninput="this.value = this.value.replace(/[^0-9]/g, '');"/>
+            </div>
+            <button type="button" class="refresh-btn" title="Update to current time" onclick="updateZuluTime(this)">🔄</button>
+          </div>
+          
+          <div class="form-group">
+            <label>MGRS</label>
+            <input type="text" name="mgrs"/>
+          </div>
+          
+          <div class="form-group">
+            <label>Location Description</label>
+            <input type="text" name="location"/>
+          </div>
+          
+          <div class="form-group">
+            <label>Activity</label>
+            <textarea name="activity" rows="1"></textarea>
+          </div>
+          
+          <div class="divider"></div>
+          
+          <div class="form-group">
+            <label>IA Notes</label>
+            <textarea name="iaNotes" rows="1"></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label>SLANT</label>
+            <input type="text" name="slant" placeholder="#/#/#" maxlength="10" title="Format: #/#/# (Size/Activity/Location)"/>
+          </div>
+          
+          <div class="form-group">
+            <label>Vehicles</label>
+            <input type="number" name="vehicles" min="0" value="0" style="text-align: center;"/>
+          </div>
+          
+          <div class="form-group">
+            <label>Target Status</label>
+            <select name="targetStatus">
+              <option value="">Select Status</option>
+              <option value="ON TARGET">ON TARGET</option>
+              <option value="OFF TARGET">OFF TARGET</option>
+            </select>
+          </div>
+          
+          <button type="button" class="submit-btn" onclick="submitCallout()">Submit</button>
+        </form>
+      </div>
     </aside>
     
     <!-- Right Content Area -->
@@ -787,7 +1004,7 @@
         <i class="fas fa-times"></i>
       </button>
       
-      <div class="callout-card">
+      <div class="callout-card student">
         <div class="callout-header">
           <h3 class="callout-title">Your Callout</h3>
           <span class="callout-type user">Student Generated</span>
@@ -797,7 +1014,7 @@
         </div>
       </div>
       
-      <div class="callout-card">
+      <div class="callout-card instructor">
         <div class="callout-header">
           <h3 class="callout-title">Instructor Callout</h3>
           <span class="callout-type instructor">Reference</span>
@@ -819,10 +1036,66 @@
 
     // Sample instructor callouts for different modules/practices
     const instructorCallouts = {
-      '1-1': 'CALLOUT: 1430Z - NAI-045: Observed 2x adult males in civilian attire conducting possible surveillance of compound entrance. Subjects maintained overwatch position for 15 minutes before departing via motorcycle. Vehicle description: Red Honda motorcycle, license obscured. Recommend continued monitoring of NAI-045 for pattern development.',
-      '1-2': 'CALLOUT: 1545Z - NAI-067: Detected unusual communication activity. Subject utilizing handheld radio device while positioned on rooftop. Multiple brief transmissions observed over 20-minute period. Possible coordination with off-site personnel. Recommend SIGINT collection on identified frequencies.',
-      '2-1': 'CALLOUT: 0830Z - NAI-089: Vehicle movement pattern indicates possible supply run. White pickup truck made 3x stops at predetermined locations, each lasting 5-7 minutes. Driver remained in vehicle while passenger conducted exchanges. Pattern consistent with logistics operation.',
-      'default': 'CALLOUT: Detailed intelligence assessment based on observed imagery. Analysis includes personnel count, activity description, equipment identification, and tactical significance. Recommend follow-up collection and continued monitoring.'
+      '1-1': {
+        classification: 'No Classification',
+        asset: 'REAPER-01',
+        sensor: 'FMV',
+        operation: 'OPERATION NIGHTWATCH',
+        countryCode: 'AFG',
+        zulu: '1430',
+        mgrs: '42SUD1234567890',
+        location: 'NAI-045, COMPOUND ENTRANCE',
+        activity: 'Observed 2x adult males in civilian attire conducting possible surveillance of compound entrance. Subjects maintained overwatch position for 15 minutes before departing via motorcycle.',
+        iaNotes: 'Vehicle description: Red Honda motorcycle, license obscured. Recommend continued monitoring of NAI-045 for pattern development.',
+        slant: '2/1/1',
+        vehicles: '1',
+        targetStatus: 'ON TARGET'
+      },
+      '1-2': {
+        classification: 'No Classification',
+        asset: 'REAPER-02',
+        sensor: 'FMV',
+        operation: 'OPERATION NIGHTWATCH',
+        countryCode: 'AFG',
+        zulu: '1545',
+        mgrs: '42SUD9876543210',
+        location: 'NAI-067, ROOFTOP POSITION',
+        activity: 'Detected unusual communication activity. Subject utilizing handheld radio device while positioned on rooftop. Multiple brief transmissions observed over 20-minute period.',
+        iaNotes: 'Possible coordination with off-site personnel. Recommend SIGINT collection on identified frequencies.',
+        slant: '1/1/1',
+        vehicles: '0',
+        targetStatus: 'ON TARGET'
+      },
+      '2-1': {
+        classification: 'No Classification',
+        asset: 'REAPER-03',
+        sensor: 'FMV',
+        operation: 'OPERATION NIGHTWATCH',
+        countryCode: 'AFG',
+        zulu: '0830',
+        mgrs: '42SUD5555555555',
+        location: 'NAI-089, SUPPLY ROUTE',
+        activity: 'Vehicle movement pattern indicates possible supply run. White pickup truck made 3x stops at predetermined locations, each lasting 5-7 minutes. Driver remained in vehicle while passenger conducted exchanges.',
+        iaNotes: 'Pattern consistent with logistics operation. Recommend continued surveillance of route.',
+        slant: '2/1/3',
+        vehicles: '1',
+        targetStatus: 'ON TARGET'
+      },
+      'default': {
+        classification: 'No Classification',
+        asset: 'REAPER-XX',
+        sensor: 'FMV',
+        operation: 'OPERATION TRAINING',
+        countryCode: 'XXX',
+        zulu: '0000',
+        mgrs: '42SUDXXXXXXXXXX',
+        location: 'TRAINING AREA',
+        activity: 'Detailed intelligence assessment based on observed imagery. Analysis includes personnel count, activity description, equipment identification, and tactical significance.',
+        iaNotes: 'Recommend follow-up collection and continued monitoring.',
+        slant: '0/0/0',
+        vehicles: '0',
+        targetStatus: 'ON TARGET'
+      }
     };
 
     // Initialize the application
@@ -967,10 +1240,26 @@
 
     // Clear form inputs
     function clearForm() {
-      document.getElementById('datetime').value = '';
-      document.getElementById('location').value = '';
-      document.getElementById('activity-type').value = '';
-      document.getElementById('description').value = '';
+      const form = document.getElementById('ia-form');
+      if (form) {
+        form.reset();
+        // Set default values
+        const vehiclesInput = form.querySelector('input[name="vehicles"]');
+        if (vehiclesInput) vehiclesInput.value = '0';
+      }
+    }
+
+    // Update Zulu time to current time
+    function updateZuluTime(button) {
+      const now = new Date();
+      const hours = String(now.getUTCHours()).padStart(2, '0');
+      const minutes = String(now.getUTCMinutes()).padStart(2, '0');
+      const zuluTime = hours + minutes;
+      
+      const zuluInput = button.parentElement.querySelector('input[name="zulu"]');
+      if (zuluInput) {
+        zuluInput.value = zuluTime;
+      }
     }
 
     // Setup video controls
@@ -1054,21 +1343,83 @@
 
     // Submit callout
     function submitCallout() {
-      const datetime = document.getElementById('datetime').value.trim();
-      const location = document.getElementById('location').value.trim();
-      const activityType = document.getElementById('activity-type').value;
-      const description = document.getElementById('description').value.trim();
+      const form = document.getElementById('ia-form');
+      const formData = new FormData(form);
       
-      if (!datetime || !location || !activityType || !description) {
-        alert('Please fill out all fields before submitting.');
-        return;
+      // Check required fields
+      const requiredFields = ['classification', 'asset', 'sensor', 'operation', 'zulu'];
+      for (let field of requiredFields) {
+        if (!formData.get(field) || formData.get(field).trim() === '') {
+          alert(`Please fill out the ${field} field before submitting.`);
+          return;
+        }
       }
       
-      // Create user callout
-      const userCallout = `${datetime} - ${location}: ${description} Activity Type: ${activityType}`;
+      // Create user callout object
+      const userCallout = {
+        classification: formData.get('classification'),
+        asset: formData.get('asset'),
+        sensor: formData.get('sensor'),
+        operation: formData.get('operation'),
+        countryCode: formData.get('countryCode') || '',
+        zulu: formData.get('zulu'),
+        mgrs: formData.get('mgrs') || '',
+        location: formData.get('location') || '',
+        activity: formData.get('activity') || '',
+        iaNotes: formData.get('iaNotes') || '',
+        slant: formData.get('slant') || '',
+        vehicles: formData.get('vehicles') || '0',
+        targetStatus: formData.get('targetStatus') || ''
+      };
       
       // Show callout comparison
       showCalloutComparison(userCallout);
+    }
+
+    // Format callout data into display format
+    function formatCallout(calloutData) {
+      let formatted = '';
+      
+      // Header section
+      formatted += `${calloutData.classification}\n`;
+      formatted += `${calloutData.asset} / ${calloutData.sensor}\n`;
+      formatted += `${calloutData.operation}\n`;
+      if (calloutData.countryCode) {
+        formatted += `${calloutData.countryCode}\n`;
+      }
+      formatted += `${calloutData.zulu}Z\n\n`;
+      
+      // Location section
+      if (calloutData.mgrs) {
+        formatted += `MGRS: ${calloutData.mgrs}\n`;
+      }
+      if (calloutData.location) {
+        formatted += `LOCATION: ${calloutData.location}\n`;
+      }
+      formatted += '\n';
+      
+      // Activity section
+      if (calloutData.activity) {
+        formatted += `ACTIVITY: ${calloutData.activity}\n\n`;
+      }
+      
+      // IA Notes section
+      if (calloutData.iaNotes) {
+        formatted += `IA NOTES: ${calloutData.iaNotes}\n\n`;
+      }
+      
+      // Footer section
+      if (calloutData.slant) {
+        formatted += `SLANT: ${calloutData.slant}\n`;
+      }
+      if (calloutData.vehicles && calloutData.vehicles !== '0') {
+        formatted += `VEHICLES: ${calloutData.vehicles}\n`;
+      }
+      if (calloutData.targetStatus) {
+        formatted += `TARGET STATUS: ${calloutData.targetStatus}\n`;
+      }
+      
+      return formatted.trim();
     }
 
     // Show callout comparison overlay
@@ -1077,20 +1428,17 @@
       const userCalloutDiv = document.getElementById('user-callout');
       const instructorCalloutDiv = document.getElementById('instructor-callout');
       
-      // Display user callout
-      userCalloutDiv.textContent = userCallout;
+      // Format and display user callout
+      const formattedUserCallout = formatCallout(userCallout);
+      userCalloutDiv.textContent = formattedUserCallout;
       
       // Get instructor callout based on current module/practice
       const calloutKey = currentModule + '-' + currentPractice;
-      const instructorCallout = instructorCallouts[calloutKey] || instructorCallouts['default'];
-      instructorCalloutDiv.textContent = instructorCallout;
+      const instructorCalloutData = instructorCallouts[calloutKey] || instructorCallouts['default'];
+      const formattedInstructorCallout = formatCallout(instructorCalloutData);
+      instructorCalloutDiv.textContent = formattedInstructorCallout;
       
       overlay.classList.add('active');
-      
-      // Auto-close after 15 seconds
-      setTimeout(function() {
-        closeCalloutOverlay();
-      }, 15000);
     }
 
     // Close callout overlay

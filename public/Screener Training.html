@@ -436,6 +436,33 @@
       min-height: 200px;
     }
 
+    .close-overlay-btn {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: rgba(239, 68, 68, 0.9);
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1001;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .close-overlay-btn:hover {
+      background: rgba(220, 38, 38, 0.9);
+      transform: scale(1.1);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    }
+
     .hidden {
       display: none !important;
     }
@@ -654,7 +681,7 @@
       
       <!-- Instruction Header -->
       <div class="instruction-header hidden" id="instruction-header">
-        <p class="instruction-text">Create a SITREP for the Named Area of Interest, NAI-078</p>
+        <p class="instruction-text">Create a SITREP for the Named Area of Interest, NAI-078 at 2111Z. </p>
       </div>
       
       <!-- Video Section -->
@@ -703,6 +730,9 @@
   <!-- Feedback Overlay -->
   <div class="feedback-overlay" id="feedback-overlay">
     <div class="feedback-content">
+      <button class="close-overlay-btn" onclick="closeFeedback()">
+        <i class="fas fa-times"></i>
+      </button>
       <div class="feedback-column">
         <h3 class="feedback-title">Your SITREP</h3>
         <div class="feedback-text" id="user-sitrep"></div>
@@ -710,8 +740,7 @@
       <div class="feedback-column">
         <h3 class="feedback-title">Reference SITREP</h3>
         <div class="feedback-text" id="reference-sitrep">
-          SITREP NAI-078: At 1430 hours, observed two military-aged males approaching the compound from the northeast. Primary subject carrying what appears to be communications equipment. Secondary subject maintaining overwatch position approximately 50 meters from main entrance. Both subjects wearing civilian clothing but displaying tactical movement patterns. Recommend continued surveillance and preparation for potential engagement.
-        </div>
+          SITREP: Upon arrival to a NAI-078 at 2111Z, three adult males, one in western wear that arrived from the W FOV and entered the S side of the residence, one in traditional wear that stood under a tree on the N side of the residence, and one in western wear on the N balcony that utilized a POSS COMMS device. One quad cab truck and one sedan were parked on the S side of the residence. SLANT 3/0/0        </div>
       </div>
     </div>
   </div>
@@ -1007,11 +1036,6 @@
       
       userSitrepDiv.textContent = userSitrep;
       overlay.classList.add('active');
-      
-      // Auto-close after 10 seconds
-      setTimeout(function() {
-        closeFeedback();
-      }, 10000);
     }
 
     // Close feedback overlay
