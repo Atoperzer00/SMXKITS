@@ -181,6 +181,144 @@
       letter-spacing: -0.02em;
     }
 
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .notification-bubble, .inbox-bubble {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+    }
+
+    .notification-bubble:hover, .inbox-bubble:hover {
+      transform: scale(1.1);
+      background: var(--accent-gradient);
+      box-shadow: 0 10px 25px rgba(79, 172, 254, 0.4);
+    }
+
+    .notification-bubble i, .inbox-bubble i {
+      font-size: 1.2rem;
+      color: var(--text-accent);
+      transition: var(--transition);
+    }
+
+    .notification-bubble:hover i, .inbox-bubble:hover i {
+      color: white;
+    }
+
+    .notification-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: var(--secondary-gradient);
+      color: white;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--dark-gradient);
+    }
+
+    .inbox-dropdown {
+      position: absolute;
+      top: 60px;
+      right: 0;
+      width: 350px;
+      max-height: 400px;
+      background: var(--card-gradient);
+      backdrop-filter: blur(20px);
+      border-radius: var(--border-radius);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-hover);
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: var(--transition);
+    }
+
+    .inbox-dropdown.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .inbox-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--glass-border);
+      font-weight: 600;
+      color: var(--text-accent);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .inbox-messages {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .inbox-message {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+    }
+
+    .inbox-message:hover {
+      background: rgba(102, 126, 234, 0.1);
+    }
+
+    .inbox-message.unread {
+      background: rgba(79, 172, 254, 0.05);
+    }
+
+    .inbox-message.unread::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 3px;
+      height: 100%;
+      background: var(--accent-gradient);
+    }
+
+    .message-sender {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .message-preview {
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      line-height: 1.4;
+      margin-bottom: 0.3rem;
+    }
+
+    .message-time {
+      color: var(--text-secondary);
+      font-size: 0.7rem;
+    }
+
     .user-info {
       display: flex;
       align-items: center;
@@ -599,13 +737,63 @@
             Welcome back! Manage your classes, students, and training resources.
           </p>
         </div>
-        <div class="user-info">
-          <div class="user-avatar">
-            <i class="fas fa-user"></i>
+        <div class="header-actions">
+          <!-- Notification Bell -->
+          <div class="notification-bubble" onclick="toggleNotifications()">
+            <i class="fas fa-bell"></i>
+            <div class="notification-badge">3</div>
           </div>
-          <div>
-            <div style="font-weight: 600;">Instructor</div>
-            <div style="font-size: 0.9rem; color: var(--text-secondary);">Admin Access</div>
+          
+          <!-- Inbox -->
+          <div class="inbox-bubble" onclick="toggleInbox()">
+            <i class="fas fa-envelope"></i>
+            <div class="notification-badge">5</div>
+            
+            <!-- Inbox Dropdown -->
+            <div class="inbox-dropdown" id="inboxDropdown">
+              <div class="inbox-header">
+                <i class="fas fa-inbox"></i>
+                Messages (5)
+              </div>
+              <div class="inbox-messages">
+                <div class="inbox-message unread" onclick="openMessage('msg1')">
+                  <div class="message-sender">Sarah Johnson</div>
+                  <div class="message-preview">Quick question about the upcoming training session...</div>
+                  <div class="message-time">2 minutes ago</div>
+                </div>
+                <div class="inbox-message unread" onclick="openMessage('msg2')">
+                  <div class="message-sender">Mike Chen</div>
+                  <div class="message-preview">Can we schedule a group meeting for next week?</div>
+                  <div class="message-time">15 minutes ago</div>
+                </div>
+                <div class="inbox-message unread" onclick="openMessage('msg3')">
+                  <div class="message-sender">Training Team</div>
+                  <div class="message-preview">New course materials have been uploaded...</div>
+                  <div class="message-time">1 hour ago</div>
+                </div>
+                <div class="inbox-message" onclick="openMessage('msg4')">
+                  <div class="message-sender">Admin Support</div>
+                  <div class="message-preview">System maintenance scheduled for this weekend</div>
+                  <div class="message-time">3 hours ago</div>
+                </div>
+                <div class="inbox-message" onclick="openMessage('msg5')">
+                  <div class="message-sender">Lisa Rodriguez</div>
+                  <div class="message-preview">Thank you for the excellent training session!</div>
+                  <div class="message-time">Yesterday</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- User Info -->
+          <div class="user-info">
+            <div class="user-avatar">
+              <i class="fas fa-user"></i>
+            </div>
+            <div>
+              <div style="font-weight: 600;">Instructor</div>
+              <div style="font-size: 0.9rem; color: var(--text-secondary);">Admin Access</div>
+            </div>
           </div>
         </div>
       </header>
@@ -1047,6 +1235,41 @@
       }, 1000);
       
       console.log('Logged in as:', userName, '(' + role + ')');
+    });
+
+    // Inbox and notification functions
+    function toggleInbox() {
+      const dropdown = document.getElementById('inboxDropdown');
+      dropdown.classList.toggle('active');
+      
+      // Close dropdown when clicking outside
+      document.addEventListener('click', function closeDropdown(e) {
+        if (!e.target.closest('.inbox-bubble')) {
+          dropdown.classList.remove('active');
+          document.removeEventListener('click', closeDropdown);
+        }
+      });
+    }
+
+    function toggleNotifications() {
+      showNotification('🔔 You have 3 new notifications!', 'info');
+    }
+
+    function openMessage(messageId) {
+      // Store message ID for the messaging page
+      localStorage.setItem('selectedMessage', messageId);
+      // Navigate to instructor messaging page
+      window.location.href = 'instructor-messaging.html';
+    }
+
+    // Close inbox dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      const inboxBubble = document.querySelector('.inbox-bubble');
+      const inboxDropdown = document.getElementById('inboxDropdown');
+      
+      if (!inboxBubble.contains(e.target)) {
+        inboxDropdown.classList.remove('active');
+      }
     });
   </script>
 </body>

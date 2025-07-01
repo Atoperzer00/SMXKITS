@@ -81,6 +81,94 @@ const upload = multer({
   }
 });
 
+// ===== MESSAGING API ENDPOINTS =====
+// Get conversation history between two users
+app.get('/api/messages/:room', async (req, res) => {
+  try {
+    const { room } = req.params;
+    const { limit = 50 } = req.query;
+    
+    const Message = require('./models/Message');
+    const messages = await Message.find({ channel: room })
+      .sort({ timestamp: -1 })
+      .limit(parseInt(limit));
+    
+    res.json({ success: true, messages: messages.reverse() });
+  } catch (error) {
+    console.error('❌ Error fetching messages:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch messages' });
+  }
+});
+
+// Get all conversations for a user
+app.get('/api/conversations/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    const Message = require('./models/Message');
+    // Get unique channels where user participated
+    const conversations = await Message.aggregate([
+      {
+        $match: {
+          $or: [
+            { 'sender.name': userId },
+            { channel: { $regex: userId, $options: 'i' } }
+          ]
+        }
+      },
+      {
+        $group: {
+          _id: '$channel',
+          lastMessage: { $last: '$content' },
+          lastTimestamp: { $last: '$timestamp' },
+          participants: { $addToSet: '$sender.name' }
+        }
+      },
+      { $sort: { lastTimestamp: -1 } }
+    ]);
+    
+    res.json({ success: true, conversations });
+  } catch (error) {
+    console.error('❌ Error fetching conversations:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch conversations' });
+  }
+});
+
+// Delete a conversation
+app.delete('/api/conversations/:room', async (req, res) => {
+  try {
+    const { room } = req.params;
+    
+    const Message = require('./models/Message');
+    await Message.deleteMany({ channel: room });
+    
+    res.json({ success: true, message: 'Conversation deleted successfully' });
+  } catch (error) {
+    console.error('❌ Error deleting conversation:', error);
+    res.status(500).json({ success: false, error: 'Failed to delete conversation' });
+  }
+});
+
+// Search users for new conversations
+app.get('/api/users/search', async (req, res) => {
+  try {
+    const { query } = req.query;
+    
+    const User = require('./models/User');
+    const users = await User.find({
+      $or: [
+        { username: { $regex: query, $options: 'i' } },
+        { email: { $regex: query, $options: 'i' } }
+      ]
+    }).select('username email role').limit(10);
+    
+    res.json({ success: true, users });
+  } catch (error) {
+    console.error('❌ Error searching users:', error);
+    res.status(500).json({ success: false, error: 'Failed to search users' });
+  }
+});
+
 // ===== VIDEO UPLOAD API =====
 app.post('/api/stream/upload', upload.single('video'), (req, res) => {
   console.log('📤 Upload request received');
@@ -1580,24 +1668,90 @@ io.on('connection', socket => {
     }
   });
   
-  // ===== INSTRUCTOR CHAT HANDLERS =====
-  socket.on('join', async (channel) => {
-    socket.join(channel);
-    console.log(`👤 User joined instructor channel: ${channel}`);
+  // ===== UNIVERSAL MESSAGING SYSTEM =====
+  // Join a conversation room (works for both students and instructors)
+  socket.on('join', async (data) => {
+    const { username, room, role } = data;
+    const roomName = room || 'general';
+    
+    socket.join(roomName);
+    socket.username = username;
+    socket.room = roomName;
+    socket.role = role;
+    
+    console.log(`👤 ${role} ${username} joined room: ${roomName}`);
     
     try {
       // Load message history from database
       const Message = require('./models/Message');
-      const messages = await Message.find({ channel })
+      const messages = await Message.find({ channel: roomName })
         .sort({ timestamp: -1 })
         .limit(50);
       
-      socket.emit('history', messages.reverse());
+      socket.emit('message_history', messages.reverse());
+      
+      // Notify others in the room
+      socket.to(roomName).emit('user_joined', { username, role });
     } catch (error) {
-      console.error('❌ Error loading instructor chat history:', error);
+      console.error('❌ Error loading message history:', error);
     }
   });
-  
+
+  // Join specific room for private conversations
+  socket.on('join_room', (data) => {
+    const { room } = data;
+    socket.join(room);
+    console.log(`👤 User joined private room: ${room}`);
+  });
+
+  // Send message (universal for all user types)
+  socket.on('send_message', async (data) => {
+    try {
+      const { message, room, timestamp, username } = data;
+      const userRole = socket.role || 'student';
+      
+      // Store the message in database
+      const Message = require('./models/Message');
+      const newMessage = new Message({
+        sender: {
+          name: username,
+          role: userRole
+        },
+        content: message,
+        channel: room || 'general',
+        timestamp: new Date()
+      });
+      
+      await newMessage.save();
+      
+      // Broadcast to all clients in the room
+      io.to(room || 'general').emit('message', {
+        username,
+        message,
+        timestamp,
+        role: userRole,
+        room
+      });
+      
+      console.log(`💬 Message sent by ${username} (${userRole}) in room ${room}: ${message}`);
+    } catch (error) {
+      console.error('❌ Error saving message:', error);
+      socket.emit('error', { message: 'Failed to save message' });
+    }
+  });
+
+  // Typing indicators
+  socket.on('typing', (data) => {
+    const { room, username } = data;
+    socket.to(room).emit('typing', { username });
+  });
+
+  socket.on('stop_typing', (data) => {
+    const { room } = data;
+    socket.to(room).emit('stop_typing');
+  });
+
+  // ===== LEGACY INSTRUCTOR CHAT HANDLERS (for backward compatibility) =====
   socket.on('message', async (data) => {
     try {
       // Store the message in database
