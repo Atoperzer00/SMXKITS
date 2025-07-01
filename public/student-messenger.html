@@ -1075,7 +1075,15 @@
       // Initialize socket connection
       initializeSocket();
       
-      // Check if we came from a specific message
+      // Check if we came from a specific contact
+      const selectedContact = localStorage.getItem('selectedContact');
+      if (selectedContact) {
+        // Auto-select the contact and load conversation
+        selectContact(selectedContact, 'instructor');
+        localStorage.removeItem('selectedContact');
+      }
+      
+      // Check if we came from a specific message (legacy support)
       const selectedMessage = localStorage.getItem('selectedMessage');
       if (selectedMessage) {
         loadMessageConversation(selectedMessage);

@@ -235,7 +235,7 @@
       border: 2px solid var(--dark-gradient);
     }
 
-    .inbox-dropdown {
+    .inbox-dropdown, .notification-dropdown {
       position: absolute;
       top: 60px;
       right: 0;
@@ -245,15 +245,41 @@
       backdrop-filter: blur(20px);
       border-radius: var(--border-radius);
       border: 1px solid var(--glass-border);
-      box-shadow: var(--shadow-hover);
-      z-index: 1000;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+      z-index: 99999;
       opacity: 0;
       visibility: hidden;
       transform: translateY(-10px);
       transition: var(--transition);
     }
 
-    .inbox-dropdown.active {
+    .inbox-dropdown::before, .notification-dropdown::before {
+      content: '';
+      position: absolute;
+      top: -10px;
+      right: 20px;
+      width: 0;
+      height: 0;
+      border-left: 10px solid transparent;
+      border-right: 10px solid transparent;
+      border-bottom: 10px solid var(--glass-border);
+      z-index: 1;
+    }
+
+    .inbox-dropdown::after, .notification-dropdown::after {
+      content: '';
+      position: absolute;
+      top: -9px;
+      right: 20px;
+      width: 0;
+      height: 0;
+      border-left: 10px solid transparent;
+      border-right: 10px solid transparent;
+      border-bottom: 10px solid #16213e;
+      z-index: 2;
+    }
+
+    .inbox-dropdown.active, .notification-dropdown.active {
       opacity: 1;
       visibility: visible;
       transform: translateY(0);
@@ -742,6 +768,31 @@
           <div class="notification-bubble" onclick="toggleNotifications()">
             <i class="fas fa-bell"></i>
             <div class="notification-badge">3</div>
+            
+            <!-- Notification Dropdown -->
+            <div class="notification-dropdown" id="notificationDropdown">
+              <div class="inbox-header">
+                <i class="fas fa-bell"></i>
+                Notifications (3)
+              </div>
+              <div class="inbox-messages">
+                <div class="inbox-message unread">
+                  <div class="message-sender">System Alert</div>
+                  <div class="message-preview">New student submissions require grading</div>
+                  <div class="message-time">5 minutes ago</div>
+                </div>
+                <div class="inbox-message unread">
+                  <div class="message-sender">Training Update</div>
+                  <div class="message-preview">Course materials have been updated</div>
+                  <div class="message-time">30 minutes ago</div>
+                </div>
+                <div class="inbox-message unread">
+                  <div class="message-sender">Class Reminder</div>
+                  <div class="message-preview">Advanced Training session starts in 1 hour</div>
+                  <div class="message-time">1 hour ago</div>
+                </div>
+              </div>
+            </div>
           </div>
           
           <!-- Inbox -->
@@ -756,27 +807,27 @@
                 Messages (5)
               </div>
               <div class="inbox-messages">
-                <div class="inbox-message unread" onclick="openMessage('msg1')">
+                <div class="inbox-message unread" onclick="openInstructorChat('sarah-johnson')">
                   <div class="message-sender">Sarah Johnson</div>
                   <div class="message-preview">Quick question about the upcoming training session...</div>
                   <div class="message-time">2 minutes ago</div>
                 </div>
-                <div class="inbox-message unread" onclick="openMessage('msg2')">
+                <div class="inbox-message unread" onclick="openInstructorChat('mike-chen')">
                   <div class="message-sender">Mike Chen</div>
                   <div class="message-preview">Can we schedule a group meeting for next week?</div>
                   <div class="message-time">15 minutes ago</div>
                 </div>
-                <div class="inbox-message unread" onclick="openMessage('msg3')">
+                <div class="inbox-message unread" onclick="openInstructorChat('training-team')">
                   <div class="message-sender">Training Team</div>
                   <div class="message-preview">New course materials have been uploaded...</div>
                   <div class="message-time">1 hour ago</div>
                 </div>
-                <div class="inbox-message" onclick="openMessage('msg4')">
+                <div class="inbox-message" onclick="openInstructorChat('admin-support')">
                   <div class="message-sender">Admin Support</div>
                   <div class="message-preview">System maintenance scheduled for this weekend</div>
                   <div class="message-time">3 hours ago</div>
                 </div>
-                <div class="inbox-message" onclick="openMessage('msg5')">
+                <div class="inbox-message" onclick="openInstructorChat('lisa-rodriguez')">
                   <div class="message-sender">Lisa Rodriguez</div>
                   <div class="message-preview">Thank you for the excellent training session!</div>
                   <div class="message-time">Yesterday</div>
@@ -1252,23 +1303,39 @@
     }
 
     function toggleNotifications() {
-      showNotification('🔔 You have 3 new notifications!', 'info');
+      const dropdown = document.getElementById('notificationDropdown');
+      dropdown.classList.toggle('active');
+      
+      // Close dropdown when clicking outside
+      document.addEventListener('click', function closeDropdown(e) {
+        if (!e.target.closest('.notification-bubble')) {
+          dropdown.classList.remove('active');
+          document.removeEventListener('click', closeDropdown);
+        }
+      });
     }
 
-    function openMessage(messageId) {
-      // Store message ID for the messaging page
-      localStorage.setItem('selectedMessage', messageId);
+    function openInstructorChat(contactId) {
+      // Store contact ID for the messaging page
+      localStorage.setItem('selectedContact', contactId);
+      localStorage.setItem('userRole', 'instructor'); // Set role for proper messaging interface
       // Navigate to instructor messaging page
       window.location.href = 'instructor-messaging.html';
     }
 
-    // Close inbox dropdown when clicking outside
+    // Close dropdowns when clicking outside
     document.addEventListener('click', function(e) {
       const inboxBubble = document.querySelector('.inbox-bubble');
       const inboxDropdown = document.getElementById('inboxDropdown');
+      const notificationBubble = document.querySelector('.notification-bubble');
+      const notificationDropdown = document.getElementById('notificationDropdown');
       
       if (!inboxBubble.contains(e.target)) {
         inboxDropdown.classList.remove('active');
+      }
+      
+      if (!notificationBubble.contains(e.target)) {
+        notificationDropdown.classList.remove('active');
       }
     });
   </script>

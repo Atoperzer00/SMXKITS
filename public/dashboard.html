@@ -1025,8 +1025,22 @@
     }
 
     function openMessage(messageId) {
-      // Store message ID for the messaging page
-      localStorage.setItem('selectedMessage', messageId);
+      // Legacy support - convert message IDs to contact IDs
+      const messageToContact = {
+        'msg1': 'instructor-davis',
+        'msg2': 'training-support', 
+        'msg3': 'class-group',
+        'msg4': 'admin'
+      };
+      
+      const contactId = messageToContact[messageId] || messageId;
+      openStudentChat(contactId);
+    }
+
+    function openStudentChat(contactId) {
+      // Store contact ID for the messaging page
+      localStorage.setItem('selectedContact', contactId);
+      localStorage.setItem('userRole', 'student'); // Set role for proper messaging interface
       // Navigate to student messaging page
       window.location.href = 'student-messenger.html';
     }

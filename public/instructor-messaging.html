@@ -996,7 +996,15 @@
 
     // Initialize the messaging interface
     document.addEventListener('DOMContentLoaded', function() {
-      // Check if we came from a specific message
+      // Check if we came from a specific contact
+      const selectedContact = localStorage.getItem('selectedContact');
+      if (selectedContact) {
+        // Load the specific conversation
+        selectContact(selectedContact, 'student');
+        localStorage.removeItem('selectedContact');
+      }
+      
+      // Check if we came from a specific message (legacy support)
       const selectedMessage = localStorage.getItem('selectedMessage');
       if (selectedMessage) {
         // Load the specific conversation
