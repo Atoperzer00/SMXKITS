@@ -118,25 +118,28 @@ router.get('/conversation/:userId', auth(['admin', 'instructor', 'student']), as
 // Send a direct message
 router.post('/send', auth(['admin', 'instructor', 'student']), async (req, res) => {
   try {
-    console.log('📨 Sending direct message:', { 
-      senderId: req.user?.id, 
-      senderName: req.user?.name,
-      recipientId: req.body?.recipientId, 
-      content: req.body?.content?.substring(0, 50) + '...' 
-    });
-
     const { recipientId, content } = req.body;
-    const sender = req.user;
+    const senderId = req.user.id;
+
+    console.log('📨 Sending direct message:', { 
+      senderId, 
+      recipientId, 
+      content: content?.substring(0, 50) + '...' 
+    });
 
     if (!recipientId || !content) {
       console.log('❌ Missing required fields:', { recipientId: !!recipientId, content: !!content });
       return res.status(400).json({ error: 'Recipient ID and content are required' });
     }
 
-    if (!sender || !sender.id) {
-      console.log('❌ Invalid sender data:', sender);
+    // Get sender info from database (like KitComm does)
+    console.log('🔍 Looking for sender:', senderId);
+    const sender = await User.findById(senderId).select('name role');
+    if (!sender) {
+      console.log('❌ Sender not found:', senderId);
       return res.status(401).json({ error: 'Invalid user authentication' });
     }
+    console.log('✅ Found sender:', { id: senderId, name: sender.name, role: sender.role });
 
     // Get recipient info
     console.log('🔍 Looking for recipient:', recipientId);
@@ -148,14 +151,14 @@ router.post('/send', auth(['admin', 'instructor', 'student']), async (req, res) 
     console.log('✅ Found recipient:', { id: recipient._id, name: recipient.name, role: recipient.role });
 
     // Generate conversation ID
-    const conversationId = Conversation.generateConversationId(sender.id, recipientId);
+    const conversationId = Conversation.generateConversationId(senderId, recipientId);
     console.log('🔗 Generated conversation ID:', conversationId);
 
     // Create the message
     const messageData = {
       conversationId,
       sender: {
-        id: sender.id,
+        id: senderId,
         name: sender.name,
         role: sender.role
       },
@@ -175,7 +178,7 @@ router.post('/send', auth(['admin', 'instructor', 'student']), async (req, res) 
     // Update or create conversation
     console.log('🔄 Finding or creating conversation...');
     const conversation = await Conversation.findOrCreateConversation(
-      { id: sender.id, name: sender.name, role: sender.role },
+      { id: senderId, name: sender.name, role: sender.role },
       { id: recipient._id, name: recipient.name, role: recipient.role }
     );
     console.log('✅ Conversation found/created:', conversation._id);
@@ -184,7 +187,7 @@ router.post('/send', auth(['admin', 'instructor', 'student']), async (req, res) 
     conversation.lastMessage = {
       content,
       timestamp: message.timestamp,
-      senderId: sender.id
+      senderId: senderId
     };
     conversation.updatedAt = new Date();
     
