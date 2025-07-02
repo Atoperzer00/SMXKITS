@@ -10,7 +10,7 @@ const defaultTemplates = [
     difficulty: 'Easy',
     name: 'Basic SMX Training',
     description: 'Introductory course covering fundamental SMX concepts and basic operations',
-    durationWeeks: 4,
+    durationWeeks: 1,
     modules: [
       {
         name: 'Introduction to SMX',
@@ -36,7 +36,7 @@ const defaultTemplates = [
         name: 'Basic Operations',
         description: 'Fundamental operational procedures',
         order: 2,
-        estimatedWeeks: 2,
+        estimatedWeeks: 1,
         lessons: [
           {
             title: 'System Startup',
@@ -72,13 +72,13 @@ const defaultTemplates = [
     difficulty: 'Medium',
     name: 'Intermediate SMX Training',
     description: 'Intermediate course covering advanced operations and tactical scenarios',
-    durationWeeks: 8,
+    durationWeeks: 2,
     modules: [
       {
         name: 'Advanced Operations',
         description: 'Complex operational procedures',
         order: 1,
-        estimatedWeeks: 2,
+        estimatedWeeks: 1,
         lessons: [
           {
             title: 'Advanced System Configuration',
@@ -98,7 +98,7 @@ const defaultTemplates = [
         name: 'Tactical Scenarios',
         description: 'Real-world scenario training',
         order: 2,
-        estimatedWeeks: 3,
+        estimatedWeeks: 1,
         lessons: [
           {
             title: 'Scenario Planning',
@@ -118,7 +118,7 @@ const defaultTemplates = [
         name: 'Advanced Practice',
         description: 'Complex practice scenarios',
         order: 3,
-        estimatedWeeks: 2,
+        estimatedWeeks: 1,
         lessons: [
           {
             title: 'Simulation Exercises',
@@ -148,13 +148,13 @@ const defaultTemplates = [
     difficulty: 'Hard',
     name: 'Advanced SMX Specialist Training',
     description: 'Expert-level course for advanced practitioners and instructors',
-    durationWeeks: 12,
+    durationWeeks: 3,
     modules: [
       {
         name: 'Expert Systems',
         description: 'Advanced system mastery',
         order: 1,
-        estimatedWeeks: 3,
+        estimatedWeeks: 1,
         lessons: [
           {
             title: 'System Architecture Deep Dive',
@@ -180,7 +180,7 @@ const defaultTemplates = [
         name: 'Leadership & Training',
         description: 'Training others and leadership skills',
         order: 2,
-        estimatedWeeks: 3,
+        estimatedWeeks: 1,
         lessons: [
           {
             title: 'Instructional Design',
@@ -200,7 +200,7 @@ const defaultTemplates = [
         name: 'Complex Scenarios',
         description: 'Multi-faceted operational scenarios',
         order: 3,
-        estimatedWeeks: 4,
+        estimatedWeeks: 1,
         lessons: [
           {
             title: 'Multi-Domain Operations',
@@ -220,7 +220,7 @@ const defaultTemplates = [
         name: 'Certification',
         description: 'Expert certification process',
         order: 4,
-        estimatedWeeks: 2,
+        estimatedWeeks: 1,
         lessons: [
           {
             title: 'Comprehensive Examination',

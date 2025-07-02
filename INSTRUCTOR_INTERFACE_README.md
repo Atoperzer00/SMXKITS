@@ -194,18 +194,18 @@ The new Instructor Interface consolidates all instructor-facing functionality in
 
 The system comes with three pre-configured templates:
 
-#### Easy Template - "Basic SMX Training" (4 weeks)
+#### Easy Template - "Basic SMX Training" (1 week)
 - Introduction to SMX
 - Basic Operations  
 - Practice Exercises
 
-#### Medium Template - "Intermediate SMX Training" (8 weeks)
+#### Medium Template - "Intermediate SMX Training" (2 weeks)
 - Advanced Operations
 - Tactical Scenarios
 - Advanced Practice
 - Assessment
 
-#### Hard Template - "Advanced SMX Specialist Training" (12 weeks)
+#### Hard Template - "Advanced SMX Specialist Training" (3 weeks)
 - Expert Systems
 - Leadership & Training
 - Complex Scenarios

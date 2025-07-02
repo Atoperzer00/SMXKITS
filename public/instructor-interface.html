@@ -918,6 +918,9 @@
           <button class="btn" onclick="showCreateTemplateModal()">
             <i class="fas fa-plus"></i> Create New Template
           </button>
+          <a href="template-editor.html" class="btn" style="margin-left: 1rem;">
+            <i class="fas fa-calendar-edit"></i> Advanced Template Editor
+          </a>
         </div>
         
         <div id="templates-list">
@@ -2408,8 +2411,9 @@
     }
 
     async function editTemplate(difficulty) {
-      // For now, just show a message - full template editing would be complex
-      alert(`Template editing for ${difficulty} level would open a detailed module editor. This is a placeholder for the full implementation.`);
+      // Open the Advanced Template Editor with the selected template
+      const url = `template-editor.html?template=${encodeURIComponent(difficulty)}`;
+      window.open(url, '_blank');
     }
 
     async function deleteTemplate(difficulty) {

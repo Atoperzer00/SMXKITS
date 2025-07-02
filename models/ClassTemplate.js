@@ -1,9 +1,27 @@
 const mongoose = require('mongoose');
 
-// Daily content sub-schema
+// Time block sub-schema for detailed scheduling
+const TimeBlockSchema = new mongoose.Schema({
+  startTime: { type: String, required: true }, // HH:MM format
+  endTime: { type: String, required: true }, // HH:MM format
+  type: { 
+    type: String, 
+    required: true,
+    enum: ['course', 'mission', 'keyboard', 'ia', 'screener', 'other']
+  },
+  contentId: { type: String }, // Reference to specific content
+  title: { type: String }, // Custom title override
+  description: { type: String },
+  isRequired: { type: Boolean, default: true },
+  order: { type: Number, default: 0 }
+});
+
+// Daily content sub-schema with enhanced scheduling
 const DailyContentSchema = new mongoose.Schema({
   day: { type: Number, required: true }, // Day number from start (1, 2, 3, etc.)
   date: { type: Date }, // Specific date if set
+  timeBlocks: [TimeBlockSchema], // Detailed time-based schedule
+  // Legacy content arrays (maintained for backward compatibility)
   missionReferences: [{
     id: { type: String, required: true },
     name: { type: String, required: true },
@@ -25,7 +43,22 @@ const DailyContentSchema = new mongoose.Schema({
     targetWPM: { type: Number, default: 30 },
     duration: { type: Number, default: 300 } // 5 minutes default
   }],
-  notes: { type: String }
+  iaTraining: [{
+    id: { type: String, required: true },
+    name: { type: String, required: true },
+    description: { type: String },
+    duration: { type: Number, default: 0 },
+    level: { type: String, enum: ['basic', 'intermediate', 'advanced'], default: 'basic' }
+  }],
+  screenerTraining: [{
+    id: { type: String, required: true },
+    name: { type: String, required: true },
+    description: { type: String },
+    duration: { type: Number, default: 0 },
+    level: { type: String, enum: ['basic', 'intermediate', 'advanced'], default: 'basic' }
+  }],
+  notes: { type: String },
+  isActive: { type: Boolean, default: true } // Whether this day is active in the schedule
 });
 
 // Module sub-schema for templates

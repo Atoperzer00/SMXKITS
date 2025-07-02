@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Template Editor - SMX KITS</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0f1419 0%, #1a2332 100%);
+      color: #e0e6ed;
+      min-height: 100vh;
+    }
+
+    .header {
+      background: rgba(30, 42, 53, 0.95);
+      padding: 1rem 2rem;
+      border-bottom: 2px solid #70b8ff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      backdrop-filter: blur(10px);
+    }
+
+    .header h1 {
+      color: #70b8ff;
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, #70b8ff 0%, #1da1f2 100%);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(112, 184, 255, 0.3);
+    }
+
+    .btn-secondary {
+      background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+    }
+
+    .main-container {
+      display: flex;
+      height: calc(100vh - 80px);
+    }
+
+    .calendar-section {
+      flex: 1;
+      padding: 1rem;
+      overflow-y: auto;
+    }
+
+    .content-library {
+      width: 350px;
+      background: rgba(30, 42, 53, 0.8);
+      border-left: 2px solid #70b8ff;
+      padding: 1rem;
+      overflow-y: auto;
+    }
+
+    .template-info {
+      background: rgba(112, 184, 255, 0.1);
+      border: 1px solid #70b8ff;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .template-info h3 {
+      color: #70b8ff;
+      margin-bottom: 0.5rem;
+    }
+
+    .calendar-container {
+      background: rgba(30, 42, 53, 0.6);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .calendar-nav {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .month-year {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #70b8ff;
+      min-width: 200px;
+      text-align: center;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+      background: #1a2332;
+      border-radius: 8px;
+      padding: 2px;
+    }
+
+    .calendar-header-cell {
+      background: #70b8ff;
+      color: white;
+      padding: 0.5rem;
+      text-align: center;
+      font-weight: 600;
+      font-size: 0.8rem;
+    }
+
+    .calendar-day {
+      background: #1e2a35;
+      min-height: 100px;
+      padding: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .calendar-day:hover {
+      background: #1a2530;
+      transform: scale(1.02);
+      box-shadow: 0 4px 12px rgba(112, 184, 255, 0.2);
+    }
+
+    .calendar-day.other-month {
+      background: #0f1419;
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .calendar-day.selected {
+      background: #70b8ff;
+      color: white;
+    }
+
+    .calendar-day.has-content {
+      border: 2px solid #70b8ff;
+    }
+
+    .day-number {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .day-blocks {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .time-block {
+      background: rgba(112, 184, 255, 0.2);
+      border-radius: 3px;
+      padding: 2px 4px;
+      font-size: 0.6rem;
+      text-align: center;
+      border-left: 3px solid;
+    }
+
+    .block-course { border-left-color: #4ecdc4; }
+    .block-mission { border-left-color: #ff6b6b; }
+    .block-keyboard { border-left-color: #ffe66d; }
+    .block-ia { border-left-color: #a8e6cf; }
+    .block-screener { border-left-color: #ffa8a8; }
+    .block-other { border-left-color: #c7a8ff; }
+
+    .content-category {
+      margin-bottom: 1.5rem;
+    }
+
+    .category-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      padding: 0.5rem;
+      background: rgba(112, 184, 255, 0.1);
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .category-header.collapsed .fa-chevron-down {
+      transform: rotate(-90deg);
+    }
+
+    .category-title {
+      font-weight: 600;
+      color: #70b8ff;
+    }
+
+    .content-list {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #3a4a5c;
+      border-radius: 6px;
+      background: rgba(15, 20, 25, 0.5);
+    }
+
+    .content-item {
+      padding: 0.5rem;
+      border-bottom: 1px solid #2a3a4c;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .content-item:hover {
+      background: rgba(112, 184, 255, 0.1);
+    }
+
+    .content-item:last-child {
+      border-bottom: none;
+    }
+
+    .content-checkbox {
+      width: 16px;
+      height: 16px;
+      accent-color: #70b8ff;
+    }
+
+    .content-info {
+      flex: 1;
+    }
+
+    .content-name {
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+
+    .content-meta {
+      font-size: 0.7rem;
+      color: #aaa;
+    }
+
+    /* Day Editor Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(5px);
+    }
+
+    .modal-content {
+      background: linear-gradient(135deg, #1e2a35 0%, #2a3a4c 100%);
+      margin: 2% auto;
+      padding: 0;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 1200px;
+      height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-header {
+      padding: 1.5rem;
+      border-bottom: 2px solid #70b8ff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-body {
+      flex: 1;
+      padding: 1.5rem;
+      overflow-y: auto;
+      display: flex;
+      gap: 2rem;
+    }
+
+    .day-schedule {
+      flex: 1;
+    }
+
+    .day-content-selector {
+      width: 300px;
+      background: rgba(15, 20, 25, 0.5);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    .time-slot {
+      background: rgba(30, 42, 53, 0.8);
+      border: 1px solid #3a4a5c;
+      border-radius: 6px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      position: relative;
+    }
+
+    .time-slot.active {
+      border-color: #70b8ff;
+      box-shadow: 0 0 10px rgba(112, 184, 255, 0.3);
+    }
+
+    .time-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .time-input {
+      background: rgba(15, 20, 25, 0.8);
+      border: 1px solid #3a4a5c;
+      border-radius: 4px;
+      padding: 0.25rem 0.5rem;
+      color: #e0e6ed;
+      font-size: 0.8rem;
+      width: 80px;
+    }
+
+    .block-type-selector {
+      margin-bottom: 0.5rem;
+    }
+
+    .block-type-selector select {
+      background: rgba(15, 20, 25, 0.8);
+      border: 1px solid #3a4a5c;
+      border-radius: 4px;
+      padding: 0.5rem;
+      color: #e0e6ed;
+      width: 100%;
+    }
+
+    .content-selector {
+      margin-top: 0.5rem;
+    }
+
+    .content-selector select {
+      background: rgba(15, 20, 25, 0.8);
+      border: 1px solid #3a4a5c;
+      border-radius: 4px;
+      padding: 0.5rem;
+      color: #e0e6ed;
+      width: 100%;
+    }
+
+    .remove-slot {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      background: #e53e3e;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      font-size: 0.7rem;
+    }
+
+    .add-time-slot {
+      background: rgba(112, 184, 255, 0.2);
+      border: 2px dashed #70b8ff;
+      border-radius: 6px;
+      padding: 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-bottom: 1rem;
+    }
+
+    .add-time-slot:hover {
+      background: rgba(112, 184, 255, 0.3);
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: #e0e6ed;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: 50%;
+      transition: all 0.3s;
+    }
+
+    .close-btn:hover {
+      background: rgba(229, 62, 62, 0.2);
+      color: #e53e3e;
+    }
+
+    .modal-footer {
+      padding: 1.5rem;
+      border-top: 1px solid #3a4a5c;
+      display: flex;
+      justify-content: flex-end;
+      gap: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      .main-container {
+        flex-direction: column;
+      }
+      
+      .content-library {
+        width: 100%;
+        height: 300px;
+      }
+      
+      .modal-body {
+        flex-direction: column;
+      }
+      
+      .day-content-selector {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>
+      <i class="fas fa-calendar-edit"></i>
+      Template Editor
+      <span id="current-template-indicator" style="font-size: 0.8rem; color: #70b8ff; margin-left: 1rem; display: none;"></span>
+    </h1>
+    <div class="header-actions">
+      <select id="template-selector" style="background: rgba(30, 42, 53, 0.8); border: 1px solid #70b8ff; border-radius: 6px; padding: 0.5rem; color: #e0e6ed;">
+        <option value="">Select Template to Edit...</option>
+      </select>
+      <button class="btn" onclick="createNewTemplate()">
+        <i class="fas fa-plus"></i> New Template
+      </button>
+      <button class="btn btn-success" onclick="saveTemplate()" id="save-btn" disabled>
+        <i class="fas fa-save"></i> Save Template
+      </button>
+      <button class="btn btn-secondary" onclick="goBack()">
+        <i class="fas fa-arrow-left"></i> Back
+      </button>
+    </div>
+  </div>
+
+  <div class="main-container">
+    <div class="calendar-section">
+      <div class="template-info" id="template-info" style="display: none;">
+        <h3 id="template-title">Template Name</h3>
+        <div id="template-details">
+          <p><strong>Difficulty:</strong> <span id="template-difficulty"></span></p>
+          <p><strong>Duration:</strong> <span id="template-duration"></span> weeks</p>
+          <p><strong>Description:</strong> <span id="template-description"></span></p>
+        </div>
+        <div style="margin-top: 1rem;">
+          <button class="btn btn-secondary" onclick="editTemplateInfo()">
+            <i class="fas fa-edit"></i> Edit Info
+          </button>
+        </div>
+      </div>
+
+      <div class="calendar-container">
+        <div class="calendar-header">
+          <div class="calendar-nav">
+            <button class="btn btn-secondary" onclick="previousMonth()">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            <div class="month-year" id="current-month-year"></div>
+            <button class="btn btn-secondary" onclick="nextMonth()">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
+          <div style="color: #aaa; font-size: 0.9rem;">
+            💡 Click days to schedule content blocks
+          </div>
+        </div>
+
+        <div class="calendar-grid" id="calendar-grid">
+          <!-- Calendar will be generated here -->
+        </div>
+      </div>
+    </div>
+
+    <div class="content-library">
+      <h3 style="color: #70b8ff; margin-bottom: 1rem;">
+        <i class="fas fa-book"></i> Content Library
+      </h3>
+
+      <div class="content-category">
+        <div class="category-header" onclick="toggleCategory('course')">
+          <i class="fas fa-chevron-down"></i>
+          <span class="category-title">Course Content</span>
+          <span style="margin-left: auto; font-size: 0.8rem;" id="course-count">0 selected</span>
+        </div>
+        <div class="content-list" id="course-content">
+          <!-- Course content will be loaded here -->
+        </div>
+      </div>
+
+      <div class="content-category">
+        <div class="category-header" onclick="toggleCategory('mission')">
+          <i class="fas fa-chevron-down"></i>
+          <span class="category-title">Mission References</span>
+          <span style="margin-left: auto; font-size: 0.8rem;" id="mission-count">0 selected</span>
+        </div>
+        <div class="content-list" id="mission-content">
+          <!-- Mission content will be loaded here -->
+        </div>
+      </div>
+
+      <div class="content-category">
+        <div class="category-header" onclick="toggleCategory('keyboard')">
+          <i class="fas fa-chevron-down"></i>
+          <span class="category-title">Keyboard Training</span>
+          <span style="margin-left: auto; font-size: 0.8rem;" id="keyboard-count">0 selected</span>
+        </div>
+        <div class="content-list" id="keyboard-content">
+          <!-- Keyboard training content will be loaded here -->
+        </div>
+      </div>
+
+      <div class="content-category">
+        <div class="category-header" onclick="toggleCategory('ia')">
+          <i class="fas fa-chevron-down"></i>
+          <span class="category-title">IA Training</span>
+          <span style="margin-left: auto; font-size: 0.8rem;" id="ia-count">0 selected</span>
+        </div>
+        <div class="content-list" id="ia-content">
+          <!-- IA training content will be loaded here -->
+        </div>
+      </div>
+
+      <div class="content-category">
+        <div class="category-header" onclick="toggleCategory('screener')">
+          <i class="fas fa-chevron-down"></i>
+          <span class="category-title">Screener Training</span>
+          <span style="margin-left: auto; font-size: 0.8rem;" id="screener-count">0 selected</span>
+        </div>
+        <div class="content-list" id="screener-content">
+          <!-- Screener training content will be loaded here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Day Editor Modal -->
+  <div id="day-editor-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="day-editor-title">Edit Day Schedule</h3>
+        <button class="close-btn" onclick="closeDayEditor()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="day-schedule">
+          <h4 style="color: #70b8ff; margin-bottom: 1rem;">Time Blocks</h4>
+          <div id="time-slots-container">
+            <!-- Time slots will be generated here -->
+          </div>
+          <div class="add-time-slot" onclick="addTimeSlot()">
+            <i class="fas fa-plus"></i> Add Time Block
+          </div>
+        </div>
+        <div class="day-content-selector">
+          <h4 style="color: #70b8ff; margin-bottom: 1rem;">Available Content</h4>
+          <div style="font-size: 0.8rem; color: #aaa; margin-bottom: 1rem;">
+            Select content types in the library to see them here
+          </div>
+          <div id="available-content-for-day">
+            <!-- Available content for this day will be shown here -->
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeDayEditor()">Cancel</button>
+        <button class="btn" onclick="saveDaySchedule()">Save Day</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Template Info Modal -->
+  <div id="template-info-modal" class="modal">
+    <div class="modal-content" style="max-width: 600px; height: auto;">
+      <div class="modal-header">
+        <h3>Template Information</h3>
+        <button class="close-btn" onclick="closeTemplateInfoModal()">&times;</button>
+      </div>
+      <div class="modal-body" style="flex-direction: column;">
+        <form id="template-info-form">
+          <div style="margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem; color: #70b8ff;">Template Name *</label>
+            <input type="text" id="template-name-input" required style="width: 100%; padding: 0.75rem; background: rgba(15, 20, 25, 0.8); border: 1px solid #3a4a5c; border-radius: 6px; color: #e0e6ed;">
+          </div>
+          <div style="margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem; color: #70b8ff;">Difficulty *</label>
+            <select id="template-difficulty-input" required style="width: 100%; padding: 0.75rem; background: rgba(15, 20, 25, 0.8); border: 1px solid #3a4a5c; border-radius: 6px; color: #e0e6ed;">
+              <option value="">Select Difficulty</option>
+              <option value="Easy">Easy</option>
+              <option value="Medium">Medium</option>
+              <option value="Hard">Hard</option>
+            </select>
+          </div>
+          <div style="margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem; color: #70b8ff;">Duration (Weeks) *</label>
+            <input type="number" id="template-duration-input" min="1" max="52" required style="width: 100%; padding: 0.75rem; background: rgba(15, 20, 25, 0.8); border: 1px solid #3a4a5c; border-radius: 6px; color: #e0e6ed;">
+          </div>
+          <div style="margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem; color: #70b8ff;">Description</label>
+            <textarea id="template-description-input" rows="3" style="width: 100%; padding: 0.75rem; background: rgba(15, 20, 25, 0.8); border: 1px solid #3a4a5c; border-radius: 6px; color: #e0e6ed; resize: vertical;"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeTemplateInfoModal()">Cancel</button>
+        <button class="btn" onclick="saveTemplateInfo()">Save Info</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Global variables
+    let currentTemplate = null;
+    let currentDate = new Date();
+    let selectedDay = null;
+    let contentLibrary = {};
+    let selectedContent = {
+      course: new Set(),
+      mission: new Set(),
+      keyboard: new Set(),
+      ia: new Set(),
+      screener: new Set()
+    };
+    let templateSchedule = {}; // day -> time blocks
+
+    // Initialize the application
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadContentLibrary();
+      await loadTemplates();
+      updateCalendarHeader();
+      renderCalendar();
+      renderContentLibrary();
+      
+      // Check if template is specified in URL parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      const templateParam = urlParams.get('template');
+      if (templateParam) {
+        // Auto-select the template from URL parameter
+        const selector = document.getElementById('template-selector');
+        selector.value = templateParam;
+        await loadTemplate(templateParam);
+      }
+    });
+
+    // Load content library from API
+    async function loadContentLibrary() {
+      try {
+        // Load existing content
+        const response = await fetch('/api/class-templates/content/available');
+        if (response.ok) {
+          const existing = await response.json();
+          contentLibrary = {
+            course: existing.course || [],
+            mission: existing.mission || [],
+            keyboard: existing.typing || [], // Map typing to keyboard for now
+            ia: [
+              { id: 'ia1', name: 'IA Fundamentals', description: 'Basic IA concepts and procedures', duration: 3600 },
+              { id: 'ia2', name: 'IA Assessment Techniques', description: 'Assessment methodologies', duration: 2700 },
+              { id: 'ia3', name: 'IA Documentation', description: 'Proper documentation procedures', duration: 1800 },
+              { id: 'ia4', name: 'IA Quality Control', description: 'Quality assurance processes', duration: 2400 }
+            ],
+            screener: [
+              { id: 'screener1', name: 'Screener Basics', description: 'Introduction to screening procedures', duration: 2400 },
+              { id: 'screener2', name: 'Advanced Screening', description: 'Complex screening scenarios', duration: 3600 },
+              { id: 'screener3', name: 'Screener Protocols', description: 'Standard operating procedures', duration: 1800 },
+              { id: 'screener4', name: 'Screener Certification', description: 'Certification requirements', duration: 4800 }
+            ]
+          };
+        }
+      } catch (error) {
+        console.error('Error loading content library:', error);
+        // Use fallback content
+        contentLibrary = {
+          course: [
+            { id: 'course1', name: 'Introduction to SMX', description: 'Basic SMX concepts', duration: 2700 },
+            { id: 'course2', name: 'System Architecture', description: 'Understanding system components', duration: 3600 }
+          ],
+          mission: [
+            { id: 'mission1', name: 'Basic Navigation', description: 'Learn basic navigation', duration: 1800 },
+            { id: 'mission2', name: 'Communication Protocols', description: 'Standard communication', duration: 2400 }
+          ],
+          keyboard: [
+            { id: 'keyboard1', name: 'Basic Typing', description: '30 WPM test', targetWPM: 30, duration: 300 },
+            { id: 'keyboard2', name: 'Speed Challenge', description: '50 WPM test', targetWPM: 50, duration: 300 }
+          ],
+          ia: [
+            { id: 'ia1', name: 'IA Fundamentals', description: 'Basic IA concepts', duration: 3600 }
+          ],
+          screener: [
+            { id: 'screener1', name: 'Screener Basics', description: 'Introduction to screening', duration: 2400 }
+          ]
+        };
+      }
+    }
+
+    // Load templates
+    async function loadTemplates() {
+      try {
+        const response = await fetch('/api/class-templates');
+        if (response.ok) {
+          const templates = await response.json();
+          const selector = document.getElementById('template-selector');
+          selector.innerHTML = '<option value="">Select Template to Edit...</option>';
+          
+          templates.forEach(template => {
+            const option = document.createElement('option');
+            option.value = template.difficulty;
+            option.textContent = `${template.difficulty} - ${template.name}`;
+            selector.appendChild(option);
+          });
+        }
+      } catch (error) {
+        console.error('Error loading templates:', error);
+      }
+    }
+
+    // Template selector change
+    document.getElementById('template-selector').addEventListener('change', async (e) => {
+      const difficulty = e.target.value;
+      if (difficulty) {
+        await loadTemplate(difficulty);
+      } else {
+        currentTemplate = null;
+        document.getElementById('template-info').style.display = 'none';
+        document.getElementById('save-btn').disabled = true;
+        document.getElementById('current-template-indicator').style.display = 'none';
+        templateSchedule = {};
+        renderCalendar();
+      }
+    });
+
+    // Load specific template
+    async function loadTemplate(difficulty) {
+      try {
+        const response = await fetch(`/api/class-templates/${difficulty}`);
+        if (response.ok) {
+          currentTemplate = await response.json();
+          displayTemplateInfo();
+          await loadTemplateSchedule();
+          document.getElementById('save-btn').disabled = false;
+          renderCalendar();
+        }
+      } catch (error) {
+        console.error('Error loading template:', error);
+      }
+    }
+
+    // Display template info
+    function displayTemplateInfo() {
+      if (!currentTemplate) return;
+      
+      document.getElementById('template-title').textContent = currentTemplate.name;
+      document.getElementById('template-difficulty').textContent = currentTemplate.difficulty;
+      document.getElementById('template-duration').textContent = currentTemplate.durationWeeks;
+      document.getElementById('template-description').textContent = currentTemplate.description || 'No description';
+      document.getElementById('template-info').style.display = 'block';
+      
+      // Update header indicator
+      const indicator = document.getElementById('current-template-indicator');
+      indicator.textContent = `- Editing: ${currentTemplate.name} (${currentTemplate.difficulty})`;
+      indicator.style.display = 'inline';
+    }
+
+    // Load template schedule
+    async function loadTemplateSchedule() {
+      templateSchedule = {};
+      
+      if (currentTemplate) {
+        try {
+          const response = await fetch(`/api/class-templates/${currentTemplate.difficulty}/schedule`);
+          if (response.ok) {
+            const schedule = await response.json();
+            templateSchedule = schedule;
+          }
+        } catch (error) {
+          console.error('Error loading template schedule:', error);
+          // Fallback to extracting from template modules
+          if (currentTemplate.modules) {
+            for (const module of currentTemplate.modules) {
+              if (module.dailySchedule) {
+                for (const dayData of module.dailySchedule) {
+                  templateSchedule[dayData.day] = {
+                    timeBlocks: dayData.timeBlocks || [],
+                    isActive: dayData.isActive !== false,
+                    notes: dayData.notes || ''
+                  };
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Calendar functions
+    function updateCalendarHeader() {
+      const monthNames = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+      ];
+      
+      const monthYear = `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+      document.getElementById('current-month-year').textContent = monthYear;
+    }
+
+    function previousMonth() {
+      currentDate.setMonth(currentDate.getMonth() - 1);
+      updateCalendarHeader();
+      renderCalendar();
+    }
+
+    function nextMonth() {
+      currentDate.setMonth(currentDate.getMonth() + 1);
+      updateCalendarHeader();
+      renderCalendar();
+    }
+
+    function renderCalendar() {
+      const grid = document.getElementById('calendar-grid');
+      
+      // Create header
+      const headers = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      let html = '';
+      headers.forEach(header => {
+        html += `<div class="calendar-header-cell">${header}</div>`;
+      });
+
+      // Get first day of month and calculate start date
+      const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+      const startDate = new Date(firstDay);
+      startDate.setDate(startDate.getDate() - firstDay.getDay());
+
+      // Generate calendar days
+      const currentCalendarDate = new Date(startDate);
+      for (let week = 0; week < 6; week++) {
+        for (let day = 0; day < 7; day++) {
+          const dayNumber = currentCalendarDate.getDate();
+          const isCurrentMonth = currentCalendarDate.getMonth() === currentDate.getMonth();
+          const isWeekend = currentCalendarDate.getDay() === 0 || currentCalendarDate.getDay() === 6;
+          
+          let dayClass = 'calendar-day';
+          if (!isCurrentMonth) dayClass += ' other-month';
+          
+          // Calculate day number from template start
+          const templateStartDate = new Date(); // In real app, this would be template start date
+          const daysSinceStart = Math.floor((currentCalendarDate - templateStartDate) / (1000 * 60 * 60 * 24)) + 1;
+          
+          let dayContent = '';
+          let hasContent = false;
+          
+          if (isCurrentMonth && !isWeekend && currentTemplate && daysSinceStart > 0 && daysSinceStart <= (currentTemplate.durationWeeks * 7)) {
+            const dayData = templateSchedule[daysSinceStart];
+            const daySchedule = dayData ? dayData.timeBlocks || [] : [];
+            hasContent = daySchedule.length > 0;
+            
+            if (hasContent) {
+              dayClass += ' has-content';
+              dayContent = '<div class="day-blocks">';
+              daySchedule.forEach(block => {
+                dayContent += `<div class="time-block block-${block.type}">${block.startTime}</div>`;
+              });
+              dayContent += '</div>';
+            }
+          }
+          
+          const clickHandler = isCurrentMonth && !isWeekend ? `onclick="openDayEditor(${daysSinceStart}, '${currentCalendarDate.toISOString()}')"` : '';
+          
+          html += `
+            <div class="${dayClass}" ${clickHandler}>
+              <div class="day-number">${dayNumber}</div>
+              ${dayContent}
+            </div>
+          `;
+          
+          currentCalendarDate.setDate(currentCalendarDate.getDate() + 1);
+        }
+      }
+
+      grid.innerHTML = html;
+    }
+
+    // Content library functions
+    function renderContentLibrary() {
+      Object.keys(contentLibrary).forEach(category => {
+        const container = document.getElementById(`${category}-content`);
+        const items = contentLibrary[category] || [];
+        
+        let html = '';
+        items.forEach(item => {
+          const isSelected = selectedContent[category].has(item.id);
+          let meta = '';
+          if (item.duration) {
+            const minutes = Math.floor(item.duration / 60);
+            meta = `${minutes} min`;
+          }
+          if (item.targetWPM) {
+            meta += ` • ${item.targetWPM} WPM`;
+          }
+          
+          html += `
+            <div class="content-item" onclick="toggleContentSelection('${category}', '${item.id}')">
+              <input type="checkbox" class="content-checkbox" ${isSelected ? 'checked' : ''} onchange="toggleContentSelection('${category}', '${item.id}')">
+              <div class="content-info">
+                <div class="content-name">${item.name}</div>
+                <div class="content-meta">${item.description}${meta ? ` • ${meta}` : ''}</div>
+              </div>
+            </div>
+          `;
+        });
+        
+        container.innerHTML = html;
+        updateCategoryCount(category);
+      });
+    }
+
+    function toggleCategory(category) {
+      const header = document.querySelector(`[onclick="toggleCategory('${category}')"]`);
+      const content = document.getElementById(`${category}-content`);
+      
+      header.classList.toggle('collapsed');
+      content.style.display = content.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function toggleContentSelection(category, itemId) {
+      if (selectedContent[category].has(itemId)) {
+        selectedContent[category].delete(itemId);
+      } else {
+        selectedContent[category].add(itemId);
+      }
+      updateCategoryCount(category);
+      renderContentLibrary();
+    }
+
+    function updateCategoryCount(category) {
+      const count = selectedContent[category].size;
+      document.getElementById(`${category}-count`).textContent = `${count} selected`;
+    }
+
+    // Day editor functions
+    function openDayEditor(dayNumber, dateString) {
+      if (!currentTemplate) {
+        alert('Please select a template first');
+        return;
+      }
+      
+      selectedDay = dayNumber;
+      const date = new Date(dateString);
+      const dayName = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+      
+      document.getElementById('day-editor-title').textContent = `Day ${dayNumber} - ${dayName}`;
+      
+      // Load existing schedule for this day
+      const dayData = templateSchedule[dayNumber] || { timeBlocks: [], isActive: true, notes: '' };
+      renderTimeSlots(dayData.timeBlocks);
+      renderAvailableContentForDay();
+      
+      document.getElementById('day-editor-modal').style.display = 'block';
+    }
+
+    function renderTimeSlots(schedule) {
+      const container = document.getElementById('time-slots-container');
+      
+      if (schedule.length === 0) {
+        // Add default time slot
+        schedule = [{
+          startTime: '09:00',
+          endTime: '10:00',
+          type: 'course',
+          contentId: '',
+          title: ''
+        }];
+      }
+      
+      let html = '';
+      schedule.forEach((slot, index) => {
+        html += createTimeSlotHTML(slot, index);
+      });
+      
+      container.innerHTML = html;
+    }
+
+    function createTimeSlotHTML(slot, index) {
+      const contentOptions = getContentOptionsForType(slot.type);
+      
+      return `
+        <div class="time-slot" data-index="${index}">
+          <button class="remove-slot" onclick="removeTimeSlot(${index})">&times;</button>
+          <div class="time-header">
+            <input type="time" class="time-input" value="${slot.startTime}" onchange="updateTimeSlot(${index}, 'startTime', this.value)">
+            <span style="margin: 0 0.5rem;">to</span>
+            <input type="time" class="time-input" value="${slot.endTime}" onchange="updateTimeSlot(${index}, 'endTime', this.value)">
+          </div>
+          <div class="block-type-selector">
+            <select onchange="updateTimeSlot(${index}, 'type', this.value)">
+              <option value="course" ${slot.type === 'course' ? 'selected' : ''}>Course Content</option>
+              <option value="mission" ${slot.type === 'mission' ? 'selected' : ''}>Mission References</option>
+              <option value="keyboard" ${slot.type === 'keyboard' ? 'selected' : ''}>Keyboard Training</option>
+              <option value="ia" ${slot.type === 'ia' ? 'selected' : ''}>IA Training</option>
+              <option value="screener" ${slot.type === 'screener' ? 'selected' : ''}>Screener Training</option>
+              <option value="other" ${slot.type === 'other' ? 'selected' : ''}>Other</option>
+            </select>
+          </div>
+          <div class="content-selector">
+            <select onchange="updateTimeSlot(${index}, 'contentId', this.value)">
+              <option value="">Select content...</option>
+              ${contentOptions}
+            </select>
+          </div>
+          <div style="margin-top: 0.5rem;">
+            <input type="text" placeholder="Custom title (optional)" value="${slot.title || ''}" 
+                   onchange="updateTimeSlot(${index}, 'title', this.value)"
+                   style="width: 100%; padding: 0.5rem; background: rgba(15, 20, 25, 0.8); border: 1px solid #3a4a5c; border-radius: 4px; color: #e0e6ed;">
+          </div>
+        </div>
+      `;
+    }
+
+    function getContentOptionsForType(type) {
+      const items = contentLibrary[type] || [];
+      return items
+        .filter(item => selectedContent[type].has(item.id))
+        .map(item => `<option value="${item.id}">${item.name}</option>`)
+        .join('');
+    }
+
+    function addTimeSlot() {
+      const container = document.getElementById('time-slots-container');
+      const existingSlots = container.children.length;
+      
+      const newSlot = {
+        startTime: '09:00',
+        endTime: '10:00',
+        type: 'course',
+        contentId: '',
+        title: ''
+      };
+      
+      container.insertAdjacentHTML('beforeend', createTimeSlotHTML(newSlot, existingSlots));
+    }
+
+    function removeTimeSlot(index) {
+      const slot = document.querySelector(`[data-index="${index}"]`);
+      if (slot) {
+        slot.remove();
+        // Re-index remaining slots
+        const slots = document.querySelectorAll('.time-slot');
+        slots.forEach((slot, newIndex) => {
+          slot.setAttribute('data-index', newIndex);
+        });
+      }
+    }
+
+    function updateTimeSlot(index, field, value) {
+      // Update the slot data (in a real app, this would update the data structure)
+      console.log(`Updating slot ${index}: ${field} = ${value}`);
+      
+      // If type changed, update content options
+      if (field === 'type') {
+        const slot = document.querySelector(`[data-index="${index}"]`);
+        const contentSelect = slot.querySelector('.content-selector select');
+        const contentOptions = getContentOptionsForType(value);
+        contentSelect.innerHTML = `<option value="">Select content...</option>${contentOptions}`;
+      }
+    }
+
+    function renderAvailableContentForDay() {
+      const container = document.getElementById('available-content-for-day');
+      let html = '';
+      
+      Object.keys(selectedContent).forEach(category => {
+        if (selectedContent[category].size > 0) {
+          const categoryTitle = category.charAt(0).toUpperCase() + category.slice(1);
+          html += `<h5 style="color: #70b8ff; margin: 1rem 0 0.5rem 0;">${categoryTitle}</h5>`;
+          
+          const items = contentLibrary[category].filter(item => selectedContent[category].has(item.id));
+          items.forEach(item => {
+            html += `
+              <div style="padding: 0.5rem; background: rgba(30, 42, 53, 0.5); border-radius: 4px; margin-bottom: 0.5rem;">
+                <div style="font-weight: 500;">${item.name}</div>
+                <div style="font-size: 0.7rem; color: #aaa;">${item.description}</div>
+              </div>
+            `;
+          });
+        }
+      });
+      
+      if (html === '') {
+        html = '<div style="color: #aaa; font-style: italic;">Select content in the library to see options here</div>';
+      }
+      
+      container.innerHTML = html;
+    }
+
+    function saveDaySchedule() {
+      if (!selectedDay) return;
+      
+      // Collect time slot data
+      const slots = [];
+      const timeSlots = document.querySelectorAll('.time-slot');
+      
+      timeSlots.forEach(slot => {
+        const index = slot.getAttribute('data-index');
+        const startTime = slot.querySelector('input[type="time"]').value;
+        const endTime = slot.querySelectorAll('input[type="time"]')[1].value;
+        const type = slot.querySelector('select').value;
+        const contentId = slot.querySelector('.content-selector select').value;
+        const title = slot.querySelector('input[type="text"]').value;
+        
+        slots.push({
+          startTime,
+          endTime,
+          type,
+          contentId,
+          title
+        });
+      });
+      
+      // Save to template schedule
+      if (!templateSchedule[selectedDay]) {
+        templateSchedule[selectedDay] = { timeBlocks: [], isActive: true, notes: '' };
+      }
+      templateSchedule[selectedDay].timeBlocks = slots;
+      
+      // Re-render calendar to show changes
+      renderCalendar();
+      
+      // Close modal
+      closeDayEditor();
+      
+      alert('Day schedule saved! Remember to save the template to persist changes.');
+    }
+
+    function closeDayEditor() {
+      document.getElementById('day-editor-modal').style.display = 'none';
+      selectedDay = null;
+    }
+
+    // Template management functions
+    function createNewTemplate() {
+      currentTemplate = {
+        name: '',
+        difficulty: '',
+        durationWeeks: 1,
+        description: '',
+        modules: []
+      };
+      templateSchedule = {};
+      
+      document.getElementById('template-name-input').value = '';
+      document.getElementById('template-difficulty-input').value = '';
+      document.getElementById('template-duration-input').value = '1';
+      document.getElementById('template-description-input').value = '';
+      
+      document.getElementById('template-info-modal').style.display = 'block';
+    }
+
+    function editTemplateInfo() {
+      if (!currentTemplate) return;
+      
+      document.getElementById('template-name-input').value = currentTemplate.name;
+      document.getElementById('template-difficulty-input').value = currentTemplate.difficulty;
+      document.getElementById('template-duration-input').value = currentTemplate.durationWeeks;
+      document.getElementById('template-description-input').value = currentTemplate.description || '';
+      
+      document.getElementById('template-info-modal').style.display = 'block';
+    }
+
+    function saveTemplateInfo() {
+      const name = document.getElementById('template-name-input').value.trim();
+      const difficulty = document.getElementById('template-difficulty-input').value;
+      const duration = parseInt(document.getElementById('template-duration-input').value);
+      const description = document.getElementById('template-description-input').value.trim();
+      
+      if (!name || !difficulty || !duration) {
+        alert('Please fill in all required fields');
+        return;
+      }
+      
+      currentTemplate.name = name;
+      currentTemplate.difficulty = difficulty;
+      currentTemplate.durationWeeks = duration;
+      currentTemplate.description = description;
+      
+      displayTemplateInfo();
+      closeTemplateInfoModal();
+      document.getElementById('save-btn').disabled = false;
+    }
+
+    function closeTemplateInfoModal() {
+      document.getElementById('template-info-modal').style.display = 'none';
+    }
+
+    async function saveTemplate() {
+      if (!currentTemplate) {
+        alert('No template to save');
+        return;
+      }
+      
+      try {
+        // First save/update the template basic info
+        const method = currentTemplate._id ? 'PUT' : 'POST';
+        const url = currentTemplate._id ? 
+          `/api/class-templates/${currentTemplate.difficulty}` : 
+          '/api/class-templates';
+        
+        const templateResponse = await fetch(url, {
+          method: method,
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(currentTemplate)
+        });
+        
+        if (!templateResponse.ok) {
+          const error = await templateResponse.json();
+          throw new Error(error.error || 'Failed to save template');
+        }
+        
+        const savedTemplate = await templateResponse.json();
+        currentTemplate = savedTemplate;
+        
+        // Then save the schedule
+        const scheduleResponse = await fetch(`/api/class-templates/${currentTemplate.difficulty}/schedule`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ schedule: templateSchedule })
+        });
+        
+        if (!scheduleResponse.ok) {
+          const error = await scheduleResponse.json();
+          throw new Error(error.error || 'Failed to save template schedule');
+        }
+        
+        alert('Template and schedule saved successfully!');
+        await loadTemplates(); // Refresh template list
+        
+      } catch (error) {
+        console.error('Error saving template:', error);
+        alert(`Error saving template: ${error.message}`);
+      }
+    }
+
+    // Navigation function
+    function goBack() {
+      // Check if this window was opened from another page
+      if (window.opener && !window.opener.closed) {
+        // Close this tab/window if it was opened as a popup
+        window.close();
+      } else {
+        // Navigate back to instructor interface
+        window.location.href = 'instructor-interface.html';
+      }
+    }
+
+    // Close modals when clicking outside
+    window.addEventListener('click', (e) => {
+      const modals = ['day-editor-modal', 'template-info-modal'];
+      modals.forEach(modalId => {
+        const modal = document.getElementById(modalId);
+        if (e.target === modal) {
+          modal.style.display = 'none';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

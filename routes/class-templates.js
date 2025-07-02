@@ -250,6 +250,36 @@ router.get('/content/available', auth(['admin', 'instructor']), async (req, res)
         { id: 'typing6', name: 'Accuracy Challenge', description: '99% accuracy test', targetWPM: 25, duration: 600 },
         { id: 'typing7', name: 'Endurance Test', description: '15-minute sustained typing', targetWPM: 45, duration: 900 },
         { id: 'typing8', name: 'Professional Test', description: 'Business document typing', targetWPM: 55, duration: 420 }
+      ],
+      keyboard: [ // Alias for typing for backward compatibility
+        { id: 'typing1', name: 'Basic Typing Test', description: '30 WPM accuracy test', targetWPM: 30, duration: 300 },
+        { id: 'typing2', name: 'Speed Challenge', description: '50 WPM speed test', targetWPM: 50, duration: 300 },
+        { id: 'typing3', name: 'Technical Terms', description: 'Technical vocabulary typing test', targetWPM: 35, duration: 600 },
+        { id: 'typing4', name: 'Code Typing', description: 'Programming syntax typing test', targetWPM: 40, duration: 450 },
+        { id: 'typing5', name: 'Advanced Speed Test', description: '70+ WPM advanced test', targetWPM: 70, duration: 300 },
+        { id: 'typing6', name: 'Accuracy Challenge', description: '99% accuracy test', targetWPM: 25, duration: 600 },
+        { id: 'typing7', name: 'Endurance Test', description: '15-minute sustained typing', targetWPM: 45, duration: 900 },
+        { id: 'typing8', name: 'Professional Test', description: 'Business document typing', targetWPM: 55, duration: 420 }
+      ],
+      ia: [
+        { id: 'ia1', name: 'IA Fundamentals', description: 'Basic IA concepts and procedures', duration: 3600, level: 'basic' },
+        { id: 'ia2', name: 'IA Assessment Techniques', description: 'Assessment methodologies and tools', duration: 2700, level: 'intermediate' },
+        { id: 'ia3', name: 'IA Documentation Standards', description: 'Proper documentation procedures', duration: 1800, level: 'basic' },
+        { id: 'ia4', name: 'IA Quality Control', description: 'Quality assurance processes', duration: 2400, level: 'intermediate' },
+        { id: 'ia5', name: 'Advanced IA Analysis', description: 'Complex analysis techniques', duration: 4200, level: 'advanced' },
+        { id: 'ia6', name: 'IA Report Writing', description: 'Professional report preparation', duration: 3000, level: 'intermediate' },
+        { id: 'ia7', name: 'IA Case Studies', description: 'Real-world scenario analysis', duration: 3600, level: 'advanced' },
+        { id: 'ia8', name: 'IA Certification Prep', description: 'Certification examination preparation', duration: 5400, level: 'advanced' }
+      ],
+      screener: [
+        { id: 'screener1', name: 'Screener Basics', description: 'Introduction to screening procedures', duration: 2400, level: 'basic' },
+        { id: 'screener2', name: 'Advanced Screening Techniques', description: 'Complex screening scenarios', duration: 3600, level: 'advanced' },
+        { id: 'screener3', name: 'Screener Protocols', description: 'Standard operating procedures', duration: 1800, level: 'basic' },
+        { id: 'screener4', name: 'Screener Equipment Training', description: 'Equipment operation and maintenance', duration: 2700, level: 'intermediate' },
+        { id: 'screener5', name: 'Threat Detection', description: 'Identifying potential threats', duration: 4200, level: 'advanced' },
+        { id: 'screener6', name: 'Screener Communication', description: 'Effective communication protocols', duration: 2100, level: 'intermediate' },
+        { id: 'screener7', name: 'Emergency Response', description: 'Emergency situation handling', duration: 3300, level: 'advanced' },
+        { id: 'screener8', name: 'Screener Certification', description: 'Certification requirements and testing', duration: 4800, level: 'advanced' }
       ]
     };
     
@@ -257,6 +287,101 @@ router.get('/content/available', auth(['admin', 'instructor']), async (req, res)
   } catch (error) {
     console.error('❌ Error fetching available content:', error);
     res.status(500).json({ error: 'Server error fetching available content' });
+  }
+});
+
+// Get template schedule (time blocks for all days)
+router.get('/:difficulty/schedule', auth(['admin', 'instructor']), async (req, res) => {
+  try {
+    const { difficulty } = req.params;
+    
+    if (!['Easy', 'Medium', 'Hard'].includes(difficulty)) {
+      return res.status(400).json({ error: 'Invalid difficulty level' });
+    }
+    
+    const template = await ClassTemplate.findOne({ difficulty });
+    if (!template) {
+      return res.status(404).json({ error: 'Template not found' });
+    }
+    
+    // Extract schedule from all modules
+    const schedule = {};
+    template.modules.forEach(module => {
+      if (module.dailySchedule) {
+        module.dailySchedule.forEach(dayData => {
+          schedule[dayData.day] = {
+            timeBlocks: dayData.timeBlocks || [],
+            isActive: dayData.isActive !== false,
+            notes: dayData.notes || ''
+          };
+        });
+      }
+    });
+    
+    res.json(schedule);
+  } catch (error) {
+    console.error('❌ Error fetching template schedule:', error);
+    res.status(500).json({ error: 'Server error fetching template schedule' });
+  }
+});
+
+// Update template schedule (time blocks for all days)
+router.put('/:difficulty/schedule', auth(['admin', 'instructor']), async (req, res) => {
+  try {
+    const { difficulty } = req.params;
+    const { schedule } = req.body;
+    
+    if (!['Easy', 'Medium', 'Hard'].includes(difficulty)) {
+      return res.status(400).json({ error: 'Invalid difficulty level' });
+    }
+    
+    const template = await ClassTemplate.findOne({ difficulty });
+    if (!template) {
+      return res.status(404).json({ error: 'Template not found' });
+    }
+    
+    // Update the first module's daily schedule (or create if doesn't exist)
+    if (!template.modules || template.modules.length === 0) {
+      template.modules = [{
+        name: 'Main Module',
+        description: 'Generated module',
+        order: 1,
+        lessons: [],
+        estimatedWeeks: template.durationWeeks || 1,
+        dailySchedule: []
+      }];
+    }
+    
+    const mainModule = template.modules[0];
+    mainModule.dailySchedule = [];
+    
+    // Convert schedule object to daily schedule array
+    Object.keys(schedule).forEach(day => {
+      const dayNumber = parseInt(day);
+      const dayData = schedule[day];
+      
+      mainModule.dailySchedule.push({
+        day: dayNumber,
+        timeBlocks: dayData.timeBlocks || [],
+        isActive: dayData.isActive !== false,
+        notes: dayData.notes || '',
+        // Keep legacy arrays empty for now
+        missionReferences: [],
+        courseContent: [],
+        typingTests: [],
+        iaTraining: [],
+        screenerTraining: []
+      });
+    });
+    
+    // Sort by day number
+    mainModule.dailySchedule.sort((a, b) => a.day - b.day);
+    
+    await template.save();
+    res.json({ message: 'Template schedule updated successfully', schedule });
+  } catch (error) {
+    console.error('❌ Error updating template schedule:', error);
+    res.status(500).json({ error: 'Server error updating template schedule' });
   }
 });
 
