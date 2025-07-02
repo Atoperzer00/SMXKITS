@@ -395,6 +395,7 @@ const Callout = mongoose.model('Callout', calloutSchema);
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/classes', require('./routes/classes'));
+app.use('/api/class-templates', require('./routes/class-templates'));
 app.use('/api/progress', require('./routes/progress'));
 app.use('/api/chat', require('./routes/chat'));
 app.use('/api/kitcomm', require('./routes/kitcomm'));
