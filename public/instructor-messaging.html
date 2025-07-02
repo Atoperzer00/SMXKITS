@@ -498,8 +498,8 @@
       color: var(--text-primary);
       font-size: 1rem;
       resize: none;
-      min-height: 50px;
-      max-height: 120px;
+      min-height: 100px;
+      max-height: 240px;
       font-family: inherit;
     }
 
@@ -836,17 +836,7 @@
             <p id="chatUserStatus">Online - Available</p>
           </div>
         </div>
-        <div class="chat-actions">
-          <div class="chat-action-btn" onclick="startVideoCall()" title="Video Call">
-            <i class="fas fa-video"></i>
-          </div>
-          <div class="chat-action-btn" onclick="startVoiceCall()" title="Voice Call">
-            <i class="fas fa-phone"></i>
-          </div>
-          <div class="chat-action-btn" onclick="openChatInfo()" title="Chat Info">
-            <i class="fas fa-info-circle"></i>
-          </div>
-        </div>
+
       </div>
 
       <div class="messages-container" id="messagesContainer">
@@ -913,7 +903,7 @@
           class="message-input" 
           id="messageInput" 
           placeholder="Type your message..." 
-          rows="1"
+          rows="3"
           onkeydown="handleKeyDown(event)"
           oninput="handleTyping()"
         ></textarea>

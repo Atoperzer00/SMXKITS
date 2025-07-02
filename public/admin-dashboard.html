@@ -673,6 +673,11 @@
       }
     }
 
+    /* Inbox dropdown z-index fix */
+    #inboxDropdown {
+      z-index: 99999 !important;
+    }
+
     /* Custom Scrollbar */
     ::-webkit-scrollbar {
       width: 8px;
@@ -1314,6 +1319,20 @@
           document.removeEventListener('click', closeDropdown);
         }
       });
+    }
+
+    function openMessage(messageId) {
+      // Legacy support - convert message IDs to contact IDs for admin
+      const messageToContact = {
+        'msg1': 'sarah-johnson',
+        'msg2': 'mike-chen',
+        'msg3': 'training-team',
+        'msg4': 'admin-support',
+        'msg5': 'lisa-rodriguez'
+      };
+      
+      const contactId = messageToContact[messageId] || messageId;
+      openInstructorChat(contactId);
     }
 
     function openInstructorChat(contactId) {
