@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Template Sync Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .template-item {
+            background: #3a3a3a;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        button {
+            background: #70b8ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #5a9edf;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background: #2d5a2d; }
+        .error { background: #5a2d2d; }
+        .info { background: #2d4a5a; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Template Synchronization Test</h1>
+        
+        <div class="section">
+            <h2>Current Templates</h2>
+            <button onclick="loadTemplates()">Load Templates</button>
+            <div id="templates-list"></div>
+        </div>
+        
+        <div class="section">
+            <h2>Create Test Template</h2>
+            <button onclick="createTestTemplate()">Create Test Template</button>
+            <div id="create-status"></div>
+        </div>
+        
+        <div class="section">
+            <h2>Storage Events</h2>
+            <div id="storage-events"></div>
+        </div>
+    </div>
+
+    <script>
+        let templates = [];
+        
+        // Listen for storage events
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'templatesUpdated') {
+                const eventsDiv = document.getElementById('storage-events');
+                eventsDiv.innerHTML += `<div class="status info">Storage event received: Templates updated at ${new Date().toLocaleTimeString()}</div>`;
+                loadTemplates();
+            }
+        });
+        
+        async function loadTemplates() {
+            try {
+                // For testing, we'll use a mock token or check if we're logged in
+                const token = localStorage.getItem('token');
+                const headers = {};
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+                
+                const response = await fetch('/api/class-templates', {
+                    headers: headers
+                });
+                
+                if (response.ok) {
+                    templates = await response.json();
+                    displayTemplates();
+                } else if (response.status === 401) {
+                    document.getElementById('templates-list').innerHTML = 
+                        `<div class="status error">Authentication required. Please <a href="/login.html" style="color: #70b8ff;">log in</a> first.</div>`;
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                document.getElementById('templates-list').innerHTML = 
+                    `<div class="status error">Error loading templates: ${error.message}</div>`;
+            }
+        }
+        
+        function displayTemplates() {
+            const container = document.getElementById('templates-list');
+            if (templates.length === 0) {
+                container.innerHTML = '<div class="status info">No templates found</div>';
+                return;
+            }
+            
+            let html = `<div class="status success">Found ${templates.length} templates:</div>`;
+            templates.forEach(template => {
+                html += `
+                    <div class="template-item">
+                        <strong>${template.difficulty}</strong>: ${template.name}<br>
+                        <small>Duration: ${template.durationWeeks} weeks | Modules: ${template.modules ? template.modules.length : 0}</small>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+        
+        async function createTestTemplate() {
+            const statusDiv = document.getElementById('create-status');
+            statusDiv.innerHTML = '<div class="status info">Creating test template...</div>';
+            
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    statusDiv.innerHTML = '<div class="status error">Authentication required. Please <a href="/login.html" style="color: #70b8ff;">log in</a> first.</div>';
+                    return;
+                }
+                
+                const testTemplate = {
+                    difficulty: 'Test',
+                    name: 'Test Template for Sync',
+                    description: 'This is a test template to verify synchronization',
+                    durationWeeks: 1,
+                    modules: []
+                };
+                
+                const response = await fetch('/api/class-templates', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(testTemplate)
+                });
+                
+                if (response.ok) {
+                    const created = await response.json();
+                    statusDiv.innerHTML = '<div class="status success">Test template created successfully!</div>';
+                    
+                    // Trigger storage event
+                    if (window.localStorage) {
+                        localStorage.setItem('templatesUpdated', Date.now().toString());
+                    }
+                    
+                    // Reload templates
+                    await loadTemplates();
+                } else if (response.status === 401) {
+                    statusDiv.innerHTML = '<div class="status error">Authentication failed. Please <a href="/login.html" style="color: #70b8ff;">log in</a> again.</div>';
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.error || `HTTP ${response.status}`);
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `<div class="status error">Error creating template: ${error.message}</div>`;
+            }
+        }
+        
+        // Load templates on page load
+        document.addEventListener('DOMContentLoaded', loadTemplates);
+    </script>
+</body>
+</html>

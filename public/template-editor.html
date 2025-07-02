@@ -446,6 +446,11 @@
       gap: 1rem;
     }
 
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
     @media (max-width: 768px) {
       .main-container {
         flex-direction: column;
@@ -677,6 +682,57 @@
     };
     let templateSchedule = {}; // day -> time blocks
 
+    // Listen for template updates from other windows/tabs
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'templatesUpdated') {
+        console.log('Templates updated in another window, refreshing...');
+        showSyncNotification('Templates synchronized from another window');
+        loadTemplates();
+      }
+    });
+
+    // Show sync notification
+    function showSyncNotification(message) {
+      // Create notification element if it doesn't exist
+      let notification = document.getElementById('sync-notification');
+      if (!notification) {
+        notification = document.createElement('div');
+        notification.id = 'sync-notification';
+        notification.style.cssText = `
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+          color: white;
+          padding: 1rem 1.5rem;
+          border-radius: 8px;
+          box-shadow: 0 8px 25px rgba(56, 161, 105, 0.3);
+          z-index: 10000;
+          transform: translateX(400px);
+          transition: transform 0.3s ease;
+          max-width: 300px;
+        `;
+        document.body.appendChild(notification);
+      }
+      
+      notification.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <i class="fas fa-sync-alt" style="animation: spin 1s linear infinite;"></i>
+          <span>${message}</span>
+        </div>
+      `;
+      
+      // Show notification
+      setTimeout(() => {
+        notification.style.transform = 'translateX(0)';
+      }, 100);
+      
+      // Hide after 3 seconds
+      setTimeout(() => {
+        notification.style.transform = 'translateX(400px)';
+      }, 3000);
+    }
+
     // Initialize the application
     document.addEventListener('DOMContentLoaded', async () => {
       await loadContentLibrary();
@@ -700,20 +756,19 @@
     async function loadContentLibrary() {
       try {
         // Load existing content
-        const response = await fetch('/api/class-templates/content/available');
-        if (response.ok) {
-          const existing = await response.json();
+        const existing = await apiCall('/api/class-templates/content/available');
+        if (existing) {
           contentLibrary = {
             course: existing.course || [],
             mission: existing.mission || [],
             keyboard: existing.typing || [], // Map typing to keyboard for now
-            ia: [
+            ia: existing.ia || [
               { id: 'ia1', name: 'IA Fundamentals', description: 'Basic IA concepts and procedures', duration: 3600 },
               { id: 'ia2', name: 'IA Assessment Techniques', description: 'Assessment methodologies', duration: 2700 },
               { id: 'ia3', name: 'IA Documentation', description: 'Proper documentation procedures', duration: 1800 },
               { id: 'ia4', name: 'IA Quality Control', description: 'Quality assurance processes', duration: 2400 }
             ],
-            screener: [
+            screener: existing.screener || [
               { id: 'screener1', name: 'Screener Basics', description: 'Introduction to screening procedures', duration: 2400 },
               { id: 'screener2', name: 'Advanced Screening', description: 'Complex screening scenarios', duration: 3600 },
               { id: 'screener3', name: 'Screener Protocols', description: 'Standard operating procedures', duration: 1800 },
@@ -747,13 +802,49 @@
       }
     }
 
+    // API Helper function with authentication
+    async function apiCall(url, options = {}) {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Authentication token missing. Please log in again.');
+        window.location.href = '/login.html';
+        return null;
+      }
+
+      const defaultOptions = {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      };
+
+      const mergedOptions = {
+        ...defaultOptions,
+        ...options,
+        headers: { ...defaultOptions.headers, ...options.headers }
+      };
+
+      const response = await fetch(url, mergedOptions);
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          alert('Session expired. Please log in again.');
+          window.location.href = '/login.html';
+          return null;
+        }
+        throw new Error(`API call failed: ${response.status} ${response.statusText}`);
+      }
+
+      return response.json();
+    }
+
     // Load templates
     async function loadTemplates() {
       try {
-        const response = await fetch('/api/class-templates');
-        if (response.ok) {
-          const templates = await response.json();
+        const templates = await apiCall('/api/class-templates');
+        if (templates) {
           const selector = document.getElementById('template-selector');
+          const currentValue = selector.value; // Preserve current selection
           selector.innerHTML = '<option value="">Select Template to Edit...</option>';
           
           templates.forEach(template => {
@@ -762,9 +853,15 @@
             option.textContent = `${template.difficulty} - ${template.name}`;
             selector.appendChild(option);
           });
+          
+          // Restore selection if it still exists
+          if (currentValue && templates.find(t => t.difficulty === currentValue)) {
+            selector.value = currentValue;
+          }
         }
       } catch (error) {
         console.error('Error loading templates:', error);
+        alert('Failed to load templates. Please check your connection and try again.');
       }
     }
 
@@ -786,9 +883,8 @@
     // Load specific template
     async function loadTemplate(difficulty) {
       try {
-        const response = await fetch(`/api/class-templates/${difficulty}`);
-        if (response.ok) {
-          currentTemplate = await response.json();
+        currentTemplate = await apiCall(`/api/class-templates/${difficulty}`);
+        if (currentTemplate) {
           displayTemplateInfo();
           await loadTemplateSchedule();
           document.getElementById('save-btn').disabled = false;
@@ -796,6 +892,7 @@
         }
       } catch (error) {
         console.error('Error loading template:', error);
+        alert('Failed to load template. Please try again.');
       }
     }
 
@@ -821,9 +918,8 @@
       
       if (currentTemplate) {
         try {
-          const response = await fetch(`/api/class-templates/${currentTemplate.difficulty}/schedule`);
-          if (response.ok) {
-            const schedule = await response.json();
+          const schedule = await apiCall(`/api/class-templates/${currentTemplate.difficulty}/schedule`);
+          if (schedule) {
             templateSchedule = schedule;
           }
         } catch (error) {
@@ -1258,38 +1354,30 @@
           `/api/class-templates/${currentTemplate.difficulty}` : 
           '/api/class-templates';
         
-        const templateResponse = await fetch(url, {
+        const savedTemplate = await apiCall(url, {
           method: method,
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(currentTemplate)
+         body: JSON.stringify(currentTemplate)
         });
         
-        if (!templateResponse.ok) {
-          const error = await templateResponse.json();
-          throw new Error(error.error || 'Failed to save template');
+        if (savedTemplate) {
+           currentTemplate = savedTemplate;
+          
+          // Then save the schedule
+          const scheduleResult = await apiCall(`/api/class-templates/${currentTemplate.difficulty}/schedule`, {
+            method: 'PUT',
+            body: JSON.stringify({ schedule: templateSchedule })
+          });
+          
+          if (scheduleResult) {
+            alert('Template and schedule saved successfully!');
+            await loadTemplates(); // Refresh template list
+            
+            // Notify other windows/tabs that templates have been updated
+            if (window.localStorage) {
+              localStorage.setItem('templatesUpdated', Date.now().toString());
+            }
+          }
         }
-        
-        const savedTemplate = await templateResponse.json();
-        currentTemplate = savedTemplate;
-        
-        // Then save the schedule
-        const scheduleResponse = await fetch(`/api/class-templates/${currentTemplate.difficulty}/schedule`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ schedule: templateSchedule })
-        });
-        
-        if (!scheduleResponse.ok) {
-          const error = await scheduleResponse.json();
-          throw new Error(error.error || 'Failed to save template schedule');
-        }
-        
-        alert('Template and schedule saved successfully!');
-        await loadTemplates(); // Refresh template list
         
       } catch (error) {
         console.error('Error saving template:', error);

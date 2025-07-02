@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Template Synchronization Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f1419 0%, #1a2332 100%);
+            color: #e0e6ed;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            background: rgba(30, 42, 53, 0.95);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            border: 2px solid #70b8ff;
+        }
+        .section {
+            background: rgba(30, 42, 53, 0.8);
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 8px;
+            border: 1px solid #3a4a5c;
+        }
+        .template-item {
+            background: rgba(15, 20, 25, 0.8);
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 6px;
+            border-left: 4px solid #70b8ff;
+        }
+        .btn {
+            background: linear-gradient(135deg, #70b8ff 0%, #1da1f2 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin: 0.25rem;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(112, 184, 255, 0.3);
+        }
+        .btn-secondary {
+            background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+        }
+        .status {
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 6px;
+            border-left: 4px solid;
+        }
+        .success { 
+            background: rgba(56, 161, 105, 0.2); 
+            border-left-color: #38a169;
+            color: #68d391;
+        }
+        .error { 
+            background: rgba(229, 62, 62, 0.2); 
+            border-left-color: #e53e3e;
+            color: #fc8181;
+        }
+        .info { 
+            background: rgba(112, 184, 255, 0.2); 
+            border-left-color: #70b8ff;
+            color: #90cdf4;
+        }
+        .warning {
+            background: rgba(237, 137, 54, 0.2);
+            border-left-color: #ed8936;
+            color: #f6ad55;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        .sync-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+        .sync-active { background: #38a169; }
+        .sync-inactive { background: #e53e3e; }
+        .sync-pending { background: #ed8936; animation: pulse 1s infinite; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .template-selector {
+            background: rgba(30, 42, 53, 0.8);
+            border: 1px solid #70b8ff;
+            border-radius: 6px;
+            padding: 0.5rem;
+            color: #e0e6ed;
+            width: 100%;
+            margin: 0.5rem 0;
+        }
+        .template-selector option {
+            background: #1e2a35;
+            color: #e0e6ed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔄 Template Synchronization Test Dashboard</h1>
+            <p>This dashboard tests the synchronization between the Template Editor and Instructor Interface</p>
+            <div>
+                <span class="sync-indicator" id="sync-status"></span>
+                <span id="sync-text">Checking synchronization...</span>
+            </div>
+        </div>
+
+        <div class="grid">
+            <div class="section">
+                <h2>📚 Current Templates</h2>
+                <button class="btn" onclick="loadTemplates()">🔄 Refresh Templates</button>
+                <button class="btn btn-secondary" onclick="clearCache()">🗑️ Clear Cache</button>
+                <div id="templates-list">Loading...</div>
+            </div>
+
+            <div class="section">
+                <h2>🎛️ Template Selector Test</h2>
+                <p>This simulates the template selector in both interfaces:</p>
+                <select class="template-selector" id="template-selector-test">
+                    <option value="">Select Template to Edit...</option>
+                </select>
+                <div id="selected-template-info"></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🧪 Synchronization Tests</h2>
+            <div class="grid">
+                <div>
+                    <h3>Create Test Template</h3>
+                    <button class="btn" onclick="createTestTemplate()">➕ Create Test Template</button>
+                    <div id="create-status"></div>
+                </div>
+                <div>
+                    <h3>Storage Events Monitor</h3>
+                    <button class="btn btn-secondary" onclick="clearEvents()">🗑️ Clear Events</button>
+                    <div id="storage-events" style="max-height: 200px; overflow-y: auto;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🔗 Interface Links</h2>
+            <button class="btn" onclick="openInstructorInterface()">👨‍🏫 Open Instructor Interface</button>
+            <button class="btn" onclick="openTemplateEditor()">📝 Open Template Editor</button>
+            <button class="btn btn-secondary" onclick="openLogin()">🔐 Login Page</button>
+        </div>
+
+        <div class="section">
+            <h2>📊 Synchronization Status</h2>
+            <div id="sync-details">
+                <div class="status info">
+                    <strong>How Synchronization Works:</strong><br>
+                    1. When templates are created/edited in either interface, a localStorage event is triggered<br>
+                    2. Both interfaces listen for 'templatesUpdated' storage events<br>
+                    3. When an event is detected, templates are automatically refreshed<br>
+                    4. This ensures both interfaces always show the same templates
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let templates = [];
+        let syncActive = false;
+        
+        // Listen for storage events
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'templatesUpdated') {
+                const timestamp = new Date().toLocaleTimeString();
+                addStorageEvent(`Templates updated at ${timestamp}`);
+                loadTemplates();
+                updateSyncStatus(true);
+            }
+        });
+
+        // API Helper function
+        async function apiCall(url, options = {}) {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('Authentication token missing');
+            }
+
+            const defaultOptions = {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            };
+
+            const mergedOptions = {
+                ...defaultOptions,
+                ...options,
+                headers: { ...defaultOptions.headers, ...options.headers }
+            };
+
+            const response = await fetch(url, mergedOptions);
+            
+            if (!response.ok) {
+                if (response.status === 401) {
+                    throw new Error('Authentication failed');
+                }
+                const error = await response.json().catch(() => ({}));
+                throw new Error(error.error || `HTTP ${response.status}`);
+            }
+
+            return response.json();
+        }
+        
+        async function loadTemplates() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    document.getElementById('templates-list').innerHTML = 
+                        '<div class="status warning">⚠️ Authentication required. Please <a href="/login.html" style="color: #70b8ff;">log in</a> first.</div>';
+                    return;
+                }
+
+                templates = await apiCall('/api/class-templates');
+                displayTemplates();
+                updateTemplateSelector();
+                updateSyncStatus(true);
+            } catch (error) {
+                console.error('Error loading templates:', error);
+                document.getElementById('templates-list').innerHTML = 
+                    `<div class="status error">❌ Error loading templates: ${error.message}</div>`;
+                updateSyncStatus(false);
+            }
+        }
+        
+        function displayTemplates() {
+            const container = document.getElementById('templates-list');
+            if (templates.length === 0) {
+                container.innerHTML = '<div class="status info">ℹ️ No templates found</div>';
+                return;
+            }
+            
+            let html = `<div class="status success">✅ Found ${templates.length} templates:</div>`;
+            templates.forEach(template => {
+                html += `
+                    <div class="template-item">
+                        <strong>${template.difficulty}</strong>: ${template.name}<br>
+                        <small>📅 Duration: ${template.durationWeeks} weeks | 📚 Modules: ${template.modules ? template.modules.length : 0}</small><br>
+                        <small style="color: #aaa;">📝 ${template.description || 'No description'}</small>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function updateTemplateSelector() {
+            const selector = document.getElementById('template-selector-test');
+            selector.innerHTML = '<option value="">Select Template to Edit...</option>';
+            
+            templates.forEach(template => {
+                const option = document.createElement('option');
+                option.value = template.difficulty;
+                option.textContent = `${template.difficulty} - ${template.name}`;
+                selector.appendChild(option);
+            });
+        }
+
+        // Template selector change handler
+        document.getElementById('template-selector-test').addEventListener('change', (e) => {
+            const difficulty = e.target.value;
+            const infoDiv = document.getElementById('selected-template-info');
+            
+            if (!difficulty) {
+                infoDiv.innerHTML = '';
+                return;
+            }
+
+            const template = templates.find(t => t.difficulty === difficulty);
+            if (template) {
+                infoDiv.innerHTML = `
+                    <div class="status info">
+                        <strong>Selected Template:</strong><br>
+                        📛 Name: ${template.name}<br>
+                        🎯 Difficulty: ${template.difficulty}<br>
+                        📅 Duration: ${template.durationWeeks} weeks<br>
+                        📝 Description: ${template.description || 'No description'}
+                    </div>
+                `;
+            }
+        });
+        
+        async function createTestTemplate() {
+            const statusDiv = document.getElementById('create-status');
+            statusDiv.innerHTML = '<div class="status info">🔄 Creating test template...</div>';
+            
+            try {
+                const timestamp = Date.now();
+                const testTemplate = {
+                    difficulty: `Test${timestamp}`,
+                    name: `Test Template ${new Date().toLocaleTimeString()}`,
+                    description: 'This is a test template to verify synchronization',
+                    durationWeeks: 1,
+                    modules: []
+                };
+                
+                const created = await apiCall('/api/class-templates', {
+                    method: 'POST',
+                    body: JSON.stringify(testTemplate)
+                });
+                
+                statusDiv.innerHTML = '<div class="status success">✅ Test template created successfully!</div>';
+                
+                // Trigger storage event
+                if (window.localStorage) {
+                    localStorage.setItem('templatesUpdated', Date.now().toString());
+                }
+                
+                // Reload templates
+                await loadTemplates();
+                
+            } catch (error) {
+                console.error('Error creating template:', error);
+                statusDiv.innerHTML = `<div class="status error">❌ Error creating template: ${error.message}</div>`;
+            }
+        }
+
+        function addStorageEvent(message) {
+            const eventsDiv = document.getElementById('storage-events');
+            const eventDiv = document.createElement('div');
+            eventDiv.className = 'status info';
+            eventDiv.innerHTML = `🔄 ${message}`;
+            eventsDiv.insertBefore(eventDiv, eventsDiv.firstChild);
+            
+            // Keep only last 10 events
+            while (eventsDiv.children.length > 10) {
+                eventsDiv.removeChild(eventsDiv.lastChild);
+            }
+        }
+
+        function clearEvents() {
+            document.getElementById('storage-events').innerHTML = '';
+        }
+
+        function clearCache() {
+            templates = [];
+            document.getElementById('templates-list').innerHTML = '<div class="status info">🗑️ Cache cleared</div>';
+            updateTemplateSelector();
+        }
+
+        function updateSyncStatus(active) {
+            syncActive = active;
+            const indicator = document.getElementById('sync-status');
+            const text = document.getElementById('sync-text');
+            
+            if (active) {
+                indicator.className = 'sync-indicator sync-active';
+                text.textContent = 'Synchronization Active ✅';
+            } else {
+                indicator.className = 'sync-indicator sync-inactive';
+                text.textContent = 'Synchronization Issues ❌';
+            }
+        }
+
+        // Interface navigation functions
+        function openInstructorInterface() {
+            window.open('/instructor-interface.html', '_blank');
+        }
+
+        function openTemplateEditor() {
+            window.open('/template-editor.html', '_blank');
+        }
+
+        function openLogin() {
+            window.open('/login.html', '_blank');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTemplates();
+            
+            // Check authentication status
+            const token = localStorage.getItem('token');
+            if (!token) {
+                document.getElementById('sync-details').innerHTML += `
+                    <div class="status warning">
+                        ⚠️ <strong>Authentication Required:</strong> Please log in to test template synchronization.<br>
+                        <button class="btn" onclick="openLogin()">🔐 Go to Login</button>
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>

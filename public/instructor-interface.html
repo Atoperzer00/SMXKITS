@@ -703,6 +703,11 @@
       font-size: 0.9rem;
     }
     
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
       .sidebar {
@@ -1261,6 +1266,57 @@
       course: [],
       typing: []
     };
+
+    // Listen for template updates from other windows/tabs
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'templatesUpdated') {
+        console.log('Templates updated in another window, refreshing...');
+        showSyncNotification('Templates synchronized from another window');
+        fetchTemplates();
+      }
+    });
+
+    // Show sync notification
+    function showSyncNotification(message) {
+      // Create notification element if it doesn't exist
+      let notification = document.getElementById('sync-notification');
+      if (!notification) {
+        notification = document.createElement('div');
+        notification.id = 'sync-notification';
+        notification.style.cssText = `
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+          color: white;
+          padding: 1rem 1.5rem;
+          border-radius: 8px;
+          box-shadow: 0 8px 25px rgba(56, 161, 105, 0.3);
+          z-index: 10000;
+          transform: translateX(400px);
+          transition: transform 0.3s ease;
+          max-width: 300px;
+        `;
+        document.body.appendChild(notification);
+      }
+      
+      notification.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <i class="fas fa-sync-alt" style="animation: spin 1s linear infinite;"></i>
+          <span>${message}</span>
+        </div>
+      `;
+      
+      // Show notification
+      setTimeout(() => {
+        notification.style.transform = 'translateX(0)';
+      }, 100);
+      
+      // Hide after 3 seconds
+      setTimeout(() => {
+        notification.style.transform = 'translateX(400px)';
+      }, 3000);
+    }
 
     // Initialize page
     document.addEventListener('DOMContentLoaded', async () => {
@@ -2423,6 +2479,11 @@
         await apiCall(`/api/class-templates/${difficulty}`, { method: 'DELETE' });
         showMessage('success', 'Template deleted successfully');
         await fetchTemplates();
+        
+        // Notify other windows/tabs that templates have been updated
+        if (window.localStorage) {
+          localStorage.setItem('templatesUpdated', Date.now().toString());
+        }
       } catch (error) {
         console.error('Error deleting template:', error);
         showMessage('error', `Failed to delete template: ${error.message}`);
@@ -2450,6 +2511,11 @@
         showMessage('success', 'Template created successfully');
         closeTemplateModal();
         await fetchTemplates();
+        
+        // Notify other windows/tabs that templates have been updated
+        if (window.localStorage) {
+          localStorage.setItem('templatesUpdated', Date.now().toString());
+        }
       } catch (error) {
         console.error('Error creating template:', error);
         showMessage('error', `Failed to create template: ${error.message}`);
