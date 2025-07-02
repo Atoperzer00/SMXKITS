@@ -280,6 +280,39 @@
       text-overflow: ellipsis;
     }
 
+    .last-message {
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 0.2rem;
+    }
+
+    .conversation-time {
+      color: var(--text-secondary);
+      font-size: 0.7rem;
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+    }
+
+    .unread-badge {
+      background: var(--accent-gradient);
+      color: white;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: bold;
+      position: absolute;
+      top: 0.8rem;
+      right: 0.8rem;
+    }
+
     /* Main Chat Area */
     .chat-main {
       flex: 1;
@@ -602,18 +635,18 @@
       </div>
     </div>
 
-    <!-- Sidebar - Contact List -->
+    <!-- Sidebar - Conversations List -->
     <div class="contacts-sidebar">
       <div class="contacts-header">
-        <input type="text" class="search-box" placeholder="Search contacts..." onkeyup="searchContacts(this.value)">
+        <input type="text" class="search-box" placeholder="Search conversations..." onkeyup="searchConversations(this.value)">
         <div class="contacts-tabs">
-          <button class="tab-button active" onclick="switchTab('all')">All</button>
-          <button class="tab-button" onclick="switchTab('instructors')">Instructors</button>
-          <button class="tab-button" onclick="switchTab('students')">Students</button>
+          <button class="tab-button active" onclick="switchTab('recent')">Recent</button>
+          <button class="tab-button" onclick="switchTab('unread')">Unread</button>
+          <button class="tab-button" onclick="switchTab('all')">All</button>
         </div>
       </div>
-      <div class="contacts-list">
-        <!-- Contacts will be loaded here -->
+      <div class="contacts-list" id="conversationsList">
+        <!-- Conversations will be loaded here -->
       </div>
     </div>
 
@@ -750,9 +783,9 @@
       // Initialize socket connection
       initializeSocket();
       
-      // Load contacts and conversations
-      await loadContacts();
+      // Load conversations and contacts
       await loadConversations();
+      await loadContacts(); // Keep for new chat modal
       
       // Check if we came from a specific contact
       const selectedContact = localStorage.getItem('selectedContact');
@@ -833,47 +866,86 @@
 
         if (response.ok) {
           conversations = await response.json();
-          updateConversationList();
+          renderConversationsList();
+        } else {
+          console.error('Failed to load conversations');
+          showWelcomeMessage();
         }
       } catch (error) {
         console.error('Error loading conversations:', error);
+        showWelcomeMessage();
       }
     }
 
-    // Render contacts list in sidebar
-    function renderContactsList() {
-      const contactsList = document.querySelector('.contacts-list');
+    // Render conversations list in sidebar
+    function renderConversationsList() {
+      const conversationsList = document.getElementById('conversationsList');
       
-      if (contacts.length === 0) {
-        contactsList.innerHTML = `
+      if (conversations.length === 0) {
+        conversationsList.innerHTML = `
           <div style="padding: 2rem; text-align: center; color: var(--text-secondary);">
-            <i class="fas fa-users" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-            <p>No contacts available</p>
-            <p style="font-size: 0.8rem; margin-top: 0.5rem;">Contacts will appear here when available</p>
+            <i class="fas fa-comments" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+            <p>No conversations yet</p>
+            <p style="font-size: 0.8rem; margin-top: 0.5rem;">Start a new conversation to see it here</p>
+            <button onclick="openNewChatModal()" style="margin-top: 1rem; padding: 0.5rem 1rem; background: var(--accent-gradient); border: none; border-radius: 15px; color: white; font-size: 0.8rem; cursor: pointer;">
+              <i class="fas fa-plus" style="margin-right: 0.5rem;"></i>
+              New Chat
+            </button>
           </div>
         `;
         return;
       }
 
-      contactsList.innerHTML = contacts.map(contact => {
-        const initials = contact.name.split(' ').map(n => n[0]).join('').toUpperCase();
-        const roleColor = contact.role === 'instructor' ? 'var(--primary-gradient)' : 
-                         contact.role === 'admin' ? 'var(--secondary-gradient)' : 
+      conversationsList.innerHTML = conversations.map(conversation => {
+        const otherParticipant = conversation.otherParticipant;
+        if (!otherParticipant) return '';
+        
+        const initials = otherParticipant.name.split(' ').map(n => n[0]).join('').toUpperCase();
+        const roleColor = otherParticipant.role === 'instructor' ? 'var(--primary-gradient)' : 
+                         otherParticipant.role === 'admin' ? 'var(--secondary-gradient)' : 
                          'var(--accent-gradient)';
         
+        const lastMessage = conversation.lastMessage;
+        const lastMessageText = lastMessage ? lastMessage.content : 'No messages yet';
+        const lastMessageTime = lastMessage ? formatTime(new Date(lastMessage.timestamp)) : '';
+        const unreadCount = conversation.unreadCount || 0;
+        
         return `
-          <div class="contact-item" onclick="selectContact('${contact._id}', '${contact.name}', '${contact.role}')">
+          <div class="contact-item" onclick="selectContact('${otherParticipant.id}', '${otherParticipant.name}', '${otherParticipant.role}')">
             <div class="contact-avatar" style="background: ${roleColor};">
               ${initials}
               <div class="status-indicator status-online"></div>
             </div>
             <div class="contact-info">
-              <div class="contact-name">${contact.name}</div>
-              <div class="contact-status">${contact.role.charAt(0).toUpperCase() + contact.role.slice(1)} - Available</div>
+              <div class="contact-name">${otherParticipant.name}</div>
+              <div class="last-message">${lastMessageText}</div>
             </div>
+            ${lastMessageTime ? `<div class="conversation-time">${lastMessageTime}</div>` : ''}
+            ${unreadCount > 0 ? `<div class="unread-badge">${unreadCount}</div>` : ''}
           </div>
         `;
       }).join('');
+    }
+
+    // Render contacts list in sidebar (for new chat modal)
+    function renderContactsList() {
+      // This function is now only used for the new chat modal
+      // The main sidebar shows conversations
+    }
+
+    // Format time for conversation list
+    function formatTime(date) {
+      const now = new Date();
+      const diff = now - date;
+      const minutes = Math.floor(diff / 60000);
+      const hours = Math.floor(diff / 3600000);
+      const days = Math.floor(diff / 86400000);
+      
+      if (minutes < 1) return 'now';
+      if (minutes < 60) return `${minutes}m`;
+      if (hours < 24) return `${hours}h`;
+      if (days < 7) return `${days}d`;
+      return date.toLocaleDateString();
     }
 
     // Show welcome message when no contacts or conversations
@@ -1112,11 +1184,14 @@
       }
     }
 
-    // Update conversation list (placeholder for now)
-    function updateConversationList() {
-      // This would update the sidebar with latest message previews
-      // For now, we'll just reload contacts
-      console.log('Conversation list updated');
+    // Update conversation list
+    async function updateConversationList() {
+      try {
+        await loadConversations();
+        console.log('Conversation list updated');
+      } catch (error) {
+        console.error('Error updating conversation list:', error);
+      }
     }
 
     function updateChatHeader(contactName, contactRole) {
@@ -1294,12 +1369,20 @@
       });
     }
 
-    function searchContacts(searchTerm) {
-      const contactItems = document.querySelectorAll('.contact-item');
-      contactItems.forEach(item => {
-        const contactName = item.querySelector('.contact-name').textContent.toLowerCase();
-        item.style.display = contactName.includes(searchTerm.toLowerCase()) ? 'flex' : 'none';
+    function searchConversations(searchTerm) {
+      const conversationItems = document.querySelectorAll('.contact-item');
+      conversationItems.forEach(item => {
+        const contactName = item.querySelector('.contact-name')?.textContent.toLowerCase() || '';
+        const lastMessage = item.querySelector('.last-message')?.textContent.toLowerCase() || '';
+        const matches = contactName.includes(searchTerm.toLowerCase()) || 
+                       lastMessage.includes(searchTerm.toLowerCase());
+        item.style.display = matches ? 'flex' : 'none';
       });
+    }
+
+    function searchContacts(searchTerm) {
+      // Keep this for backward compatibility
+      searchConversations(searchTerm);
     }
 
     // Placeholder functions for UI elements
@@ -1329,23 +1412,22 @@
       document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
       event.target.classList.add('active');
       
-      // Filter contacts based on tab
-      const contactItems = document.querySelectorAll('.contact-item');
-      contactItems.forEach(item => {
-        const contactName = item.querySelector('.contact-name').textContent;
-        const contact = contacts.find(c => c.name === contactName);
-        
-        if (!contact) return;
+      // Filter conversations based on tab
+      const conversationItems = document.querySelectorAll('.contact-item');
+      conversationItems.forEach(item => {
+        const unreadBadge = item.querySelector('.unread-badge');
+        const hasUnread = unreadBadge && parseInt(unreadBadge.textContent) > 0;
         
         switch(tab) {
           case 'all':
             item.style.display = 'flex';
             break;
-          case 'instructors':
-            item.style.display = contact.role === 'instructor' ? 'flex' : 'none';
+          case 'recent':
+            // Show all conversations, sorted by most recent (already sorted from API)
+            item.style.display = 'flex';
             break;
-          case 'students':
-            item.style.display = contact.role === 'student' ? 'flex' : 'none';
+          case 'unread':
+            item.style.display = hasUnread ? 'flex' : 'none';
             break;
         }
       });

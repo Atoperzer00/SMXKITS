@@ -740,14 +740,14 @@
       </div>
     </header>
 
-    <!-- Contacts Sidebar -->
+    <!-- Conversations Sidebar -->
     <aside class="contacts-sidebar" id="contactsSidebar">
       <div class="contacts-header">
-        <input type="text" class="search-box" placeholder="Search contacts..." id="searchBox">
+        <input type="text" class="search-box" placeholder="Search conversations..." id="searchBox" onkeyup="searchConversations(this.value)">
         <div class="contacts-tabs">
-          <button class="tab-button active" onclick="switchTab('all')">All</button>
-          <button class="tab-button" onclick="switchTab('online')">Online</button>
-          <button class="tab-button" onclick="switchTab('groups')">Groups</button>
+          <button class="tab-button active" onclick="switchTab('recent')">Recent</button>
+          <button class="tab-button" onclick="switchTab('unread')">Unread</button>
+          <button class="tab-button" onclick="switchTab('all')">All</button>
         </div>
       </div>
       

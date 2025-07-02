@@ -118,24 +118,41 @@ router.get('/conversation/:userId', auth(['admin', 'instructor', 'student']), as
 // Send a direct message
 router.post('/send', auth(['admin', 'instructor', 'student']), async (req, res) => {
   try {
+    console.log('📨 Sending direct message:', { 
+      senderId: req.user?.id, 
+      senderName: req.user?.name,
+      recipientId: req.body?.recipientId, 
+      content: req.body?.content?.substring(0, 50) + '...' 
+    });
+
     const { recipientId, content } = req.body;
     const sender = req.user;
 
     if (!recipientId || !content) {
+      console.log('❌ Missing required fields:', { recipientId: !!recipientId, content: !!content });
       return res.status(400).json({ error: 'Recipient ID and content are required' });
     }
 
+    if (!sender || !sender.id) {
+      console.log('❌ Invalid sender data:', sender);
+      return res.status(401).json({ error: 'Invalid user authentication' });
+    }
+
     // Get recipient info
+    console.log('🔍 Looking for recipient:', recipientId);
     const recipient = await User.findById(recipientId).select('name role');
     if (!recipient) {
+      console.log('❌ Recipient not found:', recipientId);
       return res.status(404).json({ error: 'Recipient not found' });
     }
+    console.log('✅ Found recipient:', { id: recipient._id, name: recipient.name, role: recipient.role });
 
     // Generate conversation ID
     const conversationId = Conversation.generateConversationId(sender.id, recipientId);
+    console.log('🔗 Generated conversation ID:', conversationId);
 
     // Create the message
-    const message = new DirectMessage({
+    const messageData = {
       conversationId,
       sender: {
         id: sender.id,
@@ -148,15 +165,20 @@ router.post('/send', auth(['admin', 'instructor', 'student']), async (req, res) 
         role: recipient.role
       },
       content
-    });
+    };
+    console.log('📝 Creating message with data:', messageData);
 
+    const message = new DirectMessage(messageData);
     await message.save();
+    console.log('✅ Message saved:', message._id);
 
     // Update or create conversation
+    console.log('🔄 Finding or creating conversation...');
     const conversation = await Conversation.findOrCreateConversation(
       { id: sender.id, name: sender.name, role: sender.role },
       { id: recipient._id, name: recipient.name, role: recipient.role }
     );
+    console.log('✅ Conversation found/created:', conversation._id);
 
     // Update conversation with last message and increment unread count for recipient
     conversation.lastMessage = {
@@ -170,20 +192,31 @@ router.post('/send', auth(['admin', 'instructor', 'student']), async (req, res) 
     conversation.unreadCounts.set(recipientId.toString(), currentUnread + 1);
     
     await conversation.save();
+    console.log('✅ Conversation updated with unread count:', currentUnread + 1);
 
     // Emit real-time message
     const io = req.app.get('io');
-    io.to(`user:${recipientId}`).emit('direct_message', message);
-    io.to(`user:${recipientId}`).emit('conversation_updated', {
-      conversationId,
-      lastMessage: conversation.lastMessage,
-      unreadCount: currentUnread + 1
-    });
+    if (io) {
+      io.to(`user:${recipientId}`).emit('direct_message', message);
+      io.to(`user:${recipientId}`).emit('conversation_updated', {
+        conversationId,
+        lastMessage: conversation.lastMessage,
+        unreadCount: currentUnread + 1
+      });
+      console.log('📡 Real-time message emitted to user:', recipientId);
+    } else {
+      console.log('⚠️ Socket.IO not available');
+    }
 
+    console.log('✅ Direct message sent successfully');
     res.status(201).json(message);
   } catch (error) {
     console.error('❌ Error sending direct message:', error);
-    res.status(500).json({ error: 'Server error sending message' });
+    console.error('❌ Error stack:', error.stack);
+    res.status(500).json({ 
+      error: 'Server error sending message',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
