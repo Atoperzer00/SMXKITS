@@ -696,12 +696,19 @@
 
     /* Inbox dropdown z-index fix */
     #inboxDropdown {
-      z-index: 99999 !important;
+      z-index: 999999 !important;
+      position: fixed !important;
     }
 
     /* Fix notification and inbox dropdown visibility */
     .inbox-dropdown {
-      z-index: 99999 !important;
+      z-index: 999999 !important;
+      position: fixed !important;
+    }
+
+    /* Ensure inbox bubble has relative positioning for dropdown */
+    .inbox-bubble {
+      position: relative;
     }
 
     /* Remove hover scale effect to prevent dropdown misalignment */
@@ -709,6 +716,29 @@
       transform: none !important;
       background: var(--accent-gradient) !important;
       box-shadow: 0 10px 25px rgba(255, 123, 0, 0.4) !important;
+    }
+
+    /* Message unread badge in inbox */
+    .message-unread-badge {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      background: var(--accent-gradient);
+      color: white;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      font-size: 0.6rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--dark-gradient);
+    }
+
+    /* Inbox message styling */
+    .inbox-message {
+      position: relative;
     }
 
     /* Ensure parent containers don't clip dropdowns */
@@ -871,35 +901,26 @@
           <!-- Inbox -->
           <div class="inbox-bubble" onclick="toggleInbox()">
             <i class="fas fa-envelope"></i>
-            <div class="notification-badge">4</div>
+            <div class="notification-badge" id="unreadCount" style="display: none;">0</div>
             
             <!-- Inbox Dropdown -->
             <div class="inbox-dropdown" id="inboxDropdown">
               <div class="inbox-header">
                 <i class="fas fa-inbox"></i>
-                Messages (4)
+                <span id="inboxTitle">Messages (0)</span>
               </div>
-              <div class="inbox-messages">
-                <div class="inbox-message unread" onclick="openMessage('msg1')">
-                  <div class="message-sender">Instructor Davis</div>
-                  <div class="message-preview">Great progress on today's exercises! Keep up the good work...</div>
-                  <div class="message-time">5 minutes ago</div>
+              <div class="inbox-messages" id="inboxMessages">
+                <div style="padding: 2rem; text-align: center; color: var(--text-secondary);">
+                  <i class="fas fa-envelope-open" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                  <p>No messages yet</p>
+                  <p style="font-size: 0.8rem; margin-top: 0.5rem;">Your recent conversations will appear here</p>
                 </div>
-                <div class="inbox-message unread" onclick="openMessage('msg2')">
-                  <div class="message-sender">Training Support</div>
-                  <div class="message-preview">Your assignment has been graded. Check your progress...</div>
-                  <div class="message-time">1 hour ago</div>
-                </div>
-                <div class="inbox-message unread" onclick="openMessage('msg3')">
-                  <div class="message-sender">Class Group</div>
-                  <div class="message-preview">Study session scheduled for tomorrow at 3 PM...</div>
-                  <div class="message-time">2 hours ago</div>
-                </div>
-                <div class="inbox-message" onclick="openMessage('msg4')">
-                  <div class="message-sender">Admin</div>
-                  <div class="message-preview">Welcome to SMX KITS! Here's your training schedule...</div>
-                  <div class="message-time">Yesterday</div>
-                </div>
+              </div>
+              <div class="inbox-footer" style="padding: 1rem; border-top: 1px solid var(--glass-border); text-align: center;">
+                <button onclick="openMessenger()" style="background: var(--accent-gradient); border: none; border-radius: 15px; padding: 0.5rem 1rem; color: white; font-size: 0.8rem; cursor: pointer; transition: var(--transition);">
+                  <i class="fas fa-comments" style="margin-right: 0.5rem;"></i>
+                  Open Messenger
+                </button>
               </div>
             </div>
           </div>
@@ -1035,17 +1056,32 @@
     }
 
     // Inbox and notification functions
-    function toggleInbox() {
+    async function toggleInbox() {
       const dropdown = document.getElementById('inboxDropdown');
+      const isOpening = !dropdown.classList.contains('active');
+      
+      if (isOpening) {
+        // Load recent messages when opening
+        await loadRecentMessages();
+        
+        // Position the dropdown correctly
+        const inboxBubble = document.querySelector('.inbox-bubble');
+        const rect = inboxBubble.getBoundingClientRect();
+        dropdown.style.top = (rect.bottom + 10) + 'px';
+        dropdown.style.right = (window.innerWidth - rect.right) + 'px';
+      }
+      
       dropdown.classList.toggle('active');
       
       // Close dropdown when clicking outside
-      document.addEventListener('click', function closeDropdown(e) {
-        if (!e.target.closest('.inbox-bubble')) {
-          dropdown.classList.remove('active');
-          document.removeEventListener('click', closeDropdown);
-        }
-      });
+      if (isOpening) {
+        document.addEventListener('click', function closeDropdown(e) {
+          if (!e.target.closest('.inbox-bubble')) {
+            dropdown.classList.remove('active');
+            document.removeEventListener('click', closeDropdown);
+          }
+        });
+      }
     }
 
     function toggleNotifications() {
@@ -1061,17 +1097,130 @@
       });
     }
 
-    function openMessage(messageId) {
-      // Legacy support - convert message IDs to contact IDs
-      const messageToContact = {
-        'msg1': 'instructor-davis',
-        'msg2': 'training-support', 
-        'msg3': 'class-group',
-        'msg4': 'admin'
-      };
+    async function loadRecentMessages() {
+      try {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user || !user.token) {
+          console.log('No user token found');
+          return;
+        }
+
+        // Load conversations
+        const response = await fetch('/api/direct-messages/conversations', {
+          headers: {
+            'Authorization': `Bearer ${user.token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const conversations = await response.json();
+          renderInboxMessages(conversations);
+          updateUnreadCount(conversations);
+        } else {
+          console.error('Failed to load conversations');
+        }
+      } catch (error) {
+        console.error('Error loading recent messages:', error);
+      }
+    }
+
+    function renderInboxMessages(conversations) {
+      const inboxMessages = document.getElementById('inboxMessages');
+      const inboxTitle = document.getElementById('inboxTitle');
       
-      const contactId = messageToContact[messageId] || messageId;
-      openStudentChat(contactId);
+      if (conversations.length === 0) {
+        inboxMessages.innerHTML = `
+          <div style="padding: 2rem; text-align: center; color: var(--text-secondary);">
+            <i class="fas fa-envelope-open" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+            <p>No messages yet</p>
+            <p style="font-size: 0.8rem; margin-top: 0.5rem;">Your recent conversations will appear here</p>
+          </div>
+        `;
+        inboxTitle.textContent = 'Messages (0)';
+        return;
+      }
+
+      // Show only the 5 most recent conversations
+      const recentConversations = conversations.slice(0, 5);
+      
+      inboxMessages.innerHTML = recentConversations.map(conversation => {
+        const otherParticipant = conversation.otherParticipant;
+        if (!otherParticipant) return '';
+        
+        const lastMessage = conversation.lastMessage;
+        const lastMessageText = lastMessage ? 
+          (lastMessage.content.length > 50 ? lastMessage.content.substring(0, 50) + '...' : lastMessage.content) : 
+          'No messages yet';
+        const lastMessageTime = lastMessage ? formatTimeAgo(new Date(lastMessage.timestamp)) : '';
+        const unreadCount = conversation.unreadCount || 0;
+        const isUnread = unreadCount > 0;
+        
+        return `
+          <div class="inbox-message ${isUnread ? 'unread' : ''}" onclick="openConversation('${otherParticipant.id}', '${otherParticipant.name}')">
+            <div class="message-sender">${otherParticipant.name}</div>
+            <div class="message-preview">${lastMessageText}</div>
+            <div class="message-time">${lastMessageTime}</div>
+            ${isUnread ? `<div class="message-unread-badge">${unreadCount}</div>` : ''}
+          </div>
+        `;
+      }).join('');
+      
+      inboxTitle.textContent = `Messages (${conversations.length})`;
+    }
+
+    function updateUnreadCount(conversations) {
+      const unreadBadge = document.getElementById('unreadCount');
+      const totalUnread = conversations.reduce((total, conv) => total + (conv.unreadCount || 0), 0);
+      
+      if (totalUnread > 0) {
+        unreadBadge.textContent = totalUnread > 99 ? '99+' : totalUnread;
+        unreadBadge.style.display = 'flex';
+      } else {
+        unreadBadge.style.display = 'none';
+      }
+    }
+
+    function formatTimeAgo(date) {
+      const now = new Date();
+      const diff = now - date;
+      const minutes = Math.floor(diff / 60000);
+      const hours = Math.floor(diff / 3600000);
+      const days = Math.floor(diff / 86400000);
+      
+      if (minutes < 1) return 'now';
+      if (minutes < 60) return `${minutes}m ago`;
+      if (hours < 24) return `${hours}h ago`;
+      if (days < 7) return `${days}d ago`;
+      return date.toLocaleDateString();
+    }
+
+    function openConversation(userId, userName) {
+      // Store the selected contact and open messenger
+      localStorage.setItem('selectedContact', JSON.stringify({
+        id: userId,
+        name: userName
+      }));
+      
+      // Close the inbox dropdown
+      document.getElementById('inboxDropdown').classList.remove('active');
+      
+      // Open messenger
+      openMessenger();
+    }
+
+    function openMessenger() {
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (user && user.role === 'student') {
+        window.location.href = 'student-messenger.html';
+      } else {
+        window.location.href = 'instructor-messaging.html';
+      }
+    }
+
+    function openMessage(messageId) {
+      console.log('Opening message:', messageId);
+      // Legacy function - now handled by openConversation
     }
 
     function openStudentChat(contactId) {
@@ -1108,6 +1257,42 @@
         setTimeout(() => document.body.removeChild(notification), 300);
       }, 3000);
     }
+
+    // Load unread message count
+    async function loadUnreadCount() {
+      try {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user || !user.token) return;
+
+        const response = await fetch('/api/direct-messages/unread-count', {
+          headers: {
+            'Authorization': `Bearer ${user.token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const unreadBadge = document.getElementById('unreadCount');
+          
+          if (data.unreadCount > 0) {
+            unreadBadge.textContent = data.unreadCount > 99 ? '99+' : data.unreadCount;
+            unreadBadge.style.display = 'flex';
+          } else {
+            unreadBadge.style.display = 'none';
+          }
+        }
+      } catch (error) {
+        console.error('Error loading unread count:', error);
+      }
+    }
+
+    // Initialize unread count checking
+    setTimeout(() => {
+      loadUnreadCount();
+      // Check for new messages every 30 seconds
+      setInterval(loadUnreadCount, 30000);
+    }, 1000);
 
     // Close dropdowns when clicking outside
     document.addEventListener('click', function(e) {
