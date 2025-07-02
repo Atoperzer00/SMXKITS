@@ -398,6 +398,7 @@ app.use('/api/classes', require('./routes/classes'));
 app.use('/api/class-templates', require('./routes/class-templates'));
 app.use('/api/progress', require('./routes/progress'));
 app.use('/api/chat', require('./routes/chat'));
+app.use('/api/direct-messages', require('./routes/direct-messages'));
 app.use('/api/kitcomm', require('./routes/kitcomm'));
 app.use('/api/streams', require('./routes/streams'));
 app.use('/api/stream', require('./routes/stream-upload.route'));
@@ -1752,6 +1753,89 @@ io.on('connection', socket => {
     socket.to(room).emit('stop_typing');
   });
 
+  // ===== DIRECT MESSAGING HANDLERS =====
+  // Join user-specific room for direct messages
+  socket.on('join_user_room', (data) => {
+    const { userId } = data;
+    const room = `user:${userId}`;
+    socket.join(room);
+    socket.userId = userId; // Store user ID on socket
+    console.log(`👤 User ${userId} joined their private room: ${room}`);
+  });
+
+  // Handle direct message sending via socket
+  socket.on('send_direct_message', async (data) => {
+    try {
+      const { recipientId, content, sender } = data;
+      const DirectMessage = require('./models/DirectMessage');
+      const Conversation = require('./models/Conversation');
+      const User = require('./models/User');
+
+      // Get recipient info
+      const recipient = await User.findById(recipientId).select('name role');
+      if (!recipient) {
+        socket.emit('error', { message: 'Recipient not found' });
+        return;
+      }
+
+      // Generate conversation ID
+      const conversationId = Conversation.generateConversationId(sender.id, recipientId);
+
+      // Create the message
+      const message = new DirectMessage({
+        conversationId,
+        sender: {
+          id: sender.id,
+          name: sender.name,
+          role: sender.role
+        },
+        recipient: {
+          id: recipient._id,
+          name: recipient.name,
+          role: recipient.role
+        },
+        content
+      });
+
+      await message.save();
+
+      // Update or create conversation
+      const conversation = await Conversation.findOrCreateConversation(
+        { id: sender.id, name: sender.name, role: sender.role },
+        { id: recipient._id, name: recipient.name, role: recipient.role }
+      );
+
+      // Update conversation with last message and increment unread count for recipient
+      conversation.lastMessage = {
+        content,
+        timestamp: message.timestamp,
+        senderId: sender.id
+      };
+      conversation.updatedAt = new Date();
+      
+      const currentUnread = conversation.unreadCounts.get(recipientId.toString()) || 0;
+      conversation.unreadCounts.set(recipientId.toString(), currentUnread + 1);
+      
+      await conversation.save();
+
+      // Emit to both sender and recipient
+      io.to(`user:${sender.id}`).emit('direct_message', message);
+      io.to(`user:${recipientId}`).emit('direct_message', message);
+      
+      // Update conversation lists
+      io.to(`user:${recipientId}`).emit('conversation_updated', {
+        conversationId,
+        lastMessage: conversation.lastMessage,
+        unreadCount: currentUnread + 1
+      });
+
+      console.log(`💬 Direct message sent from ${sender.name} to ${recipient.name}`);
+    } catch (error) {
+      console.error('❌ Error sending direct message via socket:', error);
+      socket.emit('error', { message: 'Failed to send message' });
+    }
+  });
+
   // ===== LEGACY INSTRUCTOR CHAT HANDLERS (for backward compatibility) =====
   socket.on('message', async (data) => {
     try {
@@ -2012,6 +2096,62 @@ io.on('connection', socket => {
       console.log(`📤 Sent current stream state to new joiner for class ${classId}`);
     } else {
       socket.emit('stream:no-state', { message: 'No active stream found' });
+    }
+  });
+
+  // ===== DIRECT MESSAGING HANDLERS =====
+  // Join user to their private room for direct messages
+  socket.on('join_user_room', (data) => {
+    const { userId } = data;
+    if (userId) {
+      socket.join(`user:${userId}`);
+      console.log(`👤 User ${userId} joined their private room`);
+    }
+  });
+
+  // Handle typing indicators for direct messages
+  socket.on('typing', (data) => {
+    const { room, username } = data;
+    if (room) {
+      socket.to(`user:${room}`).emit('typing', { username });
+    }
+  });
+
+  socket.on('stop_typing', (data) => {
+    const { room } = data;
+    if (room) {
+      socket.to(`user:${room}`).emit('stop_typing');
+    }
+  });
+
+  // Handle direct message sending via socket (real-time)
+  socket.on('send_direct_message', async (data) => {
+    try {
+      const { recipientId, content, senderId, senderName } = data;
+      
+      if (!recipientId || !content || !senderId) {
+        socket.emit('error', { message: 'Missing required fields for direct message' });
+        return;
+      }
+
+      // Create message object
+      const message = {
+        sender: { id: senderId, name: senderName },
+        recipient: { id: recipientId },
+        content: content,
+        timestamp: new Date()
+      };
+
+      // Send to recipient's room
+      io.to(`user:${recipientId}`).emit('direct_message', message);
+      
+      // Send confirmation back to sender
+      socket.emit('message_sent', message);
+      
+      console.log(`💬 Direct message sent from ${senderName} to user ${recipientId}`);
+    } catch (error) {
+      console.error('❌ Error handling direct message:', error);
+      socket.emit('error', { message: 'Failed to send direct message' });
     }
   });
 });

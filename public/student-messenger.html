@@ -280,45 +280,6 @@
       text-overflow: ellipsis;
     }
 
-    .unread-badge {
-      background: var(--secondary-gradient);
-      color: white;
-      border-radius: 50%;
-      width: 20px;
-      height: 20px;
-      font-size: 0.7rem;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .delete-chat-btn {
-      background: var(--secondary-gradient);
-      border: none;
-      border-radius: 50%;
-      width: 25px;
-      height: 25px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: var(--transition);
-      color: white;
-      font-size: 0.8rem;
-      opacity: 0;
-      margin-left: 0.5rem;
-    }
-
-    .contact-item:hover .delete-chat-btn {
-      opacity: 1;
-    }
-
-    .delete-chat-btn:hover {
-      transform: scale(1.2);
-      background: #ff4757;
-    }
-
     /* Main Chat Area */
     .chat-main {
       flex: 1;
@@ -522,8 +483,8 @@
       color: var(--text-primary);
       font-size: 1rem;
       resize: none;
-      min-height: 100px;
-      max-height: 240px;
+      min-height: 50px;
+      max-height: 120px;
       font-family: inherit;
     }
 
@@ -548,94 +509,13 @@
 
     .send-button:hover {
       transform: scale(1.1);
-      box-shadow: 0 10px 25px rgba(79, 172, 254, 0.4);
+      box-shadow: var(--shadow-hover);
     }
 
     .send-button:disabled {
       opacity: 0.5;
       cursor: not-allowed;
       transform: none;
-    }
-
-    /* Typing Indicator */
-    .typing-indicator {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      padding: 1rem 2rem;
-      color: var(--text-secondary);
-      font-style: italic;
-      animation: pulse 1.5s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 0.6; }
-      50% { opacity: 1; }
-    }
-
-    .typing-dots {
-      display: flex;
-      gap: 3px;
-    }
-
-    .typing-dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--text-secondary);
-      animation: typingDots 1.4s ease-in-out infinite;
-    }
-
-    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
-
-    @keyframes typingDots {
-      0%, 60%, 100% { transform: translateY(0); }
-      30% { transform: translateY(-10px); }
-    }
-
-    /* Online Status */
-    .online-status {
-      position: fixed;
-      bottom: 20px;
-      left: 20px;
-      background: var(--glass-bg);
-      backdrop-filter: blur(20px);
-      border: 1px solid var(--glass-border);
-      border-radius: 25px;
-      padding: 0.5rem 1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.8rem;
-      z-index: 1000;
-    }
-
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--online-green);
-      animation: pulse 2s ease-in-out infinite;
-    }
-
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar {
-      width: 8px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 4px;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: var(--accent-gradient);
-      border-radius: 4px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: var(--primary-gradient);
     }
 
     /* Modal Styles */
@@ -665,16 +545,12 @@
       background: var(--card-gradient);
       border-radius: var(--border-radius);
       padding: 2rem;
-      border: 1px solid var(--glass-border);
-      box-shadow: var(--shadow-hover);
       max-width: 500px;
       width: 90%;
-      transform: scale(0.9);
-      transition: var(--transition);
-    }
-
-    .modal.active .modal-content {
-      transform: scale(1);
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-primary);
+      border: 1px solid var(--glass-border);
     }
 
     .modal-header {
@@ -687,320 +563,124 @@
     .modal-title {
       font-size: 1.5rem;
       font-weight: 600;
-      color: var(--text-accent);
+      color: var(--text-primary);
     }
 
     .modal-close {
       background: none;
       border: none;
-      color: var(--text-secondary);
       font-size: 1.5rem;
+      color: var(--text-secondary);
       cursor: pointer;
       transition: var(--transition);
     }
 
     .modal-close:hover {
       color: var(--text-primary);
-      transform: scale(1.1);
-    }
-
-    /* Responsive Design */
-    @media (max-width: 768px) {
-      .contacts-sidebar {
-        width: 100%;
-        position: absolute;
-        z-index: 999;
-        transform: translateX(-100%);
-        transition: transform 0.3s ease;
-      }
-
-      .contacts-sidebar.mobile-open {
-        transform: translateX(0);
-      }
-
-      .messaging-header {
-        padding: 0 1rem;
-      }
-
-      .messaging-title {
-        font-size: 1.4rem;
-      }
-
-      .messages-container {
-        padding: 1rem;
-      }
-
-      .message {
-        max-width: 85%;
-      }
-
-      .message-input-area {
-        padding: 1rem;
-      }
     }
   </style>
 </head>
 <body>
   <div class="messaging-layout">
     <!-- Header Bar -->
-    <header class="messaging-header">
+    <div class="messaging-header">
       <div class="header-left">
-        <div class="back-button" onclick="goBack()">
+        <button class="back-button" onclick="goBack()">
           <i class="fas fa-arrow-left"></i>
-        </div>
+        </button>
         <h1 class="messaging-title">Student Messenger</h1>
       </div>
       <div class="header-actions">
-        <div class="header-button" onclick="openNewChatModal()">
+        <button class="header-button" onclick="openNewChatModal()">
           <i class="fas fa-plus"></i>
           New Chat
-        </div>
-        <div class="header-button" onclick="searchUsers()">
-          <i class="fas fa-search"></i>
-          Find Users
+        </button>
+        <div class="online-status" style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-secondary); font-size: 0.9rem;">
+          <div class="status-dot" style="width: 8px; height: 8px; border-radius: 50%; background: var(--online-green);"></div>
+          <span>Connected</span>
         </div>
       </div>
-    </header>
+    </div>
 
-    <!-- Contacts Sidebar -->
-    <aside class="contacts-sidebar" id="contactsSidebar">
+    <!-- Sidebar - Contact List -->
+    <div class="contacts-sidebar">
       <div class="contacts-header">
-        <input type="text" class="search-box" placeholder="Search conversations..." id="searchBox">
+        <input type="text" class="search-box" placeholder="Search contacts..." onkeyup="searchContacts(this.value)">
         <div class="contacts-tabs">
           <button class="tab-button active" onclick="switchTab('all')">All</button>
           <button class="tab-button" onclick="switchTab('instructors')">Instructors</button>
           <button class="tab-button" onclick="switchTab('students')">Students</button>
         </div>
       </div>
-      
-      <div class="contacts-list" id="contactsList">
-        <!-- Instructor Contacts -->
-        <div class="contact-item active" onclick="selectContact('instructor-davis', 'instructor')" data-type="instructor">
-          <div class="contact-avatar" style="background: var(--primary-gradient);">
-            ID
-            <div class="status-indicator status-online"></div>
-          </div>
-          <div class="contact-info">
-            <div class="contact-name">Instructor Davis</div>
-            <div class="contact-status">Online - Available for questions</div>
-          </div>
-          <div class="unread-badge">2</div>
-          <button class="delete-chat-btn" onclick="deleteChat(event, 'instructor-davis')" title="Delete Chat">
-            <i class="fas fa-trash"></i>
-          </button>
-        </div>
-
-        <div class="contact-item" onclick="selectContact('training-support', 'instructor')" data-type="instructor">
-          <div class="contact-avatar" style="background: var(--secondary-gradient);">
-            TS
-            <div class="status-indicator status-online"></div>
-          </div>
-          <div class="contact-info">
-            <div class="contact-name">Training Support</div>
-            <div class="contact-status">Online - Support available</div>
-          </div>
-          <div class="unread-badge">1</div>
-          <button class="delete-chat-btn" onclick="deleteChat(event, 'training-support')" title="Delete Chat">
-            <i class="fas fa-trash"></i>
-          </button>
-        </div>
-
-        <!-- Student Contacts -->
-        <div class="contact-item" onclick="selectContact('class-group', 'group')" data-type="students">
-          <div class="contact-avatar" style="background: var(--accent-gradient);">
-            <i class="fas fa-users"></i>
-            <div class="status-indicator status-online"></div>
-          </div>
-          <div class="contact-info">
-            <div class="contact-name">Class Group Chat</div>
-            <div class="contact-status">8 members - 5 online</div>
-          </div>
-          <div class="unread-badge">3</div>
-          <button class="delete-chat-btn" onclick="deleteChat(event, 'class-group')" title="Delete Chat">
-            <i class="fas fa-trash"></i>
-          </button>
-        </div>
-
-        <div class="contact-item" onclick="selectContact('sarah-student', 'student')" data-type="students">
-          <div class="contact-avatar">
-            SJ
-            <div class="status-indicator status-online"></div>
-          </div>
-          <div class="contact-info">
-            <div class="contact-name">Sarah Johnson</div>
-            <div class="contact-status">Online - Study partner</div>
-          </div>
-          <button class="delete-chat-btn" onclick="deleteChat(event, 'sarah-student')" title="Delete Chat">
-            <i class="fas fa-trash"></i>
-          </button>
-        </div>
-
-        <div class="contact-item" onclick="selectContact('mike-student', 'student')" data-type="students">
-          <div class="contact-avatar">
-            MC
-            <div class="status-indicator status-away"></div>
-          </div>
-          <div class="contact-info">
-            <div class="contact-name">Mike Chen</div>
-            <div class="contact-status">Away - In training</div>
-          </div>
-          <button class="delete-chat-btn" onclick="deleteChat(event, 'mike-student')" title="Delete Chat">
-            <i class="fas fa-trash"></i>
-          </button>
-        </div>
-
-        <div class="contact-item" onclick="selectContact('admin', 'instructor')" data-type="instructor">
-          <div class="contact-avatar" style="background: var(--primary-gradient);">
-            AD
-            <div class="status-indicator status-offline"></div>
-          </div>
-          <div class="contact-info">
-            <div class="contact-name">Admin</div>
-            <div class="contact-status">Last seen 2 hours ago</div>
-          </div>
-          <button class="delete-chat-btn" onclick="deleteChat(event, 'admin')" title="Delete Chat">
-            <i class="fas fa-trash"></i>
-          </button>
-        </div>
+      <div class="contacts-list">
+        <!-- Contacts will be loaded here -->
       </div>
-    </aside>
+    </div>
 
     <!-- Main Chat Area -->
-    <main class="chat-main">
+    <div class="chat-main">
       <div class="chat-header">
         <div class="chat-user-info">
-          <div class="chat-user-avatar" style="background: var(--primary-gradient);">
-            ID
+          <div class="chat-user-avatar">
             <div class="status-indicator status-online"></div>
           </div>
           <div class="chat-user-details">
-            <h3 id="chatUserName">Instructor Davis</h3>
-            <p id="chatUserStatus">Online - Available for questions</p>
+            <h3 id="chatUserName">Select a contact</h3>
+            <p id="chatUserStatus">Choose someone to start messaging</p>
           </div>
         </div>
-
-      </div>
-
-      <div class="messages-container" id="messagesContainer">
-        <!-- Sample Messages -->
-        <div class="message received">
-          <div class="message-avatar" style="background: var(--primary-gradient);">ID</div>
-          <div class="message-content">
-            <div class="message-text">Great progress on today's exercises! Your typing speed has improved significantly. Keep up the excellent work!</div>
-            <div class="message-time">2:15 PM</div>
-          </div>
-        </div>
-
-        <div class="message sent">
-          <div class="message-avatar">ME</div>
-          <div class="message-content">
-            <div class="message-text">Thank you! I've been practicing every day. Do you have any tips for the screening exercises?</div>
-            <div class="message-time">2:18 PM</div>
-          </div>
-        </div>
-
-        <div class="message received">
-          <div class="message-avatar" style="background: var(--primary-gradient);">ID</div>
-          <div class="message-content">
-            <div class="message-text">Focus on pattern recognition and take your time with the initial scans. Speed will come naturally with practice.</div>
-            <div class="message-time">2:20 PM</div>
-          </div>
-        </div>
-
-        <div class="message sent">
-          <div class="message-avatar">ME</div>
-          <div class="message-content">
-            <div class="message-text">That makes sense. I'll work on that during tomorrow's session. Thanks for the guidance!</div>
-            <div class="message-time">2:22 PM</div>
-          </div>
+        <div class="chat-actions">
+          <button class="chat-action-btn" onclick="attachFile()">
+            <i class="fas fa-paperclip"></i>
+          </button>
+          <button class="chat-action-btn" onclick="recordVoice()">
+            <i class="fas fa-microphone"></i>
+          </button>
         </div>
       </div>
 
-      <!-- Typing Indicator -->
-      <div class="typing-indicator" id="typingIndicator" style="display: none;">
-        <div class="message-avatar" style="background: var(--primary-gradient);">ID</div>
-        <div>
-          <span id="typingUser">Instructor Davis is typing</span>
-          <div class="typing-dots">
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-            <div class="typing-dot"></div>
-          </div>
-        </div>
+      <div class="messages-container">
+        <!-- Messages will be loaded here -->
       </div>
 
       <div class="message-input-area">
         <div class="input-actions">
-          <div class="input-action-btn" onclick="attachFile()" title="Attach File">
+          <button class="input-action-btn" onclick="attachFile()">
             <i class="fas fa-paperclip"></i>
-          </div>
-          <div class="input-action-btn" onclick="insertEmoji()" title="Insert Emoji">
+          </button>
+          <button class="input-action-btn" onclick="insertEmoji()">
             <i class="fas fa-smile"></i>
-          </div>
-          <div class="input-action-btn" onclick="recordVoice()" title="Voice Message">
-            <i class="fas fa-microphone"></i>
-          </div>
+          </button>
         </div>
         <textarea 
-          class="message-input" 
           id="messageInput" 
+          class="message-input" 
           placeholder="Type your message..." 
-          rows="3"
           onkeydown="handleKeyDown(event)"
           oninput="handleTyping()"
         ></textarea>
-        <button class="send-button" id="sendButton" onclick="sendMessage()">
+        <button class="send-button" onclick="sendMessage()">
           <i class="fas fa-paper-plane"></i>
         </button>
       </div>
-    </main>
-  </div>
-
-  <!-- Online Status Indicator -->
-  <div class="online-status">
-    <div class="status-dot"></div>
-    <span>Connected</span>
+    </div>
   </div>
 
   <!-- New Chat Modal -->
   <div class="modal" id="newChatModal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 class="modal-title">Start New Chat</h3>
+        <h3 class="modal-title">Start New Conversation</h3>
         <button class="modal-close" onclick="closeModal('newChatModal')">&times;</button>
       </div>
       <div class="modal-body">
         <div style="margin-bottom: 1rem;">
-          <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Search Users</label>
-          <input type="text" id="userSearch" style="width: 100%; padding: 0.8rem; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 10px; color: var(--text-primary);" placeholder="Enter name or email..." oninput="searchUsersInModal()">
+          <input type="text" id="userSearch" style="width: 100%; padding: 0.8rem; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 10px; color: var(--text-primary);" placeholder="Search users..." oninput="searchUsersInModal()">
         </div>
-        <div style="margin-bottom: 1.5rem;">
-          <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Available Users</label>
-          <div id="userSearchResults" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--glass-border); border-radius: 10px; padding: 0.5rem;">
-            <div style="display: flex; align-items: center; gap: 1rem; padding: 0.5rem; cursor: pointer; border-radius: 8px;" onclick="selectUserForChat(this, 'instructor-smith')">
-              <div style="width: 35px; height: 35px; border-radius: 50%; background: var(--primary-gradient); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem;">IS</div>
-              <div>
-                <div style="font-weight: 600; color: var(--text-primary);">Instructor Smith</div>
-                <div style="font-size: 0.8rem; color: var(--text-secondary);">Online - Available</div>
-              </div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 1rem; padding: 0.5rem; cursor: pointer; border-radius: 8px;" onclick="selectUserForChat(this, 'lisa-rodriguez')">
-              <div style="width: 35px; height: 35px; border-radius: 50%; background: var(--accent-gradient); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem;">LR</div>
-              <div>
-                <div style="font-weight: 600; color: var(--text-primary);">Lisa Rodriguez</div>
-                <div style="font-size: 0.8rem; color: var(--text-secondary);">Online - Student</div>
-              </div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 1rem; padding: 0.5rem; cursor: pointer; border-radius: 8px;" onclick="selectUserForChat(this, 'tech-support')">
-              <div style="width: 35px; height: 35px; border-radius: 50%; background: var(--secondary-gradient); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem;">TS</div>
-              <div>
-                <div style="font-weight: 600; color: var(--text-primary);">Tech Support</div>
-                <div style="font-size: 0.8rem; color: var(--text-secondary);">Online - Support</div>
-              </div>
-            </div>
-          </div>
+        <div id="userSearchResults" style="max-height: 300px; overflow-y: auto;">
+          <!-- Search results will appear here -->
         </div>
-        <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+        <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
           <button onclick="closeModal('newChatModal')" style="padding: 0.8rem 1.5rem; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 10px; color: var(--text-primary); cursor: pointer;">Cancel</button>
           <button onclick="startNewChat()" style="padding: 0.8rem 1.5rem; background: var(--accent-gradient); border: none; border-radius: 10px; color: white; cursor: pointer; font-weight: 600;">Start Chat</button>
         </div>
@@ -1009,12 +689,16 @@
   </div>
 
   <script>
-    let currentContact = 'instructor-davis';
-    let currentContactType = 'instructor';
+    let currentContact = null;
+    let currentContactId = null;
+    let currentContactType = 'individual';
     let typingTimer;
     let isTyping = false;
     let socket;
     let selectedUserForNewChat = null;
+    let currentUser = null;
+    let contacts = [];
+    let conversations = [];
 
     // Initialize Socket.IO connection
     function initializeSocket() {
@@ -1024,10 +708,10 @@
         console.log('Connected to server');
         updateConnectionStatus(true);
         
-        // Join user to their room with role information
-        const userName = localStorage.getItem('userName') || 'Student';
-        const userRole = localStorage.getItem('role') || 'student';
-        socket.emit('join', { username: userName, room: 'general', role: userRole });
+        // Join user to their private room for direct messages
+        if (currentUser) {
+          socket.emit('join_user_room', { userId: currentUser.id });
+        }
       });
 
       socket.on('disconnect', function() {
@@ -1035,12 +719,14 @@
         updateConnectionStatus(false);
       });
 
-      socket.on('message', function(data) {
-        receiveMessage(data);
+      // Handle incoming direct messages
+      socket.on('direct_message', function(message) {
+        receiveDirectMessage(message);
       });
 
-      socket.on('message_history', function(messages) {
-        loadMessageHistory(messages);
+      // Handle conversation updates
+      socket.on('conversation_updated', function(data) {
+        updateConversationList();
       });
 
       socket.on('typing', function(data) {
@@ -1051,33 +737,35 @@
         hideTypingIndicator();
       });
 
-      socket.on('user_joined', function(data) {
-        showNotification(`${data.username} joined the chat`, 'info');
-      });
-
-      socket.on('user_left', function(data) {
-        showNotification(`${data.username} left the chat`, 'info');
+      socket.on('error', function(data) {
+        showNotification(data.message, 'error');
       });
     }
 
     // Initialize the messaging interface
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', async function() {
+      // Get current user info
+      await initializeUser();
+      
       // Initialize socket connection
       initializeSocket();
+      
+      // Load contacts and conversations
+      await loadContacts();
+      await loadConversations();
       
       // Check if we came from a specific contact
       const selectedContact = localStorage.getItem('selectedContact');
       if (selectedContact) {
-        // Auto-select the contact and load conversation
-        selectContact(selectedContact, 'instructor');
+        // Find the contact and select them
+        const contact = contacts.find(c => c._id === selectedContact);
+        if (contact) {
+          selectContact(contact._id, contact.name, contact.role);
+        }
         localStorage.removeItem('selectedContact');
-      }
-      
-      // Check if we came from a specific message (legacy support)
-      const selectedMessage = localStorage.getItem('selectedMessage');
-      if (selectedMessage) {
-        loadMessageConversation(selectedMessage);
-        localStorage.removeItem('selectedMessage');
+      } else {
+        // Show welcome message if no contact selected
+        showWelcomeMessage();
       }
 
       // Auto-resize message input
@@ -1086,13 +774,154 @@
         this.style.height = 'auto';
         this.style.height = Math.min(this.scrollHeight, 120) + 'px';
       });
-
-      // Scroll to bottom of messages
-      scrollToBottom();
-
-      // Simulate random typing indicators
-      setInterval(simulateTyping, 20000);
     });
+
+    // Initialize current user from localStorage/token
+    async function initializeUser() {
+      const token = localStorage.getItem('token');
+      const userName = localStorage.getItem('userName');
+      const userRole = localStorage.getItem('role');
+      
+      if (!token || !userName) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      currentUser = {
+        id: localStorage.getItem('userId') || 'temp-id',
+        name: userName,
+        role: userRole || 'student',
+        token: token
+      };
+
+      console.log('Current user initialized:', currentUser);
+    }
+
+    // Load available contacts based on user role
+    async function loadContacts() {
+      try {
+        const response = await fetch('/api/direct-messages/contacts', {
+          headers: {
+            'Authorization': `Bearer ${currentUser.token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          contacts = await response.json();
+          renderContactsList();
+        } else {
+          console.error('Failed to load contacts');
+          // Show welcome message with demo contact
+          showWelcomeMessage();
+        }
+      } catch (error) {
+        console.error('Error loading contacts:', error);
+        showWelcomeMessage();
+      }
+    }
+
+    // Load user's conversations
+    async function loadConversations() {
+      try {
+        const response = await fetch('/api/direct-messages/conversations', {
+          headers: {
+            'Authorization': `Bearer ${currentUser.token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          conversations = await response.json();
+          updateConversationList();
+        }
+      } catch (error) {
+        console.error('Error loading conversations:', error);
+      }
+    }
+
+    // Render contacts list in sidebar
+    function renderContactsList() {
+      const contactsList = document.querySelector('.contacts-list');
+      
+      if (contacts.length === 0) {
+        contactsList.innerHTML = `
+          <div style="padding: 2rem; text-align: center; color: var(--text-secondary);">
+            <i class="fas fa-users" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+            <p>No contacts available</p>
+            <p style="font-size: 0.8rem; margin-top: 0.5rem;">Contacts will appear here when available</p>
+          </div>
+        `;
+        return;
+      }
+
+      contactsList.innerHTML = contacts.map(contact => {
+        const initials = contact.name.split(' ').map(n => n[0]).join('').toUpperCase();
+        const roleColor = contact.role === 'instructor' ? 'var(--primary-gradient)' : 
+                         contact.role === 'admin' ? 'var(--secondary-gradient)' : 
+                         'var(--accent-gradient)';
+        
+        return `
+          <div class="contact-item" onclick="selectContact('${contact._id}', '${contact.name}', '${contact.role}')">
+            <div class="contact-avatar" style="background: ${roleColor};">
+              ${initials}
+              <div class="status-indicator status-online"></div>
+            </div>
+            <div class="contact-info">
+              <div class="contact-name">${contact.name}</div>
+              <div class="contact-status">${contact.role.charAt(0).toUpperCase() + contact.role.slice(1)} - Available</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Show welcome message when no contacts or conversations
+    function showWelcomeMessage() {
+      const messagesContainer = document.querySelector('.messages-container');
+      const chatUserName = document.getElementById('chatUserName');
+      const chatUserStatus = document.getElementById('chatUserStatus');
+      
+      // Update header
+      if (chatUserName) chatUserName.textContent = 'SMX KITS Student Messenger';
+      if (chatUserStatus) chatUserStatus.textContent = 'Welcome to the messaging system';
+      
+      // Show welcome message
+      messagesContainer.innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; padding: 2rem;">
+          <div style="background: var(--accent-gradient); width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 2rem;">
+            <i class="fas fa-comments" style="font-size: 2rem; color: white;"></i>
+          </div>
+          <h2 style="color: var(--text-primary); margin-bottom: 1rem;">Welcome to SMX KITS Student Messenger!</h2>
+          <p style="color: var(--text-secondary); max-width: 500px; line-height: 1.6; margin-bottom: 2rem;">
+            This is your secure messaging platform where you can communicate with instructors, administrators, and fellow students. 
+            Here's how to get started:
+          </p>
+          <div style="text-align: left; max-width: 400px; color: var(--text-secondary);">
+            <div style="margin-bottom: 1rem;">
+              <i class="fas fa-user-friends" style="color: var(--text-accent); margin-right: 0.5rem;"></i>
+              <strong>Find Contacts:</strong> Your instructors and classmates will appear in the left sidebar
+            </div>
+            <div style="margin-bottom: 1rem;">
+              <i class="fas fa-comment-dots" style="color: var(--text-accent); margin-right: 0.5rem;"></i>
+              <strong>Start Chatting:</strong> Click on any contact to begin a conversation
+            </div>
+            <div style="margin-bottom: 1rem;">
+              <i class="fas fa-bell" style="color: var(--text-accent); margin-right: 0.5rem;"></i>
+              <strong>Stay Updated:</strong> You'll receive real-time notifications for new messages
+            </div>
+            <div>
+              <i class="fas fa-shield-alt" style="color: var(--text-accent); margin-right: 0.5rem;"></i>
+              <strong>Secure & Private:</strong> All messages are encrypted and stored securely
+            </div>
+          </div>
+          <button onclick="openNewChatModal()" style="margin-top: 2rem; padding: 1rem 2rem; background: var(--accent-gradient); border: none; border-radius: 25px; color: white; font-weight: 600; cursor: pointer; transition: var(--transition);">
+            <i class="fas fa-plus" style="margin-right: 0.5rem;"></i>
+            Start Your First Conversation
+          </button>
+        </div>
+      `;
+    }
 
     function updateConnectionStatus(connected) {
       const statusElement = document.querySelector('.online-status span');
@@ -1111,260 +940,218 @@
       window.location.href = 'dashboard.html';
     }
 
-    function selectContact(contactId, type) {
-      currentContact = contactId;
-      currentContactType = type;
+    function selectContact(contactId, contactName, contactRole) {
+      currentContactId = contactId;
+      currentContact = contactName;
+      currentContactType = contactRole;
       
       // Update active contact in sidebar
       document.querySelectorAll('.contact-item').forEach(item => {
         item.classList.remove('active');
       });
-      event.currentTarget.classList.add('active');
+      
+      // Find and activate the clicked contact
+      const contactItems = document.querySelectorAll('.contact-item');
+      contactItems.forEach(item => {
+        if (item.onclick && item.onclick.toString().includes(contactId)) {
+          item.classList.add('active');
+        }
+      });
 
       // Update chat header
-      updateChatHeader(contactId, type);
+      updateChatHeader(contactName, contactRole);
       
       // Load messages for this contact
-      loadMessages(contactId, type);
-      
-      // Clear unread badge
-      const badge = event.currentTarget.querySelector('.unread-badge');
-      if (badge) {
-        badge.style.display = 'none';
-      }
+      loadConversationMessages(contactId);
+    }
 
-      // Join the specific chat room
-      if (socket) {
-        socket.emit('join_room', { room: contactId });
+    // Load messages for a specific conversation
+    async function loadConversationMessages(contactId) {
+      try {
+        const response = await fetch(`/api/direct-messages/conversation/${contactId}`, {
+          headers: {
+            'Authorization': `Bearer ${currentUser.token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const messages = await response.json();
+          renderMessages(messages);
+        } else {
+          console.error('Failed to load conversation');
+          renderMessages([]);
+        }
+      } catch (error) {
+        console.error('Error loading conversation:', error);
+        renderMessages([]);
       }
     }
 
-    function updateChatHeader(contactId, type) {
+    // Render messages in the chat area
+    function renderMessages(messages) {
+      const messagesContainer = document.querySelector('.messages-container');
+      
+      if (messages.length === 0) {
+        messagesContainer.innerHTML = `
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; padding: 2rem;">
+            <div style="background: var(--glass-bg); width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 1rem;">
+              <i class="fas fa-comment" style="font-size: 1.5rem; color: var(--text-accent);"></i>
+            </div>
+            <p style="color: var(--text-secondary);">No messages yet</p>
+            <p style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 0.5rem;">Start the conversation by sending a message below</p>
+          </div>
+        `;
+        return;
+      }
+
+      messagesContainer.innerHTML = messages.map(message => {
+        const isFromCurrentUser = message.sender.id === currentUser.id;
+        const messageClass = isFromCurrentUser ? 'sent' : 'received';
+        const senderInitials = message.sender.name.split(' ').map(n => n[0]).join('').toUpperCase();
+        const time = new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        return `
+          <div class="message ${messageClass}">
+            <div class="message-avatar">${isFromCurrentUser ? 'ME' : senderInitials}</div>
+            <div class="message-content">
+              <div class="message-text">${message.content}</div>
+              <div class="message-time">${time}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      scrollToBottom();
+    }
+
+    // Send a message
+    async function sendMessage() {
+      const messageInput = document.getElementById('messageInput');
+      const content = messageInput.value.trim();
+      
+      if (!content || !currentContactId) {
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/direct-messages/send', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${currentUser.token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            recipientId: currentContactId,
+            content: content
+          })
+        });
+
+        if (response.ok) {
+          const message = await response.json();
+          
+          // Add message to UI immediately
+          addMessageToUI(message, true);
+          
+          // Clear input
+          messageInput.value = '';
+          messageInput.style.height = 'auto';
+          
+          // Update conversation list
+          updateConversationList();
+        } else {
+          showNotification('Failed to send message', 'error');
+        }
+      } catch (error) {
+        console.error('Error sending message:', error);
+        showNotification('Error sending message', 'error');
+      }
+    }
+
+    // Add message to UI
+    function addMessageToUI(message, isFromCurrentUser = false) {
+      const messagesContainer = document.querySelector('.messages-container');
+      const messageClass = isFromCurrentUser ? 'sent' : 'received';
+      const senderInitials = message.sender.name.split(' ').map(n => n[0]).join('').toUpperCase();
+      const time = new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      
+      const messageElement = document.createElement('div');
+      messageElement.className = `message ${messageClass}`;
+      messageElement.innerHTML = `
+        <div class="message-avatar">${isFromCurrentUser ? 'ME' : senderInitials}</div>
+        <div class="message-content">
+          <div class="message-text">${message.content}</div>
+          <div class="message-time">${time}</div>
+        </div>
+      `;
+      
+      // Remove welcome message if it exists
+      const welcomeMessage = messagesContainer.querySelector('[style*="justify-content: center"]');
+      if (welcomeMessage) {
+        messagesContainer.innerHTML = '';
+      }
+      
+      messagesContainer.appendChild(messageElement);
+      scrollToBottom();
+    }
+
+    // Handle incoming direct messages
+    function receiveDirectMessage(message) {
+      // Only show if it's for the current conversation
+      if (currentContactId && 
+          (message.sender.id === currentContactId || message.recipient.id === currentContactId)) {
+        addMessageToUI(message, false);
+      }
+      
+      // Update conversation list
+      updateConversationList();
+      
+      // Show notification if not in current conversation
+      if (!currentContactId || message.sender.id !== currentContactId) {
+        showNotification(`New message from ${message.sender.name}`, 'info');
+      }
+    }
+
+    // Update conversation list (placeholder for now)
+    function updateConversationList() {
+      // This would update the sidebar with latest message previews
+      // For now, we'll just reload contacts
+      console.log('Conversation list updated');
+    }
+
+    function updateChatHeader(contactName, contactRole) {
       const chatUserName = document.getElementById('chatUserName');
       const chatUserStatus = document.getElementById('chatUserStatus');
       const chatUserAvatar = document.querySelector('.chat-user-avatar');
 
-      const contacts = {
-        'instructor-davis': { name: 'Instructor Davis', status: 'Online - Available for questions', avatar: 'ID', statusClass: 'status-online', bg: 'var(--primary-gradient)' },
-        'training-support': { name: 'Training Support', status: 'Online - Support available', avatar: 'TS', statusClass: 'status-online', bg: 'var(--secondary-gradient)' },
-        'class-group': { name: 'Class Group Chat', status: '8 members - 5 online', avatar: '<i class="fas fa-users"></i>', statusClass: 'status-online', bg: 'var(--accent-gradient)' },
-        'sarah-student': { name: 'Sarah Johnson', status: 'Online - Study partner', avatar: 'SJ', statusClass: 'status-online', bg: 'var(--accent-gradient)' },
-        'mike-student': { name: 'Mike Chen', status: 'Away - In training', avatar: 'MC', statusClass: 'status-away', bg: 'var(--accent-gradient)' },
-        'admin': { name: 'Admin', status: 'Last seen 2 hours ago', avatar: 'AD', statusClass: 'status-offline', bg: 'var(--primary-gradient)' }
-      };
-
-      const contact = contacts[contactId];
-      if (contact) {
-        chatUserName.textContent = contact.name;
-        chatUserStatus.textContent = contact.status;
+      if (chatUserName) chatUserName.textContent = contactName;
+      if (chatUserStatus) {
+        const statusText = contactRole === 'instructor' ? 'Online - Available for questions' :
+                          contactRole === 'admin' ? 'Online - Administrative support' :
+                          'Online - Student';
+        chatUserStatus.textContent = statusText;
+      }
+      
+      if (chatUserAvatar) {
+        const initials = contactName.split(' ').map(n => n[0]).join('').toUpperCase();
+        const roleColor = contactRole === 'instructor' ? 'var(--primary-gradient)' : 
+                         contactRole === 'admin' ? 'var(--secondary-gradient)' : 
+                         'var(--accent-gradient)';
         
-        chatUserAvatar.style.background = contact.bg;
-        if (contact.avatar.includes('fas')) {
-          chatUserAvatar.innerHTML = contact.avatar + '<div class="status-indicator ' + contact.statusClass + '"></div>';
-        } else {
-          chatUserAvatar.innerHTML = contact.avatar + '<div class="status-indicator ' + contact.statusClass + '"></div>';
+        chatUserAvatar.textContent = initials;
+        chatUserAvatar.style.background = roleColor;
+        
+        // Add status indicator
+        const existingIndicator = chatUserAvatar.querySelector('.status-indicator');
+        if (!existingIndicator) {
+          const statusIndicator = document.createElement('div');
+          statusIndicator.className = 'status-indicator status-online';
+          chatUserAvatar.appendChild(statusIndicator);
         }
       }
     }
 
-    function loadMessageHistory(messages) {
-      const messagesContainer = document.getElementById('messagesContainer');
-      messagesContainer.innerHTML = '';
-      
-      messages.forEach(msg => {
-        const messageData = {
-          type: msg.sender.name === (localStorage.getItem('userName') || 'Student') ? 'sent' : 'received',
-          avatar: msg.sender.name.substring(0, 2).toUpperCase(),
-          text: msg.content,
-          time: new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          bg: msg.sender.role === 'instructor' ? 'var(--primary-gradient)' : 'var(--accent-gradient)'
-        };
-        
-        const messageEl = createMessageElement(messageData);
-        messagesContainer.appendChild(messageEl);
-      });
-      
-      scrollToBottom();
-    }
-
-    function loadMessages(contactId, type) {
-      const messagesContainer = document.getElementById('messagesContainer');
-      
-      // Try to load real messages from server first
-      if (socket) {
-        socket.emit('join', { username: localStorage.getItem('userName') || 'Student', room: contactId, role: localStorage.getItem('role') || 'student' });
-        return; // Wait for message_history event
-      }
-      
-      // Fallback to sample messages for different contacts
-      const messageData = {
-        'instructor-davis': [
-          { type: 'received', avatar: 'ID', text: 'Great progress on today\'s exercises! Your typing speed has improved significantly. Keep up the excellent work!', time: '2:15 PM', bg: 'var(--primary-gradient)' },
-          { type: 'sent', avatar: 'ME', text: 'Thank you! I\'ve been practicing every day. Do you have any tips for the screening exercises?', time: '2:18 PM' },
-          { type: 'received', avatar: 'ID', text: 'Focus on pattern recognition and take your time with the initial scans. Speed will come naturally with practice.', time: '2:20 PM', bg: 'var(--primary-gradient)' },
-          { type: 'sent', avatar: 'ME', text: 'That makes sense. I\'ll work on that during tomorrow\'s session. Thanks for the guidance!', time: '2:22 PM' }
-        ],
-        'training-support': [
-          { type: 'received', avatar: 'TS', text: 'Your assignment has been graded. You scored 92% - excellent work!', time: '1:30 PM', bg: 'var(--secondary-gradient)' },
-          { type: 'sent', avatar: 'ME', text: 'Thank you! What areas should I focus on for improvement?', time: '1:35 PM' },
-          { type: 'received', avatar: 'TS', text: 'Work on your threat identification speed. The accuracy is perfect, just need to be faster.', time: '1:40 PM', bg: 'var(--secondary-gradient)' }
-        ],
-        'class-group': [
-          { type: 'received', avatar: 'SJ', text: 'Study session scheduled for tomorrow at 3 PM in the main training room.', time: '11:00 AM' },
-          { type: 'received', avatar: 'MC', text: 'I\'ll be there! Should we bring our laptops?', time: '11:05 AM' },
-          { type: 'sent', avatar: 'ME', text: 'Yes, and don\'t forget the screening exercise materials from last week.', time: '11:10 AM' }
-        ]
-      };
-
-      const messages = messageData[contactId] || [];
-      
-      messagesContainer.innerHTML = '';
-      messages.forEach(msg => {
-        const messageEl = createMessageElement(msg);
-        messagesContainer.appendChild(messageEl);
-      });
-
-      scrollToBottom();
-    }
-
-    function createMessageElement(messageData) {
-      const messageDiv = document.createElement('div');
-      messageDiv.className = `message ${messageData.type}`;
-      
-      const avatarStyle = messageData.bg ? `style="background: ${messageData.bg}"` : '';
-      
-      messageDiv.innerHTML = `
-        <div class="message-avatar" ${avatarStyle}>${messageData.avatar}</div>
-        <div class="message-content">
-          <div class="message-text">${messageData.text}</div>
-          <div class="message-time">${messageData.time}</div>
-        </div>
-      `;
-      
-      return messageDiv;
-    }
-
-    function sendMessage() {
-      const messageInput = document.getElementById('messageInput');
-      const messageText = messageInput.value.trim();
-      
-      if (!messageText) return;
-
-      const messagesContainer = document.getElementById('messagesContainer');
-      const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      
-      const messageData = {
-        type: 'sent',
-        avatar: 'ME',
-        text: messageText,
-        time: currentTime
-      };
-
-      const messageEl = createMessageElement(messageData);
-      messagesContainer.appendChild(messageEl);
-      
-      // Send message via socket
-      if (socket) {
-        socket.emit('send_message', {
-          message: messageText,
-          room: currentContact,
-          timestamp: currentTime,
-          username: localStorage.getItem('userName') || 'Student'
-        });
-      }
-      
-      messageInput.value = '';
-      messageInput.style.height = 'auto';
-      scrollToBottom();
-
-      // Stop typing indicator
-      if (socket) {
-        socket.emit('stop_typing', { room: currentContact });
-      }
-
-      // Simulate a response after a delay (for demo purposes)
-      setTimeout(() => {
-        simulateResponse();
-      }, 1000 + Math.random() * 2000);
-    }
-
-    function receiveMessage(data) {
-      const messagesContainer = document.getElementById('messagesContainer');
-      
-      const messageData = {
-        type: 'received',
-        avatar: data.username.substring(0, 2).toUpperCase(),
-        text: data.message,
-        time: data.timestamp,
-        bg: currentContactType === 'instructor' ? 'var(--primary-gradient)' : 'var(--accent-gradient)'
-      };
-
-      const messageEl = createMessageElement(messageData);
-      messagesContainer.appendChild(messageEl);
-      scrollToBottom();
-
-      // Show notification if not in current chat
-      if (data.room !== currentContact) {
-        showNotification(`New message from ${data.username}`, 'info');
-        updateUnreadBadge(data.room);
-      }
-    }
-
-    function updateUnreadBadge(contactId) {
-      const contactItems = document.querySelectorAll('.contact-item');
-      contactItems.forEach(item => {
-        if (item.onclick.toString().includes(contactId)) {
-          let badge = item.querySelector('.unread-badge');
-          if (!badge) {
-            badge = document.createElement('div');
-            badge.className = 'unread-badge';
-            badge.textContent = '1';
-            item.appendChild(badge);
-          } else {
-            const count = parseInt(badge.textContent) + 1;
-            badge.textContent = count.toString();
-          }
-          badge.style.display = 'flex';
-        }
-      });
-    }
-
-    function simulateResponse() {
-      const responses = [
-        "Thanks for reaching out!",
-        "I'll look into that for you.",
-        "Great question! Let me get back to you on that.",
-        "That's a good point. I'll review the materials.",
-        "Perfect, thanks for the update.",
-        "I'll make sure to address that in our next session."
-      ];
-
-      const messagesContainer = document.getElementById('messagesContainer');
-      const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      
-      const contacts = {
-        'instructor-davis': { avatar: 'ID', bg: 'var(--primary-gradient)' },
-        'training-support': { avatar: 'TS', bg: 'var(--secondary-gradient)' },
-        'sarah-student': { avatar: 'SJ', bg: 'var(--accent-gradient)' },
-        'mike-student': { avatar: 'MC', bg: 'var(--accent-gradient)' },
-        'admin': { avatar: 'AD', bg: 'var(--primary-gradient)' }
-      };
-
-      const contact = contacts[currentContact] || { avatar: 'XX', bg: 'var(--accent-gradient)' };
-
-      const messageData = {
-        type: 'received',
-        avatar: contact.avatar,
-        text: responses[Math.floor(Math.random() * responses.length)],
-        time: currentTime,
-        bg: contact.bg
-      };
-
-      const messageEl = createMessageElement(messageData);
-      messagesContainer.appendChild(messageEl);
-      scrollToBottom();
-    }
-
+    // Handle key down events for message input
     function handleKeyDown(event) {
       if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault();
@@ -1372,13 +1159,14 @@
       }
     }
 
+    // Handle typing indicators
     function handleTyping() {
-      if (!isTyping) {
+      if (!isTyping && currentContactId) {
         isTyping = true;
         if (socket) {
-          socket.emit('typing', { 
-            room: currentContact,
-            username: localStorage.getItem('userName') || 'Student'
+          socket.emit('typing', {
+            room: currentContactId,
+            username: currentUser.name
           });
         }
       }
@@ -1387,224 +1175,34 @@
       typingTimer = setTimeout(() => {
         isTyping = false;
         if (socket) {
-          socket.emit('stop_typing', { room: currentContact });
+          socket.emit('stop_typing', { room: currentContactId });
         }
       }, 1000);
     }
 
-    function showTypingIndicator(username) {
-      const typingIndicator = document.getElementById('typingIndicator');
-      const typingUser = document.getElementById('typingUser');
-      typingUser.textContent = `${username} is typing`;
-      typingIndicator.style.display = 'flex';
-    }
-
-    function hideTypingIndicator() {
-      const typingIndicator = document.getElementById('typingIndicator');
-      typingIndicator.style.display = 'none';
-    }
-
-    function simulateTyping() {
-      const typingIndicator = document.getElementById('typingIndicator');
-      if (Math.random() > 0.8) { // 20% chance to show typing
-        typingIndicator.style.display = 'flex';
-        setTimeout(() => {
-          typingIndicator.style.display = 'none';
-        }, 2000 + Math.random() * 3000);
-      }
-    }
-
+    // Scroll to bottom of messages
     function scrollToBottom() {
-      const messagesContainer = document.getElementById('messagesContainer');
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
-
-    function switchTab(tab) {
-      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-      event.target.classList.add('active');
-      
-      // Filter contacts based on tab
-      const contactItems = document.querySelectorAll('.contact-item');
-      contactItems.forEach(item => {
-        const dataType = item.getAttribute('data-type');
-        
-        switch(tab) {
-          case 'all':
-            item.style.display = 'flex';
-            break;
-          case 'instructors':
-            item.style.display = dataType === 'instructor' ? 'flex' : 'none';
-            break;
-          case 'students':
-            item.style.display = dataType === 'students' ? 'flex' : 'none';
-            break;
-        }
-      });
-    }
-
-    function deleteChat(event, contactId) {
-      event.stopPropagation();
-      
-      if (confirm('Are you sure you want to delete this chat? This action cannot be undone.')) {
-        const contactItem = event.target.closest('.contact-item');
-        contactItem.remove();
-        
-        showNotification('Chat deleted successfully', 'success');
-        
-        // If this was the active chat, select the first available chat
-        if (currentContact === contactId) {
-          const firstContact = document.querySelector('.contact-item');
-          if (firstContact) {
-            firstContact.click();
-          }
-        }
+      const messagesContainer = document.querySelector('.messages-container');
+      if (messagesContainer) {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
       }
     }
 
-    function openNewChatModal() {
-      document.getElementById('newChatModal').classList.add('active');
-    }
-
-    function closeModal(modalId) {
-      document.getElementById(modalId).classList.remove('active');
-      selectedUserForNewChat = null;
-    }
-
-    function searchUsersInModal() {
-      const searchTerm = document.getElementById('userSearch').value.toLowerCase();
-      const userResults = document.querySelectorAll('#userSearchResults > div');
-      
-      userResults.forEach(result => {
-        const userName = result.querySelector('div:last-child div:first-child').textContent.toLowerCase();
-        result.style.display = userName.includes(searchTerm) ? 'flex' : 'none';
-      });
-    }
-
-    function selectUserForChat(element, userId) {
-      // Remove previous selection
-      document.querySelectorAll('#userSearchResults > div').forEach(div => {
-        div.style.background = 'transparent';
-      });
-      
-      // Highlight selected user
-      element.style.background = 'rgba(79, 172, 254, 0.2)';
-      selectedUserForNewChat = userId;
-    }
-
-    function startNewChat() {
-      if (!selectedUserForNewChat) {
-        alert('Please select a user to start a chat with');
-        return;
-      }
-
-      // Create new chat in contacts list (simplified for demo)
-      const userName = document.querySelector('#userSearchResults > div[style*="rgba(79, 172, 254, 0.2)"] div:last-child div:first-child').textContent;
-      const userInitials = userName.split(' ').map(n => n[0]).join('').toUpperCase();
-      
-      const contactsList = document.getElementById('contactsList');
-      const newChatElement = document.createElement('div');
-      newChatElement.className = 'contact-item';
-      newChatElement.setAttribute('data-type', 'students');
-      newChatElement.onclick = () => selectContact(selectedUserForNewChat, 'student');
-      
-      newChatElement.innerHTML = `
-        <div class="contact-avatar">
-          ${userInitials}
-          <div class="status-indicator status-online"></div>
-        </div>
-        <div class="contact-info">
-          <div class="contact-name">${userName}</div>
-          <div class="contact-status">Online</div>
-        </div>
-        <button class="delete-chat-btn" onclick="deleteChat(event, '${selectedUserForNewChat}')" title="Delete Chat">
-          <i class="fas fa-trash"></i>
-        </button>
-      `;
-      
-      contactsList.appendChild(newChatElement);
-      
-      closeModal('newChatModal');
-      showNotification(`New chat started with ${userName}!`, 'success');
-      
-      // Select the new chat
-      newChatElement.click();
-    }
-
-    function searchUsers() {
-      openNewChatModal();
-    }
-
-    function loadMessageConversation(messageId) {
-      const messageMap = {
-        'msg1': 'instructor-davis',
-        'msg2': 'training-support',
-        'msg3': 'class-group',
-        'msg4': 'admin'
-      };
-      
-      const contactId = messageMap[messageId];
-      if (contactId) {
-        const contactType = contactId === 'class-group' ? 'group' : 
-                           contactId.includes('instructor') || contactId === 'admin' ? 'instructor' : 'student';
-        
-        // Find and activate the contact item
-        const contactItems = document.querySelectorAll('.contact-item');
-        contactItems.forEach(item => {
-          item.classList.remove('active');
-          if (item.onclick.toString().includes(contactId)) {
-            item.classList.add('active');
-            selectContact(contactId, contactType);
-          }
-        });
-      }
-    }
-
-    // Additional features
-    function startVideoCall() {
-      showNotification('📹 Starting video call...', 'info');
-    }
-
-    function startVoiceCall() {
-      showNotification('📞 Starting voice call...', 'info');
-    }
-
-    function openChatInfo() {
-      showNotification('ℹ️ Chat info panel coming soon!', 'info');
-    }
-
-    function attachFile() {
-      showNotification('📎 File attachment feature coming soon!', 'info');
-    }
-
-    function insertEmoji() {
-      const messageInput = document.getElementById('messageInput');
-      const emojis = ['😊', '😂', '👍', '❤️', '🎉', '🔥', '💯', '🚀', '📚', '✅'];
-      const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
-      messageInput.value += randomEmoji;
-      messageInput.focus();
-    }
-
-    function recordVoice() {
-      showNotification('🎤 Voice message feature coming soon!', 'info');
-    }
-
-    // Notification system
+    // Show notification
     function showNotification(message, type = 'info') {
       const notification = document.createElement('div');
       notification.style.cssText = `
         position: fixed;
-        top: 90px;
+        top: 20px;
         right: 20px;
-        padding: 1rem 1.5rem;
-        background: ${type === 'success' ? 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'};
+        background: ${type === 'error' ? 'var(--secondary-gradient)' : 'var(--accent-gradient)'};
         color: white;
+        padding: 1rem 1.5rem;
         border-radius: 10px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        box-shadow: var(--shadow-primary);
         z-index: 10000;
-        font-weight: 500;
         transform: translateX(100%);
         transition: transform 0.3s ease;
-        max-width: 300px;
       `;
       notification.textContent = message;
       document.body.appendChild(notification);
@@ -1616,23 +1214,142 @@
       }, 3000);
     }
 
-    // Search functionality
-    document.getElementById('searchBox').addEventListener('input', function(e) {
-      const searchTerm = e.target.value.toLowerCase();
-      const contactItems = document.querySelectorAll('.contact-item');
+    // Modal functions
+    function openNewChatModal() {
+      const modal = document.getElementById('newChatModal');
+      modal.classList.add('active');
+      loadAvailableUsers();
+    }
+
+    function closeModal(modalId) {
+      const modal = document.getElementById(modalId);
+      modal.classList.remove('active');
+    }
+
+    function loadAvailableUsers() {
+      const userSearchResults = document.getElementById('userSearchResults');
       
+      if (contacts.length === 0) {
+        userSearchResults.innerHTML = `
+          <div style="padding: 1rem; text-align: center; color: var(--text-secondary);">
+            <p>No contacts available</p>
+          </div>
+        `;
+        return;
+      }
+
+      userSearchResults.innerHTML = contacts.map(contact => {
+        const initials = contact.name.split(' ').map(n => n[0]).join('').toUpperCase();
+        const roleColor = contact.role === 'instructor' ? 'var(--primary-gradient)' : 
+                         contact.role === 'admin' ? 'var(--secondary-gradient)' : 
+                         'var(--accent-gradient)';
+        
+        return `
+          <div style="display: flex; align-items: center; gap: 1rem; padding: 0.5rem; cursor: pointer; border-radius: 8px;" onclick="selectUserForChat(this, '${contact._id}', '${contact.name}', '${contact.role}')">
+            <div style="width: 35px; height: 35px; border-radius: 50%; background: ${roleColor}; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem;">${initials}</div>
+            <div>
+              <div style="font-weight: 600; color: var(--text-primary);">${contact.name}</div>
+              <div style="font-size: 0.8rem; color: var(--text-secondary);">Online - ${contact.role.charAt(0).toUpperCase() + contact.role.slice(1)}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function selectUserForChat(element, userId, userName, userRole) {
+      // Remove previous selection
+      document.querySelectorAll('#userSearchResults > div').forEach(div => {
+        div.style.background = 'transparent';
+      });
+      
+      // Highlight selected user
+      element.style.background = 'rgba(79, 172, 254, 0.15)';
+      
+      selectedUserForNewChat = { id: userId, name: userName, role: userRole };
+    }
+
+    function startNewChat() {
+      if (!selectedUserForNewChat) {
+        showNotification('Please select a user to chat with', 'error');
+        return;
+      }
+
+      // Close modal
+      closeModal('newChatModal');
+      
+      // Select the contact
+      selectContact(selectedUserForNewChat.id, selectedUserForNewChat.name, selectedUserForNewChat.role);
+      
+      // Reset selection
+      selectedUserForNewChat = null;
+    }
+
+    function searchUsersInModal() {
+      const searchTerm = document.getElementById('userSearch').value.toLowerCase();
+      const userItems = document.querySelectorAll('#userSearchResults > div');
+      
+      userItems.forEach(item => {
+        const userName = item.querySelector('div:last-child > div:first-child').textContent.toLowerCase();
+        item.style.display = userName.includes(searchTerm) ? 'flex' : 'none';
+      });
+    }
+
+    function searchContacts(searchTerm) {
+      const contactItems = document.querySelectorAll('.contact-item');
       contactItems.forEach(item => {
         const contactName = item.querySelector('.contact-name').textContent.toLowerCase();
-        item.style.display = contactName.includes(searchTerm) ? 'flex' : 'none';
+        item.style.display = contactName.includes(searchTerm.toLowerCase()) ? 'flex' : 'none';
       });
-    });
+    }
 
-    // Close modals when clicking outside
-    document.addEventListener('click', function(e) {
-      if (e.target.classList.contains('modal')) {
-        e.target.classList.remove('active');
-      }
-    });
+    // Placeholder functions for UI elements
+    function attachFile() {
+      showNotification('File attachment feature coming soon!', 'info');
+    }
+
+    function insertEmoji() {
+      showNotification('Emoji picker coming soon!', 'info');
+    }
+
+    function recordVoice() {
+      showNotification('Voice message feature coming soon!', 'info');
+    }
+
+    function showTypingIndicator(username) {
+      // Placeholder for typing indicator
+      console.log(`${username} is typing...`);
+    }
+
+    function hideTypingIndicator() {
+      // Placeholder for hiding typing indicator
+      console.log('Stopped typing');
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      // Filter contacts based on tab
+      const contactItems = document.querySelectorAll('.contact-item');
+      contactItems.forEach(item => {
+        const contactName = item.querySelector('.contact-name').textContent;
+        const contact = contacts.find(c => c.name === contactName);
+        
+        if (!contact) return;
+        
+        switch(tab) {
+          case 'all':
+            item.style.display = 'flex';
+            break;
+          case 'instructors':
+            item.style.display = contact.role === 'instructor' ? 'flex' : 'none';
+            break;
+          case 'students':
+            item.style.display = contact.role === 'student' ? 'flex' : 'none';
+            break;
+        }
+      });
+    }
   </script>
 </body>
 </html>

@@ -8,18 +8,18 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary-gradient: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
-      --secondary-gradient: linear-gradient(135deg, #718096 0%, #4a5568 100%);
-      --accent-gradient: linear-gradient(135deg, #63b3ed 0%, #4299e1 100%);
+      --primary-gradient: linear-gradient(135deg, #ff7b00 0%, #ff5722 100%);
+      --secondary-gradient: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+      --accent-gradient: linear-gradient(135deg, #ffab40 0%, #ff9800 100%);
       --dark-gradient: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 100%);
-      --card-gradient: linear-gradient(145deg, #2d3748 0%, #1a202c 100%);
-      --glass-bg: rgba(255, 255, 255, 0.05);
-      --glass-border: rgba(255, 255, 255, 0.1);
+      --card-gradient: linear-gradient(145deg, #2d1810 0%, #1a0f08 100%);
+      --glass-bg: rgba(255, 123, 0, 0.05);
+      --glass-border: rgba(255, 152, 0, 0.1);
       --text-primary: #ffffff;
-      --text-secondary: #a0aec0;
-      --text-accent: #63b3ed;
-      --shadow-primary: 0 20px 40px rgba(0, 0, 0, 0.3);
-      --shadow-hover: 0 30px 60px rgba(0, 0, 0, 0.4);
+      --text-secondary: #ffcc80;
+      --text-accent: #ffab40;
+      --shadow-primary: 0 20px 40px rgba(255, 123, 0, 0.3);
+      --shadow-hover: 0 30px 60px rgba(255, 123, 0, 0.4);
       --border-radius: 20px;
       --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
@@ -47,9 +47,9 @@
       width: 100%;
       height: 100%;
       background: 
-        radial-gradient(circle at 20% 80%, rgba(74, 85, 104, 0.2) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(113, 128, 150, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 40% 40%, rgba(99, 179, 237, 0.08) 0%, transparent 50%);
+        radial-gradient(circle at 20% 80%, rgba(255, 123, 0, 0.2) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 152, 0, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(255, 171, 64, 0.08) 0%, transparent 50%);
       z-index: -1;
       animation: float 20s ease-in-out infinite;
     }
@@ -85,14 +85,14 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: linear-gradient(180deg, rgba(74, 85, 104, 0.1) 0%, transparent 100%);
+      background: linear-gradient(180deg, rgba(255, 123, 0, 0.1) 0%, transparent 100%);
       z-index: -1;
     }
 
     .admin-logo {
       width: 200px;
       margin: 0 auto 3rem;
-      filter: drop-shadow(0 10px 30px rgba(74, 85, 104, 0.3));
+      filter: drop-shadow(0 10px 30px rgba(255, 123, 0, 0.3));
       transition: var(--transition);
     }
 
@@ -201,7 +201,7 @@
     .notification-bubble:hover, .inbox-bubble:hover {
       transform: scale(1.1);
       background: var(--accent-gradient);
-      box-shadow: 0 10px 25px rgba(79, 172, 254, 0.4);
+      box-shadow: 0 10px 25px rgba(255, 123, 0, 0.4);
     }
 
     .notification-bubble i, .inbox-bubble i {
@@ -283,7 +283,7 @@
     }
 
     .inbox-message.unread {
-      background: rgba(79, 172, 254, 0.05);
+      background: rgba(255, 123, 0, 0.05);
     }
 
     .inbox-message.unread::before {
@@ -339,7 +339,7 @@
     .notification-bubble:hover, .inbox-bubble:hover {
       transform: scale(1.1);
       background: var(--accent-gradient);
-      box-shadow: 0 10px 25px rgba(79, 172, 254, 0.4);
+      box-shadow: 0 10px 25px rgba(255, 123, 0, 0.4);
     }
 
     .notification-bubble i, .inbox-bubble i {
@@ -421,7 +421,7 @@
     }
 
     .inbox-message.unread {
-      background: rgba(79, 172, 254, 0.05);
+      background: rgba(255, 123, 0, 0.05);
     }
 
     .inbox-message.unread::before {
@@ -509,7 +509,7 @@
       cursor: pointer;
       transition: var(--transition);
       position: relative;
-      overflow: hidden;
+      overflow: visible; /* Prevent clipping of overlays like inbox dropdown */
     }
 
     .tool-card::before {
@@ -691,57 +691,60 @@
     }
 
     .stagger-1 { animation-delay: 0.1s; }
-    .stagger-2 { animation-delay: 0.2s; }header-actions">
-          <!-- Notification Bell -->
-          <div class="notification-bubble" onclick="toggleNotifications()">
-            <i class="fas fa-bell"></i>
-            <div class="notification-badge">2</div>
-          </div>
-          
-          <!-- Inbox -->
-          <div class="inbox-bubble" onclick="toggleInbox()">
-            <i class="fas fa-envelope"></i>
-            <div class="notification-badge">4</div>
-            
-            <!-- Inbox Dropdown -->
-            <div class="inbox-dropdown" id="inboxDropdown">
-              <div class="inbox-header">
-                <i class="fas fa-inbox"></i>
-                Messages (4)
-              </div>
-              <div class="inbox-messages">
-                <div class="inbox-message unread" onclick="openMessage('msg1')">
-                  <div class="message-sender">Instructor Davis</div>
-                  <div class="message-preview">Great progress on today's exercises! Keep up the good work...</div>
-                  <div class="message-time">5 minutes ago</div>
-                </div>
-                <div class="inbox-message unread" onclick="openMessage('msg2')">
-                  <div class="message-sender">Training Support</div>
-                  <div class="message-preview">Your assignment has been graded. Check your progress...</div>
-                  <div class="message-time">1 hour ago</div>
-                </div>
-                <div class="inbox-message unread" onclick="openMessage('msg3')">
-                  <div class="message-sender">Class Group</div>
-                  <div class="message-preview">Study session scheduled for tomorrow at 3 PM...</div>
-                  <div class="message-time">2 hours ago</div>
-                </div>
-                <div class="inbox-message" onclick="openMessage('msg4')">
-                  <div class="message-sender">Admin</div>
-                  <div class="message-preview">Welcome to SMX KITS! Here's your training schedule...</div>
-                  <div class="message-time">Yesterday</div>
-                </div>
-              </div>
-            </div>
-            </div>
-            
-          <!-- User Info -->
-            <div class="user-info">
-              <div class="user-avatar">
-      .stagger-3 { animation-delay: 0.3s; }
+    .stagger-2 { animation-delay: 0.2s; }
+    .stagger-3 { animation-delay: 0.3s; }
 
     /* Inbox dropdown z-index fix */
     #inboxDropdown {
       z-index: 99999 !important;
+    }
+
+    /* Fix notification and inbox dropdown visibility */
+    .inbox-dropdown {
+      z-index: 99999 !important;
+    }
+
+    /* Remove hover scale effect to prevent dropdown misalignment */
+    .notification-bubble:hover, .inbox-bubble:hover {
+      transform: none !important;
+      background: var(--accent-gradient) !important;
+      box-shadow: 0 10px 25px rgba(255, 123, 0, 0.4) !important;
+    }
+
+    /* Ensure parent containers don't clip dropdowns */
+    .dashboard-header, .admin-content, .tools-grid {
+      overflow: visible !important;
+    }
+
+    /* Ensure inbox bubble container allows overflow */
+    .header-actions {
+      overflow: visible !important;
+      position: relative;
+    }
+
+    /* Fix notification dropdown positioning */
+    .notification-dropdown {
+      position: absolute;
+      top: 60px;
+      right: 0;
+      width: 350px;
+      max-height: 400px;
+      background: var(--card-gradient);
+      backdrop-filter: blur(20px);
+      border-radius: var(--border-radius);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-hover);
+      z-index: 99999 !important;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: var(--transition);
+    }
+
+    .notification-dropdown.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
     }
 
     /* Custom Scrollbar */
@@ -833,7 +836,7 @@
       <!-- Header Section -->
       <header class="dashboard-header fade-in">
         <div>
-          <h1 class="dashboard-title">Student Dashboard</h1 onclick="window.location.href='student-messenger.html'">
+          <h1 class="dashboard-title">Student Dashboard</h1>
           <p style="color: var(--text-secondary); font-size: 1.1rem; margin-top: 0.5rem;">
             Welcome back! Access live training, modules, progress, and instructor info here.
           </p>
@@ -843,6 +846,26 @@
           <div class="notification-bubble" onclick="toggleNotifications()">
             <i class="fas fa-bell"></i>
             <div class="notification-badge">2</div>
+            
+            <!-- Notification Dropdown -->
+            <div class="notification-dropdown" id="notificationDropdown">
+              <div class="inbox-header">
+                <i class="fas fa-bell"></i>
+                Notifications (2)
+              </div>
+              <div class="inbox-messages">
+                <div class="inbox-message unread">
+                  <div class="message-sender">System</div>
+                  <div class="message-preview">New assignment available: Advanced Screening Techniques</div>
+                  <div class="message-time">10 minutes ago</div>
+                </div>
+                <div class="inbox-message unread">
+                  <div class="message-sender">Training Update</div>
+                  <div class="message-preview">Your keyboard training progress has been updated</div>
+                  <div class="message-time">1 hour ago</div>
+                </div>
+              </div>
+            </div>
           </div>
           
           <!-- Inbox -->
@@ -1026,7 +1049,16 @@
     }
 
     function toggleNotifications() {
-      showNotification('🔔 You have 2 new notifications!', 'info');
+      const dropdown = document.getElementById('notificationDropdown');
+      dropdown.classList.toggle('active');
+      
+      // Close dropdown when clicking outside
+      document.addEventListener('click', function closeDropdown(e) {
+        if (!e.target.closest('.notification-bubble')) {
+          dropdown.classList.remove('active');
+          document.removeEventListener('click', closeDropdown);
+        }
+      });
     }
 
     function openMessage(messageId) {
@@ -1077,13 +1109,21 @@
       }, 3000);
     }
 
-    // Close inbox dropdown when clicking outside
+    // Close dropdowns when clicking outside
     document.addEventListener('click', function(e) {
       const inboxBubble = document.querySelector('.inbox-bubble');
       const inboxDropdown = document.getElementById('inboxDropdown');
+      const notificationBubble = document.querySelector('.notification-bubble');
+      const notificationDropdown = document.getElementById('notificationDropdown');
       
+      // Close inbox dropdown if clicking outside
       if (inboxBubble && inboxDropdown && !inboxBubble.contains(e.target)) {
         inboxDropdown.classList.remove('active');
+      }
+      
+      // Close notification dropdown if clicking outside
+      if (notificationBubble && notificationDropdown && !notificationBubble.contains(e.target)) {
+        notificationDropdown.classList.remove('active');
       }
     });
   </script>
