@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Modal Scrolling</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #1e1e1e;
+      color: white;
+      padding: 20px;
+    }
+    button {
+      background: #ff6b35;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 10px;
+      font-size: 16px;
+    }
+    button:hover {
+      background: #ff8c42;
+    }
+    .info {
+      background: #2a2a2a;
+      padding: 20px;
+      border-radius: 10px;
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Test Modal Scrolling Functionality</h1>
+  
+  <div class="info">
+    <h3>🎯 Testing Instructions:</h3>
+    <ol>
+      <li><strong>Setup Test Data:</strong> Click "Create Test Data" to add sample submissions</li>
+      <li><strong>Login:</strong> Go to login page and use credentials:
+        <ul>
+          <li>Username: <code>instructor</code></li>
+          <li>Password: <code>password</code></li>
+        </ul>
+      </li>
+      <li><strong>Open Grading:</strong> Click "Open Grading Interface"</li>
+      <li><strong>Select Class:</strong> Choose a class from the dropdown</li>
+      <li><strong>Test Scrolling:</strong> Click on any submission row to open the grading modal</li>
+      <li><strong>Verify:</strong> The rubric categories should be scrollable in the right panel</li>
+    </ol>
+  </div>
+  
+  <div>
+    <button onclick="createTestData()">Create Test Data</button>
+    <button onclick="openLogin()">Open Login Page</button>
+    <button onclick="openGrading()">Open Grading Interface</button>
+    <button onclick="clearData()">Clear Test Data</button>
+  </div>
+  
+  <div id="status"></div>
+  
+  <script>
+    function createTestData() {
+      // Create test submissions
+      const testSubmissions = [
+        {
+          id: 'scroll_test_001',
+          studentName: 'John Doe',
+          fileName: 'mission_report.pdf',
+          fileSize: 1024000,
+          fileType: 'application/pdf',
+          fileData: 'data:application/pdf;base64,JVBERi0xLjQKJdPr6eEK',
+          submittedAt: new Date().toISOString(),
+          status: 'pending',
+          vaultType: 'slideVault'
+        },
+        {
+          id: 'scroll_test_002',
+          studentName: 'Jane Smith',
+          fileName: 'analysis.pptx',
+          fileSize: 2048000,
+          fileType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+          fileData: 'data:application/vnd.openxmlformats-officedocument.presentationml.presentation;base64,UEsDBBQAAAAIAA==',
+          submittedAt: new Date(Date.now() - 1800000).toISOString(),
+          status: 'pending',
+          vaultType: 'slideVault'
+        }
+      ];
+      
+      // Store submissions
+      let fileSubmissions = JSON.parse(localStorage.getItem('fileSubmissions') || '[]');
+      let submissions = JSON.parse(localStorage.getItem('submissions') || '[]');
+      
+      testSubmissions.forEach(submission => {
+        fileSubmissions.push(submission);
+        submissions.push({
+          id: submission.id,
+          student: submission.studentName,
+          class: 'Test Class',
+          mission: 'Scroll Test Mission',
+          submittedAt: submission.submittedAt,
+          status: 'pending',
+          fileData: submission.fileData,
+          fileName: submission.fileName,
+          fileSize: submission.fileSize,
+          fileType: submission.fileType,
+          vaultType: submission.vaultType
+        });
+      });
+      
+      localStorage.setItem('fileSubmissions', JSON.stringify(fileSubmissions));
+      localStorage.setItem('submissions', JSON.stringify(submissions));
+      
+      // Create test classes
+      const testClasses = [
+        { id: 'test_class_001', name: 'Scroll Test Class', instructor: 'instructor' }
+      ];
+      localStorage.setItem('classes', JSON.stringify(testClasses));
+      
+      document.getElementById('status').innerHTML = `
+        <div style="background: #2a4a2a; padding: 15px; border-radius: 8px; margin-top: 20px;">
+          ✅ Test data created successfully!<br>
+          - 2 test submissions added<br>
+          - 1 test class created<br>
+          <strong>Next:</strong> Login as instructor and test the modal scrolling
+        </div>
+      `;
+    }
+    
+    function openLogin() {
+      window.open('/login.html', '_blank');
+    }
+    
+    function openGrading() {
+      window.open('/instructor-grading.html', '_blank');
+    }
+    
+    function clearData() {
+      localStorage.removeItem('fileSubmissions');
+      localStorage.removeItem('submissions');
+      localStorage.removeItem('classes');
+      document.getElementById('status').innerHTML = `
+        <div style="background: #4a2a2a; padding: 15px; border-radius: 8px; margin-top: 20px;">
+          🗑️ Test data cleared!
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>

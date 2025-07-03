@@ -597,6 +597,46 @@
       gap: 15px;
     }
 
+    /* Modal specific sliders container - make it scrollable */
+    #modalSlidersContainer {
+      max-height: 400px;
+      overflow-y: auto;
+      padding-right: 10px; /* Space for scrollbar */
+      position: relative;
+    }
+
+    /* Add a subtle gradient at the bottom to indicate more content */
+    #modalSlidersContainer::after {
+      content: '';
+      position: sticky;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 20px;
+      background: linear-gradient(transparent, rgba(255, 255, 255, 0.05));
+      pointer-events: none;
+      border-radius: 0 0 10px 10px;
+    }
+
+    /* Custom scrollbar for modal sliders */
+    #modalSlidersContainer::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    #modalSlidersContainer::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+
+    #modalSlidersContainer::-webkit-scrollbar-thumb {
+      background: var(--text-accent);
+      border-radius: 4px;
+    }
+
+    #modalSlidersContainer::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 167, 38, 0.8);
+    }
+
     /* Rubric Panel Styles */
     .rubric-panel {
       background: var(--glass-bg);
@@ -1293,11 +1333,18 @@
     }
 
     .rubric-category {
-      margin-bottom: 20px;
+      margin-bottom: 15px;
       padding: 15px;
       background: rgba(255, 255, 255, 0.05);
       border-radius: 10px;
       border: 1px solid var(--glass-border);
+      flex-shrink: 0; /* Prevent compression */
+    }
+
+    /* Ensure rubric categories in modal are properly sized */
+    #modalSlidersContainer .rubric-category {
+      margin-bottom: 12px;
+      padding: 12px;
     }
 
     .rubric-category h4 {
@@ -1557,41 +1604,41 @@
         <button class="modal-close" onclick="closeGradingModal()">&times;</button>
       </div>
       <div class="modal-body">
-        <div style="display: flex; gap: 30px; height: 70vh;">
+        <div style="display: flex; gap: 30px; height: 75vh; max-height: 800px;">
           <!-- Left Panel - Student Info & File Preview -->
-          <div style="flex: 1; display: flex; flex-direction: column;">
-            <div class="student-info-panel">
+          <div style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+            <div class="student-info-panel" style="flex-shrink: 0;">
               <div id="modalStudentInfo">
                 <!-- Student info will be populated here -->
               </div>
             </div>
-            <div class="file-preview-panel" style="flex: 1; margin-top: 20px;">
+            <div class="file-preview-panel" style="flex: 1; margin-top: 20px; min-height: 0;">
               <h4>File Preview</h4>
-              <div id="filePreviewContainer" style="height: 100%; border: 1px solid var(--glass-border); border-radius: 8px; background: var(--glass-bg);">
+              <div id="filePreviewContainer" style="height: 100%; border: 1px solid var(--glass-border); border-radius: 8px; background: var(--glass-bg); overflow: auto;">
                 <!-- File preview will be shown here -->
               </div>
             </div>
           </div>
           
           <!-- Right Panel - Grading Interface -->
-          <div style="flex: 1;">
-            <div class="grading-wheel-container">
-              <div class="sliders-container" id="modalSlidersContainer">
+          <div style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+            <div class="grading-wheel-container" style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+              <div class="sliders-container" id="modalSlidersContainer" style="flex: 1; min-height: 0;">
                 <!-- Number boxes will be generated here -->
               </div>
-              <div class="chart-container">
-                <canvas id="modalGradingChart" width="300" height="300"></canvas>
+              <div class="chart-container" style="flex-shrink: 0; margin-top: 20px;">
+                <canvas id="modalGradingChart" width="280" height="280"></canvas>
               </div>
             </div>
 
             <!-- Instructor Notes -->
-            <div class="notes-section" style="margin-top: 20px;">
+            <div class="notes-section" style="margin-top: 20px; flex-shrink: 0;">
               <h4>Instructor Notes (Private)</h4>
-              <textarea id="modalInstructorNotes" placeholder="Enter private notes about this submission..." rows="3"></textarea>
+              <textarea id="modalInstructorNotes" placeholder="Enter private notes about this submission..." rows="2"></textarea>
             </div>
 
             <!-- Action Buttons -->
-            <div class="action-buttons" style="margin-top: 20px;">
+            <div class="action-buttons" style="margin-top: 15px; flex-shrink: 0;">
               <button type="button" class="cancel-btn" onclick="closeGradingModal()">Cancel</button>
               <button type="button" class="save-btn" onclick="saveModalGrade()">Save Grade</button>
             </div>
@@ -2076,10 +2123,10 @@
       const modalContainer = document.getElementById('modalSlidersContainer');
       const categories = Object.keys(rubricCategories);
       
-      modalContainer.innerHTML = categories.map(category => {
+      modalContainer.innerHTML = categories.map((category, index) => {
         return `
           <div class="rubric-category">
-            <h4>${category}</h4>
+            <h4>${category} ${index + 1}/${categories.length}</h4>
             <div class="score-boxes-container" data-category="${category}">
               ${[1,2,3,4,5].map(score => `
                 <div class="score-box" data-score="${score}" onclick="selectModalScore('${category}', ${score})">
@@ -2090,6 +2137,34 @@
           </div>
         `;
       }).join('');
+      
+      // Add scroll hint if there are many categories
+      if (categories.length > 4) {
+        const scrollHint = document.createElement('div');
+        scrollHint.style.cssText = `
+          position: absolute;
+          top: 10px;
+          right: 20px;
+          background: rgba(255, 167, 38, 0.2);
+          color: var(--text-accent);
+          padding: 5px 10px;
+          border-radius: 15px;
+          font-size: 12px;
+          font-weight: 600;
+          z-index: 10;
+          pointer-events: none;
+        `;
+        scrollHint.textContent = '↕ Scroll for more';
+        modalContainer.parentElement.style.position = 'relative';
+        modalContainer.parentElement.appendChild(scrollHint);
+        
+        // Remove hint after 3 seconds
+        setTimeout(() => {
+          if (scrollHint.parentElement) {
+            scrollHint.parentElement.removeChild(scrollHint);
+          }
+        }, 3000);
+      }
       
       // Initialize modal chart
       initializeModalGradingChart();
