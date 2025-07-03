@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Complete Flow Test</title>
+  <style>
+    :root {
+      --text-secondary: #b8c5d6;
+      --primary-gradient: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background: #1e1e1e;
+      color: white;
+      padding: 20px;
+    }
+    .container {
+      display: flex;
+      gap: 20px;
+    }
+    .panel {
+      flex: 1;
+      border: 1px solid #333;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    .submissions-list {
+      border: 1px solid #333;
+      padding: 20px;
+      border-radius: 10px;
+      min-height: 200px;
+      background: #2a2a2a;
+    }
+    button {
+      background: var(--primary-gradient);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      opacity: 0.8;
+    }
+    .status {
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    .success { background: #22c55e; }
+    .info { background: #3b82f6; }
+  </style>
+</head>
+<body>
+  <h1>Complete File Submission Flow Test</h1>
+  
+  <div class="container">
+    <div class="panel">
+      <h2>Student Side (File Submission)</h2>
+      <button onclick="simulateFileSubmission()">Simulate File Drop & Submit</button>
+      <button onclick="clearAllData()">Clear All Data</button>
+      <div id="studentStatus"></div>
+    </div>
+    
+    <div class="panel">
+      <h2>Instructor Side (Grading Interface)</h2>
+      <div class="submissions-list" id="submissionsList">
+        <!-- Submissions will be populated here -->
+      </div>
+      <button onclick="refreshSubmissions()">Refresh Submissions</button>
+      <button onclick="openRealGradingPage()">Open Real Grading Page</button>
+    </div>
+  </div>
+  
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    let socket = null;
+    
+    // Initialize socket connection
+    function initSocket() {
+      if (!socket) {
+        socket = io();
+        
+        socket.on('new-file-submission', (submission) => {
+          console.log('📁 Received file submission via socket:', submission);
+          handleNewFileSubmission(submission);
+        });
+        
+        console.log('🔌 Socket initialized');
+      }
+    }
+    
+    // Simulate the exact same process as the real system
+    function simulateFileSubmission() {
+      const studentStatus = document.getElementById('studentStatus');
+      studentStatus.innerHTML = '<div class="status info">Simulating file submission...</div>';
+      
+      // Create a test file submission exactly like the real system
+      const submissionData = {
+        studentName: 'Test Student',
+        fileName: 'test-presentation.pptx',
+        fileSize: 2048000,
+        fileType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        fileData: 'data:application/vnd.openxmlformats-officedocument.presentationml.presentation;base64,UEsDBBQAAAAIAA==', // Truncated for brevity
+        vaultType: 'slideVault'
+      };
+      
+      // Send via socket (like the real system)
+      if (socket) {
+        socket.emit('file-submission', submissionData);
+        studentStatus.innerHTML = '<div class="status success">File submitted via socket!</div>';
+      } else {
+        studentStatus.innerHTML = '<div class="status info">Socket not connected, storing locally...</div>';
+        // Fallback to direct storage for testing
+        handleNewFileSubmission({
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+          ...submissionData,
+          submittedAt: new Date().toISOString(),
+          status: 'pending'
+        });
+      }
+    }
+    
+    // Handle new file submission (like the instructor grading page)
+    function handleNewFileSubmission(submission) {
+      console.log('📁 Processing new file submission:', submission);
+      
+      // Add to file submissions storage
+      let fileSubmissions = JSON.parse(localStorage.getItem('fileSubmissions') || '[]');
+      fileSubmissions.push(submission);
+      localStorage.setItem('fileSubmissions', JSON.stringify(fileSubmissions));
+      
+      // Add to regular submissions for display
+      let submissions = JSON.parse(localStorage.getItem('submissions') || '[]');
+      const displaySubmission = {
+        id: submission.id,
+        student: submission.studentName,
+        class: 'Mission Exercise',
+        mission: `${submission.vaultType === 'slideVault' ? 'Slide' : 'Sheet'} Submission`,
+        submittedAt: submission.submittedAt,
+        status: 'pending',
+        fileData: submission.fileData,
+        fileName: submission.fileName,
+        fileSize: submission.fileSize,
+        fileType: submission.fileType,
+        vaultType: submission.vaultType
+      };
+      
+      submissions.push(displaySubmission);
+      localStorage.setItem('submissions', JSON.stringify(submissions));
+      
+      // Refresh submissions list
+      loadSubmissions();
+      
+      // Show success message
+      const studentStatus = document.getElementById('studentStatus');
+      studentStatus.innerHTML = '<div class="status success">File submission processed and displayed!</div>';
+    }
+    
+    // Load submissions (exact same logic as instructor grading page)
+    function loadSubmissions() {
+      // Load both exercise submissions and file submissions
+      const exerciseSubmissions = [];
+      const fileSubmissions = JSON.parse(localStorage.getItem('fileSubmissions') || '[]');
+      const regularSubmissions = JSON.parse(localStorage.getItem('submissions') || '[]');
+      
+      // Combine all submissions, avoiding duplicates
+      const allSubmissions = [...exerciseSubmissions, ...fileSubmissions];
+      
+      // Add regular submissions that aren't already included
+      regularSubmissions.forEach(sub => {
+        if (!allSubmissions.find(existing => existing.id === sub.id)) {
+          allSubmissions.push(sub);
+        }
+      });
+      
+      const submissionsList = document.getElementById('submissionsList');
+      
+      if (allSubmissions.length === 0) {
+        submissionsList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-secondary); font-style: italic;">Student Submissions Appear Here</div>';
+        return;
+      }
+
+      submissionsList.innerHTML = allSubmissions.map(submission => `
+        <div style="border: 1px solid #444; padding: 15px; margin: 10px 0; border-radius: 8px; background: #333;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-weight: bold; color: #ffa726;">${submission.studentName || submission.student}</div>
+              <div style="color: #b8c5d6; margin: 5px 0;">${submission.fileName || submission.mission || submission.exercise}</div>
+              <div style="font-size: 0.9em; color: #888;">
+                ${submission.vaultType === 'slideVault' ? '📊 Slide Vault' : '📋 Sheet Vault'} • 
+                ${formatFileSize(submission.fileSize || 0)}
+              </div>
+            </div>
+            <div style="text-align: right; color: #888;">
+              ${new Date(submission.submittedAt).toLocaleTimeString()}
+            </div>
+          </div>
+        </div>
+      `).join('');
+      
+      console.log(`📋 Loaded ${allSubmissions.length} submissions`);
+    }
+    
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    function refreshSubmissions() {
+      loadSubmissions();
+    }
+    
+    function clearAllData() {
+      localStorage.removeItem('fileSubmissions');
+      localStorage.removeItem('submissions');
+      loadSubmissions();
+      document.getElementById('studentStatus').innerHTML = '<div class="status info">All data cleared</div>';
+      console.log('🗑️ All data cleared');
+    }
+    
+    function openRealGradingPage() {
+      window.open('/instructor-grading.html', '_blank');
+    }
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      initSocket();
+      loadSubmissions();
+      console.log('🚀 Test page initialized');
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test New Grading Interface</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #1e1e1e;
+      color: white;
+      padding: 20px;
+    }
+    button {
+      background: #ff6b35;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 10px;
+    }
+    button:hover {
+      background: #ff8c42;
+    }
+    .status {
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 5px;
+      background: #2a2a2a;
+    }
+  </style>
+</head>
+<body>
+  <h1>Test New Grading Interface</h1>
+  
+  <div>
+    <button onclick="createTestSubmissions()">Create Test Submissions</button>
+    <button onclick="openGradingInterface()">Open Grading Interface</button>
+    <button onclick="clearAllData()">Clear All Data</button>
+  </div>
+  
+  <div id="status"></div>
+  
+  <script>
+    function createTestSubmissions() {
+      const testSubmissions = [
+        {
+          id: 'sub_001_' + Date.now(),
+          studentName: 'Alice Johnson',
+          fileName: 'mission_analysis.pptx',
+          fileSize: 2048000,
+          fileType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+          fileData: 'data:application/vnd.openxmlformats-officedocument.presentationml.presentation;base64,UEsDBBQAAAAIAA==',
+          submittedAt: new Date().toISOString(),
+          status: 'pending',
+          vaultType: 'slideVault'
+        },
+        {
+          id: 'sub_002_' + Date.now(),
+          studentName: 'Bob Smith',
+          fileName: 'tactical_report.pdf',
+          fileSize: 1536000,
+          fileType: 'application/pdf',
+          fileData: 'data:application/pdf;base64,JVBERi0xLjQKJdPr6eEK',
+          submittedAt: new Date(Date.now() - 3600000).toISOString(),
+          status: 'pending',
+          vaultType: 'slideVault'
+        },
+        {
+          id: 'sub_003_' + Date.now(),
+          studentName: 'Carol Davis',
+          fileName: 'mission_data.xlsx',
+          fileSize: 512000,
+          fileType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          fileData: 'data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,UEsDBBQAAAAIAA==',
+          submittedAt: new Date(Date.now() - 7200000).toISOString(),
+          status: 'pending',
+          vaultType: 'sheetVault'
+        }
+      ];
+      
+      // Store in both localStorage locations
+      let fileSubmissions = JSON.parse(localStorage.getItem('fileSubmissions') || '[]');
+      let submissions = JSON.parse(localStorage.getItem('submissions') || '[]');
+      
+      testSubmissions.forEach(submission => {
+        fileSubmissions.push(submission);
+        
+        const displaySubmission = {
+          id: submission.id,
+          student: submission.studentName,
+          class: 'Mission Exercise',
+          mission: `${submission.vaultType === 'slideVault' ? 'Slide' : 'Sheet'} Submission`,
+          submittedAt: submission.submittedAt,
+          status: 'pending',
+          fileData: submission.fileData,
+          fileName: submission.fileName,
+          fileSize: submission.fileSize,
+          fileType: submission.fileType,
+          vaultType: submission.vaultType
+        };
+        
+        submissions.push(displaySubmission);
+      });
+      
+      localStorage.setItem('fileSubmissions', JSON.stringify(fileSubmissions));
+      localStorage.setItem('submissions', JSON.stringify(submissions));
+      
+      // Also create some test classes
+      const testClasses = [
+        { id: 'class_001', name: 'Advanced Tactical Operations', instructor: 'instructor' },
+        { id: 'class_002', name: 'Mission Planning & Analysis', instructor: 'instructor' },
+        { id: 'class_003', name: 'Strategic Intelligence', instructor: 'instructor' }
+      ];
+      
+      localStorage.setItem('classes', JSON.stringify(testClasses));
+      
+      document.getElementById('status').innerHTML = `
+        <div class="status">
+          ✅ Created ${testSubmissions.length} test submissions and ${testClasses.length} test classes!<br>
+          - Alice Johnson: mission_analysis.pptx<br>
+          - Bob Smith: tactical_report.pdf<br>
+          - Carol Davis: mission_data.xlsx
+        </div>
+      `;
+    }
+    
+    function openGradingInterface() {
+      window.open('/instructor-grading.html', '_blank');
+    }
+    
+    function clearAllData() {
+      localStorage.removeItem('fileSubmissions');
+      localStorage.removeItem('submissions');
+      localStorage.removeItem('classes');
+      document.getElementById('status').innerHTML = '<div class="status">🗑️ All test data cleared!</div>';
+    }
+  </script>
+</body>
+</html>
