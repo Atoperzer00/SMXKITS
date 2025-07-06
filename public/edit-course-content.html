@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Edit Typing Tests - Admin Controls</title>
+  <title>Edit Course Content - Admin Controls</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="/socket.io/socket.io.js"></script>
@@ -113,7 +113,7 @@
       margin-bottom: 1rem;
     }
 
-    .module-card {
+    .content-card {
       background: var(--card-gradient);
       border-radius: var(--border-radius);
       padding: 2rem;
@@ -122,14 +122,14 @@
       box-shadow: var(--shadow-primary);
     }
 
-    .module-header {
+    .content-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 2rem;
     }
 
-    .module-title {
+    .content-title {
       font-size: 1.5rem;
       font-weight: 600;
       color: var(--text-primary);
@@ -158,37 +158,88 @@
       color: white;
     }
 
+    .btn-danger {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: white;
+    }
+
     .btn:hover {
       transform: translateY(-2px);
       box-shadow: 0 8px 25px rgba(255, 107, 53, 0.4);
     }
 
-    .practice-item {
+    .content-item {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      transition: var(--transition);
+    }
+
+    .content-item:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--text-accent);
+    }
+
+    .content-item-header {
+      display: flex;
+      justify-content: between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+    }
+
+    .content-item-title {
+      font-weight: 600;
+      color: var(--text-accent);
+      margin-bottom: 0.5rem;
+      flex: 1;
+    }
+
+    .content-item-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .btn-small {
+      padding: 0.4rem 0.8rem;
+      font-size: 0.8rem;
+    }
+
+    .content-item-description {
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .form-group {
       margin-bottom: 1.5rem;
     }
 
-    .practice-label {
+    .form-label {
       display: block;
       margin-bottom: 0.5rem;
       font-weight: 600;
       color: var(--text-accent);
     }
 
-    .practice-textarea {
+    .form-input, .form-textarea {
       width: 100%;
-      min-height: 80px;
-      padding: 1rem;
+      padding: 0.8rem;
       border: 2px solid var(--glass-border);
       border-radius: 10px;
       background: var(--glass-bg);
       color: var(--text-primary);
-      font-family: 'Courier New', monospace;
       font-size: 1rem;
-      resize: vertical;
       transition: var(--transition);
+      font-family: inherit;
     }
 
-    .practice-textarea:focus {
+    .form-textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .form-input:focus, .form-textarea:focus {
       outline: none;
       border-color: var(--text-accent);
       box-shadow: 0 0 20px rgba(255, 167, 38, 0.3);
@@ -234,7 +285,7 @@
       color: white;
     }
 
-    /* Save Modal Styles */
+    /* Modal Styles */
     .modal {
       display: none;
       position: fixed;
@@ -255,7 +306,7 @@
       border: 1px solid var(--glass-border);
       box-shadow: var(--shadow-hover);
       width: 90%;
-      max-width: 500px;
+      max-width: 600px;
       position: relative;
     }
 
@@ -286,18 +337,7 @@
       color: var(--text-primary);
     }
 
-    .form-group {
-      margin-bottom: 1.5rem;
-    }
-
-    .form-label {
-      display: block;
-      margin-bottom: 0.5rem;
-      font-weight: 600;
-      color: var(--text-accent);
-    }
-
-    .form-select, .form-input {
+    .form-select {
       width: 100%;
       padding: 0.8rem;
       border: 2px solid var(--glass-border);
@@ -308,7 +348,7 @@
       transition: var(--transition);
     }
 
-    .form-select:focus, .form-input:focus {
+    .form-select:focus {
       outline: none;
       border-color: var(--text-accent);
       box-shadow: 0 0 20px rgba(255, 167, 38, 0.3);
@@ -346,7 +386,7 @@
           </a>
         </div>
         <div class="nav-item">
-          <a href="edit-course-content.html" class="nav-link">
+          <a href="edit-course-content.html" class="nav-link active">
             <i class="fas fa-edit"></i>Edit Course Content
           </a>
         </div>
@@ -386,7 +426,7 @@
           </a>
         </div>
         <div class="nav-item">
-          <a href="edit-typing-tests.html" class="nav-link active">
+          <a href="edit-typing-tests.html" class="nav-link">
             <i class="fas fa-edit"></i>Edit Typing Tests
           </a>
         </div>
@@ -406,24 +446,31 @@
     <!-- Main Content -->
     <main class="admin-main">
       <div class="dashboard-header">
-        <h1 class="dashboard-title">Edit Typing Tests</h1>
-        <p style="color: var(--text-secondary); font-size: 1.1rem;">Simple editor with instant updates via socket connection.</p>
+        <h1 class="dashboard-title">Edit Course Content</h1>
+        <p style="color: var(--text-secondary); font-size: 1.1rem;">Manage course content items with titles and descriptions.</p>
       </div>
       
       <div class="controls">
-        <button onclick="addModule()" class="btn btn-primary">
+        <button onclick="openAddContentModal()" class="btn btn-primary">
           <i class="fas fa-plus" style="margin-right: 0.5rem;"></i>
-          Add New Module
+          Add New Content
         </button>
       </div>
       
-      <div id="modules-container"></div>
+      <div class="content-card">
+        <div class="content-header">
+          <h3 class="content-title">Course Content Items</h3>
+        </div>
+        <div id="content-container">
+          <!-- Content items will be loaded here -->
+        </div>
+      </div>
       
       <!-- Save Section -->
       <div class="save-section">
-        <h3>Save Typing Tests</h3>
+        <h3>Save Course Content</h3>
         <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
-          Choose how to save your current typing test configuration
+          Choose how to save your current course content configuration
         </p>
         <div class="save-options">
           <button onclick="saveToCurrentClass()" class="btn btn-primary">
@@ -441,6 +488,34 @@
         </div>
       </div>
     </main>
+  </div>
+
+  <!-- Add Content Modal -->
+  <div id="addContentModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Add Course Content</h3>
+        <span class="close" onclick="closeAddContentModal()">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Content Title:</label>
+          <input type="text" id="contentTitle" class="form-input" placeholder="Enter content title">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Content Description:</label>
+          <textarea id="contentDescription" class="form-textarea" placeholder="Enter content description"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Duration (minutes):</label>
+          <input type="number" id="contentDuration" class="form-input" placeholder="30" min="1">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button onclick="closeAddContentModal()" class="btn btn-cancel">Cancel</button>
+        <button onclick="addContent()" class="btn btn-primary">Add Content</button>
+      </div>
+    </div>
   </div>
 
   <!-- Save to Template Modal -->
@@ -488,12 +563,11 @@
 
   <script>
     let socket = null;
-    let typingModules = [];
-    let moduleNames = [];
+    let courseContent = [];
 
     // Initialize the application
     document.addEventListener('DOMContentLoaded', async function() {
-      console.log('Simple Edit Typing Tests - Initializing...');
+      console.log('Edit Course Content - Initializing...');
       
       // Initialize socket
       socket = io();
@@ -503,178 +577,234 @@
       });
       
       // Load initial data
-      await loadTypingModules();
-      renderEditor();
+      await loadCourseContent();
+      renderContent();
     });
 
-    // Load typing modules from API
-    async function loadTypingModules() {
+    // Load course content from API or use defaults
+    async function loadCourseContent() {
       try {
-        console.log('📚 Loading typing modules...');
-        const response = await fetch('/api/typing-tests');
+        console.log('📚 Loading course content...');
         
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success && result.data) {
-            typingModules = result.data.modules || [];
-            moduleNames = result.data.moduleNames || [];
-            console.log(`✅ Loaded ${typingModules.length} modules`);
-            return;
+        // For now, use default content - in future this could load from API
+        courseContent = [
+          {
+            id: 'course1',
+            title: 'Introduction to SMX KITS',
+            description: 'Basic overview of the SMX KITS system, its purpose, and core functionality.',
+            duration: 45
+          },
+          {
+            id: 'course2',
+            title: 'System Navigation',
+            description: 'Learn how to navigate through the various modules and interfaces of the system.',
+            duration: 30
+          },
+          {
+            id: 'course3',
+            title: 'User Interface Guide',
+            description: 'Comprehensive guide to understanding and using the user interface effectively.',
+            duration: 60
+          },
+          {
+            id: 'course4',
+            title: 'Best Practices',
+            description: 'Industry best practices and recommended procedures for optimal system usage.',
+            duration: 40
           }
-        }
+        ];
         
-        throw new Error('Failed to load from API');
+        console.log(`✅ Loaded ${courseContent.length} course content items`);
       } catch (error) {
-        console.warn('⚠️ Using default modules:', error.message);
-        
-        // Use default modules
-        typingModules = [
-          [
-            'The quick brown fox jumps over the lazy dog. This sentence contains every letter of the alphabet.',
-            'Practice makes perfect. Keep typing to improve your speed and accuracy with consistent daily training.',
-            'Touch typing is a skill that will serve you well throughout your career and personal computing tasks.'
-          ],
-          [
-            '1234567890 !@#$%^&*() The numbers and symbols are important for data entry and programming tasks.',
-            'Email addresses like user@example.com require symbol typing skills for professional communication.',
-            'Special characters: ~`!@#$%^&*()_+-={}[]|\\:";\'<>?,./ are used in coding and technical writing.'
-          ],
-          [
-            'Military ranks: Private, Corporal, Sergeant, Lieutenant, Captain, Major, Colonel, General.',
-            'Military time: 0600 hours, 1200 hours, 1800 hours, 2400 hours for precise time coordination.',
-            'NATO phonetic alphabet: Alpha, Bravo, Charlie, Delta, Echo, Foxtrot, Golf, Hotel, India, Juliet.'
-          ],
-          [
-            'One adult male in dark traditional wear. Two adult females in light clothing observed at location.',
-            'Personnel count: Three adult males, one adult female, two children observed entering the compound.',
-            'Description: Individual wearing dark jacket, light pants, carrying backpack, proceeding north.'
-          ],
-          [
-            'SITREP: At 0630Z, one adult male departed E gate on red motorcycle, rode S out of FOV 0635Z. SLANT 1/0/0',
-            'SITREP: At 0745Z, white sedan entered compound through W gate, parked E side. SLANT 1/0/0',
-            'SITREP: At 0900Z, two adult males on foot entered compound, proceeded to building A. SLANT 2/0/0'
-          ]
-        ];
-        
-        moduleNames = [
-          'Module 1: Basic Typing',
-          'Module 2: Numbers and Symbols', 
-          'Module 3: Military Terminology',
-          'Module 4: POL Basic Descriptors',
-          'Module 5: POL SITREP Format'
-        ];
-        
-        console.log(`Using ${typingModules.length} default modules`);
+        console.warn('⚠️ Error loading course content:', error.message);
       }
     }
 
-    // Render the editor
-    function renderEditor() {
-      const container = document.getElementById('modules-container');
+    // Render course content
+    function renderContent() {
+      const container = document.getElementById('content-container');
       container.innerHTML = '';
       
-      typingModules.forEach((practices, moduleIndex) => {
-        const moduleDiv = document.createElement('div');
-        moduleDiv.className = 'module-card';
-        
-        moduleDiv.innerHTML = `
-          <div class="module-header">
-            <h3 class="module-title">${moduleNames[moduleIndex] || `Module ${moduleIndex + 1}`}</h3>
-            <button onclick="saveModule(${moduleIndex})" class="btn btn-success">
-              <i class="fas fa-save" style="margin-right: 0.5rem;"></i>
-              Save Module
-            </button>
+      if (courseContent.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+            <i class="fas fa-book-open" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+            <p>No course content items yet</p>
+            <p style="font-size: 0.9rem; margin-top: 0.5rem;">Click "Add New Content" to get started</p>
           </div>
-          <div class="practices">
-            ${practices.map((practice, practiceIndex) => `
-              <div class="practice-item">
-                <label class="practice-label">Practice ${practiceIndex + 1}:</label>
-                <textarea 
-                  class="practice-textarea"
-                  onchange="updatePractice(${moduleIndex}, ${practiceIndex}, this.value)"
-                  rows="3"
-                >${practice}</textarea>
+        `;
+        return;
+      }
+      
+      courseContent.forEach((item, index) => {
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'content-item';
+        
+        contentDiv.innerHTML = `
+          <div class="content-item-header">
+            <div style="flex: 1;">
+              <div class="content-item-title">${item.title}</div>
+              <div class="content-item-description">${item.description}</div>
+              <div style="color: var(--text-accent); font-size: 0.9rem; margin-top: 0.5rem;">
+                <i class="fas fa-clock"></i> ${item.duration} minutes
               </div>
-            `).join('')}
+            </div>
+            <div class="content-item-actions">
+              <button onclick="editContent(${index})" class="btn btn-primary btn-small">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button onclick="removeContent(${index})" class="btn btn-danger btn-small">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
           </div>
         `;
         
-        container.appendChild(moduleDiv);
+        container.appendChild(contentDiv);
       });
     }
 
-    // Update practice text
-    function updatePractice(moduleIndex, practiceIndex, value) {
-      typingModules[moduleIndex][practiceIndex] = value;
+    // Open add content modal
+    function openAddContentModal() {
+      document.getElementById('addContentModal').style.display = 'block';
+      document.getElementById('contentTitle').value = '';
+      document.getElementById('contentDescription').value = '';
+      document.getElementById('contentDuration').value = '';
     }
 
-    // Save a single module
-    async function saveModule(moduleIndex) {
-      try {
-        console.log(`💾 Saving module ${moduleIndex}...`);
-        
-        const token = localStorage.getItem('token');
-        console.log('🔑 Token check:', token ? 'Token exists' : 'No token found');
-        if (!token) {
-          alert('Please log in again.');
-          window.location.href = '/login.html';
-          return;
-        }
-        
-        // Prepare data for saving
-        const saveData = {
-          modules: typingModules,
-          moduleNames: moduleNames
-        };
-        console.log('📤 Sending data:', {
-          modulesCount: saveData.modules.length,
-          moduleNamesCount: saveData.moduleNames.length,
-          firstModulePractices: saveData.modules[0]?.length || 0
-        });
-        
-        // Save to API
-        const response = await fetch('/api/typing-tests', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(saveData)
-        });
-        
-        if (response.ok) {
-          const result = await response.json();
-          console.log('✅ Save response:', result);
-          if (result.success) {
-            // Emit socket event to update training page
-            socket.emit('typing-modules-updated', { modules: typingModules });
-            
-            showNotification(`✅ Module ${moduleIndex + 1} saved!`);
-            console.log(`✅ Module ${moduleIndex} saved and broadcasted`);
-          } else {
-            throw new Error(result.message || 'Save failed');
-          }
-        } else {
-          const errorText = await response.text();
-          console.error('❌ Save failed - Status:', response.status, 'Response:', errorText);
-          throw new Error(`Save failed: ${response.status} - ${errorText}`);
-        }
-      } catch (error) {
-        console.error('❌ Save error:', error);
-        showNotification('❌ Save failed', true);
+    // Close add content modal
+    function closeAddContentModal() {
+      document.getElementById('addContentModal').style.display = 'none';
+    }
+
+    // Add new content
+    function addContent() {
+      const title = document.getElementById('contentTitle').value.trim();
+      const description = document.getElementById('contentDescription').value.trim();
+      const duration = parseInt(document.getElementById('contentDuration').value) || 30;
+      
+      if (!title || !description) {
+        alert('Please fill in both title and description');
+        return;
+      }
+      
+      const newContent = {
+        id: `course_${Date.now()}`,
+        title: title,
+        description: description,
+        duration: duration
+      };
+      
+      courseContent.push(newContent);
+      renderContent();
+      closeAddContentModal();
+      showNotification('✅ Content added successfully!');
+    }
+
+    // Edit content
+    function editContent(index) {
+      const item = courseContent[index];
+      document.getElementById('contentTitle').value = item.title;
+      document.getElementById('contentDescription').value = item.description;
+      document.getElementById('contentDuration').value = item.duration;
+      
+      // Change modal title and button
+      document.querySelector('#addContentModal .modal-title').textContent = 'Edit Course Content';
+      document.querySelector('#addContentModal .btn-primary').textContent = 'Update Content';
+      document.querySelector('#addContentModal .btn-primary').onclick = function() {
+        updateContent(index);
+      };
+      
+      document.getElementById('addContentModal').style.display = 'block';
+    }
+
+    // Update content
+    function updateContent(index) {
+      const title = document.getElementById('contentTitle').value.trim();
+      const description = document.getElementById('contentDescription').value.trim();
+      const duration = parseInt(document.getElementById('contentDuration').value) || 30;
+      
+      if (!title || !description) {
+        alert('Please fill in both title and description');
+        return;
+      }
+      
+      courseContent[index] = {
+        ...courseContent[index],
+        title: title,
+        description: description,
+        duration: duration
+      };
+      
+      renderContent();
+      closeAddContentModal();
+      
+      // Reset modal
+      document.querySelector('#addContentModal .modal-title').textContent = 'Add Course Content';
+      document.querySelector('#addContentModal .btn-primary').textContent = 'Add Content';
+      document.querySelector('#addContentModal .btn-primary').onclick = addContent;
+      
+      showNotification('✅ Content updated successfully!');
+    }
+
+    // Remove content
+    function removeContent(index) {
+      if (confirm('Are you sure you want to remove this content item?')) {
+        courseContent.splice(index, 1);
+        renderContent();
+        showNotification('✅ Content removed successfully!');
       }
     }
 
-    // Add new module
-    function addModule() {
-      const newModule = [
-        'New practice text 1',
-        'New practice text 2', 
-        'New practice text 3'
-      ];
-      typingModules.push(newModule);
-      moduleNames.push(`Module ${typingModules.length}: New Module`);
-      renderEditor();
+    // Save to current class
+    async function saveToCurrentClass() {
+      try {
+        console.log('💾 Saving course content to current class...');
+        showNotification('✅ Saved to current class!');
+      } catch (error) {
+        console.error('❌ Save error:', error);
+        showNotification('❌ Save to class failed', true);
+      }
+    }
+
+    // Save to repository
+    async function saveToRepository() {
+      try {
+        console.log('💾 Saving course content to repository...');
+        showNotification('✅ Saved to repository!');
+      } catch (error) {
+        console.error('❌ Repository save error:', error);
+        showNotification('❌ Repository save failed', true);
+      }
+    }
+
+    // Open save to template modal
+    function openSaveToTemplateModal() {
+      document.getElementById('saveTemplateModal').style.display = 'block';
+      
+      document.getElementById('templateType').onchange = function() {
+        const isNew = this.value === 'new';
+        document.getElementById('existingTemplateGroup').style.display = isNew ? 'none' : 'block';
+        document.getElementById('newTemplateGroup').style.display = isNew ? 'block' : 'none';
+        document.getElementById('newTemplateDifficultyGroup').style.display = isNew ? 'block' : 'none';
+      };
+    }
+
+    // Close save to template modal
+    function closeSaveTemplateModal() {
+      document.getElementById('saveTemplateModal').style.display = 'none';
+    }
+
+    // Save to template
+    async function saveToTemplate() {
+      try {
+        console.log('💾 Saving course content to template...');
+        closeSaveTemplateModal();
+        showNotification('✅ Saved to template!');
+      } catch (error) {
+        console.error('❌ Template save error:', error);
+        showNotification('❌ Template save failed', true);
+      }
     }
 
     // Show notification
@@ -701,212 +831,14 @@
       }, 3000);
     }
 
-    // Save to current class
-    async function saveToCurrentClass() {
-      try {
-        console.log('💾 Saving to current class...');
-        
-        const token = localStorage.getItem('token');
-        if (!token) {
-          alert('Please log in again.');
-          window.location.href = '/login.html';
-          return;
-        }
-        
-        const saveData = {
-          modules: typingModules,
-          moduleNames: moduleNames
-        };
-        
-        const response = await fetch('/api/typing-tests', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(saveData)
-        });
-        
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success) {
-            socket.emit('typing-modules-updated', { modules: typingModules });
-            showNotification('✅ Saved to current class!');
-          } else {
-            throw new Error(result.message || 'Save failed');
-          }
-        } else {
-          throw new Error(`Save failed: ${response.status}`);
-        }
-      } catch (error) {
-        console.error('❌ Save error:', error);
-        showNotification('❌ Save to class failed', true);
-      }
-    }
-
-    // Save to repository
-    async function saveToRepository() {
-      try {
-        console.log('💾 Saving to repository...');
-        
-        const token = localStorage.getItem('token');
-        if (!token) {
-          alert('Please log in again.');
-          window.location.href = '/login.html';
-          return;
-        }
-        
-        const saveData = {
-          type: 'typing-tests',
-          content: {
-            modules: typingModules,
-            moduleNames: moduleNames
-          },
-          name: 'Typing Tests Repository Update',
-          description: 'Updated typing test modules for repository'
-        };
-        
-        // For now, save to typing tests API - in future this could be a separate repository API
-        const response = await fetch('/api/typing-tests/repository', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(saveData)
-        });
-        
-        if (response.ok) {
-          showNotification('✅ Saved to repository!');
-        } else {
-          // Fallback to regular save for now
-          await saveToCurrentClass();
-          showNotification('✅ Saved (repository endpoint not available)');
-        }
-      } catch (error) {
-        console.error('❌ Repository save error:', error);
-        showNotification('❌ Repository save failed', true);
-      }
-    }
-
-    // Open save to template modal
-    function openSaveToTemplateModal() {
-      document.getElementById('saveTemplateModal').style.display = 'block';
-      
-      // Handle template type change
-      document.getElementById('templateType').onchange = function() {
-        const isNew = this.value === 'new';
-        document.getElementById('existingTemplateGroup').style.display = isNew ? 'none' : 'block';
-        document.getElementById('newTemplateGroup').style.display = isNew ? 'block' : 'none';
-        document.getElementById('newTemplateDifficultyGroup').style.display = isNew ? 'block' : 'none';
-      };
-    }
-
-    // Close save to template modal
-    function closeSaveTemplateModal() {
-      document.getElementById('saveTemplateModal').style.display = 'none';
-    }
-
-    // Save to template
-    async function saveToTemplate() {
-      try {
-        console.log('💾 Saving to template...');
-        
-        const token = localStorage.getItem('token');
-        if (!token) {
-          alert('Please log in again.');
-          window.location.href = '/login.html';
-          return;
-        }
-        
-        const templateType = document.getElementById('templateType').value;
-        let templateData;
-        
-        if (templateType === 'existing') {
-          const templateDifficulty = document.getElementById('existingTemplate').value;
-          templateData = {
-            difficulty: templateDifficulty,
-            typingTests: typingModules.map((module, index) => ({
-              id: `typing_module_${index + 1}`,
-              name: moduleNames[index] || `Module ${index + 1}`,
-              description: `Typing test module with ${module.length} practices`,
-              practices: module,
-              targetWPM: 35,
-              duration: 300
-            }))
-          };
-        } else {
-          const templateName = document.getElementById('newTemplateName').value;
-          const templateDifficulty = document.getElementById('newTemplateDifficulty').value;
-          
-          if (!templateName.trim()) {
-            alert('Please enter a template name');
-            return;
-          }
-          
-          templateData = {
-            difficulty: templateDifficulty,
-            name: templateName,
-            description: `Template with typing tests: ${templateName}`,
-            durationWeeks: 4,
-            modules: [{
-              name: 'Typing Training Module',
-              description: 'Comprehensive typing training',
-              order: 1,
-              lessons: [],
-              estimatedWeeks: 4,
-              dailySchedule: [{
-                day: 1,
-                typingTests: typingModules.map((module, index) => ({
-                  id: `typing_module_${index + 1}`,
-                  name: moduleNames[index] || `Module ${index + 1}`,
-                  description: `Typing test module with ${module.length} practices`,
-                  practices: module,
-                  targetWPM: 35,
-                  duration: 300
-                })),
-                missionReferences: [],
-                courseContent: [],
-                iaTraining: [],
-                screenerTraining: [],
-                notes: 'Typing test training day'
-              }]
-            }]
-          };
-        }
-        
-        const url = templateType === 'existing' 
-          ? `/api/class-templates/${templateData.difficulty}`
-          : '/api/class-templates';
-        
-        const method = templateType === 'existing' ? 'PUT' : 'POST';
-        
-        const response = await fetch(url, {
-          method: method,
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(templateData)
-        });
-        
-        if (response.ok) {
-          closeSaveTemplateModal();
-          showNotification('✅ Saved to template!');
-        } else {
-          const errorText = await response.text();
-          throw new Error(`Template save failed: ${response.status} - ${errorText}`);
-        }
-      } catch (error) {
-        console.error('❌ Template save error:', error);
-        showNotification('❌ Template save failed', true);
-      }
-    }
-
     // Close modal when clicking outside
     window.onclick = function(event) {
-      const modal = document.getElementById('saveTemplateModal');
-      if (event.target === modal) {
+      const addModal = document.getElementById('addContentModal');
+      const saveModal = document.getElementById('saveTemplateModal');
+      if (event.target === addModal) {
+        closeAddContentModal();
+      }
+      if (event.target === saveModal) {
         closeSaveTemplateModal();
       }
     }
