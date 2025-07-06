@@ -599,9 +599,9 @@
 
     /* Make modal sliders container scrollable */
     #modalSlidersContainer {
-      max-height: 350px;
+      max-height: 500px;
       overflow-y: auto;
-      padding-right: 8px;
+      padding-right: 12px;
     }
 
     /* Custom scrollbar for modal */
@@ -1269,6 +1269,10 @@
       border-radius: var(--border-radius);
       box-shadow: var(--shadow-hover);
       overflow: hidden;
+      width: 95vw;
+      max-width: 1400px;
+      height: 90vh;
+      max-height: 900px;
     }
 
     .modal-header {
@@ -1308,7 +1312,9 @@
     }
 
     .modal-body {
-      padding: 30px;
+      padding: 0;
+      height: calc(100% - 80px);
+      overflow: hidden;
     }
 
     .student-info-panel h4,
@@ -1576,50 +1582,60 @@
   </div>
 
   <!-- Grading Modal -->
-  <div id="gradingModal" class="modal" style="display: none;">
-    <div class="modal-content" style="max-width: 1200px; width: 95%; max-height: 90vh;">
+  <div id="gradingModal" class="modal" style="display: none;" onclick="if(event.target === this) closeGradingModal();">
+    <div class="modal-content" onclick="event.stopPropagation();">
       <div class="modal-header">
         <h3 id="gradingModalTitle">Grade Submission</h3>
         <button class="modal-close" onclick="closeGradingModal()">&times;</button>
       </div>
       <div class="modal-body">
-        <div style="display: flex; gap: 30px; height: 70vh;">
+        <div style="display: flex; gap: 40px; height: calc(90vh - 120px); padding: 30px;">
           <!-- Left Panel - Student Info & File Preview -->
-          <div style="flex: 1; display: flex; flex-direction: column;">
-            <div class="student-info-panel">
+          <div style="flex: 0 0 400px; display: flex; flex-direction: column;">
+            <div class="student-info-panel" style="margin-bottom: 25px;">
               <div id="modalStudentInfo">
                 <!-- Student info will be populated here -->
               </div>
             </div>
-            <div class="file-preview-panel" style="flex: 1; margin-top: 20px;">
-              <h4>File Preview</h4>
-              <div id="filePreviewContainer" style="height: 100%; border: 1px solid var(--glass-border); border-radius: 8px; background: var(--glass-bg);">
+            <div class="file-preview-panel" style="flex: 1; min-height: 0;">
+              <h4 style="margin-bottom: 15px; color: var(--text-accent);">File Preview</h4>
+              <div id="filePreviewContainer" style="height: 100%; border: 1px solid var(--glass-border); border-radius: 12px; background: var(--glass-bg); overflow: auto;">
                 <!-- File preview will be shown here -->
               </div>
             </div>
           </div>
           
-          <!-- Right Panel - Grading Interface -->
-          <div style="flex: 1;">
-            <div class="grading-wheel-container">
-              <div class="sliders-container" id="modalSlidersContainer">
-                <!-- Number boxes will be generated here -->
-              </div>
-              <div class="chart-container">
-                <canvas id="modalGradingChart" width="300" height="300"></canvas>
-              </div>
+          <!-- Center Panel - Grading Rubric -->
+          <div style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+            <h4 style="margin-bottom: 20px; color: var(--text-accent); font-size: 1.2em;">Grading Rubric</h4>
+            <div class="sliders-container" id="modalSlidersContainer" style="flex: 1; min-height: 0;">
+              <!-- Number boxes will be generated here -->
             </div>
-
+            
             <!-- Instructor Notes -->
-            <div class="notes-section" style="margin-top: 20px;">
-              <h4>Instructor Notes (Private)</h4>
-              <textarea id="modalInstructorNotes" placeholder="Enter private notes about this submission..." rows="3"></textarea>
+            <div class="notes-section" style="margin-top: 25px; flex-shrink: 0;">
+              <h4 style="margin-bottom: 10px; color: var(--text-accent);">Instructor Notes (Private)</h4>
+              <textarea id="modalInstructorNotes" placeholder="Enter private notes about this submission..." rows="3" style="width: 100%; resize: vertical;"></textarea>
+            </div>
+          </div>
+          
+          <!-- Right Panel - Chart & Actions -->
+          <div style="flex: 0 0 350px; display: flex; flex-direction: column;">
+            <h4 style="margin-bottom: 20px; color: var(--text-accent); font-size: 1.2em;">Grade Overview</h4>
+            <div class="chart-container" style="flex: 1; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.02); border-radius: 12px; border: 1px solid var(--glass-border); padding: 20px;">
+              <canvas id="modalGradingChart" width="280" height="280"></canvas>
+            </div>
+            
+            <!-- Final Grade Display -->
+            <div id="finalGradeDisplay" style="margin: 20px 0; padding: 20px; background: var(--glass-bg); border-radius: 12px; border: 1px solid var(--glass-border); text-align: center;">
+              <h4 style="margin: 0 0 10px 0; color: var(--text-accent);">Final Grade</h4>
+              <div id="finalGradeValue" style="font-size: 2em; font-weight: bold; color: var(--text-primary);">-</div>
             </div>
 
             <!-- Action Buttons -->
-            <div class="action-buttons" style="margin-top: 20px;">
-              <button type="button" class="cancel-btn" onclick="closeGradingModal()">Cancel</button>
-              <button type="button" class="save-btn" onclick="saveModalGrade()">Save Grade</button>
+            <div class="action-buttons" style="display: flex; gap: 15px; flex-shrink: 0;">
+              <button type="button" class="cancel-btn" onclick="closeGradingModal()" style="flex: 1;">Cancel</button>
+              <button type="button" class="save-btn" onclick="saveModalGrade()" style="flex: 1;">Save Grade</button>
             </div>
           </div>
         </div>
@@ -2065,8 +2081,20 @@
     }
     
     function closeGradingModal() {
-      document.getElementById('gradingModal').style.display = 'none';
+      const modal = document.getElementById('gradingModal');
+      modal.style.display = 'none';
       window.currentGradingSubmission = null;
+      
+      // Clean up chart
+      if (window.modalGradingChart) {
+        window.modalGradingChart.destroy();
+        window.modalGradingChart = null;
+      }
+      
+      // Clear modal content
+      document.getElementById('modalSlidersContainer').innerHTML = '';
+      document.getElementById('modalInstructorNotes').value = '';
+      document.getElementById('finalGradeValue').textContent = '-';
     }
     
     function getFileIconClass(fileName) {
@@ -2108,7 +2136,7 @@
             <h4>${category}</h4>
             <div class="score-boxes-container" data-category="${category}">
               ${[1,2,3,4,5].map(score => `
-                <div class="score-box" data-score="${score}" onclick="selectModalScore('${category}', ${score})">
+                <div class="score-box" data-score="${score}" onclick="event.stopPropagation(); selectModalScore('${category}', ${score});">
                   ${score}
                 </div>
               `).join('')}
@@ -2135,15 +2163,20 @@
     }
     
     function selectModalScore(category, score) {
-      const container = document.querySelector(`[data-category="${category}"]`);
+      const container = document.querySelector(`#modalSlidersContainer [data-category="${category}"]`);
+      if (!container) return;
+      
       container.querySelectorAll('.score-box').forEach(box => {
         box.classList.remove('selected');
       });
       const selectedBox = container.querySelector(`[data-score="${score}"]`);
-      selectedBox.classList.add('selected');
+      if (selectedBox) {
+        selectedBox.classList.add('selected');
+      }
       
-      // Update modal chart
+      // Update modal chart and final grade
       updateModalGradingChart();
+      updateFinalGradeDisplay();
     }
     
     function initializeModalGradingChart() {
@@ -2205,12 +2238,36 @@
       
       const categories = Object.keys(rubricCategories);
       const scores = categories.map(category => {
-        const selectedBox = document.querySelector(`[data-category="${category}"] .score-box.selected`);
+        const selectedBox = document.querySelector(`#modalSlidersContainer [data-category="${category}"] .score-box.selected`);
         return selectedBox ? parseInt(selectedBox.dataset.score) : 0;
       });
       
       window.modalGradingChart.data.datasets[0].data = scores;
       window.modalGradingChart.update();
+    }
+    
+    function updateFinalGradeDisplay() {
+      const categories = Object.keys(rubricCategories);
+      let totalScore = 0;
+      let gradedCategories = 0;
+      
+      categories.forEach(category => {
+        const selectedBox = document.querySelector(`#modalSlidersContainer [data-category="${category}"] .score-box.selected`);
+        if (selectedBox) {
+          totalScore += parseInt(selectedBox.dataset.score);
+          gradedCategories++;
+        }
+      });
+      
+      const finalGradeElement = document.getElementById('finalGradeValue');
+      if (gradedCategories > 0) {
+        const finalGrade = Math.round((totalScore / (gradedCategories * 5)) * 100);
+        finalGradeElement.textContent = finalGrade + '%';
+        finalGradeElement.style.color = finalGrade >= 70 ? '#4CAF50' : finalGrade >= 60 ? '#FF9800' : '#F44336';
+      } else {
+        finalGradeElement.textContent = '-';
+        finalGradeElement.style.color = 'var(--text-primary)';
+      }
     }
     
     function saveModalGrade() {
@@ -2224,7 +2281,7 @@
       let gradedCategories = 0;
       
       categories.forEach(category => {
-        const selectedBox = document.querySelector(`[data-category="${category}"] .score-box.selected`);
+        const selectedBox = document.querySelector(`#modalSlidersContainer [data-category="${category}"] .score-box.selected`);
         if (selectedBox) {
           const score = parseInt(selectedBox.dataset.score);
           grades[category] = score;
@@ -2267,12 +2324,29 @@
         localStorage.setItem('fileSubmissions', JSON.stringify(fileSubmissions));
       }
       
+      // Update the table row immediately
+      updateTableRowGrade(submission.id, finalGrade);
+      
       // Show success message
       alert(`Grade saved successfully! Final Grade: ${finalGrade}%`);
       
       // Close modal and refresh table
       closeGradingModal();
       loadClassSubmissions();
+    }
+    
+    function updateTableRowGrade(submissionId, finalGrade) {
+      // Find the table row and update the grade cell
+      const rows = document.querySelectorAll('#submissionsTableBody tr');
+      rows.forEach(row => {
+        if (row.onclick && row.onclick.toString().includes(submissionId)) {
+          const gradeCell = row.querySelector('td:last-child strong');
+          if (gradeCell) {
+            gradeCell.textContent = finalGrade + '%';
+            gradeCell.style.color = finalGrade >= 70 ? '#4CAF50' : finalGrade >= 60 ? '#FF9800' : '#F44336';
+          }
+        }
+      });
     }
 
     // Submission overlay functions
