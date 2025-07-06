@@ -1468,6 +1468,9 @@
           <select id="classSelect" class="class-dropdown" onchange="loadClassSubmissions()">
             <option value="">Select a class...</option>
           </select>
+          <button type="button" onclick="refreshData()" class="nav-btn" style="margin-left: 10px; padding: 8px 12px; font-size: 0.9em;">
+            <i class="fas fa-sync-alt"></i> Refresh
+          </button>
         </div>
       </div>
       <div class="header-right">
@@ -1509,7 +1512,8 @@
               <i class="fas fa-inbox"></i>
               <h3>Student Submissions Appear Here</h3>
               <p>Select a class from the dropdown above to view student submissions.<br>
-              Click on any row to open the grading interface.</p>
+              Students can submit files through the <strong>Mission Links</strong> page.<br>
+              Click on any submission row to open the grading interface.</p>
             </div>
           </div>
         </div>
@@ -1902,14 +1906,17 @@
       loadClassSubmissions();
     }
 
-    function loadClassSubmissions() {
+    async function loadClassSubmissions() {
       const selectedClass = document.getElementById('classSelect').value;
       const tableBody = document.getElementById('submissionsTableBody');
       const emptyState = document.getElementById('emptyState');
       const tableTitle = document.getElementById('tableTitle');
       const tableSubtitle = document.getElementById('tableSubtitle');
       
+      console.log('🔄 Loading submissions for class:', selectedClass);
+      
       if (!selectedClass) {
+        console.log('⚠️ No class selected');
         tableBody.innerHTML = '';
         emptyState.style.display = 'block';
         tableTitle.textContent = 'Student Submissions';
@@ -1917,73 +1924,111 @@
         return;
       }
       
-      // Load both exercise submissions and file submissions
-      const exerciseSubmissions = currentExercise ? submissions.filter(sub => sub.exercise === currentExercise.id) : [];
-      const fileSubmissions = JSON.parse(localStorage.getItem('fileSubmissions') || '[]');
-      const regularSubmissions = JSON.parse(localStorage.getItem('submissions') || '[]');
-      
-      // Combine all submissions, avoiding duplicates
-      const allSubmissions = [...exerciseSubmissions, ...fileSubmissions];
-      
-      // Add regular submissions that aren't already included
-      regularSubmissions.forEach(sub => {
-        if (!allSubmissions.find(existing => existing.id === sub.id)) {
-          allSubmissions.push(sub);
+      try {
+        // Show loading state
+        tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: var(--text-secondary);">Loading submissions...</td></tr>';
+        emptyState.style.display = 'none';
+        
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('No authentication token found');
         }
-      });
-      
-      // Filter by selected class if needed (for now show all)
-      const classSubmissions = allSubmissions;
-      
-      if (classSubmissions.length === 0) {
+        
+        console.log('📡 Fetching submissions from API...');
+        // Fetch submissions for the selected class
+        const response = await fetch(`/api/submissions/class/${selectedClass}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        console.log('📡 Submissions response status:', response.status);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('❌ API Error:', response.status, errorText);
+          throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+        }
+        
+        const data = await response.json();
+        const classSubmissions = data.submissions || [];
+        
+        console.log('✅ Received submissions:', classSubmissions.length);
+        
+        if (classSubmissions.length === 0) {
+          tableBody.innerHTML = '';
+          emptyState.style.display = 'block';
+          
+          // Get class name from the dropdown
+          const classSelect = document.getElementById('classSelect');
+          const selectedOption = classSelect.options[classSelect.selectedIndex];
+          const className = selectedOption ? selectedOption.text : 'Selected Class';
+          
+          tableTitle.textContent = `${className} - Student Submissions`;
+          tableSubtitle.textContent = 'No submissions found for this class. Students can submit files through Mission Links.';
+          console.log('📝 No submissions found for class');
+          return;
+        }
+        
+        emptyState.style.display = 'none';
+        
+        // Get class name from the dropdown
+        const classSelect = document.getElementById('classSelect');
+        const selectedOption = classSelect.options[classSelect.selectedIndex];
+        const className = selectedOption ? selectedOption.text : 'Selected Class';
+        
+        tableTitle.textContent = `${className} - Student Submissions`;
+        tableSubtitle.textContent = `${classSubmissions.length} submission${classSubmissions.length !== 1 ? 's' : ''} found`;
+        
+        console.log('📋 Rendering submissions table...');
+        tableBody.innerHTML = classSubmissions.map(submission => {
+          const studentName = submission.studentName || 'Unknown Student';
+          const fileName = submission.fileName || 'Unknown File';
+          const fileType = getFileTypeFromName(fileName);
+          const submittedTime = new Date(submission.submittedAt).toLocaleString();
+          const status = submission.status || 'pending';
+          const grade = submission.grade ? `${submission.grade}%` : '-';
+          
+          return `
+            <tr onclick="openGradingModal('${submission.id}')" style="cursor: pointer;">
+              <td>
+                <div class="student-cell">
+                  <div class="student-avatar">${studentName.charAt(0).toUpperCase()}</div>
+                  <div class="student-info">
+                    <div class="student-name">${studentName}</div>
+                    <div class="student-id">ID: ${submission.id.substring(0, 8)}</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="submission-title">${submission.missionTitle || fileName}</div>
+              </td>
+              <td>
+                <span class="file-type-badge file-type-${fileType.toLowerCase()}">${fileType}</span>
+              </td>
+              <td>
+                <div class="time-cell">${submittedTime}</div>
+              </td>
+              <td>
+                <span class="status-badge status-${status}">${status}</span>
+              </td>
+              <td>
+                <strong style="color: var(--text-accent);">${grade}</strong>
+              </td>
+            </tr>
+          `;
+        }).join('');
+        
+        console.log('✅ Submissions table rendered successfully');
+        
+      } catch (error) {
+        console.error('❌ Error loading submissions:', error);
         tableBody.innerHTML = '';
         emptyState.style.display = 'block';
-        tableTitle.textContent = `${selectedClass} - Student Submissions`;
-        tableSubtitle.textContent = 'No submissions found for this class';
-        return;
+        tableTitle.textContent = 'Error Loading Submissions';
+        tableSubtitle.textContent = 'Failed to load submissions. Please check console for details.';
       }
-      
-      emptyState.style.display = 'none';
-      tableTitle.textContent = `${selectedClass} - Student Submissions`;
-      tableSubtitle.textContent = `${classSubmissions.length} submission${classSubmissions.length !== 1 ? 's' : ''} found`;
-      
-      tableBody.innerHTML = classSubmissions.map(submission => {
-        const studentName = submission.studentName || submission.student || 'Unknown Student';
-        const fileName = submission.fileName || submission.mission || submission.exercise || 'Unknown File';
-        const fileType = getFileTypeFromName(fileName);
-        const submittedTime = new Date(submission.submittedAt).toLocaleString();
-        const status = submission.status || 'pending';
-        const grade = submission.grade || '-';
-        
-        return `
-          <tr onclick="openGradingModal('${submission.id}')" style="cursor: pointer;">
-            <td>
-              <div class="student-cell">
-                <div class="student-avatar">${studentName.charAt(0).toUpperCase()}</div>
-                <div class="student-info">
-                  <div class="student-name">${studentName}</div>
-                  <div class="student-id">ID: ${submission.id.substring(0, 8)}</div>
-                </div>
-              </div>
-            </td>
-            <td>
-              <div class="submission-title">${fileName}</div>
-            </td>
-            <td>
-              <span class="file-type-badge file-type-${fileType.toLowerCase()}">${fileType}</span>
-            </td>
-            <td>
-              <div class="time-cell">${submittedTime}</div>
-            </td>
-            <td>
-              <span class="status-badge status-${status}">${status}</span>
-            </td>
-            <td>
-              <strong style="color: var(--text-accent);">${grade}</strong>
-            </td>
-          </tr>
-        `;
-      }).join('');
     }
     
     function getFileTypeFromName(fileName) {
@@ -2002,82 +2047,92 @@
       openGradingModal(submissionId);
     }
     
-    function openGradingModal(submissionId) {
-      // Find the submission
-      const exerciseSubmissions = currentExercise ? submissions.filter(sub => sub.exercise === currentExercise.id) : [];
-      const fileSubmissions = JSON.parse(localStorage.getItem('fileSubmissions') || '[]');
-      const regularSubmissions = JSON.parse(localStorage.getItem('submissions') || '[]');
-      const allSubmissions = [...exerciseSubmissions, ...fileSubmissions, ...regularSubmissions];
-      
-      const submission = allSubmissions.find(sub => sub.id === submissionId);
-      
-      if (!submission) {
-        console.error('Submission not found:', submissionId);
-        return;
-      }
-      
-      // Populate modal with submission data
-      const modalTitle = document.getElementById('gradingModalTitle');
-      const modalStudentInfo = document.getElementById('modalStudentInfo');
-      const filePreviewContainer = document.getElementById('filePreviewContainer');
-      
-      modalTitle.textContent = `Grade: ${submission.fileName || submission.mission || 'Submission'}`;
-      
-      modalStudentInfo.innerHTML = `
-        <div style="background: var(--glass-bg); padding: 20px; border-radius: 10px; border: 1px solid var(--glass-border);">
-          <h4 style="margin: 0 0 15px 0; color: var(--text-accent);">Student Information</h4>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-            <div>
-              <strong>Name:</strong><br>
-              <span style="color: var(--text-secondary);">${submission.studentName || submission.student || 'Unknown'}</span>
-            </div>
-            <div>
-              <strong>Submission ID:</strong><br>
-              <span style="color: var(--text-secondary);">${submission.id}</span>
-            </div>
-            <div>
-              <strong>File Name:</strong><br>
-              <span style="color: var(--text-secondary);">${submission.fileName || 'Unknown'}</span>
-            </div>
-            <div>
-              <strong>Submitted:</strong><br>
-              <span style="color: var(--text-secondary);">${new Date(submission.submittedAt).toLocaleString()}</span>
+    async function openGradingModal(submissionId) {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('No authentication token found');
+        }
+        
+        // Fetch submission details from API
+        const response = await fetch(`/api/submissions/${submissionId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const submission = data.submission;
+        
+        // Populate modal with submission data
+        const modalTitle = document.getElementById('gradingModalTitle');
+        const modalStudentInfo = document.getElementById('modalStudentInfo');
+        const filePreviewContainer = document.getElementById('filePreviewContainer');
+        
+        modalTitle.textContent = `Grade: ${submission.missionTitle || submission.fileName || 'Submission'}`;
+        
+        modalStudentInfo.innerHTML = `
+          <div style="background: var(--glass-bg); padding: 20px; border-radius: 10px; border: 1px solid var(--glass-border);">
+            <h4 style="margin: 0 0 15px 0; color: var(--text-accent);">Student Information</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+              <div>
+                <strong>Name:</strong><br>
+                <span style="color: var(--text-secondary);">${submission.studentName}</span>
+              </div>
+              <div>
+                <strong>Email:</strong><br>
+                <span style="color: var(--text-secondary);">${submission.studentEmail}</span>
+              </div>
+              <div>
+                <strong>Class:</strong><br>
+                <span style="color: var(--text-secondary);">${submission.className}</span>
+              </div>
+              <div>
+                <strong>Submission ID:</strong><br>
+                <span style="color: var(--text-secondary);">${submission.id.substring(0, 12)}...</span>
+              </div>
+              <div>
+                <strong>File Name:</strong><br>
+                <span style="color: var(--text-secondary);">${submission.fileName}</span>
+              </div>
+              <div>
+                <strong>Submitted:</strong><br>
+                <span style="color: var(--text-secondary);">${new Date(submission.submittedAt).toLocaleString()}</span>
+              </div>
             </div>
           </div>
-        </div>
-      `;
-      
-      // Show file preview
-      if (submission.fileData) {
+        `;
+        
+        // Show file preview
         filePreviewContainer.innerHTML = `
           <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center;">
             <i class="fas fa-file-${getFileIconClass(submission.fileName)}" style="font-size: 4em; color: var(--text-accent); margin-bottom: 20px;"></i>
-            <h4 style="margin-bottom: 10px;">${submission.fileName || 'Unknown File'}</h4>
-            <p style="color: var(--text-secondary); margin-bottom: 20px;">File Size: ${formatFileSize(submission.fileSize || 0)}</p>
+            <h4 style="margin-bottom: 10px;">${submission.fileName}</h4>
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">File Size: ${formatFileSize(submission.fileSize)}</p>
             <button onclick="downloadSubmissionFile('${submission.id}')" class="download-btn">
               <i class="fas fa-download"></i> Download File
             </button>
           </div>
         `;
-      } else {
-        filePreviewContainer.innerHTML = `
-          <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-secondary);">
-            <div style="text-align: center;">
-              <i class="fas fa-file-times" style="font-size: 3em; margin-bottom: 15px;"></i>
-              <p>No file preview available</p>
-            </div>
-          </div>
-        `;
+        
+        // Initialize grading interface with existing grade if available
+        initializeModalGradingInterface(submission);
+        
+        // Show modal
+        document.getElementById('gradingModal').style.display = 'flex';
+        
+        // Store current submission for saving
+        window.currentGradingSubmission = submission;
+        
+      } catch (error) {
+        console.error('Error opening grading modal:', error);
+        alert('Failed to load submission details. Please try again.');
       }
-      
-      // Initialize grading interface
-      initializeModalGradingInterface(submission);
-      
-      // Show modal
-      document.getElementById('gradingModal').style.display = 'flex';
-      
-      // Store current submission for saving
-      window.currentGradingSubmission = submission;
     }
     
     function closeGradingModal() {
@@ -2095,6 +2150,130 @@
       document.getElementById('modalSlidersContainer').innerHTML = '';
       document.getElementById('modalInstructorNotes').value = '';
       document.getElementById('finalGradeValue').textContent = '-';
+    }
+    
+    async function downloadSubmissionFile(submissionId) {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          alert('Authentication required. Please log in again.');
+          return;
+        }
+        
+        // Create a temporary link to download the file
+        const response = await fetch(`/api/submissions/${submissionId}/download`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        // Get the filename from the response headers
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = 'download';
+        if (contentDisposition) {
+          const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+          if (filenameMatch) {
+            filename = filenameMatch[1];
+          }
+        }
+        
+        // Create blob and download
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+      } catch (error) {
+        console.error('Error downloading file:', error);
+        alert('Failed to download file. Please try again.');
+      }
+    }
+    
+    async function saveModalGrade() {
+      if (!window.currentGradingSubmission) {
+        alert('No submission selected for grading.');
+        return;
+      }
+      
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          alert('Authentication required. Please log in again.');
+          return;
+        }
+        
+        // Collect rubric scores
+        const rubricScores = [];
+        let totalScore = 0;
+        let maxScore = 0;
+        
+        // Get scores from the modal interface
+        const scoreBoxes = document.querySelectorAll('#modalSlidersContainer .score-box.selected');
+        const categories = ['Technical Accuracy', 'Presentation Quality', 'Content Depth', 'Creativity', 'Timeliness'];
+        
+        categories.forEach((category, index) => {
+          const categoryBoxes = document.querySelectorAll(`#modalSlidersContainer .rubric-category:nth-child(${index + 1}) .score-box.selected`);
+          let score = 5; // default score
+          
+          if (categoryBoxes.length > 0) {
+            score = parseInt(categoryBoxes[0].textContent) || 5;
+          }
+          
+          rubricScores.push({
+            category: category,
+            score: score,
+            maxScore: 10
+          });
+          
+          totalScore += score;
+          maxScore += 10;
+        });
+        
+        // Calculate final grade percentage
+        const finalGrade = Math.round((totalScore / maxScore) * 100);
+        
+        // Get instructor notes
+        const instructorNotes = document.getElementById('modalInstructorNotes').value.trim();
+        
+        // Submit grade to API
+        const response = await fetch(`/api/submissions/${window.currentGradingSubmission.id}/grade`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            grade: finalGrade,
+            rubricScores: rubricScores,
+            instructorNotes: instructorNotes
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        alert(`Grade saved successfully! Final Grade: ${finalGrade}%`);
+        
+        // Close modal and refresh the submissions table
+        closeGradingModal();
+        loadClassSubmissions();
+        
+      } catch (error) {
+        console.error('Error saving grade:', error);
+        alert('Failed to save grade. Please try again.');
+      }
     }
     
     function getFileIconClass(fileName) {
@@ -2128,14 +2307,14 @@
     function initializeModalGradingInterface(submission) {
       // Initialize the grading chart and sliders in the modal
       const modalContainer = document.getElementById('modalSlidersContainer');
-      const categories = Object.keys(rubricCategories);
+      const categories = ['Technical Accuracy', 'Presentation Quality', 'Content Depth', 'Creativity', 'Timeliness'];
       
       modalContainer.innerHTML = categories.map(category => {
         return `
           <div class="rubric-category">
             <h4>${category}</h4>
             <div class="score-boxes-container" data-category="${category}">
-              ${[1,2,3,4,5].map(score => `
+              ${[1,2,3,4,5,6,7,8,9,10].map(score => `
                 <div class="score-box" data-score="${score}" onclick="event.stopPropagation(); selectModalScore('${category}', ${score});">
                   ${score}
                 </div>
@@ -2148,10 +2327,15 @@
       // Initialize modal chart
       initializeModalGradingChart();
       
-      // Load existing grades if any
-      if (submission.grades) {
-        Object.entries(submission.grades).forEach(([category, score]) => {
-          selectModalScore(category, score);
+      // Load existing rubric scores if any
+      if (submission.rubricScores && submission.rubricScores.length > 0) {
+        submission.rubricScores.forEach(rubricScore => {
+          selectModalScore(rubricScore.category, rubricScore.score);
+        });
+      } else {
+        // Set default scores of 5 for each category
+        categories.forEach(category => {
+          selectModalScore(category, 5);
         });
       }
       
@@ -2159,6 +2343,45 @@
       const notesTextarea = document.getElementById('modalInstructorNotes');
       if (submission.instructorNotes) {
         notesTextarea.value = submission.instructorNotes;
+      } else {
+        notesTextarea.value = '';
+      }
+      
+      // Update final grade display
+      updateFinalGradeDisplay();
+    }
+    
+    function updateFinalGradeDisplay() {
+      const categories = ['Technical Accuracy', 'Presentation Quality', 'Content Depth', 'Creativity', 'Timeliness'];
+      let totalScore = 0;
+      let maxScore = 0;
+      
+      categories.forEach(category => {
+        const container = document.querySelector(`#modalSlidersContainer [data-category="${category}"]`);
+        if (container) {
+          const selectedBox = container.querySelector('.score-box.selected');
+          if (selectedBox) {
+            totalScore += parseInt(selectedBox.dataset.score) || 0;
+          }
+          maxScore += 10; // Max score per category
+        }
+      });
+      
+      const finalGrade = maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : 0;
+      const finalGradeElement = document.getElementById('finalGradeValue');
+      if (finalGradeElement) {
+        finalGradeElement.textContent = `${finalGrade}%`;
+        
+        // Color code the grade
+        if (finalGrade >= 90) {
+          finalGradeElement.style.color = 'var(--qc-green)';
+        } else if (finalGrade >= 80) {
+          finalGradeElement.style.color = 'var(--qc-yellow)';
+        } else if (finalGrade >= 70) {
+          finalGradeElement.style.color = 'var(--qc-orange)';
+        } else {
+          finalGradeElement.style.color = 'var(--qc-red)';
+        }
       }
     }
     
@@ -2181,7 +2404,7 @@
     
     function initializeModalGradingChart() {
       const ctx = document.getElementById('modalGradingChart').getContext('2d');
-      const categories = Object.keys(rubricCategories);
+      const categories = ['Technical Accuracy', 'Presentation Quality', 'Content Depth', 'Creativity', 'Timeliness'];
       
       window.modalGradingChart = new Chart(ctx, {
         type: 'radar',
@@ -2236,7 +2459,7 @@
     function updateModalGradingChart() {
       if (!window.modalGradingChart) return;
       
-      const categories = Object.keys(rubricCategories);
+      const categories = ['Technical Accuracy', 'Presentation Quality', 'Content Depth', 'Creativity', 'Timeliness'];
       const scores = categories.map(category => {
         const selectedBox = document.querySelector(`#modalSlidersContainer [data-category="${category}"] .score-box.selected`);
         return selectedBox ? parseInt(selectedBox.dataset.score) : 0;
@@ -2689,20 +2912,107 @@
     function goToDashboard() {
       window.location.href = '/dashboard.html';
     }
+    
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      localStorage.removeItem('username');
+      window.location.href = '/login.html';
+    }
+    
+    async function refreshData() {
+      console.log('🔄 Refreshing data...');
+      const refreshBtn = document.querySelector('button[onclick="refreshData()"]');
+      const originalText = refreshBtn.innerHTML;
+      
+      // Show loading state
+      refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+      refreshBtn.disabled = true;
+      
+      try {
+        // Reload classes
+        await loadClasses();
+        
+        // Reload submissions if a class is selected
+        const selectedClass = document.getElementById('classSelect').value;
+        if (selectedClass) {
+          await loadClassSubmissions();
+        }
+        
+        console.log('✅ Data refreshed successfully');
+        
+      } catch (error) {
+        console.error('❌ Error refreshing data:', error);
+        alert('Failed to refresh data. Please check your connection.');
+      } finally {
+        // Restore button state
+        refreshBtn.innerHTML = originalText;
+        refreshBtn.disabled = false;
+      }
+    }
 
     // Class and Student Management
-    function loadClasses() {
-      // Mock classes data - in real implementation, fetch from server
-      const classes = [
-        { id: 'class_1', name: 'Alpha Squadron' },
-        { id: 'class_2', name: 'Bravo Squadron' },
-        { id: 'class_3', name: 'Charlie Squadron' },
-        { id: 'class_4', name: 'Delta Squadron' }
-      ];
-      
-      const classSelect = document.getElementById('classSelect');
-      classSelect.innerHTML = '<option value="">Select a class...</option>' +
-        classes.map(cls => `<option value="${cls.id}">${cls.name}</option>`).join('');
+    async function loadClasses() {
+      try {
+        console.log('🔄 Loading classes...');
+        const token = localStorage.getItem('token');
+        if (!token) {
+          console.error('❌ No authentication token found');
+          alert('Please log in to access this page');
+          window.location.href = '/login.html';
+          return;
+        }
+        
+        console.log('📡 Fetching classes from API...');
+        const response = await fetch('/api/classes/my-classes', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        console.log('📡 Response status:', response.status);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('❌ API Error:', response.status, errorText);
+          throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+        }
+        
+        const classes = await response.json();
+        console.log('✅ Received classes:', classes);
+        
+        const classSelect = document.getElementById('classSelect');
+        if (!classSelect) {
+          console.error('❌ Class select element not found');
+          return;
+        }
+        
+        // Clear existing options and add new ones
+        classSelect.innerHTML = '<option value="">Select a class...</option>';
+        
+        if (classes && classes.length > 0) {
+          classes.forEach(cls => {
+            const option = document.createElement('option');
+            option.value = cls._id;
+            option.textContent = cls.name;
+            classSelect.appendChild(option);
+          });
+          console.log(`✅ Loaded ${classes.length} classes for instructor`);
+        } else {
+          console.log('⚠️ No classes found for this instructor');
+          classSelect.innerHTML = '<option value="">No classes assigned</option>';
+        }
+        
+      } catch (error) {
+        console.error('❌ Error loading classes:', error);
+        // Show error in dropdown
+        const classSelect = document.getElementById('classSelect');
+        if (classSelect) {
+          classSelect.innerHTML = '<option value="">Error loading classes - Check console</option>';
+        }
+        alert('Failed to load classes. Please check your connection and try refreshing the page.');
+      }
     }
 
     function loadStudentsForClass() {

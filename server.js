@@ -1,6 +1,6 @@
 const express = require('express');
 const http = require('http');
-const path = require('path');
+const path = require('path'); 
 const fs = require('fs');
 const cors = require('cors');
 const mongoose = require('mongoose');
@@ -8,6 +8,7 @@ const socketio = require('socket.io');
 const multer = require('multer');
 const bcrypt = require('bcryptjs');
 const User = require('./models/User');
+const Class = require('./models/Class');
 require('dotenv').config();
 
 // Debug environment variables
@@ -267,6 +268,74 @@ async function createDefaultUsers() {
   }
 }
 
+// Function to create default classes and assign users
+async function createDefaultClasses() {
+  try {
+    
+    // Find the default instructor
+    const instructor = await User.findOne({ username: 'instructor' });
+    if (!instructor) {
+      console.log('⚠️ Default instructor not found, skipping class creation');
+      return;
+    }
+    
+    const defaultClasses = [
+      { name: 'Alpha Squadron', organization: 'SMXKITS Demo', country: 'USA' },
+      { name: 'Bravo Squadron', organization: 'SMXKITS Demo', country: 'USA' },
+      { name: 'Charlie Squadron', organization: 'SMXKITS Demo', country: 'USA' },
+      { name: 'Delta Squadron', organization: 'SMXKITS Demo', country: 'USA' }
+    ];
+
+    for (const classData of defaultClasses) {
+      const existingClass = await Class.findOne({ name: classData.name });
+      if (!existingClass) {
+        const newClass = new Class({
+          name: classData.name,
+          organization: classData.organization,
+          country: classData.country,
+          instructorId: instructor._id,
+          instructors: [instructor._id],
+          students: [],
+          startDate: new Date(),
+          endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) // 1 year from now
+        });
+        
+        await newClass.save();
+        console.log(`✅ Created default class: ${classData.name}`);
+        
+        // Assign instructor to the first class only (to avoid conflicts)
+        if (classData.name === 'Alpha Squadron' && !instructor.classId) {
+          instructor.classId = newClass._id;
+          await instructor.save();
+          console.log(`✅ Assigned instructor to class: ${classData.name}`);
+        }
+      } else {
+        console.log(`ℹ️ Default class already exists: ${classData.name}`);
+      }
+    }
+    
+    // Assign the default student to Alpha Squadron
+    const student = await User.findOne({ username: 'student' });
+    const alphaSquadron = await Class.findOne({ name: 'Alpha Squadron' });
+    
+    if (student && alphaSquadron && !student.classId) {
+      // Add student to class
+      if (!alphaSquadron.students.includes(student._id)) {
+        alphaSquadron.students.push(student._id);
+        await alphaSquadron.save();
+      }
+      
+      // Assign class to student
+      student.classId = alphaSquadron._id;
+      await student.save();
+      console.log(`✅ Assigned student to Alpha Squadron`);
+    }
+    
+  } catch (error) {
+    console.error('❌ Error creating default classes:', error);
+  }
+}
+
 // MongoDB connection with in-memory fallback
 const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/smxkits';
 
@@ -288,6 +357,7 @@ async function connectToDatabase() {
     await mongoose.connect(mongoURI, options);
     console.log('✅ MongoDB connected successfully!');
     await createDefaultUsers();
+    await createDefaultClasses();
   } catch (err) {
     console.error('❌ MongoDB connection failed:', err.message);
     console.log('🔄 Switching to in-memory database for demo...');
@@ -405,6 +475,7 @@ app.use('/api/stream', require('./routes/stream-upload.route'));
 const feedbackRoutes = require('./routes/feedback.route');
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/typing-tests', require('./routes/typing-tests'));
+app.use('/api/submissions', require('./routes/submissions'));
 
 // ===== OpsLog API Routes =====
 // Get all callouts for a room

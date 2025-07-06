@@ -1632,42 +1632,102 @@
       }
 
       try {
-        // Create submissions for instructor grading
-        const submissions = selectedStudents.map(studentId => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          alert('Authentication required. Please log in again.');
+          window.location.href = '/login.html';
+          return;
+        }
+
+        let successCount = 0;
+        let errorCount = 0;
+        const totalSubmissions = selectedStudents.length * uploadedFiles.length;
+
+        // Show progress
+        const progressDiv = document.createElement('div');
+        progressDiv.style.cssText = `
+          position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+          background: var(--card-gradient); padding: 30px; border-radius: 15px;
+          border: 1px solid var(--glass-border); z-index: 10000;
+          color: var(--text-primary); text-align: center; min-width: 300px;
+        `;
+        progressDiv.innerHTML = `
+          <h3 style="margin-bottom: 15px; color: var(--text-accent);">Submitting Files...</h3>
+          <div id="progressText">Processing 0 of ${totalSubmissions} submissions...</div>
+          <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin: 15px 0;">
+            <div id="progressBar" style="width: 0%; height: 100%; background: var(--primary-gradient); border-radius: 3px; transition: width 0.3s;"></div>
+          </div>
+        `;
+        document.body.appendChild(progressDiv);
+
+        // Submit files for each selected student
+        for (const studentId of selectedStudents) {
           const student = classStudents.find(s => s._id === studentId);
-          return uploadedFiles.map(file => ({
-            id: `sub_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            studentId: studentId,
-            studentName: student ? student.username : 'Unknown',
-            fileName: file.name,
-            fileSize: file.size,
-            fileType: file.type,
-            fileData: file, // Store file object for now
-            submittedAt: new Date().toISOString(),
-            status: 'pending',
-            exercise: 'File Submission'
-          }));
-        }).flat();
+          
+          for (const file of uploadedFiles) {
+            try {
+              // Create FormData for file upload
+              const formData = new FormData();
+              formData.append('file', file);
+              formData.append('studentId', studentId);
+              formData.append('missionTitle', 'Mission File Submission');
+              
+              // Submit file on behalf of student
+              const response = await fetch('/api/submissions/submit-for-student', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${token}`
+                },
+                body: formData
+              });
 
-        // Store submissions in localStorage for instructor grading
-        const existingSubmissions = JSON.parse(localStorage.getItem('fileSubmissions') || '[]');
-        existingSubmissions.push(...submissions);
-        localStorage.setItem('fileSubmissions', JSON.stringify(existingSubmissions));
+              if (response.ok) {
+                successCount++;
+              } else {
+                console.error(`Failed to submit ${file.name} for ${student.username}`);
+                errorCount++;
+              }
+            } catch (error) {
+              console.error(`Error submitting ${file.name} for ${student.username}:`, error);
+              errorCount++;
+            }
 
-        alert(`Successfully submitted ${uploadedFiles.length} file(s) for ${selectedStudents.length} student(s) to instructor grading.`);
-        
-        // Reset the form
-        showFileDropView();
-        
-        // Optionally open instructor grading
-        const openGrading = confirm('Would you like to open the instructor grading page now?');
-        if (openGrading) {
-          openInstructorGrading();
+            // Update progress
+            const completed = successCount + errorCount;
+            const progressPercent = (completed / totalSubmissions) * 100;
+            document.getElementById('progressText').textContent = `Processing ${completed} of ${totalSubmissions} submissions...`;
+            document.getElementById('progressBar').style.width = `${progressPercent}%`;
+          }
+        }
+
+        // Remove progress dialog
+        document.body.removeChild(progressDiv);
+
+        // Show results
+        if (successCount > 0) {
+          alert(`Successfully submitted ${successCount} file(s) to instructor grading.${errorCount > 0 ? ` ${errorCount} submissions failed.` : ''}`);
+          
+          // Reset the form
+          showFileDropView();
+          
+          // Optionally open instructor grading
+          const openGrading = confirm('Would you like to open the instructor grading page now?');
+          if (openGrading) {
+            openInstructorGrading();
+          }
+        } else {
+          alert('All submissions failed. Please check your connection and try again.');
         }
 
       } catch (error) {
         console.error('Error submitting files:', error);
         alert('Error submitting files. Please try again.');
+        
+        // Remove progress dialog if it exists
+        const progressDiv = document.querySelector('div[style*="position: fixed"]');
+        if (progressDiv) {
+          document.body.removeChild(progressDiv);
+        }
       }
     }
 

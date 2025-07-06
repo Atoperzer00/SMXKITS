@@ -3,98 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API Test</title>
+    <title>SMXKITS API Test</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .result { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 5px; }
-        .success { background: #d4edda; color: #155724; }
-        .error { background: #f8d7da; color: #721c24; }
-        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        body { font-family: Arial, sans-serif; padding: 20px; background: #1a1a1a; color: white; }
+        button { padding: 10px 20px; margin: 10px; background: #ff6b35; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .result { background: #2a2a2a; padding: 15px; margin: 10px 0; border-radius: 5px; white-space: pre-wrap; }
+        .error { background: #4a1a1a; }
+        .success { background: #1a4a1a; }
     </style>
 </head>
 <body>
-    <h1>Typing Tests API Test</h1>
+    <h1>SMXKITS API Test</h1>
     
-    <button onclick="testGetAPI()">Test GET API</button>
-    <button onclick="testAuthAPI()">Test Auth API (requires login)</button>
+    <h2>Authentication</h2>
+    <button onclick="loginAsInstructor()">Login as Instructor</button>
+    <button onclick="loginAsStudent()">Login as Student</button>
+    <div id="authResult" class="result"></div>
     
-    <div id="results"></div>
-
+    <h2>Classes</h2>
+    <button onclick="loadClasses()">Load Classes</button>
+    <div id="classesResult" class="result"></div>
+    
+    <h2>Submissions</h2>
+    <button onclick="loadSubmissions()">Load Submissions (Alpha Squadron)</button>
+    <div id="submissionsResult" class="result"></div>
+    
     <script>
-        function addResult(message, isError = false) {
-            const results = document.getElementById('results');
-            const div = document.createElement('div');
-            div.className = `result ${isError ? 'error' : 'success'}`;
-            div.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong>: ${message}`;
-            results.appendChild(div);
-            results.scrollTop = results.scrollHeight;
-        }
-
-        async function testGetAPI() {
+        let token = localStorage.getItem('token');
+        
+        async function loginAsInstructor() {
             try {
-                addResult('Testing GET /api/typing-tests...');
-                const response = await fetch('/api/typing-tests');
-                const data = await response.json();
-                
-                if (response.ok && data.success) {
-                    addResult(`✅ GET API Success: Found ${data.data.modules.length} modules`);
-                    console.log('API Response:', data);
-                } else {
-                    addResult(`❌ GET API Failed: ${data.message || 'Unknown error'}`, true);
-                }
-            } catch (error) {
-                addResult(`❌ GET API Error: ${error.message}`, true);
-            }
-        }
-
-        async function testAuthAPI() {
-            try {
-                const token = localStorage.getItem('token');
-                if (!token) {
-                    addResult('❌ No auth token found. Please login first.', true);
-                    return;
-                }
-
-                addResult('Testing PUT /api/typing-tests with auth...');
-                
-                // First get current data
-                const getResponse = await fetch('/api/typing-tests');
-                const currentData = await getResponse.json();
-                
-                if (!currentData.success) {
-                    addResult('❌ Failed to get current data', true);
-                    return;
-                }
-
-                // Try to update with same data (should succeed)
-                const response = await fetch('/api/typing-tests', {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        modules: currentData.data.modules,
-                        moduleNames: currentData.data.moduleNames
-                    })
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: 'instructor', password: 'instructor123' })
                 });
-
-                const data = await response.json();
                 
-                if (response.ok && data.success) {
-                    addResult('✅ PUT API Success: Data updated successfully');
+                const data = await response.json();
+                if (response.ok) {
+                    token = data.token;
+                    localStorage.setItem('token', token);
+                    localStorage.setItem('role', data.role);
+                    document.getElementById('authResult').className = 'result success';
+                    document.getElementById('authResult').textContent = 'Logged in as instructor: ' + JSON.stringify(data, null, 2);
                 } else {
-                    addResult(`❌ PUT API Failed: ${data.message || 'Unknown error'}`, true);
+                    throw new Error(data.error || 'Login failed');
                 }
             } catch (error) {
-                addResult(`❌ PUT API Error: ${error.message}`, true);
+                document.getElementById('authResult').className = 'result error';
+                document.getElementById('authResult').textContent = 'Login error: ' + error.message;
             }
         }
-
-        // Auto-test GET API on load
-        window.addEventListener('load', () => {
-            testGetAPI();
-        });
+        
+        async function loginAsStudent() {
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: 'student', password: 'student123' })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    token = data.token;
+                    localStorage.setItem('token', token);
+                    localStorage.setItem('role', data.role);
+                    document.getElementById('authResult').className = 'result success';
+                    document.getElementById('authResult').textContent = 'Logged in as student: ' + JSON.stringify(data, null, 2);
+                } else {
+                    throw new Error(data.error || 'Login failed');
+                }
+            } catch (error) {
+                document.getElementById('authResult').className = 'result error';
+                document.getElementById('authResult').textContent = 'Login error: ' + error.message;
+            }
+        }
+        
+        async function loadClasses() {
+            try {
+                if (!token) {
+                    throw new Error('Please login first');
+                }
+                
+                const response = await fetch('/api/classes/my-classes', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    document.getElementById('classesResult').className = 'result success';
+                    document.getElementById('classesResult').textContent = 'Classes loaded: ' + JSON.stringify(data, null, 2);
+                } else {
+                    throw new Error(data.error || 'Failed to load classes');
+                }
+            } catch (error) {
+                document.getElementById('classesResult').className = 'result error';
+                document.getElementById('classesResult').textContent = 'Classes error: ' + error.message;
+            }
+        }
+        
+        async function loadSubmissions() {
+            try {
+                if (!token) {
+                    throw new Error('Please login first');
+                }
+                
+                // First get classes to find Alpha Squadron ID
+                const classesResponse = await fetch('/api/classes/my-classes', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (!classesResponse.ok) {
+                    throw new Error('Failed to load classes');
+                }
+                
+                const classes = await classesResponse.json();
+                const alphaSquadron = classes.find(c => c.name === 'Alpha Squadron');
+                
+                if (!alphaSquadron) {
+                    throw new Error('Alpha Squadron not found');
+                }
+                
+                // Now load submissions for Alpha Squadron
+                const response = await fetch(`/api/submissions/class/${alphaSquadron._id}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    document.getElementById('submissionsResult').className = 'result success';
+                    document.getElementById('submissionsResult').textContent = 'Submissions loaded: ' + JSON.stringify(data, null, 2);
+                } else {
+                    throw new Error(data.error || 'Failed to load submissions');
+                }
+            } catch (error) {
+                document.getElementById('submissionsResult').className = 'result error';
+                document.getElementById('submissionsResult').textContent = 'Submissions error: ' + error.message;
+            }
+        }
+        
+        // Auto-load token if available
+        if (token) {
+            document.getElementById('authResult').className = 'result';
+            document.getElementById('authResult').textContent = 'Token found in localStorage: ' + token.substring(0, 50) + '...';
+        }
     </script>
 </body>
 </html>

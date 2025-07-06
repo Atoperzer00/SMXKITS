@@ -286,4 +286,111 @@ router.post('/:id/generate-stream-key', auth(['admin', 'instructor']), async (re
   }
 });
 
+// Enroll student in class
+router.post('/:id/enroll', auth(['admin', 'instructor']), async (req, res) => {
+  try {
+    const { studentId } = req.body;
+    const classId = req.params.id;
+    
+    if (!studentId) {
+      return res.status(400).json({ error: 'Student ID is required' });
+    }
+    
+    // Find the class
+    const classObj = await Class.findById(classId);
+    if (!classObj) {
+      return res.status(404).json({ error: 'Class not found' });
+    }
+    
+    // Find the student
+    const student = await User.findById(studentId);
+    if (!student) {
+      return res.status(404).json({ error: 'Student not found' });
+    }
+    
+    if (student.role !== 'student') {
+      return res.status(400).json({ error: 'User is not a student' });
+    }
+    
+    // Check if instructor has permission to enroll students in this class
+    if (req.user.role === 'instructor') {
+      if (!classObj.instructors.includes(req.user.id) && classObj.instructorId.toString() !== req.user.id) {
+        return res.status(403).json({ error: 'Access denied to this class' });
+      }
+    }
+    
+    // Check if student is already enrolled
+    if (classObj.students.includes(studentId)) {
+      return res.status(400).json({ error: 'Student is already enrolled in this class' });
+    }
+    
+    // Enroll student
+    classObj.students.push(studentId);
+    await classObj.save();
+    
+    // Update student's classId
+    student.classId = classId;
+    await student.save();
+    
+    console.log(`✅ Enrolled student ${student.name} in class ${classObj.name}`);
+    
+    res.json({ 
+      message: 'Student enrolled successfully',
+      student: {
+        id: student._id,
+        name: student.name,
+        username: student.username
+      },
+      class: {
+        id: classObj._id,
+        name: classObj.name
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error enrolling student:', error);
+    res.status(500).json({ error: 'Server error enrolling student' });
+  }
+});
+
+// Remove student from class
+router.post('/:id/unenroll', auth(['admin', 'instructor']), async (req, res) => {
+  try {
+    const { studentId } = req.body;
+    const classId = req.params.id;
+    
+    if (!studentId) {
+      return res.status(400).json({ error: 'Student ID is required' });
+    }
+    
+    // Find the class
+    const classObj = await Class.findById(classId);
+    if (!classObj) {
+      return res.status(404).json({ error: 'Class not found' });
+    }
+    
+    // Check if instructor has permission
+    if (req.user.role === 'instructor') {
+      if (!classObj.instructors.includes(req.user.id) && classObj.instructorId.toString() !== req.user.id) {
+        return res.status(403).json({ error: 'Access denied to this class' });
+      }
+    }
+    
+    // Remove student from class
+    classObj.students = classObj.students.filter(id => id.toString() !== studentId);
+    await classObj.save();
+    
+    // Update student's classId
+    await User.findByIdAndUpdate(studentId, { $unset: { classId: "" } });
+    
+    console.log(`✅ Removed student from class ${classObj.name}`);
+    
+    res.json({ message: 'Student removed from class successfully' });
+    
+  } catch (error) {
+    console.error('❌ Error removing student from class:', error);
+    res.status(500).json({ error: 'Server error removing student from class' });
+  }
+});
+
 module.exports = router;
