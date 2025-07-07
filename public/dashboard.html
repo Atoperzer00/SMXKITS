@@ -150,7 +150,7 @@
       flex: 1;
       padding: 2rem;
       background: transparent;
-      overflow-y: auto;
+      overflow: visible !important;
       position: relative;
       z-index: 1;
     }
@@ -180,6 +180,12 @@
       background-clip: text;
       margin: 0;
       letter-spacing: -0.02em;
+    }
+
+    .dashboard-header,
+    .header-actions {
+      position: relative;
+      z-index: 100;
     }
 
     .header-actions {
@@ -243,38 +249,38 @@
     /* Fixed dropdown positioning and z-index */
     .notification-dropdown {
       position: absolute;
-      top: calc(100% + 10px);
-      right: -150px; /* Center dropdown under bubble */
-      width: 350px;
+      top: 60px;
+      right: 0;
+      width: 300px;
       max-height: 400px;
-      background: var(--card-gradient);
-      backdrop-filter: blur(20px);
-      border-radius: var(--border-radius);
-      border: 1px solid var(--glass-border);
-      box-shadow: var(--shadow-hover);
-      z-index: 999999;
+      background: #1e1e2f;
+      border: 1px solid #333;
+      border-radius: 10px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+      z-index: 9999 !important;
       opacity: 0;
       visibility: hidden;
       transform: translateY(-10px);
       transition: var(--transition);
+      overflow-y: auto;
     }
 
     .inbox-dropdown {
       position: absolute;
-      top: calc(100% + 10px);
-      right: -150px; /* Center dropdown under bubble */
-      width: 350px;
+      top: 60px;
+      right: 0;
+      width: 300px;
       max-height: 400px;
-      background: var(--card-gradient);
-      backdrop-filter: blur(20px);
-      border-radius: var(--border-radius);
-      border: 1px solid var(--glass-border);
-      box-shadow: var(--shadow-hover);
-      z-index: 999999;
+      background: #1e1e2f;
+      border: 1px solid #333;
+      border-radius: 10px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+      z-index: 9999 !important;
       opacity: 0;
       visibility: hidden;
       transform: translateY(-10px);
       transition: var(--transition);
+      overflow-y: auto;
     }
 
     .inbox-dropdown.active, .notification-dropdown.active {
@@ -291,6 +297,27 @@
       display: flex;
       align-items: center;
       gap: 0.5rem;
+    }
+
+    .dropdown-header.clickable {
+      cursor: pointer;
+      font-weight: bold;
+      padding: 1rem;
+      border-bottom: 1px solid #444;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-accent);
+    }
+
+    .dropdown-header.clickable:hover {
+      background: rgba(255, 123, 0, 0.1);
+    }
+
+    .no-messages {
+      padding: 1rem;
+      text-align: center;
+      color: var(--text-secondary);
     }
 
     .inbox-messages {
@@ -615,6 +642,13 @@
       overflow-x: visible;
     }
 
+    /* Ensure dropdowns appear above tool cards */
+    .inbox-dropdown,
+    .notification-dropdown {
+      position: absolute !important;
+      z-index: 9999 !important;
+    }
+
     /* Custom Scrollbar */
     ::-webkit-scrollbar {
       width: 8px;
@@ -713,30 +747,15 @@
           <!-- Notification Bell -->
           <div class="notification-bubble" onclick="toggleNotifications()">
             <i class="fas fa-bell"></i>
-            <div class="notification-badge">3</div>
             
             <!-- Notification Dropdown -->
             <div class="notification-dropdown" id="notificationDropdown">
-              <div class="inbox-header">
+              <div onclick="window.location.href='student-messenger.html'" class="dropdown-header clickable">
                 <i class="fas fa-bell"></i>
-                Notifications (3)
+                Notifications
               </div>
               <div class="inbox-messages">
-                <div class="inbox-message unread">
-                  <div class="message-sender">System Alert</div>
-                  <div class="message-preview">New student submissions require grading</div>
-                  <div class="message-time">5 minutes ago</div>
-                </div>
-                <div class="inbox-message unread">
-                  <div class="message-sender">Training Update</div>
-                  <div class="message-preview">Course materials have been updated</div>
-                  <div class="message-time">30 minutes ago</div>
-                </div>
-                <div class="inbox-message unread">
-                  <div class="message-sender">Class Reminder</div>
-                  <div class="message-preview">Advanced Training session starts in 1 hour</div>
-                  <div class="message-time">1 hour ago</div>
-                </div>
+                <div class="dropdown-item no-messages">No notifications to display</div>
               </div>
             </div>
           </div>
@@ -748,22 +767,12 @@
             
             <!-- Inbox Dropdown -->
             <div class="inbox-dropdown" id="inboxDropdown">
-              <div class="inbox-header">
+              <div onclick="window.location.href='student-messenger.html'" class="dropdown-header clickable">
                 <i class="fas fa-inbox"></i>
-                <span id="inboxTitle">Messages (0)</span>
+                Messages
               </div>
               <div class="inbox-messages" id="inboxMessages">
-                <div style="padding: 2rem; text-align: center; color: var(--text-secondary);">
-                  <i class="fas fa-envelope-open" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-                  <p>No messages yet</p>
-                  <p style="font-size: 0.8rem; margin-top: 0.5rem;">Your recent conversations will appear here</p>
-                </div>
-              </div>
-              <div class="inbox-footer" style="padding: 1rem; border-top: 1px solid var(--glass-border); text-align: center;">
-                <button onclick="openMessenger()" style="background: var(--accent-gradient); border: none; border-radius: 15px; padding: 0.5rem 1rem; color: white; font-size: 0.8rem; cursor: pointer; transition: var(--transition);">
-                  <i class="fas fa-comments" style="margin-right: 0.5rem;"></i>
-                  Open Messenger
-                </button>
+                <div class="dropdown-item no-messages">No messages to display</div>
               </div>
             </div>
           </div>
@@ -968,17 +977,9 @@
 
     function renderInboxMessages(conversations) {
       const inboxMessages = document.getElementById('inboxMessages');
-      const inboxTitle = document.getElementById('inboxTitle');
       
       if (conversations.length === 0) {
-        inboxMessages.innerHTML = `
-          <div style="padding: 2rem; text-align: center; color: var(--text-secondary);">
-            <i class="fas fa-envelope-open" style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-            <p>No messages yet</p>
-            <p style="font-size: 0.8rem; margin-top: 0.5rem;">Your recent conversations will appear here</p>
-          </div>
-        `;
-        inboxTitle.textContent = 'Messages (0)';
+        inboxMessages.innerHTML = `<div class="dropdown-item no-messages">No messages to display</div>`;
         return;
       }
 
@@ -1006,8 +1007,6 @@
           </div>
         `;
       }).join('');
-      
-      inboxTitle.textContent = `Messages (${conversations.length})`;
     }
 
     function updateUnreadCount(conversations) {
