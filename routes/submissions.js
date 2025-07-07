@@ -285,6 +285,73 @@ router.get('/my-classes', auth(['instructor', 'admin']), async (req, res) => {
   }
 });
 
+// Get student's own submissions
+router.get('/my-submissions', auth(['student']), async (req, res) => {
+  try {
+    const submissions = await Submission.find({ studentId: req.user.id })
+      .populate('classId', 'name')
+      .populate('gradedBy', 'name')
+      .sort({ submittedAt: -1 });
+
+    res.json({
+      success: true,
+      submissions: submissions.map(sub => ({
+        id: sub._id,
+        missionTitle: sub.missionTitle,
+        fileName: sub.originalFileName,
+        fileType: sub.fileType,
+        fileSize: sub.fileSize,
+        submittedAt: sub.submittedAt,
+        status: sub.status,
+        grade: sub.grade,
+        rubricScores: sub.rubricScores,
+        instructorNotes: sub.instructorNotes,
+        gradedAt: sub.gradedAt,
+        gradedBy: sub.gradedBy ? sub.gradedBy.name : null,
+        className: sub.classId ? sub.classId.name : 'Unknown Class'
+      }))
+    });
+
+  } catch (error) {
+    console.error('❌ Error fetching student submissions:', error);
+    res.status(500).json({ error: 'Server error fetching submissions' });
+  }
+});
+
+// Get grades from JSON file (fallback/alternative endpoint)
+router.get('/grades-json/:studentId?', auth(['student', 'instructor', 'admin']), async (req, res) => {
+  try {
+    const gradesFilePath = path.join(__dirname, '..', 'data', 'grades.json');
+    
+    if (!fs.existsSync(gradesFilePath)) {
+      return res.json({ success: true, grades: [] });
+    }
+    
+    const fileContent = fs.readFileSync(gradesFilePath, 'utf8');
+    let gradesData = JSON.parse(fileContent);
+    
+    // Filter by student if requested
+    const targetStudentId = req.params.studentId || req.user.id;
+    
+    // Students can only see their own grades
+    if (req.user.role === 'student' && targetStudentId !== req.user.id) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    // Filter grades for the specific student
+    const studentGrades = gradesData.filter(grade => grade.studentId === targetStudentId);
+    
+    res.json({
+      success: true,
+      grades: studentGrades
+    });
+
+  } catch (error) {
+    console.error('❌ Error reading grades JSON file:', error);
+    res.status(500).json({ error: 'Server error reading grades' });
+  }
+});
+
 // Get single submission details
 router.get('/:id', auth(['instructor', 'admin', 'student']), async (req, res) => {
   try {
@@ -406,6 +473,44 @@ router.put('/:id/grade', auth(['instructor', 'admin']), async (req, res) => {
     submission.gradedBy = req.user.id;
 
     await submission.save();
+
+    // Also save to JSON file for backup/compatibility
+    try {
+      const gradesFilePath = path.join(__dirname, '..', 'data', 'grades.json');
+      let gradesData = [];
+      
+      // Read existing grades if file exists
+      if (fs.existsSync(gradesFilePath)) {
+        const fileContent = fs.readFileSync(gradesFilePath, 'utf8');
+        gradesData = JSON.parse(fileContent);
+      }
+      
+      // Add or update grade record
+      const gradeRecord = {
+        submissionId: submission._id.toString(),
+        studentId: submission.studentId.toString(),
+        studentName: submission.studentName,
+        missionTitle: submission.missionTitle,
+        grade: grade,
+        rubricScores: rubricScores || [],
+        instructorNotes: instructorNotes || '',
+        gradedAt: submission.gradedAt,
+        gradedBy: req.user.id
+      };
+      
+      // Remove existing record for this submission if it exists
+      gradesData = gradesData.filter(g => g.submissionId !== submission._id.toString());
+      
+      // Add new record
+      gradesData.push(gradeRecord);
+      
+      // Write back to file
+      fs.writeFileSync(gradesFilePath, JSON.stringify(gradesData, null, 2));
+      
+    } catch (jsonError) {
+      console.error('❌ Error saving to grades JSON file:', jsonError);
+      // Don't fail the main operation if JSON backup fails
+    }
 
     console.log(`✅ Graded submission ${submission._id}: ${grade}%`);
 

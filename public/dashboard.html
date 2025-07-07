@@ -35,6 +35,7 @@
       background: var(--dark-gradient);
       color: var(--text-primary);
       overflow-x: hidden;
+      overflow-y: auto;
       line-height: 1.6;
     }
 
@@ -150,6 +151,8 @@
       padding: 2rem;
       background: transparent;
       overflow-y: auto;
+      position: relative;
+      z-index: 1;
     }
 
     /* Header Section */
@@ -164,6 +167,8 @@
       border-radius: var(--border-radius);
       border: 1px solid var(--glass-border);
       box-shadow: var(--shadow-primary);
+      position: relative;
+      z-index: 100;
     }
 
     .dashboard-title {
@@ -183,6 +188,7 @@
       gap: 1rem;
       overflow: visible !important;
       position: relative;
+      z-index: 1000;
     }
 
     .notification-bubble, .inbox-bubble {
@@ -235,30 +241,10 @@
     }
 
     /* Fixed dropdown positioning and z-index */
-    .inbox-dropdown {
-      position: fixed;
-      width: 350px;
-      max-height: 400px;
-      background: var(--card-gradient);
-      backdrop-filter: blur(20px);
-      border-radius: var(--border-radius);
-      border: 1px solid var(--glass-border);
-      box-shadow: var(--shadow-hover);
-      z-index: 999999;
-      opacity: 0;
-      visibility: hidden;
-      transform: translateY(-10px);
-      transition: var(--transition);
-    }
-
-    .inbox-dropdown.active {
-      opacity: 1;
-      visibility: visible;
-      transform: translateY(0);
-    }
-
     .notification-dropdown {
-      position: fixed;
+      position: absolute;
+      top: calc(100% + 10px);
+      right: -150px; /* Center dropdown under bubble */
       width: 350px;
       max-height: 400px;
       background: var(--card-gradient);
@@ -273,7 +259,25 @@
       transition: var(--transition);
     }
 
-    .notification-dropdown.active {
+    .inbox-dropdown {
+      position: absolute;
+      top: calc(100% + 10px);
+      right: -150px; /* Center dropdown under bubble */
+      width: 350px;
+      max-height: 400px;
+      background: var(--card-gradient);
+      backdrop-filter: blur(20px);
+      border-radius: var(--border-radius);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-hover);
+      z-index: 999999;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: var(--transition);
+    }
+
+    .inbox-dropdown.active, .notification-dropdown.active {
       opacity: 1;
       visibility: visible;
       transform: translateY(0);
@@ -402,6 +406,8 @@
       gap: 2rem;
       margin-bottom: 2rem;
       overflow: visible !important;
+      position: relative;
+      z-index: 1;
     }
 
     .tool-card {
@@ -414,6 +420,7 @@
       transition: var(--transition);
       position: relative;
       overflow: visible;
+      z-index: 1;
     }
 
     .tool-card::before {
@@ -599,8 +606,13 @@
     .stagger-3 { animation-delay: 0.3s; }
 
     /* Ensure parent containers don't clip dropdowns */
-    .dashboard-header, .admin-content {
+    .dashboard-header, .admin-content, .header-actions, .notification-bubble, .inbox-bubble {
       overflow: visible !important;
+    }
+
+    /* Ensure body and html don't clip dropdowns */
+    body, html {
+      overflow-x: visible;
     }
 
     /* Custom Scrollbar */
@@ -701,23 +713,28 @@
           <!-- Notification Bell -->
           <div class="notification-bubble" onclick="toggleNotifications()">
             <i class="fas fa-bell"></i>
-            <div class="notification-badge">2</div>
+            <div class="notification-badge">3</div>
             
             <!-- Notification Dropdown -->
             <div class="notification-dropdown" id="notificationDropdown">
               <div class="inbox-header">
                 <i class="fas fa-bell"></i>
-                Notifications (2)
+                Notifications (3)
               </div>
               <div class="inbox-messages">
                 <div class="inbox-message unread">
-                  <div class="message-sender">System</div>
-                  <div class="message-preview">New assignment available: Advanced Screening Techniques</div>
-                  <div class="message-time">10 minutes ago</div>
+                  <div class="message-sender">System Alert</div>
+                  <div class="message-preview">New student submissions require grading</div>
+                  <div class="message-time">5 minutes ago</div>
                 </div>
                 <div class="inbox-message unread">
                   <div class="message-sender">Training Update</div>
-                  <div class="message-preview">Your keyboard training progress has been updated</div>
+                  <div class="message-preview">Course materials have been updated</div>
+                  <div class="message-time">30 minutes ago</div>
+                </div>
+                <div class="inbox-message unread">
+                  <div class="message-sender">Class Reminder</div>
+                  <div class="message-preview">Advanced Training session starts in 1 hour</div>
                   <div class="message-time">1 hour ago</div>
                 </div>
               </div>
@@ -889,12 +906,6 @@
       if (isOpening) {
         // Load recent messages when opening
         await loadRecentMessages();
-        
-        // Position the dropdown correctly
-        const inboxBubble = document.querySelector('.inbox-bubble');
-        const rect = inboxBubble.getBoundingClientRect();
-        dropdown.style.top = (rect.bottom + 10) + 'px';
-        dropdown.style.right = (window.innerWidth - rect.right) + 'px';
       }
       
       dropdown.classList.toggle('active');
@@ -913,14 +924,6 @@
     function toggleNotifications() {
       const dropdown = document.getElementById('notificationDropdown');
       const isOpening = !dropdown.classList.contains('active');
-      
-      if (isOpening) {
-        // Position the dropdown correctly
-        const notificationBubble = document.querySelector('.notification-bubble');
-        const rect = notificationBubble.getBoundingClientRect();
-        dropdown.style.top = (rect.bottom + 10) + 'px';
-        dropdown.style.right = (window.innerWidth - rect.right) + 'px';
-      }
       
       dropdown.classList.toggle('active');
       

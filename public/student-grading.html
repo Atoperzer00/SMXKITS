@@ -634,9 +634,9 @@
       <div class="dashboard-header">
         <h1 class="dashboard-title">My Grades</h1>
         <div class="user-info">
-          <div class="user-avatar">JS</div>
+          <div class="user-avatar" id="userAvatar">ST</div>
           <div>
-            <div style="font-weight: 600;">John Smith</div>
+            <div style="font-weight: 600;" id="userName">Student</div>
             <div style="font-size: 0.9rem; color: var(--text-secondary);">Student</div>
           </div>
         </div>
@@ -715,105 +715,103 @@
   </div>
 
   <script>
-    // Sample data for John Smith
-    const studentData = {
-      name: "John Smith",
-      missions: [
-        {
-          id: 1,
-          title: "Mission 1: Basic Intelligence Analysis",
-          date: "2024-01-15",
-          description: "Introduction to intelligence analysis techniques and basic target identification.",
-          overallGrade: 8.5,
-          status: "Completed",
-          grades: {
-            "Accuracy": 8,
-            "Analytic Judgment": 9,
-            "Attention to Detail": 8,
-            "Communication": 8,
-            "Format": 9,
-            "Mission Awareness": 8,
-            "Products": 9
-          }
-        },
-        {
-          id: 2,
-          title: "Mission 2: Advanced Target Analysis",
-          date: "2024-01-22",
-          description: "Complex target analysis with multiple intelligence sources and threat assessment.",
-          overallGrade: 7.8,
-          status: "Completed",
-          grades: {
-            "Accuracy": 8,
-            "Analytic Judgment": 7,
-            "Attention to Detail": 8,
-            "Communication": 8,
-            "Format": 8,
-            "Mission Awareness": 7,
-            "Products": 8
-          }
-        },
-        {
-          id: 3,
-          title: "Mission 3: Multi-Source Intelligence",
-          date: "2024-01-29",
-          description: "Integration of multiple intelligence sources for comprehensive analysis.",
-          overallGrade: 9.2,
-          status: "Completed",
-          grades: {
-            "Accuracy": 9,
-            "Analytic Judgment": 10,
-            "Attention to Detail": 9,
-            "Communication": 9,
-            "Format": 9,
-            "Mission Awareness": 9,
-            "Products": 9
-          }
-        },
-        {
-          id: 4,
-          title: "Mission 4: Real-Time Analysis",
-          date: "2024-02-05",
-          description: "Time-sensitive intelligence analysis under pressure conditions.",
-          overallGrade: 8.1,
-          status: "Completed",
-          grades: {
-            "Accuracy": 8,
-            "Analytic Judgment": 8,
-            "Attention to Detail": 7,
-            "Communication": 9,
-            "Format": 8,
-            "Mission Awareness": 8,
-            "Products": 9
-          }
-        },
-        {
-          id: 5,
-          title: "Mission 5: Comprehensive Assessment",
-          date: "2024-02-12",
-          description: "Final comprehensive mission combining all learned techniques and skills.",
-          overallGrade: 8.9,
-          status: "Completed",
-          grades: {
-            "Accuracy": 9,
-            "Analytic Judgment": 9,
-            "Attention to Detail": 9,
-            "Communication": 8,
-            "Format": 9,
-            "Mission Awareness": 9,
-            "Products": 9
-          }
-        }
-      ]
+    let studentData = {
+      name: "",
+      missions: []
     };
-
     let gradeChart = null;
     let currentMission = null;
 
     // Initialize the page
-    function initializePage() {
+    async function initializePage() {
+      await loadUserInfo();
+      await loadStudentSubmissions();
       populateMissions();
       updateSummaryStats();
+    }
+
+    // Load user information
+    async function loadUserInfo() {
+      try {
+        const userName = localStorage.getItem('userName');
+        if (userName) {
+          studentData.name = userName;
+          document.getElementById('userName').textContent = userName;
+          
+          // Create initials for avatar
+          const initials = userName.split(' ').map(name => name.charAt(0)).join('').toUpperCase();
+          document.getElementById('userAvatar').textContent = initials;
+        }
+      } catch (error) {
+        console.error('Error loading user info:', error);
+      }
+    }
+
+    // Load student submissions from API
+    async function loadStudentSubmissions() {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          window.location.href = '/login.html';
+          return;
+        }
+
+        const response = await fetch('/api/submissions/my-submissions', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.success) {
+          // Transform API data to match our expected format
+          studentData.missions = data.submissions
+            .filter(sub => sub.status === 'graded') // Only show graded submissions
+            .map(sub => ({
+              id: sub.id,
+              title: sub.missionTitle,
+              date: sub.gradedAt || sub.submittedAt,
+              description: `Submitted: ${formatDate(sub.submittedAt)}${sub.gradedAt ? ` | Graded: ${formatDate(sub.gradedAt)}` : ''}`,
+              overallGrade: sub.grade || 0,
+              status: "Completed",
+              grades: transformRubricScores(sub.rubricScores),
+              instructorNotes: sub.instructorNotes,
+              fileName: sub.fileName,
+              gradedBy: sub.gradedBy
+            }));
+        }
+      } catch (error) {
+        console.error('Error loading student submissions:', error);
+        // Show error message to user
+        const missionsGrid = document.getElementById('missionsGrid');
+        missionsGrid.innerHTML = `
+          <div style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+            <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem; color: var(--text-accent);"></i>
+            <div>Error loading grades. Please try refreshing the page.</div>
+          </div>
+        `;
+      }
+    }
+
+    // Transform rubric scores to match expected format
+    function transformRubricScores(rubricScores) {
+      if (!rubricScores || rubricScores.length === 0) {
+        return {};
+      }
+      
+      const grades = {};
+      rubricScores.forEach(score => {
+        grades[score.category] = score.score;
+      });
+      
+      return grades;
     }
 
     // Populate mission cards
@@ -827,15 +825,18 @@
         return;
       }
 
-      missionsGrid.innerHTML = studentData.missions.map(mission => `
-        <div class="mission-card" onclick="openGradeModal(${mission.id})">
+      emptyState.style.display = 'none';
+      missionsGrid.style.display = 'grid';
+      
+      missionsGrid.innerHTML = studentData.missions.map((mission, index) => `
+        <div class="mission-card" onclick="openGradeModal('${mission.id}')">
           <div class="mission-header">
             <div class="mission-title">${mission.title}</div>
             <div class="mission-date">${formatDate(mission.date)}</div>
           </div>
           <div class="mission-description">${mission.description}</div>
           <div class="mission-grade">
-            <div class="grade-score">${mission.overallGrade.toFixed(1)}</div>
+            <div class="grade-score">${mission.overallGrade ? mission.overallGrade.toFixed(1) : 'N/A'}</div>
             <div class="grade-status">${mission.status}</div>
           </div>
         </div>
@@ -845,24 +846,42 @@
     // Update summary statistics
     function updateSummaryStats() {
       const missions = studentData.missions;
-      if (missions.length === 0) return;
+      
+      if (missions.length === 0) {
+        document.getElementById('overallAverage').textContent = 'N/A';
+        document.getElementById('completedMissions').textContent = '0';
+        document.getElementById('highestGrade').textContent = 'N/A';
+        document.getElementById('improvementTrend').textContent = 'N/A';
+        return;
+      }
 
-      const overallAverage = missions.reduce((sum, mission) => sum + mission.overallGrade, 0) / missions.length;
-      const highestGrade = Math.max(...missions.map(mission => mission.overallGrade));
+      const validGrades = missions.filter(mission => mission.overallGrade != null);
+      
+      if (validGrades.length === 0) {
+        document.getElementById('overallAverage').textContent = 'N/A';
+        document.getElementById('completedMissions').textContent = missions.length;
+        document.getElementById('highestGrade').textContent = 'N/A';
+        document.getElementById('improvementTrend').textContent = 'N/A';
+        return;
+      }
+
+      const overallAverage = validGrades.reduce((sum, mission) => sum + mission.overallGrade, 0) / validGrades.length;
+      const highestGrade = Math.max(...validGrades.map(mission => mission.overallGrade));
       const completedMissions = missions.filter(mission => mission.status === 'Completed').length;
       
       // Calculate improvement trend (last 3 missions vs first 3 missions)
       let improvementTrend = 0;
-      if (missions.length >= 3) {
-        const recent = missions.slice(-3).reduce((sum, mission) => sum + mission.overallGrade, 0) / 3;
-        const early = missions.slice(0, 3).reduce((sum, mission) => sum + mission.overallGrade, 0) / 3;
+      if (validGrades.length >= 6) {
+        const recent = validGrades.slice(-3).reduce((sum, mission) => sum + mission.overallGrade, 0) / 3;
+        const early = validGrades.slice(0, 3).reduce((sum, mission) => sum + mission.overallGrade, 0) / 3;
         improvementTrend = recent - early;
       }
 
       document.getElementById('overallAverage').textContent = overallAverage.toFixed(1);
       document.getElementById('completedMissions').textContent = completedMissions;
       document.getElementById('highestGrade').textContent = highestGrade.toFixed(1);
-      document.getElementById('improvementTrend').textContent = improvementTrend >= 0 ? `+${improvementTrend.toFixed(1)}` : improvementTrend.toFixed(1);
+      document.getElementById('improvementTrend').textContent = validGrades.length >= 6 ? 
+        (improvementTrend >= 0 ? `+${improvementTrend.toFixed(1)}` : improvementTrend.toFixed(1)) : 'N/A';
     }
 
     // Open grade details modal
@@ -872,7 +891,15 @@
 
       document.getElementById('modalTitle').textContent = currentMission.title;
       populateGradeBreakdown();
-      createGradeChart();
+      
+      // Only create chart if there are rubric scores
+      if (Object.keys(currentMission.grades).length > 0) {
+        createGradeChart();
+      } else {
+        // Hide chart container if no detailed grades
+        const chartContainer = document.querySelector('.chart-container');
+        chartContainer.style.display = 'none';
+      }
       
       const modal = document.getElementById('gradeModal');
       modal.classList.add('active');
@@ -883,6 +910,10 @@
       const modal = document.getElementById('gradeModal');
       modal.classList.remove('active');
       
+      // Reset chart container visibility
+      const chartContainer = document.querySelector('.chart-container');
+      chartContainer.style.display = 'flex';
+      
       if (gradeChart) {
         gradeChart.destroy();
         gradeChart = null;
@@ -892,16 +923,50 @@
     // Populate grade breakdown
     function populateGradeBreakdown() {
       const breakdown = document.getElementById('gradeBreakdown');
-      breakdown.innerHTML = Object.entries(currentMission.grades).map(([category, score]) => `
-        <div class="breakdown-item">
-          <div class="breakdown-label">${category}</div>
-          <div class="breakdown-score">${score}</div>
-        </div>
-      `).join('');
+      
+      if (Object.keys(currentMission.grades).length === 0) {
+        // No detailed rubric scores, show overall grade and notes
+        breakdown.innerHTML = `
+          <div class="breakdown-item">
+            <div class="breakdown-label">Overall Grade</div>
+            <div class="breakdown-score">${currentMission.overallGrade ? currentMission.overallGrade.toFixed(1) : 'N/A'}</div>
+          </div>
+          ${currentMission.gradedBy ? `
+          <div class="breakdown-item">
+            <div class="breakdown-label">Graded By</div>
+            <div class="breakdown-score" style="background: var(--glass-bg); color: var(--text-primary); font-weight: normal;">${currentMission.gradedBy}</div>
+          </div>
+          ` : ''}
+          ${currentMission.instructorNotes ? `
+          <div class="breakdown-item" style="flex-direction: column; align-items: flex-start;">
+            <div class="breakdown-label" style="margin-bottom: 0.5rem;">Instructor Notes</div>
+            <div style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.4;">${currentMission.instructorNotes}</div>
+          </div>
+          ` : ''}
+        `;
+      } else {
+        // Show detailed rubric breakdown
+        breakdown.innerHTML = Object.entries(currentMission.grades).map(([category, score]) => `
+          <div class="breakdown-item">
+            <div class="breakdown-label">${category}</div>
+            <div class="breakdown-score">${score}</div>
+          </div>
+        `).join('') + 
+        (currentMission.instructorNotes ? `
+          <div class="breakdown-item" style="flex-direction: column; align-items: flex-start;">
+            <div class="breakdown-label" style="margin-bottom: 0.5rem;">Instructor Notes</div>
+            <div style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.4;">${currentMission.instructorNotes}</div>
+          </div>
+        ` : '');
+      }
     }
 
     // Create grade chart (radar chart without numerical values)
     function createGradeChart() {
+      if (!currentMission || Object.keys(currentMission.grades).length === 0) {
+        return;
+      }
+      
       const ctx = document.getElementById('gradeChart').getContext('2d');
       const categories = Object.keys(currentMission.grades);
       const scores = Object.values(currentMission.grades);
@@ -999,8 +1064,6 @@
   </script>
 </body>
 </html>
-
-    .grade-item {
       background: var(--panel);
       border: 1px solid var(--input-border);
       border-radius: 8px;
