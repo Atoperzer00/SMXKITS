@@ -65,7 +65,7 @@ router.post('/submit-for-student', auth(['instructor', 'admin']), upload.single(
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    const { studentId, missionTitle } = req.body;
+    const { studentId, missionTitle, submittedBy } = req.body;
     
     if (!studentId) {
       // Clean up uploaded file
@@ -107,12 +107,13 @@ router.post('/submit-for-student', auth(['instructor', 'admin']), upload.single(
       filePath: req.file.path,
       fileSize: req.file.size,
       fileType: req.file.mimetype,
-      missionTitle: missionTitle || 'Instructor Submitted File'
+      missionTitle: missionTitle || 'Instructor Submitted File',
+      submittedBy: submittedBy || req.user.name || 'Unknown' // Store who submitted the file
     });
 
     await submission.save();
 
-    console.log(`📄 New submission for ${student.name} by instructor: ${req.file.originalname}`);
+    console.log(`📄 New submission for ${student.name} by ${submittedBy || req.user.name || 'Unknown'}: ${req.file.originalname}`);
 
     res.status(201).json({
       success: true,
@@ -223,6 +224,7 @@ router.get('/class/:classId', auth(['instructor', 'admin']), async (req, res) =>
         fileSize: sub.fileSize,
         missionTitle: sub.missionTitle,
         submittedAt: sub.submittedAt,
+        submittedBy: sub.submittedBy,
         status: sub.status,
         grade: sub.grade,
         gradedAt: sub.gradedAt
@@ -273,6 +275,7 @@ router.get('/my-classes', auth(['instructor', 'admin']), async (req, res) => {
         fileSize: sub.fileSize,
         missionTitle: sub.missionTitle,
         submittedAt: sub.submittedAt,
+        submittedBy: sub.submittedBy,
         status: sub.status,
         grade: sub.grade,
         gradedAt: sub.gradedAt
@@ -389,6 +392,7 @@ router.get('/:id', auth(['instructor', 'admin', 'student']), async (req, res) =>
         fileSize: submission.fileSize,
         missionTitle: submission.missionTitle,
         submittedAt: submission.submittedAt,
+        submittedBy: submission.submittedBy,
         status: submission.status,
         grade: submission.grade,
         rubricScores: submission.rubricScores,

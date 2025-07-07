@@ -43,6 +43,10 @@ const SubmissionSchema = new mongoose.Schema({
     type: Date, 
     default: Date.now 
   },
+  submittedBy: { 
+    type: String,
+    default: null // Name of the person who submitted on behalf of the student
+  },
   status: { 
     type: String, 
     enum: ['pending', 'reviewing', 'graded'], 

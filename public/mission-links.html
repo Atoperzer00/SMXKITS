@@ -805,11 +805,11 @@
           <div style="display: flex; gap: 1rem; align-items: flex-start; margin-bottom: 1.5rem;">
             <div style="flex: 1;">
               <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-accent);">
-                <i class="fas fa-users"></i> Select Students:
+                <i class="fas fa-users"></i> Select Mission Classmates:
               </label>
               <div class="student-dropdown-container" style="position: relative;">
                 <button id="studentDropdownBtn" style="width: 100%; padding: 0.75rem; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text-primary); text-align: left; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
-                  <span>Select students...</span>
+                  <span>Select classmates you worked with...</span>
                   <i class="fas fa-chevron-down"></i>
                 </button>
                 <div id="studentDropdown" class="student-dropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; background: var(--card-gradient); border: 1px solid var(--glass-border); border-radius: 8px; max-height: 200px; overflow-y: auto; z-index: 1000; margin-top: 4px;">
@@ -1549,7 +1549,7 @@
       updateSelectedStudentsDisplay();
     }
 
-    // Student selection functions
+    // Student selection functions - loads only students from the same class/mission
     async function loadClassStudents() {
       try {
         const token = localStorage.getItem('token');
@@ -1568,6 +1568,7 @@
 
         if (response.ok) {
           const classData = await response.json();
+          // Only show students from the same class (mission participants)
           classStudents = classData.students || [];
           updateStudentDropdown();
         } else {
@@ -1581,11 +1582,14 @@
     function updateStudentDropdown() {
       const dropdown = document.getElementById('studentDropdown');
       if (classStudents.length === 0) {
-        dropdown.innerHTML = '<div style="padding: 1rem; text-align: center; color: var(--text-secondary);">No students found in this class</div>';
+        dropdown.innerHTML = '<div style="padding: 1rem; text-align: center; color: var(--text-secondary);">No classmates found for this mission</div>';
         return;
       }
 
-      dropdown.innerHTML = classStudents.map(student => `
+      // Add header to clarify these are classmates
+      const headerHtml = '<div style="padding: 0.5rem 1rem; font-size: 0.8rem; color: var(--text-accent); border-bottom: 1px solid var(--glass-border); font-weight: 600;">Select Mission Classmates:</div>';
+      
+      dropdown.innerHTML = headerHtml + classStudents.map(student => `
         <div class="student-option" onclick="toggleStudent('${student._id}', '${student.username}')">
           <div class="student-checkbox ${selectedStudents.includes(student._id) ? 'checked' : ''}"></div>
           <span>${student.username}</span>
@@ -1633,6 +1637,8 @@
 
       try {
         const token = localStorage.getItem('token');
+        const currentUserName = localStorage.getItem('userName') || 'Unknown User';
+        
         if (!token) {
           alert('Authentication required. Please log in again.');
           window.location.href = '/login.html';
@@ -1671,6 +1677,7 @@
               formData.append('file', file);
               formData.append('studentId', studentId);
               formData.append('missionTitle', 'Mission File Submission');
+              formData.append('submittedBy', currentUserName); // Automatically grab current user's name
               
               // Submit file on behalf of student
               const response = await fetch('/api/submissions/submit-for-student', {
