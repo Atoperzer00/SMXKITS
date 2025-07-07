@@ -649,6 +649,173 @@
       z-index: 9999 !important;
     }
 
+    /* Daily Schedule Styles */
+    .daily-schedule-container {
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+      overflow: hidden;
+      position: relative;
+      z-index: 1;
+    }
+
+    .schedule-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem 2rem;
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .schedule-date {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .schedule-date i {
+      color: var(--text-accent);
+      font-size: 1.4rem;
+    }
+
+    .schedule-calendar-btn {
+      background: var(--accent-gradient);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 25px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .schedule-calendar-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(255, 171, 64, 0.4);
+    }
+
+    .schedule-timeline {
+      max-height: 400px;
+      overflow-y: auto;
+      padding: 1rem 0;
+    }
+
+    .schedule-hour {
+      display: flex;
+      align-items: stretch;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      min-height: 60px;
+      transition: var(--transition);
+      cursor: pointer;
+      position: relative;
+    }
+
+    .schedule-hour:hover {
+      background: rgba(255, 123, 0, 0.05);
+    }
+
+    .schedule-hour.has-event {
+      background: rgba(255, 123, 0, 0.1);
+      border-left: 4px solid var(--accent-gradient);
+    }
+
+    .schedule-hour.has-event:hover {
+      background: rgba(255, 123, 0, 0.15);
+    }
+
+    .schedule-time {
+      width: 100px;
+      padding: 1rem 1.5rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-right: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .schedule-content {
+      flex: 1;
+      padding: 1rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .schedule-event {
+      margin-bottom: 0.5rem;
+    }
+
+    .schedule-event:last-child {
+      margin-bottom: 0;
+    }
+
+    .event-title {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 1rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .event-description {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+
+    .event-type {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 0.5rem;
+    }
+
+    .event-type.training {
+      background: rgba(255, 107, 53, 0.2);
+      color: #ff6b35;
+      border: 1px solid rgba(255, 107, 53, 0.3);
+    }
+
+    .event-type.exam {
+      background: rgba(106, 168, 79, 0.2);
+      color: #6aa84f;
+      border: 1px solid rgba(106, 168, 79, 0.3);
+    }
+
+    .event-type.deadline {
+      background: rgba(204, 65, 37, 0.2);
+      color: #cc4125;
+      border: 1px solid rgba(204, 65, 37, 0.3);
+    }
+
+    .event-type.meeting {
+      background: rgba(61, 133, 198, 0.2);
+      color: #3d85c6;
+      border: 1px solid rgba(61, 133, 198, 0.3);
+    }
+
+    .schedule-empty {
+      color: var(--text-secondary);
+      font-style: italic;
+      font-size: 0.9rem;
+    }
+
     /* Custom Scrollbar */
     ::-webkit-scrollbar {
       width: 8px;
@@ -695,6 +862,32 @@
       
       .tools-grid {
         grid-template-columns: 1fr;
+      }
+
+      .schedule-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+      }
+
+      .schedule-hour {
+        flex-direction: column;
+        min-height: auto;
+      }
+
+      .schedule-time {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        padding: 0.75rem;
+      }
+
+      .schedule-content {
+        padding: 1rem;
+      }
+
+      .schedule-timeline {
+        max-height: 300px;
       }
     }
   </style>
@@ -836,22 +1029,33 @@
             <p class="tool-description" id="gradingDescription">View your grades, performance metrics, and instructor feedback.</p>
           </div>
           
-          <div class="tool-card" onclick="window.location.href='schedule.html'">
-            <div class="tool-icon"><i class="fas fa-calendar-alt"></i></div>
-            <h3 class="tool-title">Training Schedule</h3>
-            <p class="tool-description">View upcoming training sessions, deadlines, and important dates.</p>
-          </div>
-          
           <div class="tool-card" onclick="window.location.href='student-messenger.html'">
             <div class="tool-icon"><i class="fas fa-comments"></i></div>
             <h3 class="tool-title">Student Messenger</h3>
             <p class="tool-description">Send messages to instructors, ask questions, and communicate with your training team.</p>
           </div>
-          
-          <div class="tool-card" onclick="showInstructorInfo()">
-            <div class="tool-icon"><i class="fas fa-chalkboard-teacher"></i></div>
-            <h3 class="tool-title">Instructor Information</h3>
-            <p class="tool-description">View instructor profiles, contact information, and office hours.</p>
+        </div>
+      </section>
+
+      <!-- Daily Schedule Section -->
+      <section class="fade-in stagger-3">
+        <h2 class="section-title">
+          <i class="fas fa-clock"></i>
+          Today's Schedule
+        </h2>
+        <div class="daily-schedule-container">
+          <div class="schedule-header">
+            <div class="schedule-date" id="scheduleDate">
+              <i class="fas fa-calendar-day"></i>
+              <span id="currentDate">Loading...</span>
+            </div>
+            <button class="schedule-calendar-btn" onclick="window.location.href='schedule.html'">
+              <i class="fas fa-calendar-alt"></i>
+              View Full Calendar
+            </button>
+          </div>
+          <div class="schedule-timeline" id="scheduleTimeline">
+            <!-- Timeline will be populated by JavaScript -->
           </div>
         </div>
       </section>
@@ -875,7 +1079,175 @@
       } else {
         gradingDescription.textContent = 'View your grades, performance metrics, and instructor feedback.';
       }
+
+      // Initialize daily schedule
+      initializeDailySchedule();
     });
+
+    // Daily Schedule Functions
+    function initializeDailySchedule() {
+      // Set current date
+      const today = new Date();
+      const options = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      };
+      document.getElementById('currentDate').textContent = today.toLocaleDateString('en-US', options);
+
+      // Generate timeline
+      generateScheduleTimeline();
+    }
+
+    function generateScheduleTimeline() {
+      const timeline = document.getElementById('scheduleTimeline');
+      const startHour = 7; // 7 AM
+      const endHour = 18; // 6 PM
+      
+      // Sample schedule data - this would come from your backend
+      const todayEvents = getTodayEvents();
+      
+      timeline.innerHTML = '';
+      
+      for (let hour = startHour; hour <= endHour; hour++) {
+        const hourDiv = document.createElement('div');
+        hourDiv.className = 'schedule-hour';
+        
+        // Check if there are events for this hour
+        const hourEvents = todayEvents.filter(event => event.hour === hour);
+        if (hourEvents.length > 0) {
+          hourDiv.classList.add('has-event');
+        }
+        
+        // Time column
+        const timeDiv = document.createElement('div');
+        timeDiv.className = 'schedule-time';
+        timeDiv.textContent = formatHour(hour);
+        
+        // Content column
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'schedule-content';
+        
+        if (hourEvents.length > 0) {
+          hourEvents.forEach(event => {
+            const eventDiv = document.createElement('div');
+            eventDiv.className = 'schedule-event';
+            
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'event-title';
+            titleDiv.textContent = event.title;
+            
+            const descDiv = document.createElement('div');
+            descDiv.className = 'event-description';
+            descDiv.textContent = event.description;
+            
+            const typeDiv = document.createElement('div');
+            typeDiv.className = `event-type ${event.type}`;
+            typeDiv.textContent = event.type;
+            
+            eventDiv.appendChild(titleDiv);
+            eventDiv.appendChild(descDiv);
+            eventDiv.appendChild(typeDiv);
+            
+            contentDiv.appendChild(eventDiv);
+          });
+        } else {
+          const emptyDiv = document.createElement('div');
+          emptyDiv.className = 'schedule-empty';
+          emptyDiv.textContent = 'No scheduled activities';
+          contentDiv.appendChild(emptyDiv);
+        }
+        
+        // Add click handler for time blocks
+        hourDiv.addEventListener('click', () => openTimeBlockDetails(hour, hourEvents));
+        
+        hourDiv.appendChild(timeDiv);
+        hourDiv.appendChild(contentDiv);
+        timeline.appendChild(hourDiv);
+      }
+    }
+
+    function getTodayEvents() {
+      // This would typically come from your backend API
+      // For now, using sample data based on current day of week
+      const today = new Date();
+      const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
+      
+      const weeklySchedule = {
+        1: [ // Monday
+          {
+            hour: 9,
+            title: "Keyboard Training Session",
+            description: "Improve typing speed and accuracy with military terminology",
+            type: "training"
+          },
+          {
+            hour: 15,
+            title: "Live PED Exercise",
+            description: "Real-time pattern of life exercises and mission scenarios",
+            type: "training"
+          }
+        ],
+        2: [ // Tuesday
+          {
+            hour: 14,
+            title: "Screener Training",
+            description: "Advanced screening techniques and threat identification",
+            type: "training"
+          }
+        ],
+        3: [ // Wednesday
+          {
+            hour: 10,
+            title: "IA Training Exam",
+            description: "Intelligence analysis assessment",
+            type: "exam"
+          }
+        ],
+        4: [ // Thursday
+          {
+            hour: 13,
+            title: "Assignment Review",
+            description: "Review completed assignments and prepare submissions",
+            type: "meeting"
+          }
+        ],
+        5: [ // Friday
+          {
+            hour: 13,
+            title: "Weekly Progress Review",
+            description: "Meet with instructor to discuss weekly progress",
+            type: "meeting"
+          }
+        ]
+      };
+      
+      return weeklySchedule[dayOfWeek] || [];
+    }
+
+    function formatHour(hour) {
+      if (hour === 0) return '12:00 AM';
+      if (hour < 12) return `${hour}:00 AM`;
+      if (hour === 12) return '12:00 PM';
+      return `${hour - 12}:00 PM`;
+    }
+
+    function openTimeBlockDetails(hour, events) {
+      const timeStr = formatHour(hour);
+      
+      if (events.length === 0) {
+        alert(`${timeStr}\n\nNo scheduled activities for this time slot.\n\nClick "View Full Calendar" to see your complete schedule or add new events.`);
+      } else {
+        let message = `${timeStr}\n\n`;
+        events.forEach((event, index) => {
+          message += `${event.title}\n${event.description}\nType: ${event.type.toUpperCase()}`;
+          if (index < events.length - 1) message += '\n\n';
+        });
+        message += '\n\nClick "View Full Calendar" to manage your schedule.';
+        alert(message);
+      }
+    }
 
     function goToGrading() {
       const role = localStorage.getItem('role');
@@ -890,9 +1262,7 @@
       window.location.href = 'OpsLog.html';
     }
 
-    function showInstructorInfo() {
-      alert('Instructor information feature coming soon!');
-    }
+
 
     function logout() {
       localStorage.removeItem('token');
