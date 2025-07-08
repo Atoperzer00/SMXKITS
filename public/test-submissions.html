@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Submissions Display</title>
+  <style>
+    :root {
+      --text-secondary: #b8c5d6;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background: #1e1e1e;
+      color: white;
+      padding: 20px;
+    }
+    .submissions-list {
+      border: 1px solid #333;
+      padding: 20px;
+      border-radius: 10px;
+      min-height: 200px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Test Submissions Display</h1>
+  <div class="submissions-list" id="submissionsList">
+    <!-- Submissions will be populated here -->
+  </div>
+  
+  <button onclick="testLoadSubmissions()">Test Load Submissions</button>
+  <button onclick="clearStorage()">Clear Storage</button>
+  
+  <script>
+    function loadSubmissions() {
+      // Load both exercise submissions and file submissions
+      const exerciseSubmissions = [];
+      const fileSubmissions = JSON.parse(localStorage.getItem('fileSubmissions') || '[]');
+      const regularSubmissions = JSON.parse(localStorage.getItem('submissions') || '[]');
+      
+      // Combine all submissions, avoiding duplicates
+      const allSubmissions = [...exerciseSubmissions, ...fileSubmissions];
+      
+      // Add regular submissions that aren't already included
+      regularSubmissions.forEach(sub => {
+        if (!allSubmissions.find(existing => existing.id === sub.id)) {
+          allSubmissions.push(sub);
+        }
+      });
+      
+      const submissionsList = document.getElementById('submissionsList');
+      
+      if (allSubmissions.length === 0) {
+        submissionsList.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-secondary); font-style: italic;">Student Submissions Appear Here</div>';
+        return;
+      }
+
+      submissionsList.innerHTML = allSubmissions.map(submission => `
+        <div style="border: 1px solid #444; padding: 10px; margin: 5px 0; border-radius: 5px;">
+          <div><strong>Student:</strong> ${submission.studentName || submission.student}</div>
+          <div><strong>File:</strong> ${submission.fileName || submission.mission || submission.exercise}</div>
+          <div><strong>Time:</strong> ${new Date(submission.submittedAt).toLocaleTimeString()}</div>
+        </div>
+      `).join('');
+    }
+    
+    function testLoadSubmissions() {
+      console.log('Testing loadSubmissions...');
+      loadSubmissions();
+    }
+    
+    function clearStorage() {
+      localStorage.removeItem('fileSubmissions');
+      localStorage.removeItem('submissions');
+      loadSubmissions();
+      console.log('Storage cleared');
+    }
+    
+    // Load on page load
+    loadSubmissions();
+  </script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test File Submission</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #1e1e1e;
+      color: white;
+      padding: 20px;
+    }
+    button {
+      background: #ff6b35;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 10px;
+    }
+    button:hover {
+      background: #ff8c42;
+    }
+  </style>
+</head>
+<body>
+  <h1>Test File Submission</h1>
+  <button onclick="createTestSubmission()">Create Test Submission</button>
+  <button onclick="openInstructorGrading()">Open Instructor Grading</button>
+  <button onclick="openTestPage()">Open Test Page</button>
+  
+  <div id="status"></div>
+  
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    function createTestSubmission() {
+      const testSubmission = {
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+        studentName: 'Test Student',
+        fileName: 'test-file.pdf',
+        fileSize: 1024000,
+        fileType: 'application/pdf',
+        fileData: 'data:application/pdf;base64,JVBERi0xLjQKJdPr6eEKMSAwIG9iago8PAovVHlwZSAvQ2F0YWxvZwovUGFnZXMgMiAwIFIKPj4KZW5kb2JqCjIgMCBvYmoKPDwKL1R5cGUgL1BhZ2VzCi9LaWRzIFszIDAgUl0KL0NvdW50IDEKPD4KZW5kb2JqCjMgMCBvYmoKPDwKL1R5cGUgL1BhZ2UKL1BhcmVudCAyIDAgUgovTWVkaWFCb3ggWzAgMCA2MTIgNzkyXQovUmVzb3VyY2VzIDw8Ci9Gb250IDw8Ci9GMSA0IDAgUgo+Pgo+PgovQ29udGVudHMgNSAwIFIKPj4KZW5kb2JqCjQgMCBvYmoKPDwKL1R5cGUgL0ZvbnQKL1N1YnR5cGUgL1R5cGUxCi9CYXNlRm9udCAvSGVsdmV0aWNhCj4+CmVuZG9iago1IDAgb2JqCjw8Ci9MZW5ndGggNDQKPj4Kc3RyZWFtCkJUCi9GMSA4IFRmCjEwMCA3MDAgVGQKKFRlc3QgUERGKSBUagpFVApzdHJlYW0KZW5kb2JqCnhyZWYKMCA2CjAwMDAwMDAwMDAgNjU1MzUgZiAKMDAwMDAwMDAwOSAwMDAwMCBuIAowMDAwMDAwMDU4IDAwMDAwIG4gCjAwMDAwMDAxMTUgMDAwMDAgbiAKMDAwMDAwMDI0NSAwMDAwMCBuIAowMDAwMDAwMzIyIDAwMDAwIG4gCnRyYWlsZXIKPDwKL1NpemUgNgovUm9vdCAxIDAgUgo+PgpzdGFydHhyZWYKNDE0CiUlRU9G',
+        submittedAt: new Date().toISOString(),
+        status: 'pending',
+        vaultType: 'slideVault'
+      };
+      
+      // Store in localStorage like the real system does
+      let fileSubmissions = JSON.parse(localStorage.getItem('fileSubmissions') || '[]');
+      fileSubmissions.push(testSubmission);
+      localStorage.setItem('fileSubmissions', JSON.stringify(fileSubmissions));
+      
+      let submissions = JSON.parse(localStorage.getItem('submissions') || '[]');
+      const displaySubmission = {
+        id: testSubmission.id,
+        student: testSubmission.studentName,
+        class: 'Mission Exercise',
+        mission: `${testSubmission.vaultType === 'slideVault' ? 'Slide' : 'Sheet'} Submission`,
+        submittedAt: testSubmission.submittedAt,
+        status: 'pending',
+        fileData: testSubmission.fileData,
+        fileName: testSubmission.fileName,
+        fileSize: testSubmission.fileSize,
+        fileType: testSubmission.fileType,
+        vaultType: testSubmission.vaultType
+      };
+      
+      submissions.push(displaySubmission);
+      localStorage.setItem('submissions', JSON.stringify(submissions));
+      
+      document.getElementById('status').innerHTML = '<p style="color: green;">Test submission created successfully!</p>';
+      console.log('Test submission created:', testSubmission);
+    }
+    
+    function openInstructorGrading() {
+      window.open('/instructor-grading.html', '_blank');
+    }
+    
+    function openTestPage() {
+      window.open('/test-submissions.html', '_blank');
+    }
+  </script>
+</body>
+</html>

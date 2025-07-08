@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Test</title>
+</head>
+<body>
+    <h1>Dashboard Test</h1>
+    <p>Testing if dashboard.html loads correctly...</p>
+    
+    <script>
+        // Test if we can load the dashboard
+        fetch('./public/dashboard.html')
+            .then(response => response.text())
+            .then(html => {
+                console.log('Dashboard HTML loaded successfully');
+                document.body.innerHTML += '<p style="color: green;">✅ Dashboard HTML structure is valid</p>';
+            })
+            .catch(error => {
+                console.error('Error loading dashboard:', error);
+                document.body.innerHTML += '<p style="color: red;">❌ Error loading dashboard</p>';
+            });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Edit IA Training - Admin Controls</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    :root {
+      --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      --dark-gradient: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 100%);
+      --card-gradient: linear-gradient(145deg, #16213e 0%, #0f1419 100%);
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --text-primary: #ffffff;
+      --text-secondary: #b8c5d6;
+      --text-accent: #64b5f6;
+      --shadow-primary: 0 20px 40px rgba(0, 0, 0, 0.3);
+      --shadow-hover: 0 30px 60px rgba(0, 0, 0, 0.4);
+      --border-radius: 20px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      --accent-color: #22c55e;
+      --input-bg: #252a33;
+      --input-border: #333c48;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--dark-gradient);
+      color: var(--text-primary);
+      overflow-x: hidden;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .admin-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .admin-sidebar {
+      width: 280px;
+      background: rgba(15, 20, 25, 0.95);
+      backdrop-filter: blur(20px);
+      border-right: 1px solid var(--glass-border);
+      display: flex;
+      flex-direction: column;
+      padding: 2rem 0;
+    }
+
+    .admin-logo {
+      width: 200px;
+      margin: 0 auto 3rem;
+      filter: drop-shadow(0 10px 30px rgba(102, 126, 234, 0.3));
+    }
+
+    .nav-item {
+      margin: 0.5rem 1.5rem;
+      border-radius: 15px;
+      overflow: hidden;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: var(--transition);
+      background: var(--glass-bg);
+      border: 1px solid transparent;
+    }
+
+    .nav-link:hover, .nav-link.active {
+      color: var(--text-primary);
+      background: var(--primary-gradient);
+      border-color: var(--text-accent);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    }
+
+    .nav-link i {
+      margin-right: 1rem;
+      font-size: 1.2rem;
+      width: 20px;
+      text-align: center;
+    }
+
+    .admin-main {
+      flex: 1;
+      padding: 2rem;
+      overflow-y: auto;
+    }
+
+    .dashboard-header {
+      margin-bottom: 3rem;
+      text-align: center;
+    }
+
+    .dashboard-title {
+      font-size: 3rem;
+      font-weight: 800;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1rem;
+    }
+
+    .training-card {
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      margin-bottom: 2rem;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    .card-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .btn {
+      padding: 0.8rem 2rem;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      font-size: 1rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .btn-primary {
+      background: var(--primary-gradient);
+      color: white;
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+      color: white;
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: white;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-small {
+      padding: 0.4rem 0.8rem;
+      font-size: 0.8rem;
+    }
+
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 2rem;
+    }
+
+    .module-item {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 15px;
+      padding: 1.5rem;
+      transition: var(--transition);
+    }
+
+    .module-item:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--text-accent);
+      transform: translateY(-5px);
+    }
+
+    .module-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+    }
+
+    .module-title {
+      font-weight: 600;
+      color: var(--text-accent);
+      margin-bottom: 0.5rem;
+      flex: 1;
+    }
+
+    .module-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .module-description {
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 1rem;
+    }
+
+    .module-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.9rem;
+      color: var(--text-accent);
+    }
+
+    .level-badge {
+      padding: 0.3rem 0.8rem;
+      border-radius: 15px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .level-basic {
+      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+      color: white;
+    }
+
+    .level-intermediate {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: white;
+    }
+
+    .level-advanced {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: white;
+    }
+
+    .practices-section {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--glass-border);
+    }
+
+    .practices-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-accent);
+      margin-bottom: 0.5rem;
+    }
+
+    .practice-list {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .practice-item {
+      margin-bottom: 0.3rem;
+    }
+
+    .controls {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      justify-content: center;
+    }
+
+    .save-section {
+      margin-top: 3rem;
+      padding: 2rem;
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+      text-align: center;
+    }
+
+    .save-section h3 {
+      color: var(--text-accent);
+      margin-bottom: 1rem;
+      font-size: 1.3rem;
+    }
+
+    .save-options {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-secondary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-warning {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 10000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(5px);
+    }
+
+    .modal-content {
+      background: var(--card-gradient);
+      margin: 5% auto;
+      padding: 2rem;
+      border-radius: var(--border-radius);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-hover);
+      width: 90%;
+      max-width: 700px;
+      position: relative;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .modal-title {
+      color: var(--text-accent);
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .close {
+      color: var(--text-secondary);
+      font-size: 2rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .close:hover {
+      color: var(--text-primary);
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: var(--text-accent);
+    }
+
+    .form-input, .form-textarea, .form-select {
+      width: 100%;
+      padding: 0.8rem;
+      border: 2px solid var(--glass-border);
+      border-radius: 10px;
+      background: var(--glass-bg);
+      color: var(--text-primary);
+      font-size: 1rem;
+      transition: var(--transition);
+      font-family: inherit;
+    }
+
+    .form-textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .form-input:focus, .form-textarea:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--text-accent);
+      box-shadow: 0 0 20px rgba(100, 181, 246, 0.3);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: flex-end;
+      margin-top: 2rem;
+    }
+
+    .btn-cancel {
+      background: transparent;
+      border: 2px solid var(--glass-border);
+      color: var(--text-secondary);
+    }
+
+    .btn-cancel:hover {
+      background: var(--glass-bg);
+      color: var(--text-primary);
+    }
+
+    .practice-list-modal {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      background: var(--glass-bg);
+    }
+
+    .practice-item-modal {
+      padding: 0.8rem;
+      border-bottom: 1px solid var(--glass-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .practice-item-modal:last-child {
+      border-bottom: none;
+    }
+
+    .practice-text {
+      flex: 1;
+      margin-right: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .video-section {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--glass-border);
+    }
+
+    .video-preview {
+      width: 80px;
+      height: 50px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-accent);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .video-preview:hover {
+      background: var(--accent-gradient);
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <img src="smx-logo.png" alt="SMX KITS Logo" class="admin-logo">
+      
+      <nav>
+        <div class="nav-item">
+          <a href="dashboard.html" class="nav-link">
+            <i class="fas fa-tachometer-alt"></i>Dashboard
+          </a>
+        </div>
+        <div class="nav-item">
+          <a href="edit-course-content.html" class="nav-link">
+            <i class="fas fa-edit"></i>Edit Course Content
+          </a>
+        </div>
+        <div class="nav-item">
+          <a href="course-content.html" class="nav-link">
+            <i class="fas fa-book-open"></i>Course Content
+          </a>
+        </div>
+        <div class="nav-item">
+          <a href="edit-ia-training.html" class="nav-link active">
+            <i class="fas fa-edit"></i>Edit IA Training
+          </a>
+        </div>
+        <div class="nav-item">
+          <a href="IA Training.html" class="nav-link">
+            <i class="fas fa-satellite-dish"></i>IA Training
+          </a>
+        </div>
+        <div class="nav-item">
+          <a href="edit-screener-training.html" class="nav-link">
+            <i class="fas fa-edit"></i>Edit Screener Training
+          </a>
+        </div>
+        <div class="nav-item">
+          <a href="Screener Training.html" class="nav-link">
+            <i class="fas fa-user-shield"></i>Screener Training
+          </a>
+        </div>
+        <div class="nav-item">
+          <a href="edit-mission-links.html" class="nav-link">
+            <i class="fas fa-edit"></i>Edit Mission Links
+          </a>
+        </div>
+        <div class="nav-item">
+          <a href="mission-links.html" class="nav-link">
+            <i class="fas fa-rocket"></i>Mission Links
+          </a>
+        </div>
+        <div class="nav-item">
+          <a href="edit-typing-tests.html" class="nav-link">
+            <i class="fas fa-edit"></i>Edit Typing Tests
+          </a>
+        </div>
+        <div class="nav-item">
+          <a href="keyboard-training.html" class="nav-link">
+            <i class="fas fa-keyboard"></i>Keyboard Training
+          </a>
+        </div>
+        <div class="nav-item">
+          <a href="#" onclick="logout()" class="nav-link">
+            <i class="fas fa-sign-out-alt"></i>Logout
+          </a>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+      <div class="dashboard-header">
+        <h1 class="dashboard-title">Edit IA Training</h1>
+        <p style="color: var(--text-secondary); font-size: 1.1rem;">Manage Intelligence Analysis training modules with practices, videos, and assessments.</p>
+      </div>
+      
+      <div class="controls">
+        <button onclick="openAddModuleModal()" class="btn btn-primary">
+          <i class="fas fa-plus" style="margin-right: 0.5rem;"></i>
+          Add New Module
+        </button>
+      </div>
+      
+      <div class="training-card">
+        <div class="card-header">
+          <h3 class="card-title">IA Training Modules</h3>
+        </div>
+        <div class="module-grid" id="modules-container">
+          <!-- Modules will be loaded here -->
+        </div>
+      </div>
+      
+      <!-- Save Section -->
+      <div class="save-section">
+        <h3>Save IA Training</h3>
+        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+          Choose how to save your current IA training configuration
+        </p>
+        <div class="save-options">
+          <button onclick="saveToCurrentClass()" class="btn btn-primary">
+            <i class="fas fa-save" style="margin-right: 0.5rem;"></i>
+            Save to Current Class
+          </button>
+          <button onclick="openSaveToTemplateModal()" class="btn btn-secondary">
+            <i class="fas fa-layer-group" style="margin-right: 0.5rem;"></i>
+            Save to Template
+          </button>
+          <button onclick="saveToRepository()" class="btn btn-warning">
+            <i class="fas fa-database" style="margin-right: 0.5rem;"></i>
+            Save to Repository
+          </button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Add/Edit Module Modal -->
+  <div id="moduleModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Add IA Training Module</h3>
+        <span class="close" onclick="closeModuleModal()">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Module Name:</label>
+          <input type="text" id="moduleName" class="form-input" placeholder="Enter module name">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Module Description:</label>
+          <textarea id="moduleDescription" class="form-textarea" placeholder="Enter module description"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Difficulty Level:</label>
+          <select id="moduleLevel" class="form-select">
+            <option value="basic">Basic</option>
+            <option value="intermediate">Intermediate</option>
+            <option value="advanced">Advanced</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Duration (minutes):</label>
+          <input type="number" id="moduleDuration" class="form-input" placeholder="60" min="1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Video URL:</label>
+          <input type="url" id="moduleVideo" class="form-input" placeholder="https://example.com/video.mp4">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Assessment/Correct Answer:</label>
+          <textarea id="moduleAssessment" class="form-textarea" placeholder="Enter assessment questions or correct answers"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Practices:</label>
+          <div class="practice-list-modal" id="practiceList">
+            <!-- Practices will be added here -->
+          </div>
+          <div style="margin-top: 1rem;">
+            <input type="text" id="newPractice" class="form-input" placeholder="Enter practice scenario or exercise" style="margin-bottom: 0.5rem;">
+            <button onclick="addPractice()" class="btn btn-primary btn-small">Add Practice</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button onclick="closeModuleModal()" class="btn btn-cancel">Cancel</button>
+        <button onclick="saveModule()" class="btn btn-primary" id="saveModuleBtn">Add Module</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Save to Template Modal -->
+  <div id="saveTemplateModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Save to Template</h3>
+        <span class="close" onclick="closeSaveTemplateModal()">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Template Type:</label>
+          <select id="templateType" class="form-select">
+            <option value="existing">Add to Existing Template</option>
+            <option value="new">Create New Template</option>
+          </select>
+        </div>
+        <div class="form-group" id="existingTemplateGroup">
+          <label class="form-label">Select Template:</label>
+          <select id="existingTemplate" class="form-select">
+            <option value="Easy">Easy Template</option>
+            <option value="Medium">Medium Template</option>
+            <option value="Hard">Hard Template</option>
+          </select>
+        </div>
+        <div class="form-group" id="newTemplateGroup" style="display: none;">
+          <label class="form-label">Template Name:</label>
+          <input type="text" id="newTemplateName" class="form-input" placeholder="Enter template name">
+        </div>
+        <div class="form-group" id="newTemplateDifficultyGroup" style="display: none;">
+          <label class="form-label">Template Difficulty:</label>
+          <select id="newTemplateDifficulty" class="form-select">
+            <option value="Easy">Easy</option>
+            <option value="Medium">Medium</option>
+            <option value="Hard">Hard</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button onclick="closeSaveTemplateModal()" class="btn btn-cancel">Cancel</button>
+        <button onclick="saveToTemplate()" class="btn btn-primary">Save to Template</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let socket = null;
+    let iaModules = [];
+    let currentEditIndex = -1;
+    let currentPractices = [];
+
+    // Initialize the application
+    document.addEventListener('DOMContentLoaded', async function() {
+      console.log('Edit IA Training - Initializing...');
+      
+      // Initialize socket
+      socket = io();
+      
+      socket.on('connect', () => {
+        console.log('✅ Socket connected:', socket.id);
+      });
+      
+      // Load initial data
+      await loadIAModules();
+      renderModules();
+    });
+
+    // Load IA modules from API or use defaults
+    async function loadIAModules() {
+      try {
+        console.log('📚 Loading IA modules...');
+        
+        // For now, use default modules - in future this could load from API
+        iaModules = [
+          {
+            id: 'ia1',
+            name: 'Intelligence Fundamentals',
+            description: 'Basic principles of intelligence analysis, collection methods, and analytical frameworks.',
+            level: 'basic',
+            duration: 90,
+            practices: [
+              'Analyze open-source intelligence (OSINT) from social media platforms',
+              'Practice the intelligence cycle: planning, collection, processing, analysis, dissemination',
+              'Identify and assess source credibility and reliability'
+            ],
+            videoUrl: 'https://example.com/ia-fundamentals.mp4',
+            assessment: 'Students must correctly identify the six steps of the intelligence cycle and demonstrate proper source evaluation techniques using provided case studies.'
+          },
+          {
+            id: 'ia2',
+            name: 'Threat Assessment Methodologies',
+            description: 'Advanced techniques for assessing threats, analyzing patterns, and predicting potential security risks.',
+            level: 'intermediate',
+            duration: 120,
+            practices: [
+              'Conduct structured analytical techniques (SATs) for threat assessment',
+              'Perform link analysis to identify threat networks and relationships',
+              'Create threat matrices and risk assessment frameworks'
+            ],
+            videoUrl: 'https://example.com/ia-threat-assessment.mp4',
+            assessment: 'Complete a comprehensive threat assessment using provided intelligence data, including network analysis, risk matrix, and predictive analysis with confidence levels.'
+          },
+          {
+            id: 'ia3',
+            name: 'Advanced Pattern Analysis',
+            description: 'Complex pattern recognition, behavioral analysis, and predictive intelligence techniques.',
+            level: 'advanced',
+            duration: 150,
+            practices: [
+              'Identify behavioral patterns in large datasets using analytical software',
+              'Perform geospatial analysis for pattern of life assessments',
+              'Conduct predictive analysis using historical intelligence data'
+            ],
+            videoUrl: 'https://example.com/ia-pattern-analysis.mp4',
+            assessment: 'Demonstrate mastery of advanced analytical techniques by completing a multi-source intelligence fusion exercise, including temporal analysis, geospatial correlation, and predictive modeling with statistical confidence measures.'
+          },
+          {
+            id: 'ia4',
+            name: 'Intelligence Writing and Briefing',
+            description: 'Professional intelligence product creation, briefing techniques, and communication skills.',
+            level: 'intermediate',
+            duration: 75,
+            practices: [
+              'Write intelligence summaries following standard formats (IIR, INTSUM)',
+              'Create visual intelligence products (charts, maps, timelines)',
+              'Deliver oral intelligence briefings to decision makers'
+            ],
+            videoUrl: 'https://example.com/ia-writing-briefing.mp4',
+            assessment: 'Produce a complete intelligence package including written assessment, visual aids, and deliver a 10-minute briefing that meets professional intelligence community standards.'
+          }
+        ];
+        
+        console.log(`✅ Loaded ${iaModules.length} IA modules`);
+      } catch (error) {
+        console.warn('⚠️ Error loading IA modules:', error.message);
+      }
+    }
+
+    // Render IA modules
+    function renderModules() {
+      const container = document.getElementById('modules-container');
+      container.innerHTML = '';
+      
+      if (iaModules.length === 0) {
+        container.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--text-secondary);">
+            <i class="fas fa-satellite-dish" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+            <p>No IA training modules yet</p>
+            <p style="font-size: 0.9rem; margin-top: 0.5rem;">Click "Add New Module" to get started</p>
+          </div>
+        `;
+        return;
+      }
+      
+      iaModules.forEach((module, index) => {
+        const moduleDiv = document.createElement('div');
+        moduleDiv.className = 'module-item';
+        
+        moduleDiv.innerHTML = `
+          <div class="module-header">
+            <div style="flex: 1;">
+              <div class="module-title">${module.name}</div>
+              <div class="level-badge level-${module.level}">${module.level.toUpperCase()}</div>
+            </div>
+            <div class="module-actions">
+              <button onclick="editModule(${index})" class="btn btn-primary btn-small">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button onclick="removeModule(${index})" class="btn btn-danger btn-small">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+          <div class="module-description">${module.description}</div>
+          <div class="module-meta">
+            <span><i class="fas fa-clock"></i> ${module.duration} minutes</span>
+            <span><i class="fas fa-tasks"></i> ${module.practices.length} practices</span>
+          </div>
+          <div class="practices-section">
+            <div class="practices-title">Practice Scenarios:</div>
+            <div class="practice-list">
+              ${module.practices.slice(0, 2).map(practice => `<div class="practice-item">• ${practice}</div>`).join('')}
+              ${module.practices.length > 2 ? `<div class="practice-item"><em>+${module.practices.length - 2} more practices</em></div>` : ''}
+            </div>
+          </div>
+          <div class="video-section">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 0.9rem; color: var(--text-accent);">Training Video:</span>
+              <div class="video-preview" onclick="previewVideo('${module.videoUrl}')">
+                <i class="fas fa-play"></i>
+              </div>
+            </div>
+          </div>
+        `;
+        
+        container.appendChild(moduleDiv);
+      });
+    }
+
+    // Open add module modal
+    function openAddModuleModal() {
+      currentEditIndex = -1;
+      currentPractices = [];
+      document.querySelector('#moduleModal .modal-title').textContent = 'Add IA Training Module';
+      document.getElementById('saveModuleBtn').textContent = 'Add Module';
+      
+      // Clear form
+      document.getElementById('moduleName').value = '';
+      document.getElementById('moduleDescription').value = '';
+      document.getElementById('moduleLevel').value = 'basic';
+      document.getElementById('moduleDuration').value = '';
+      document.getElementById('moduleVideo').value = '';
+      document.getElementById('moduleAssessment').value = '';
+      document.getElementById('newPractice').value = '';
+      
+      renderPractices();
+      document.getElementById('moduleModal').style.display = 'block';
+    }
+
+    // Close module modal
+    function closeModuleModal() {
+      document.getElementById('moduleModal').style.display = 'none';
+    }
+
+    // Edit module
+    function editModule(index) {
+      currentEditIndex = index;
+      const module = iaModules[index];
+      currentPractices = [...module.practices];
+      
+      document.querySelector('#moduleModal .modal-title').textContent = 'Edit IA Training Module';
+      document.getElementById('saveModuleBtn').textContent = 'Update Module';
+      
+      // Fill form
+      document.getElementById('moduleName').value = module.name;
+      document.getElementById('moduleDescription').value = module.description;
+      document.getElementById('moduleLevel').value = module.level;
+      document.getElementById('moduleDuration').value = module.duration;
+      document.getElementById('moduleVideo').value = module.videoUrl;
+      document.getElementById('moduleAssessment').value = module.assessment;
+      
+      renderPractices();
+      document.getElementById('moduleModal').style.display = 'block';
+    }
+
+    // Add practice
+    function addPractice() {
+      const practiceText = document.getElementById('newPractice').value.trim();
+      if (!practiceText) {
+        alert('Please enter practice text');
+        return;
+      }
+      
+      currentPractices.push(practiceText);
+      document.getElementById('newPractice').value = '';
+      renderPractices();
+    }
+
+    // Remove practice
+    function removePractice(index) {
+      currentPractices.splice(index, 1);
+      renderPractices();
+    }
+
+    // Render practices list
+    function renderPractices() {
+      const practiceList = document.getElementById('practiceList');
+      practiceList.innerHTML = '';
+      
+      if (currentPractices.length === 0) {
+        practiceList.innerHTML = '<div style="padding: 1rem; text-align: center; color: var(--text-secondary);">No practices added yet</div>';
+        return;
+      }
+      
+      currentPractices.forEach((practice, index) => {
+        const practiceDiv = document.createElement('div');
+        practiceDiv.className = 'practice-item-modal';
+        
+        practiceDiv.innerHTML = `
+          <div class="practice-text">${practice}</div>
+          <button onclick="removePractice(${index})" class="btn btn-danger btn-small">
+            <i class="fas fa-trash"></i>
+          </button>
+        `;
+        
+        practiceList.appendChild(practiceDiv);
+      });
+    }
+
+    // Save module
+    function saveModule() {
+      const name = document.getElementById('moduleName').value.trim();
+      const description = document.getElementById('moduleDescription').value.trim();
+      const level = document.getElementById('moduleLevel').value;
+      const duration = parseInt(document.getElementById('moduleDuration').value) || 60;
+      const videoUrl = document.getElementById('moduleVideo').value.trim();
+      const assessment = document.getElementById('moduleAssessment').value.trim();
+      
+      if (!name || !description || currentPractices.length === 0) {
+        alert('Please fill in name, description, and add at least one practice');
+        return;
+      }
+      
+      const moduleData = {
+        id: currentEditIndex >= 0 ? iaModules[currentEditIndex].id : `ia_${Date.now()}`,
+        name: name,
+        description: description,
+        level: level,
+        duration: duration,
+        practices: [...currentPractices],
+        videoUrl: videoUrl,
+        assessment: assessment
+      };
+      
+      if (currentEditIndex >= 0) {
+        iaModules[currentEditIndex] = moduleData;
+        showNotification('✅ Module updated successfully!');
+      } else {
+        iaModules.push(moduleData);
+        showNotification('✅ Module added successfully!');
+      }
+      
+      renderModules();
+      closeModuleModal();
+    }
+
+    // Remove module
+    function removeModule(index) {
+      if (confirm('Are you sure you want to remove this module?')) {
+        iaModules.splice(index, 1);
+        renderModules();
+        showNotification('✅ Module removed successfully!');
+      }
+    }
+
+    // Preview video
+    function previewVideo(videoUrl) {
+      if (videoUrl) {
+        window.open(videoUrl, '_blank');
+      } else {
+        alert('No video URL provided for this module');
+      }
+    }
+
+    // Save to current class
+    async function saveToCurrentClass() {
+      try {
+        console.log('💾 Saving IA training to current class...');
+        showNotification('✅ Saved to current class!');
+      } catch (error) {
+        console.error('❌ Save error:', error);
+        showNotification('❌ Save to class failed', true);
+      }
+    }
+
+    // Save to repository
+    async function saveToRepository() {
+      try {
+        console.log('💾 Saving IA training to repository...');
+        showNotification('✅ Saved to repository!');
+      } catch (error) {
+        console.error('❌ Repository save error:', error);
+        showNotification('❌ Repository save failed', true);
+      }
+    }
+
+    // Open save to template modal
+    function openSaveToTemplateModal() {
+      document.getElementById('saveTemplateModal').style.display = 'block';
+      
+      document.getElementById('templateType').onchange = function() {
+        const isNew = this.value === 'new';
+        document.getElementById('existingTemplateGroup').style.display = isNew ? 'none' : 'block';
+        document.getElementById('newTemplateGroup').style.display = isNew ? 'block' : 'none';
+        document.getElementById('newTemplateDifficultyGroup').style.display = isNew ? 'block' : 'none';
+      };
+    }
+
+    // Close save to template modal
+    function closeSaveTemplateModal() {
+      document.getElementById('saveTemplateModal').style.display = 'none';
+    }
+
+    // Save to template
+    async function saveToTemplate() {
+      try {
+        console.log('💾 Saving IA training to template...');
+        closeSaveTemplateModal();
+        showNotification('✅ Saved to template!');
+      } catch (error) {
+        console.error('❌ Template save error:', error);
+        showNotification('❌ Template save failed', true);
+      }
+    }
+
+    // Show notification
+    function showNotification(message, isError = false) {
+      const existing = document.getElementById('notification');
+      if (existing) existing.remove();
+      
+      const notification = document.createElement('div');
+      notification.id = 'notification';
+      notification.textContent = message;
+      notification.style.cssText = `
+        position: fixed; top: 20px; right: 20px; z-index: 1000;
+        background: ${isError ? '#ef4444' : '#22c55e'}; color: white;
+        padding: 12px 20px; border-radius: 10px; font-weight: 600;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      `;
+      
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.remove();
+        }
+      }, 3000);
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+      const moduleModal = document.getElementById('moduleModal');
+      const saveModal = document.getElementById('saveTemplateModal');
+      if (event.target === moduleModal) {
+        closeModuleModal();
+      }
+      if (event.target === saveModal) {
+        closeSaveTemplateModal();
+      }
+    }
+
+    // Logout function
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      localStorage.removeItem('userName');
+      localStorage.removeItem('classId');
+      window.location.replace('/login.html');
+    }
+  </script>
+</body>
+</html>

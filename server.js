@@ -1,6 +1,6 @@
 const express = require('express');
 const http = require('http');
-const path = require('path');
+const path = require('path'); 
 const fs = require('fs');
 const cors = require('cors');
 const mongoose = require('mongoose');
@@ -8,6 +8,7 @@ const socketio = require('socket.io');
 const multer = require('multer');
 const bcrypt = require('bcryptjs');
 const User = require('./models/User');
+const Class = require('./models/Class');
 require('dotenv').config();
 
 // Debug environment variables
@@ -22,6 +23,12 @@ const io = socketio(server, { cors: { origin: "*" } });
 
 app.use(cors());
 app.use(express.json());
+
+// Middleware to pass io instance to routes
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
 
 // Define root route before static middleware to ensure it takes precedence
 app.get('/', (req, res) => {
@@ -78,6 +85,94 @@ const upload = multer({
     } else {
       cb(new Error('Only video files are allowed!'), false);
     }
+  }
+});
+
+// ===== MESSAGING API ENDPOINTS =====
+// Get conversation history between two users
+app.get('/api/messages/:room', async (req, res) => {
+  try {
+    const { room } = req.params;
+    const { limit = 50 } = req.query;
+    
+    const Message = require('./models/Message');
+    const messages = await Message.find({ channel: room })
+      .sort({ timestamp: -1 })
+      .limit(parseInt(limit));
+    
+    res.json({ success: true, messages: messages.reverse() });
+  } catch (error) {
+    console.error('❌ Error fetching messages:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch messages' });
+  }
+});
+
+// Get all conversations for a user
+app.get('/api/conversations/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    const Message = require('./models/Message');
+    // Get unique channels where user participated
+    const conversations = await Message.aggregate([
+      {
+        $match: {
+          $or: [
+            { 'sender.name': userId },
+            { channel: { $regex: userId, $options: 'i' } }
+          ]
+        }
+      },
+      {
+        $group: {
+          _id: '$channel',
+          lastMessage: { $last: '$content' },
+          lastTimestamp: { $last: '$timestamp' },
+          participants: { $addToSet: '$sender.name' }
+        }
+      },
+      { $sort: { lastTimestamp: -1 } }
+    ]);
+    
+    res.json({ success: true, conversations });
+  } catch (error) {
+    console.error('❌ Error fetching conversations:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch conversations' });
+  }
+});
+
+// Delete a conversation
+app.delete('/api/conversations/:room', async (req, res) => {
+  try {
+    const { room } = req.params;
+    
+    const Message = require('./models/Message');
+    await Message.deleteMany({ channel: room });
+    
+    res.json({ success: true, message: 'Conversation deleted successfully' });
+  } catch (error) {
+    console.error('❌ Error deleting conversation:', error);
+    res.status(500).json({ success: false, error: 'Failed to delete conversation' });
+  }
+});
+
+// Search users for new conversations
+app.get('/api/users/search', async (req, res) => {
+  try {
+    const { query } = req.query;
+    
+    const User = require('./models/User');
+    const users = await User.find({
+      $or: [
+        { username: { $regex: query, $options: 'i' } },
+        { email: { $regex: query, $options: 'i' } }
+      ]
+    }).select('username email role').limit(10);
+    
+    res.json({ success: true, users });
+  } catch (error) {
+    console.error('❌ Error searching users:', error);
+    res.status(500).json({ success: false, error: 'Failed to search users' });
   }
 });
 
@@ -179,6 +274,74 @@ async function createDefaultUsers() {
   }
 }
 
+// Function to create default classes and assign users
+async function createDefaultClasses() {
+  try {
+    
+    // Find the default instructor
+    const instructor = await User.findOne({ username: 'instructor' });
+    if (!instructor) {
+      console.log('⚠️ Default instructor not found, skipping class creation');
+      return;
+    }
+    
+    const defaultClasses = [
+      { name: 'Alpha Squadron', organization: 'SMXKITS Demo', country: 'USA' },
+      { name: 'Bravo Squadron', organization: 'SMXKITS Demo', country: 'USA' },
+      { name: 'Charlie Squadron', organization: 'SMXKITS Demo', country: 'USA' },
+      { name: 'Delta Squadron', organization: 'SMXKITS Demo', country: 'USA' }
+    ];
+
+    for (const classData of defaultClasses) {
+      const existingClass = await Class.findOne({ name: classData.name });
+      if (!existingClass) {
+        const newClass = new Class({
+          name: classData.name,
+          organization: classData.organization,
+          country: classData.country,
+          instructorId: instructor._id,
+          instructors: [instructor._id],
+          students: [],
+          startDate: new Date(),
+          endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) // 1 year from now
+        });
+        
+        await newClass.save();
+        console.log(`✅ Created default class: ${classData.name}`);
+        
+        // Assign instructor to the first class only (to avoid conflicts)
+        if (classData.name === 'Alpha Squadron' && !instructor.classId) {
+          instructor.classId = newClass._id;
+          await instructor.save();
+          console.log(`✅ Assigned instructor to class: ${classData.name}`);
+        }
+      } else {
+        console.log(`ℹ️ Default class already exists: ${classData.name}`);
+      }
+    }
+    
+    // Assign the default student to Alpha Squadron
+    const student = await User.findOne({ username: 'student' });
+    const alphaSquadron = await Class.findOne({ name: 'Alpha Squadron' });
+    
+    if (student && alphaSquadron && !student.classId) {
+      // Add student to class
+      if (!alphaSquadron.students.includes(student._id)) {
+        alphaSquadron.students.push(student._id);
+        await alphaSquadron.save();
+      }
+      
+      // Assign class to student
+      student.classId = alphaSquadron._id;
+      await student.save();
+      console.log(`✅ Assigned student to Alpha Squadron`);
+    }
+    
+  } catch (error) {
+    console.error('❌ Error creating default classes:', error);
+  }
+}
+
 // MongoDB connection with in-memory fallback
 const mongoURI = process.env.MONGO_URI || 'mongodb://localhost:27017/smxkits';
 
@@ -200,6 +363,7 @@ async function connectToDatabase() {
     await mongoose.connect(mongoURI, options);
     console.log('✅ MongoDB connected successfully!');
     await createDefaultUsers();
+    await createDefaultClasses();
   } catch (err) {
     console.error('❌ MongoDB connection failed:', err.message);
     console.log('🔄 Switching to in-memory database for demo...');
@@ -280,6 +444,9 @@ const calloutSchema = new mongoose.Schema({
   females: Number,
   children: Number,
   iaNotes: String,
+  slant: String,
+  vehicles: Number,
+  targetStatus: String,
   follow: {
     name: String,
     stage: String,
@@ -304,13 +471,29 @@ const Callout = mongoose.model('Callout', calloutSchema);
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/classes', require('./routes/classes'));
+app.use('/api/class-templates', require('./routes/class-templates'));
 app.use('/api/progress', require('./routes/progress'));
 app.use('/api/chat', require('./routes/chat'));
+app.use('/api/direct-messages', require('./routes/direct-messages'));
 app.use('/api/kitcomm', require('./routes/kitcomm'));
 app.use('/api/streams', require('./routes/streams'));
 app.use('/api/stream', require('./routes/stream-upload.route'));
 const feedbackRoutes = require('./routes/feedback.route');
 app.use('/api/feedback', feedbackRoutes);
+app.use('/api/typing-tests', require('./routes/typing-tests'));
+app.use('/api/submissions', require('./routes/submissions'));
+
+// Add middleware to make io available in routes
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
+
+// Instructor Dashboard Routes
+app.use('/api', require('./routes/instructor-dashboard'));
+app.use('/api/schedule', require('./routes/schedule'));
+app.use('/api/collaboration', require('./routes/collaboration'));
+app.use('/api/analytics', require('./routes/analytics'));
 
 // ===== OpsLog API Routes =====
 // Get all callouts for a room
@@ -386,8 +569,7 @@ app.get('/api/callouts/:id/history', async (req, res) => {
   }
 });
 
-// Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Note: /uploads route already defined above at line 54
 
 // Serve temporary stream files (for testing/preview)
 app.use('/temp', express.static(path.join(__dirname, 'temp')));
@@ -554,10 +736,308 @@ app.post('/api/stream/state/:classId', async (req, res) => {
   }
 });
 
+// Import instructor socket handler
+const InstructorSocketHandler = require('./socket-handlers/instructor-socket');
+
+// Track online users
+const onlineUsers = new Map(); // userId -> socketId
+
+// Initialize instructor socket handler
+const instructorHandler = new InstructorSocketHandler(io);
+
 // Real-time chat and streaming with MongoDB storage
 io.on('connection', socket => {
   console.log('🔌 New socket connection established');
   
+  // ===== INSTRUCTOR DASHBOARD HANDLERS =====
+  
+  // Handle instructor connections with enhanced features
+  instructorHandler.handleConnection(socket);
+  
+  // Handle instructor joining dashboard (legacy support)
+  socket.on('join-instructor', (data) => {
+    const { userId, classId } = data;
+    console.log(`👨‍🏫 Instructor ${userId} joined dashboard for class: ${classId}`);
+    
+    // Store instructor info on socket
+    socket.instructorId = userId;
+    socket.classId = classId;
+    
+    // Join instructor room for this class
+    socket.join(`instructor-${classId}`);
+    
+    // Join general class room for updates
+    socket.join(`class-${classId}`);
+    
+    // Track online instructor
+    onlineUsers.set(userId, socket.id);
+    
+    // Emit instructor online status to students
+    socket.to(`class-${classId}`).emit('instructor-online', {
+      instructorId: userId,
+      timestamp: new Date().toISOString()
+    });
+  });
+  
+  // Handle student activity updates
+  socket.on('student-activity', (data) => {
+    const { studentId, classId, activity, status } = data;
+    console.log(`👤 Student activity update: ${studentId} - ${activity}`);
+    
+    // Broadcast to instructors
+    socket.to(`instructor-${classId}`).emit('student-activity', {
+      studentId,
+      studentName: data.studentName,
+      activity,
+      status,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Update instructor handler
+    instructorHandler.updateStudentOnlineStatus(classId, studentId, status === 'online');
+  });
+  
+  // Handle real-time messaging
+  socket.on('send-message', async (data) => {
+    try {
+      const { classId, message, type, recipientId, senderId, senderName } = data;
+      console.log(`💬 Message from ${senderName}: ${message}`);
+      
+      // Save message to database
+      const Message = require('./models/Message');
+      const messageDoc = new Message({
+        senderId,
+        classId,
+        message,
+        type: type || 'broadcast',
+        recipientId: recipientId || null
+      });
+      await messageDoc.save();
+      
+      const messageData = {
+        ...messageDoc.toObject(),
+        senderName,
+        timestamp: messageDoc.createdAt
+      };
+      
+      // Broadcast message based on type
+      if (type === 'broadcast') {
+        io.to(`class-${classId}`).emit('new-message', messageData);
+      } else if (type === 'direct' && recipientId) {
+        io.to(`user-${recipientId}`).emit('new-message', messageData);
+        socket.emit('new-message', messageData); // Send back to sender
+      }
+      
+    } catch (error) {
+      console.error('❌ Error handling message:', error);
+      socket.emit('message-error', { error: 'Failed to send message' });
+    }
+  });
+  
+  // Handle typing indicators
+  socket.on('typing-start', (data) => {
+    const { classId, userId, userName } = data;
+    socket.to(`class-${classId}`).emit('user-typing', {
+      userId,
+      userName,
+      typing: true
+    });
+  });
+  
+  socket.on('typing-stop', (data) => {
+    const { classId, userId, userName } = data;
+    socket.to(`class-${classId}`).emit('user-typing', {
+      userId,
+      userName,
+      typing: false
+    });
+  });
+  
+  // Handle progress updates
+  socket.on('progress-update', async (data) => {
+    try {
+      const { studentId, classId, lessonId, progress, completionPercentage } = data;
+      
+      // Update progress in database
+      const Progress = require('./models/Progress');
+      await Progress.findOneAndUpdate(
+        { userId: studentId, classId, lessonId },
+        { 
+          progress,
+          completionPercentage,
+          lastAccessed: new Date()
+        },
+        { upsert: true, new: true }
+      );
+      
+      // Notify instructors
+      socket.to(`instructor-${classId}`).emit('student-progress-update', {
+        studentId,
+        lessonId,
+        progress,
+        completionPercentage,
+        timestamp: new Date().toISOString()
+      });
+      
+    } catch (error) {
+      console.error('❌ Error updating progress:', error);
+    }
+  });
+  
+  // Handle assignment submissions
+  socket.on('assignment-submitted', async (data) => {
+    try {
+      const { studentId, classId, assignmentId, submissionData } = data;
+      
+      // Notify instructors
+      socket.to(`instructor-${classId}`).emit('new-submission', {
+        studentId,
+        assignmentId,
+        submissionData,
+        timestamp: new Date().toISOString()
+      });
+      
+      console.log(`📝 New assignment submission from student ${studentId}`);
+      
+    } catch (error) {
+      console.error('❌ Error handling assignment submission:', error);
+    }
+  });
+  
+  // Handle quiz/test submissions
+  socket.on('quiz-submitted', (data) => {
+    const { studentId, classId, quizId, answers, score } = data;
+    
+    // Notify instructors
+    socket.to(`instructor-${classId}`).emit('quiz-submission', {
+      studentId,
+      quizId,
+      answers,
+      score,
+      timestamp: new Date().toISOString()
+    });
+    
+    console.log(`🧪 Quiz submission from student ${studentId}, score: ${score}`);
+  });
+  
+  // Handle screen sharing requests
+  socket.on('request-screen-share', (data) => {
+    const { classId, instructorId } = data;
+    
+    // Notify students about screen sharing
+    socket.to(`class-${classId}`).emit('screen-share-started', {
+      instructorId,
+      timestamp: new Date().toISOString()
+    });
+    
+    console.log(`🖥️ Screen sharing started by instructor ${instructorId}`);
+  });
+  
+  socket.on('stop-screen-share', (data) => {
+    const { classId, instructorId } = data;
+    
+    // Notify students that screen sharing stopped
+    socket.to(`class-${classId}`).emit('screen-share-stopped', {
+      instructorId,
+      timestamp: new Date().toISOString()
+    });
+    
+    console.log(`🖥️ Screen sharing stopped by instructor ${instructorId}`);
+  });
+  
+  // Handle live polls/questions
+  socket.on('create-poll', (data) => {
+    const { classId, question, options, duration } = data;
+    
+    const pollData = {
+      id: Date.now().toString(),
+      question,
+      options,
+      duration,
+      startTime: new Date().toISOString(),
+      responses: new Map()
+    };
+    
+    // Store poll in memory (could be moved to database)
+    if (!io.activePolls) {
+      io.activePolls = new Map();
+    }
+    io.activePolls.set(pollData.id, pollData);
+    
+    // Send poll to students
+    socket.to(`class-${classId}`).emit('new-poll', pollData);
+    
+    console.log(`📊 New poll created: ${question}`);
+  });
+  
+  socket.on('poll-response', (data) => {
+    const { pollId, classId, studentId, response } = data;
+    
+    if (io.activePolls && io.activePolls.has(pollId)) {
+      const poll = io.activePolls.get(pollId);
+      poll.responses.set(studentId, response);
+      
+      // Send updated results to instructors
+      socket.to(`instructor-${classId}`).emit('poll-update', {
+        pollId,
+        totalResponses: poll.responses.size,
+        responses: Array.from(poll.responses.values())
+      });
+    }
+  });
+  
+  // Handle breakout rooms
+  socket.on('create-breakout-room', (data) => {
+    const { classId, roomName, studentIds } = data;
+    
+    const breakoutRoom = `breakout-${classId}-${Date.now()}`;
+    
+    // Move students to breakout room
+    studentIds.forEach(studentId => {
+      const studentSocket = Array.from(io.sockets.sockets.values())
+        .find(s => s.userId === studentId);
+      
+      if (studentSocket) {
+        studentSocket.join(breakoutRoom);
+        studentSocket.emit('joined-breakout-room', {
+          roomName,
+          roomId: breakoutRoom
+        });
+      }
+    });
+    
+    console.log(`🏠 Breakout room created: ${roomName} with ${studentIds.length} students`);
+  });
+  
+  // Handle user authentication for socket
+  socket.on('authenticate', (data) => {
+    const { userId, role, classId } = data;
+    
+    socket.userId = userId;
+    socket.userRole = role;
+    socket.classId = classId;
+    
+    // Join appropriate rooms based on role
+    if (role === 'instructor' || role === 'admin') {
+      socket.join(`instructor-${classId}`);
+    }
+    
+    socket.join(`user-${userId}`);
+    socket.join(`class-${classId}`);
+    
+    // Track online user
+    onlineUsers.set(userId, socket.id);
+    
+    console.log(`🔐 User authenticated: ${userId} (${role})`);
+  });
+  
+  // ===== TYPING MODULES HANDLERS =====
+  socket.on('typing-modules-updated', (data) => {
+    console.log('📝 Typing modules updated, broadcasting to all clients');
+    // Broadcast to all connected clients except sender
+    socket.broadcast.emit('typing-modules-updated', data);
+  });
+
   // ===== OPSLOG HANDLERS =====
   socket.on('join_room', roomId => {
     console.log(`👤 User joined OpsLog room: ${roomId}`);
@@ -609,6 +1089,222 @@ io.on('connection', socket => {
   if (!io.streamStates) {
     io.streamStates = new Map();
   }
+  
+  // Initialize viewer tracking if not exists
+  if (!io.viewerTracking) {
+    io.viewerTracking = new Map(); // classId -> Set of viewerIds
+  }
+  
+  // Initialize viewer tracking if not exists
+  if (!io.viewerTracking) {
+    io.viewerTracking = new Map(); // classId -> Set of viewerIds
+  }
+  
+  // ===== FMV VIEWER HANDLERS =====
+  // Handle viewer joining stream
+  socket.on('join-stream', (data) => {
+    const { classId, viewerId } = data;
+    console.log(`📺 Viewer ${viewerId} joining stream for class: ${classId}`);
+    
+    // Join stream room
+    const streamRoom = `stream:${classId}`;
+    socket.join(streamRoom);
+    
+    // Track viewer
+    if (!io.viewerTracking.has(classId)) {
+      io.viewerTracking.set(classId, new Set());
+    }
+    io.viewerTracking.get(classId).add(viewerId);
+    
+    // Store viewer info on socket
+    socket.viewerId = viewerId;
+    socket.streamClassId = classId;
+    socket.streamRoom = streamRoom;
+    
+    // Update viewer count for instructors
+    const viewerCount = io.viewerTracking.get(classId).size;
+    io.to(streamRoom).emit('viewer-count', { classId, count: viewerCount });
+    
+    console.log(`👥 Viewer count for ${classId}: ${viewerCount}`);
+  });
+  
+  // Handle viewer actively watching (when video starts playing)
+  socket.on('viewer-joined', (data) => {
+    const { classId, viewerId } = data;
+    console.log(`▶️ Viewer ${viewerId} started watching class: ${classId}`);
+    
+    // Notify instructors in Stream Mode
+    const instructorRoom = `class:${classId}`;
+    io.to(instructorRoom).emit('viewer-joined', { 
+      viewerId, 
+      classId,
+      timestamp: new Date().toISOString()
+    });
+  });
+  
+  // Handle viewer leaving
+  socket.on('viewer-left', (data) => {
+    const { classId, viewerId } = data;
+    console.log(`📺 Viewer ${viewerId} left stream for class: ${classId}`);
+    
+    // Remove from tracking
+    if (io.viewerTracking.has(classId)) {
+      io.viewerTracking.get(classId).delete(viewerId);
+      
+      // Update viewer count
+      const viewerCount = io.viewerTracking.get(classId).size;
+      const streamRoom = `stream:${classId}`;
+      io.to(streamRoom).emit('viewer-count', { classId, count: viewerCount });
+      
+      // Notify instructors
+      const instructorRoom = `class:${classId}`;
+      io.to(instructorRoom).emit('viewer-left', { 
+        viewerId, 
+        classId,
+        timestamp: new Date().toISOString()
+      });
+      
+      console.log(`👥 Updated viewer count for ${classId}: ${viewerCount}`);
+    }
+  });
+  
+  // Handle stream status changes (from Stream Mode)
+  socket.on('stream:start', (data) => {
+    const { classId, streamKey, status, streamMode } = data;
+    console.log(`🔴 Stream started for class ${classId} (mode: ${streamMode})`);
+    
+    // Notify all viewers in the stream room
+    const streamRoom = `stream:${classId}`;
+    io.to(streamRoom).emit('stream-live', { 
+      classId, 
+      streamKey, 
+      status,
+      streamMode,
+      timestamp: new Date().toISOString()
+    });
+  });
+  
+  socket.on('stream:stop', (data) => {
+    const { classId, status } = data;
+    console.log(`⏹️ Stream stopped for class ${classId}`);
+    
+    // Notify all viewers in the stream room
+    const streamRoom = `stream:${classId}`;
+    io.to(streamRoom).emit('stream-offline', { 
+      classId, 
+      status,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Clear viewer tracking for this class
+    if (io.viewerTracking.has(classId)) {
+      io.viewerTracking.delete(classId);
+      console.log(`🧹 Cleared viewer tracking for class ${classId}`);
+    }
+  });
+  
+  // ===== FMV VIEWER HANDLERS =====
+  // Handle viewer joining stream
+  socket.on('join-stream', (data) => {
+    const { classId, viewerId } = data;
+    console.log(`📺 Viewer ${viewerId} joining stream for class: ${classId}`);
+    
+    // Join stream room
+    const streamRoom = `stream:${classId}`;
+    socket.join(streamRoom);
+    
+    // Track viewer
+    if (!io.viewerTracking.has(classId)) {
+      io.viewerTracking.set(classId, new Set());
+    }
+    io.viewerTracking.get(classId).add(viewerId);
+    
+    // Store viewer info on socket
+    socket.viewerId = viewerId;
+    socket.streamClassId = classId;
+    socket.streamRoom = streamRoom;
+    
+    // Update viewer count for instructors
+    const viewerCount = io.viewerTracking.get(classId).size;
+    io.to(streamRoom).emit('viewer-count', { classId, count: viewerCount });
+    
+    console.log(`👥 Viewer count for ${classId}: ${viewerCount}`);
+  });
+  
+  // Handle viewer actively watching (when video starts playing)
+  socket.on('viewer-joined', (data) => {
+    const { classId, viewerId } = data;
+    console.log(`▶️ Viewer ${viewerId} started watching class: ${classId}`);
+    
+    // Notify instructors in Stream Mode
+    const instructorRoom = `class:${classId}`;
+    io.to(instructorRoom).emit('viewer-joined', { 
+      viewerId, 
+      classId,
+      timestamp: new Date().toISOString()
+    });
+  });
+  
+  // Handle viewer leaving
+  socket.on('viewer-left', (data) => {
+    const { classId, viewerId } = data;
+    console.log(`📺 Viewer ${viewerId} left stream for class: ${classId}`);
+    
+    // Remove from tracking
+    if (io.viewerTracking.has(classId)) {
+      io.viewerTracking.get(classId).delete(viewerId);
+      
+      // Update viewer count
+      const viewerCount = io.viewerTracking.get(classId).size;
+      const streamRoom = `stream:${classId}`;
+      io.to(streamRoom).emit('viewer-count', { classId, count: viewerCount });
+      
+      // Notify instructors
+      const instructorRoom = `class:${classId}`;
+      io.to(instructorRoom).emit('viewer-left', { 
+        viewerId, 
+        classId,
+        timestamp: new Date().toISOString()
+      });
+      
+      console.log(`👥 Updated viewer count for ${classId}: ${viewerCount}`);
+    }
+  });
+  
+  // Handle stream status changes (from Stream Mode)
+  socket.on('stream:start', (data) => {
+    const { classId, streamKey, status, streamMode } = data;
+    console.log(`🔴 Stream started for class ${classId} (mode: ${streamMode})`);
+    
+    // Notify all viewers in the stream room
+    const streamRoom = `stream:${classId}`;
+    io.to(streamRoom).emit('stream-live', { 
+      classId, 
+      streamKey, 
+      status,
+      streamMode,
+      timestamp: new Date().toISOString()
+    });
+  });
+  
+  socket.on('stream:stop', (data) => {
+    const { classId, status } = data;
+    console.log(`⏹️ Stream stopped for class ${classId}`);
+    
+    // Notify all viewers in the stream room
+    const streamRoom = `stream:${classId}`;
+    io.to(streamRoom).emit('stream-offline', { 
+      classId, 
+      status,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Clear viewer tracking for this class
+    if (io.viewerTracking.has(classId)) {
+      io.viewerTracking.delete(classId);
+      console.log(`🧹 Cleared viewer tracking for class ${classId}`);
+    }
+  });
   
   // ===== WEBRTC HANDLERS =====
   // Track WebRTC connections
@@ -1354,24 +2050,183 @@ io.on('connection', socket => {
     }
   });
   
-  // ===== INSTRUCTOR CHAT HANDLERS =====
-  socket.on('join', async (channel) => {
-    socket.join(channel);
-    console.log(`👤 User joined instructor channel: ${channel}`);
+  // ===== UNIVERSAL MESSAGING SYSTEM =====
+  // Join a conversation room (works for both students and instructors)
+  socket.on('join', async (data) => {
+    const { username, room, role } = data;
+    const roomName = room || 'general';
+    
+    socket.join(roomName);
+    socket.username = username;
+    socket.room = roomName;
+    socket.role = role;
+    
+    console.log(`👤 ${role} ${username} joined room: ${roomName}`);
     
     try {
       // Load message history from database
       const Message = require('./models/Message');
-      const messages = await Message.find({ channel })
+      const messages = await Message.find({ channel: roomName })
         .sort({ timestamp: -1 })
         .limit(50);
       
-      socket.emit('history', messages.reverse());
+      socket.emit('message_history', messages.reverse());
+      
+      // Notify others in the room
+      socket.to(roomName).emit('user_joined', { username, role });
     } catch (error) {
-      console.error('❌ Error loading instructor chat history:', error);
+      console.error('❌ Error loading message history:', error);
     }
   });
-  
+
+  // Join specific room for private conversations
+  socket.on('join_room', (data) => {
+    const { room } = data;
+    socket.join(room);
+    console.log(`👤 User joined private room: ${room}`);
+  });
+
+  // Send message (universal for all user types)
+  socket.on('send_message', async (data) => {
+    try {
+      const { message, room, timestamp, username } = data;
+      const userRole = socket.role || 'student';
+      
+      // Store the message in database
+      const Message = require('./models/Message');
+      const newMessage = new Message({
+        sender: {
+          name: username,
+          role: userRole
+        },
+        content: message,
+        channel: room || 'general',
+        timestamp: new Date()
+      });
+      
+      await newMessage.save();
+      
+      // Broadcast to all clients in the room
+      io.to(room || 'general').emit('message', {
+        username,
+        message,
+        timestamp,
+        role: userRole,
+        room
+      });
+      
+      console.log(`💬 Message sent by ${username} (${userRole}) in room ${room}: ${message}`);
+    } catch (error) {
+      console.error('❌ Error saving message:', error);
+      socket.emit('error', { message: 'Failed to save message' });
+    }
+  });
+
+  // Typing indicators
+  socket.on('typing', (data) => {
+    const { room, username } = data;
+    socket.to(room).emit('typing', { username });
+  });
+
+  socket.on('stop_typing', (data) => {
+    const { room } = data;
+    socket.to(room).emit('stop_typing');
+  });
+
+  // ===== DIRECT MESSAGING HANDLERS =====
+  // Join user-specific room for direct messages
+  socket.on('join_user_room', (data) => {
+    const { userId } = data;
+    const room = `user:${userId}`;
+    socket.join(room);
+    socket.userId = userId; // Store user ID on socket
+    
+    // Track user as online
+    onlineUsers.set(userId, socket.id);
+    console.log(`👤 User ${userId} joined their private room: ${room} (Online users: ${onlineUsers.size})`);
+    
+    // Notify all users about this user coming online
+    socket.broadcast.emit('user_online', { userId });
+    
+    // Send current online users list to the newly connected user
+    const onlineUsersList = Array.from(onlineUsers.keys());
+    socket.emit('online_users', { users: onlineUsersList });
+  });
+
+  // Handle direct message sending via socket
+  socket.on('send_direct_message', async (data) => {
+    try {
+      const { recipientId, content, sender } = data;
+      const DirectMessage = require('./models/DirectMessage');
+      const Conversation = require('./models/Conversation');
+      const User = require('./models/User');
+
+      // Get recipient info
+      const recipient = await User.findById(recipientId).select('name role');
+      if (!recipient) {
+        socket.emit('error', { message: 'Recipient not found' });
+        return;
+      }
+
+      // Generate conversation ID
+      const conversationId = Conversation.generateConversationId(sender.id, recipientId);
+
+      // Create the message
+      const message = new DirectMessage({
+        conversationId,
+        sender: {
+          id: sender.id,
+          name: sender.name,
+          role: sender.role
+        },
+        recipient: {
+          id: recipient._id,
+          name: recipient.name,
+          role: recipient.role
+        },
+        content
+      });
+
+      await message.save();
+
+      // Update or create conversation
+      const conversation = await Conversation.findOrCreateConversation(
+        { id: sender.id, name: sender.name, role: sender.role },
+        { id: recipient._id, name: recipient.name, role: recipient.role }
+      );
+
+      // Update conversation with last message and increment unread count for recipient
+      conversation.lastMessage = {
+        content,
+        timestamp: message.timestamp,
+        senderId: sender.id
+      };
+      conversation.updatedAt = new Date();
+      
+      const currentUnread = conversation.unreadCounts.get(recipientId.toString()) || 0;
+      conversation.unreadCounts.set(recipientId.toString(), currentUnread + 1);
+      
+      await conversation.save();
+
+      // Emit to both sender and recipient
+      io.to(`user:${sender.id}`).emit('direct_message', message);
+      io.to(`user:${recipientId}`).emit('direct_message', message);
+      
+      // Update conversation lists
+      io.to(`user:${recipientId}`).emit('conversation_updated', {
+        conversationId,
+        lastMessage: conversation.lastMessage,
+        unreadCount: currentUnread + 1
+      });
+
+      console.log(`💬 Direct message sent from ${sender.name} to ${recipient.name}`);
+    } catch (error) {
+      console.error('❌ Error sending direct message via socket:', error);
+      socket.emit('error', { message: 'Failed to send message' });
+    }
+  });
+
+  // ===== LEGACY INSTRUCTOR CHAT HANDLERS (for backward compatibility) =====
   socket.on('message', async (data) => {
     try {
       // Store the message in database
@@ -1489,6 +2344,15 @@ io.on('connection', socket => {
   socket.on('disconnect', () => {
     console.log('🔌 Socket disconnected');
     
+    // Handle online user tracking
+    if (socket.userId) {
+      onlineUsers.delete(socket.userId);
+      console.log(`👤 User ${socket.userId} went offline (Online users: ${onlineUsers.size})`);
+      
+      // Notify all users about this user going offline
+      socket.broadcast.emit('user_offline', { userId: socket.userId });
+    }
+    
     // Handle WebRTC disconnection
     if (socket.classId && socket.role) {
       const classId = socket.classId;
@@ -1529,6 +2393,41 @@ io.on('connection', socket => {
           const viewerCount = roomMembers ? roomMembers.size - 1 : 0; // Subtract instructor if present
           console.log(`👥 Updated viewer count after disconnect for ${socket.currentStreamRoom}: ${viewerCount}`);
           io.to(socket.currentStreamRoom).emit('viewerCount', { count: viewerCount });
+        }
+      }
+    }
+    
+    // Handle FMV viewer disconnection
+    if (socket.viewerId && socket.streamClassId) {
+      const classId = socket.streamClassId;
+      const viewerId = socket.viewerId;
+      
+      console.log(`📺 FMV Viewer ${viewerId} disconnected from class: ${classId}`);
+      
+      // Remove from viewer tracking
+      if (io.viewerTracking && io.viewerTracking.has(classId)) {
+        io.viewerTracking.get(classId).delete(viewerId);
+        
+        // Update viewer count
+        const viewerCount = io.viewerTracking.get(classId).size;
+        const streamRoom = `stream:${classId}`;
+        io.to(streamRoom).emit('viewer-count', { classId, count: viewerCount });
+        
+        // Notify instructors in Stream Mode
+        const instructorRoom = `class:${classId}`;
+        io.to(instructorRoom).emit('viewer-left', { 
+          viewerId, 
+          classId,
+          reason: 'disconnected',
+          timestamp: new Date().toISOString()
+        });
+        
+        console.log(`👥 Updated FMV viewer count for ${classId}: ${viewerCount}`);
+        
+        // Clean up empty viewer tracking
+        if (io.viewerTracking.get(classId).size === 0) {
+          io.viewerTracking.delete(classId);
+          console.log(`🧹 Cleaned up empty viewer tracking for class ${classId}`);
         }
       }
     }
@@ -1596,6 +2495,62 @@ io.on('connection', socket => {
       console.log(`📤 Sent current stream state to new joiner for class ${classId}`);
     } else {
       socket.emit('stream:no-state', { message: 'No active stream found' });
+    }
+  });
+
+  // ===== DIRECT MESSAGING HANDLERS =====
+  // Join user to their private room for direct messages
+  socket.on('join_user_room', (data) => {
+    const { userId } = data;
+    if (userId) {
+      socket.join(`user:${userId}`);
+      console.log(`👤 User ${userId} joined their private room`);
+    }
+  });
+
+  // Handle typing indicators for direct messages
+  socket.on('typing', (data) => {
+    const { room, username } = data;
+    if (room) {
+      socket.to(`user:${room}`).emit('typing', { username });
+    }
+  });
+
+  socket.on('stop_typing', (data) => {
+    const { room } = data;
+    if (room) {
+      socket.to(`user:${room}`).emit('stop_typing');
+    }
+  });
+
+  // Handle direct message sending via socket (real-time)
+  socket.on('send_direct_message', async (data) => {
+    try {
+      const { recipientId, content, senderId, senderName } = data;
+      
+      if (!recipientId || !content || !senderId) {
+        socket.emit('error', { message: 'Missing required fields for direct message' });
+        return;
+      }
+
+      // Create message object
+      const message = {
+        sender: { id: senderId, name: senderName },
+        recipient: { id: recipientId },
+        content: content,
+        timestamp: new Date()
+      };
+
+      // Send to recipient's room
+      io.to(`user:${recipientId}`).emit('direct_message', message);
+      
+      // Send confirmation back to sender
+      socket.emit('message_sent', message);
+      
+      console.log(`💬 Direct message sent from ${senderName} to user ${recipientId}`);
+    } catch (error) {
+      console.error('❌ Error handling direct message:', error);
+      socket.emit('error', { message: 'Failed to send direct message' });
     }
   });
 });

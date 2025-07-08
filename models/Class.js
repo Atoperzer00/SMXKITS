@@ -9,6 +9,21 @@ const BookmarkSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
+// Module sub-schema for classes (copied from templates)
+const ClassModuleSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  description: { type: String },
+  order: { type: Number, required: true },
+  lessons: [{
+    title: { type: String, required: true },
+    description: { type: String },
+    filePath: { type: String },
+    duration: { type: Number, default: 0 }, // in seconds
+    order: { type: Number, default: 0 }
+  }],
+  estimatedWeeks: { type: Number, default: 1 }
+});
+
 const ClassSchema = new mongoose.Schema({
   name: { type: String, required: true },
   organization: { type: String },
@@ -27,6 +42,10 @@ const ClassSchema = new mongoose.Schema({
   currentUploadPath: { type: String }, // Path to uploaded video file
   currentUploadFilename: { type: String }, // Filename of uploaded video
   bookmarks: [BookmarkSchema],
+  
+  // Template-based modules (deep copied from templates)
+  difficulty: { type: String, enum: ['Easy', 'Medium', 'Hard'] },
+  modules: [ClassModuleSchema],
   
   createdAt: { type: Date, default: Date.now }
 });

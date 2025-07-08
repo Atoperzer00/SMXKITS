@@ -71,41 +71,61 @@
 
     /* Responsive adjustments */
     @media (max-width: 1200px) {
-      .bubble {
-        min-width: 300px;
-        max-width: calc(100vw - 500px);
+      .sidebar {
+        width: 400px;
+        min-width: 350px;
+        max-width: 600px;
       }
-      .main-panel {
-        max-width: calc(100vw - 400px);
+      .bubble {
+        min-width: 250px;
+      }
+      .callout-card {
+        width: 100%;
+        max-width: 100%;
       }
     }
 
     @media (max-width: 768px) {
       .container {
         flex-direction: column;
+        height: calc(100vh - 58px);
       }
       .sidebar {
         width: 100%;
         min-width: 100%;
         max-width: 100%;
         height: auto;
-        min-height: auto;
+        min-height: 200px;
+        flex-shrink: 0;
+        resize: none;
       }
       .main-panel {
-        max-width: 100%;
+        flex: 1;
         height: auto;
+        min-height: 0;
+      }
+      .feed-panel {
+        padding: 20px 15px;
       }
       .bubble {
         min-width: 200px;
-        max-width: calc(100vw - 40px);
+        margin-bottom: 12px;
+      }
+      .callout-card {
+        margin-bottom: 12px;
+      }
+      .top-bar {
+        position: fixed;
+        width: 100vw;
       }
     }
 
     .container {
       display: flex;
-      min-height: 100vh;
       width: 100%;
-      overflow: hidden; /* Prevent horizontal overflow */
+      height: calc(100vh - 58px); /* Account for fixed top bar */
+      overflow: hidden;
+      margin-top: 58px; /* Account for fixed top bar */
     }
 
     /* Sidebar */
@@ -124,7 +144,7 @@
       resize: horizontal;
       z-index: 5;
       pointer-events: auto;
-      min-height: 100vh; /* Ensure sidebar takes full height */
+      height: 100%; /* Use full height of container */
       display: flex;
       flex-direction: column;
     }
@@ -258,14 +278,12 @@
     /* Main */
     .main-panel {
       flex: 1;
-      flex-grow: 1;
       display: flex;
       flex-direction: column;
       background: transparent;
       overflow: hidden; /* Prevent overflow */
       min-width: 0; /* Prevents flex item from overflowing */
-      height: 100vh; /* Ensure main panel takes full viewport height */
-      max-width: calc(100vw - 600px); /* Ensure it doesn't exceed available space */
+      height: 100%; /* Use full height of container */
     }
     
     .top-bar {
@@ -284,27 +302,45 @@
       color: #a9d4c6;
       font-weight: 500;
       z-index: 100;
-      position: relative;
-      width: 100%; /* Allow top bar to extend full width */
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      width: 100vw; /* Extend to full viewport width */
       margin-left: 0;
       box-shadow: var(--shadow-primary);
     }
 
     .feed-panel {
       flex: 1;
-      flex-grow: 1;
       overflow-y: auto;
-      overflow-x: hidden; /* Prevent horizontal overflow */
-      padding: 36px 40px 22px 80px; /* Reduced left padding since sidebar is wider */
+      padding: 36px 10px 22px 20px;
+      box-sizing: border-box;
+      min-width: 0; /* Allow shrinking */
+    }
+
+    /* Enhanced scrollbar styling for consistent positioning */
+    .feed-panel::-webkit-scrollbar {
+      width: 12px;
+      position: absolute;
+      right: 0;
+    }
+
+    .feed-panel::-webkit-scrollbar-track {
       background: transparent;
-      display: flex;
-      flex-direction: column;
-      gap: 28px;
-      min-height: calc(100vh - 58px); /* Use min-height instead of fixed height */
-      max-width: 100%; /* Ensure feed panel doesn't exceed container */
-      scrollbar-width: thin;
-      scrollbar-color: var(--accent) transparent;
-      scroll-behavior: smooth; /* Enable smooth scrolling */
+      border-radius: 6px;
+    }
+
+    .feed-panel::-webkit-scrollbar-thumb {
+      background: var(--accent);
+      border-radius: 6px;
+      border: 2px solid transparent;
+      background-clip: content-box;
+    }
+
+    .feed-panel::-webkit-scrollbar-thumb:hover {
+      background: #28dd6c;
+      background-clip: content-box;
     }
 
     /* Log Bubbles */
@@ -319,9 +355,11 @@
       padding: 24px 34px 19px 24px;
       position: relative;
       transition: var(--transition);
-      min-width: 500px;
-      max-width: calc(100vw - 700px); /* Ensure bubbles fit within available space */
-      width: 95%;
+      min-width: 300px;
+      width: 100%;
+      max-width: 100%;
+      margin-bottom: 16px;
+      box-sizing: border-box;
       word-break: break-word;
       white-space: pre-line;
       font-size: 1.06em;
@@ -329,9 +367,11 @@
     
     .callout-card {
       width: 100%;
-      max-width: none;
+      max-width: 100%;
+      margin-bottom: 16px;
+      box-sizing: border-box;
       transform: none !important;
-      border-radius: 0;
+      border-radius: 20px; /* Match bubble border-radius */
     }
     .bubble:hover {
       box-shadow: var(--shadow-hover), inset 0 1px 0 rgba(255, 255, 255, 0.15);
@@ -802,7 +842,7 @@
     /* Group selection checkbox */
     .bubble-select-checkbox {
       position: absolute;
-      left: -38px;
+      left: -15px;
       top: 62px;
       width: 24px;
       height: 24px;
@@ -977,23 +1017,7 @@
       text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     }
     
-    .top-bar {
-      height: 58px;
-      background: var(--glass-bg);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      padding: 0 30px;
-      border-bottom: 1px solid var(--glass-border);
-      font-size: 1.1em;
-      letter-spacing: 1px;
-      color: #a9d4c6;
-      font-weight: 500;
-      z-index: 2;
-      box-shadow: var(--glass-shadow);
-    }
+
     
     /* Remove AI-like rounded corners and make more professional */
     .room-status {
@@ -1027,17 +1051,17 @@
       border: 2px solid var(--qc-orange);
       border-radius: 8px;
       padding: 16px 24px;
-      margin-bottom: 8px;
+      margin-bottom: 16px;
       margin-left: 30px; /* Make room for external checkbox */
-      margin-right: 40px;
+      margin-right: 10px; /* Reduced right margin */
       font-size: 1.2em;
       line-height: 1.4;
       color: var(--bubble-text);
       word-break: break-word;
       white-space: pre-line;
       min-height: auto;
-      width: 100%;
-      max-width: 100%;
+      width: calc(100% - 40px); /* Account for margins */
+      max-width: calc(100% - 40px); /* Account for margins */
       box-sizing: border-box;
     }
     
@@ -1088,9 +1112,9 @@
     }
     
     .follow-stage {
-      color: var(--accent);
+      color: var(--follow-blue);
       font-size: 13px;
-      background: rgba(34, 197, 94, 0.1);
+      background: rgba(59, 130, 246, 0.1);
       padding: 2px 6px;
       border-radius: 3px;
       border: 1px solid rgba(34, 197, 94, 0.3);
@@ -1106,6 +1130,42 @@
     .follow-id-row .follow-id {
       color: var(--follow-blue);
       font-weight: bold;
+    }
+
+    /* Target Status display styling to match follow format */
+    .target-status-display {
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .target-status-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+      font-weight: bold;
+    }
+    
+    .target-status-label {
+      color: var(--follow-blue);
+      font-size: 15px;
+    }
+    
+    .target-status-value {
+      font-size: 13px;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+    
+    .target-status-on {
+      color: var(--qc-green);
+      background: rgba(34, 197, 94, 0.1);
+    }
+    
+    .target-status-off {
+      color: var(--qc-red);
+      background: rgba(239, 68, 68, 0.1);
     }
 
     /* Improved spacing for callout content sections */
@@ -1132,13 +1192,13 @@
     .callout-wrapper {
       position: relative;
       width: 100%;
-      margin-bottom: 8px;
+      margin-bottom: 16px;
     }
     
     /* Ensure proper positioning context for external elements */
     .callout-wrapper .callout-card {
       margin-left: 30px; /* Space for checkbox */
-      margin-right: 0;
+      margin-right: 10px; /* Reduced right margin */
     }
 
     /* Classic Menu and QC Buttons */
@@ -1161,13 +1221,13 @@
     }
     
     .menu-btn {
-      left: -38px;
+      left: -15px;
       top: 6px;
       line-height: 1;
     }
     
     .qc-btn {
-      left: -38px;
+      left: -15px;
       top: 34px;
     }
     
@@ -1210,15 +1270,6 @@
     
     * {
       box-sizing: border-box;
-    }
-    
-    /* Ensure proper flex behavior */
-    .container > * {
-      flex-shrink: 0;
-    }
-    
-    .main-panel {
-      flex-shrink: 1 !important; /* Allow main panel to shrink if needed */
     }
   </style>
 </head>
@@ -1265,15 +1316,15 @@
           </div>
           
           <div class="form-group">
-            <label>Team Name</label>
+            <label>Team</label>
             <input type="text" name="team"/>
           </div>
           
           <div class="form-group-with-refresh">
             <div class="form-group">
               <label>Zulu Time</label>
-              <input type="text" name="zulu" required placeholder="HH:MM" pattern="[0-9]{2}:[0-9]{2}" maxlength="5" 
-                    oninput="this.value = this.value.replace(/[^0-9:]/g, '');"/>
+              <input type="text" name="zulu" required placeholder="HHMM" pattern="[0-9]{4}" maxlength="4" 
+                    oninput="this.value = this.value.replace(/[^0-9]/g, '');"/>
             </div>
             <button type="button" class="refresh-btn" title="Update to current time" onclick="updateZuluTime(this)">🔄</button>
           </div>
@@ -1369,7 +1420,7 @@
         
         <div class="form-group" style="margin-bottom: 12px;">
           <label>Mission / Operation</label>
-          <input type="text" name="operation" value="OBJ" required oninput="autoGrow(this)"/>
+          <input type="text" name="operation" required oninput="autoGrow(this)"/>
         </div>
         
         <div class="form-group" style="margin-bottom: 12px;">
@@ -1377,15 +1428,12 @@
           <input type="text" name="countryCode" maxlength="3" oninput="autoGrow(this)"/>
         </div>
         
-        <div class="form-group" style="margin-bottom: 12px;">
-          <label>Team Name</label>
-          <input type="text" name="team" oninput="autoGrow(this)"/>
-        </div>
+
         
         <div class="form-group-with-refresh" style="margin-bottom: 12px;">
           <div class="form-group">
             <label>Zulu Time</label>
-            <input type="text" name="zulu" required placeholder="HH:MM" pattern="[0-9]{2}:[0-9]{2}" maxlength="5" oninput="this.value = this.value.replace(/[^0-9:]/g, '');"/>
+            <input type="text" name="zulu" required placeholder="HHMM" pattern="[0-9]{4}" maxlength="4" oninput="this.value = this.value.replace(/[^0-9]/g, '');"/>
           </div>
           <button type="button" class="refresh-btn" title="Update to current time" onclick="updateZuluTime(this)">🔄</button>
         </div>
@@ -1807,22 +1855,26 @@
     }
     
     try {
-      console.log("Log form submitted");
       
-      const formData = new FormData(form);
-      const data = Object.fromEntries(formData.entries());
+      // Use form.elements to avoid conflicts with duplicate field names on page
+      const data = {
+        classification: form.elements.classification?.value || '',
+        asset: form.elements.asset?.value || '',
+        sensor: form.elements.sensor?.value || '',
+        operation: form.elements.operation?.value || '',
+        countryCode: form.elements.countryCode?.value || '',
+        team: form.elements.team?.value || '',
+        zulu: form.elements.zulu?.value || '',
+        mgrs: form.elements.mgrs?.value || '',
+        location: form.elements.location?.value || '',
+        activity: form.elements.activity?.value || '',
+        iaNotes: form.elements.iaNotes?.value || '',
+        slant: form.elements.slant?.value || '',
+        vehicles: form.elements.vehicles?.value || '0',
+        targetStatus: form.elements.targetStatus?.value || ''
+      };
       
-      // Debug: Log the form data to see what's being submitted
-      console.log('Form data being submitted:', data);
-      console.log('SLANT value:', data.slant);
-      console.log('Vehicles value:', data.vehicles);
-      console.log('Target Status value:', data.targetStatus);
-      
-      // Additional debugging - check form elements directly
-      console.log('Form elements check:');
-      console.log('SLANT element:', form.elements.slant ? form.elements.slant.value : 'NOT FOUND');
-      console.log('Vehicles element:', form.elements.vehicles ? form.elements.vehicles.value : 'NOT FOUND');
-      console.log('Target Status element:', form.elements.targetStatus ? form.elements.targetStatus.value : 'NOT FOUND');
+
       
       let follow = undefined;
       
@@ -2067,11 +2119,6 @@
   // ------ UI Generation Functions ------
   window.createBubble = function(data, append=false) {
     try {
-      // Debug: Log the data being used to create the bubble
-      console.log('Creating bubble with data:', data);
-      console.log('SLANT in bubble data:', data.slant);
-      console.log('Vehicles in bubble data:', data.vehicles);
-      console.log('Target Status in bubble data:', data.targetStatus);
       
       const panel = document.getElementById('feedPanel');
       
@@ -2205,7 +2252,10 @@
       html += `<span> <strong>Location:</strong> ${(data.location || 'Not specified').toUpperCase()}</span>`;
       html += `<div style="text-align: right; font-size: 12px;">`;
       html += `<div> ${(data.mgrs || 'Not specified').toUpperCase()}</div>`;
-      html += `<div>S: ${(data.slant || 'N/A').toUpperCase()}     VIC: ${data.vehicles !== undefined ? data.vehicles : '0'}</div>`;
+      // Debug: Log SLANT and vehicles values
+      console.log('SLANT value for display:', data.slant, 'Type:', typeof data.slant);
+      console.log('Vehicles value for display:', data.vehicles, 'Type:', typeof data.vehicles);
+      html += `<div>S: ${(data.slant && data.slant.trim() !== '' ? data.slant : 'N/A').toUpperCase()}     V: ${data.vehicles !== undefined && data.vehicles !== null ? data.vehicles : '0'}</div>`;
       html += `</div>`;
       html += `</div>`;
       
@@ -2215,17 +2265,19 @@
       
       // IA Notes
       if (data.iaNotes && data.iaNotes.trim()) {
-        html += `<div style="margin-top: 4px; font-size: 10px; color: #999;">`;
+        html += `<div style="margin-top: 4px; color: #999;">`;
         html += `<strong>IA Notes:</strong> ${data.iaNotes.replace(/\n/g,'<br>')}`;
         html += `</div>`;
       }
       
-      // Target Status - moved below IA Notes with bold font
-      if (data.targetStatus) {
-        const statusColor = data.targetStatus === 'ON TARGET' ? '#22c55e' : '#ef4444';
-        const statusBg = data.targetStatus === 'ON TARGET' ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)';
-        html += `<div style="text-align: center; margin: 4px 0;">`;
-        html += `<span style="background: ${statusBg}; color: ${statusColor}; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: bold;">${data.targetStatus}</span>`;
+      // Target Status - styled to match follow display
+      if (data.targetStatus && data.targetStatus.trim() !== '') {
+        const statusClass = data.targetStatus === 'ON TARGET' ? 'target-status-on' : 'target-status-off';
+        html += `<div class="target-status-display">`;
+        html += `<div class="target-status-header">`;
+
+        html += `<span class="target-status-value ${statusClass}">${data.targetStatus}</span>`;
+        html += `</div>`;
         html += `</div>`;
       }
       
@@ -2380,18 +2432,18 @@
   function formatZuluTime(zuluTime) {
     if (!zuluTime) return '-';
     
-    // If it already contains a colon, it's in the old format
+    // If it contains a colon, remove it to get HHMM format
     if (zuluTime.includes(':')) {
-      return zuluTime;
+      return zuluTime.replace(':', '');
     }
     
-    // For 4-digit format, insert a colon between hours and minutes
+    // For 4-digit format, return as-is (HHMM)
     // Handle both 3-digit and 4-digit cases
     if (zuluTime.length === 3) {
-      // For 3 digits (e.g., "130" for 1:30), add leading zero
-      return "0" + zuluTime.charAt(0) + ":" + zuluTime.substring(1);
+      // For 3 digits (e.g., "130" for 0130), add leading zero
+      return "0" + zuluTime;
     } else if (zuluTime.length === 4) {
-      return zuluTime.substring(0, 2) + ":" + zuluTime.substring(2);
+      return zuluTime;
     }
     
     // Return as-is for any other format
@@ -3742,11 +3794,11 @@
         return;
       }
       
-      // Get current UTC time and format as HH:MM (Zulu time)
+      // Get current UTC time and format as HHMM (Zulu time)
       const now = new Date();
       const hours = String(now.getUTCHours()).padStart(2, '0');
       const minutes = String(now.getUTCMinutes()).padStart(2, '0');
-      const zuluTime = hours + ':' + minutes;
+      const zuluTime = hours + minutes;
       
       // Update the input field
       zuluInput.value = zuluTime;

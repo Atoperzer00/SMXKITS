@@ -4,126 +4,1127 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Screener Training - SMX KITS</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
   <style>
-    .zoom-in { transform: scale(1.5); transition: transform .3s; }
-    .zoom-out { transform: scale(1); transition: transform .3s; }
-    .video-container { overflow: hidden; border-radius: 1rem; }
+    :root {
+      --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      --dark-gradient: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 100%);
+      --card-gradient: linear-gradient(145deg, #16213e 0%, #0f1419 100%);
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --text-primary: #ffffff;
+      --text-secondary: #b8c5d6;
+      --text-accent: #64b5f6;
+      --shadow-primary: 0 20px 40px rgba(0, 0, 0, 0.3);
+      --shadow-hover: 0 30px 60px rgba(0, 0, 0, 0.4);
+      --border-radius: 20px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--dark-gradient);
+      color: var(--text-primary);
+      overflow-x: hidden;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* Animated background particles */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.1) 0%, transparent 50%);
+      z-index: -1;
+      animation: float 20s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      33% { transform: translateY(-20px) rotate(1deg); }
+      66% { transform: translateY(10px) rotate(-1deg); }
+    }
+
+    .training-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Left Sidebar - Module Picker */
+    .module-sidebar {
+      width: 320px;
+      background: rgba(15, 20, 25, 0.95);
+      backdrop-filter: blur(20px);
+      border-right: 1px solid var(--glass-border);
+      display: flex;
+      flex-direction: column;
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .module-sidebar::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, rgba(102, 126, 234, 0.1) 0%, transparent 100%);
+      z-index: -1;
+    }
+
+    .sidebar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .sidebar-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .back-button {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      padding: 0.5rem 1rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: var(--transition);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .back-button:hover {
+      background: var(--accent-gradient);
+      color: white;
+      transform: translateX(-2px);
+    }
+
+    .tool-card {
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      padding: 1.5rem;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+
+    .tool-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--primary-gradient);
+      opacity: 0;
+      transition: var(--transition);
+    }
+
+    .tool-card:hover::before {
+      opacity: 0.1;
+    }
+
+    .tool-card:hover {
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: var(--shadow-hover);
+      border-color: rgba(102, 126, 234, 0.5);
+    }
+
+    .tool-card.active {
+      border-color: rgba(102, 126, 234, 0.8);
+      background: linear-gradient(145deg, #1a2a4e 0%, #0f1419 100%);
+    }
+
+    .tool-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+
+    .practices-list {
+      display: none;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--glass-border);
+    }
+
+    .practices-list.active {
+      display: block;
+    }
+
+    .practice-button {
+      display: block;
+      width: 100%;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: var(--transition);
+      margin-bottom: 0.5rem;
+      text-align: left;
+    }
+
+    .practice-button:hover {
+      background: var(--accent-gradient);
+      color: white;
+      transform: translateX(5px);
+    }
+
+    .practice-button.active {
+      background: var(--secondary-gradient);
+      color: white;
+    }
+
+    /* Right Content Area */
+    .training-content {
+      flex: 1;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .instruction-header {
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      padding: 1.5rem;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+      text-align: center;
+    }
+
+    .instruction-text {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--text-accent);
+      margin: 0;
+    }
+
+    .video-section {
+      flex: 1;
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      padding: 1.5rem;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+      display: flex;
+      flex-direction: column;
+      min-height: 500px;
+    }
+
+    .video-container {
+      flex: 1;
+      position: relative;
+      background: #000;
+      border-radius: 15px;
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+
+    .training-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    .video-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      background: rgba(0, 0, 0, 0.8);
+      border-radius: 10px;
+      margin-bottom: 1rem;
+    }
+
+    .play-pause-btn {
+      background: var(--accent-gradient);
+      border: none;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      color: white;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .play-pause-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 10px 25px rgba(79, 172, 254, 0.4);
+    }
+
+    .progress-container {
+      flex: 1;
+      margin: 0 1rem;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: var(--accent-gradient);
+      width: 0%;
+      transition: width 0.1s ease;
+    }
+
+    .zoom-controls {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .zoom-btn {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 0.5rem;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .zoom-btn:hover {
+      background: var(--primary-gradient);
+      color: white;
+    }
+
+    .input-section {
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      padding: 1.5rem;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+    }
+
+    .sitrep-textarea {
+      width: 100%;
+      min-height: 120px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 15px;
+      padding: 1rem;
+      color: var(--text-primary);
+      font-size: 1rem;
+      font-family: inherit;
+      resize: vertical;
+      margin-bottom: 1rem;
+    }
+
+    .sitrep-textarea:focus {
+      outline: none;
+      border-color: rgba(102, 126, 234, 0.5);
+      box-shadow: 0 0 20px rgba(102, 126, 234, 0.2);
+    }
+
+    .submit-btn {
+      width: 100%;
+      background: var(--secondary-gradient);
+      border: none;
+      border-radius: 15px;
+      padding: 1rem 2rem;
+      color: white;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 35px rgba(245, 87, 108, 0.4);
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Feedback Overlay */
+    .feedback-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .feedback-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .feedback-content {
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-hover);
+      max-width: 90%;
+      max-height: 90%;
+      overflow-y: auto;
+      display: flex;
+      gap: 2rem;
+      min-width: 800px;
+    }
+
+    .feedback-column {
+      flex: 1;
+    }
+
+    .feedback-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--text-accent);
+    }
+
+    .feedback-text {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      padding: 1rem;
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 200px;
+    }
+
+    .close-overlay-btn {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: rgba(239, 68, 68, 0.9);
+      border: none;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      color: white;
+      font-size: 1.5rem;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1001;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .close-overlay-btn:hover {
+      background: rgba(220, 38, 38, 0.9);
+      transform: scale(1.1);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Welcome Section */
+    .welcome-section {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .welcome-card {
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      padding: 3rem;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+      max-width: 800px;
+      width: 100%;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .welcome-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--primary-gradient);
+      opacity: 0.05;
+      z-index: -1;
+    }
+
+    .welcome-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .welcome-icon {
+      font-size: 3rem;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .welcome-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin: 0;
+    }
+
+    .welcome-content {
+      margin-bottom: 2rem;
+    }
+
+    .welcome-text {
+      font-size: 1.1rem;
+      line-height: 1.8;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+      text-align: left;
+    }
+
+    .welcome-text.highlight {
+      color: var(--text-accent);
+      font-weight: 600;
+      text-align: center;
+      font-size: 1.2rem;
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background: var(--glass-bg);
+      border-radius: 10px;
+      border: 1px solid var(--glass-border);
+    }
+
+    .welcome-footer {
+      display: flex;
+      justify-content: center;
+    }
+
+    .instruction-badge {
+      background: var(--secondary-gradient);
+      color: white;
+      padding: 1rem 2rem;
+      border-radius: 50px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+      .training-layout {
+        flex-direction: column;
+      }
+      
+      .module-sidebar {
+        width: 100%;
+        height: auto;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+      
+      .feedback-content {
+        flex-direction: column;
+        min-width: auto;
+        max-width: 95%;
+      }
+      
+      .welcome-card {
+        padding: 2rem;
+        margin: 1rem;
+      }
+      
+      .welcome-title {
+        font-size: 2rem;
+      }
+      
+      .welcome-text {
+        font-size: 1rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .welcome-header {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      
+      .welcome-icon {
+        font-size: 2rem;
+      }
+      
+      .welcome-title {
+        font-size: 1.5rem;
+      }
+      
+      .instruction-badge {
+        padding: 0.75rem 1.5rem;
+        font-size: 0.9rem;
+      }
+    }
   </style>
 </head>
-<body class="bg-[#0f172a] text-white min-h-screen font-sans">
-  <div class="flex min-h-screen">
-    <!-- Sidebar / Navigation (Optional, you can add more links here) -->
-    <aside class="w-80 bg-[#2b2b2b] rounded-3xl m-6 p-4 shadow-2xl flex flex-col">
-      <div class="flex items-center mb-6 justify-between">
-        <div class="text-2xl font-bold">Screener Training</div>
-        <button onclick="goBack()" class="text-zinc-400 hover:text-blue-400 text-lg">← Back</button>
+<body>
+  <div class="training-layout">
+    <!-- Left Sidebar - Module Picker -->
+    <aside class="module-sidebar">
+      <div class="sidebar-header">
+        <h1 class="sidebar-title">Screener Training</h1>
+        <button class="back-button" onclick="goBack()">
+          <i class="fas fa-arrow-left"></i>
+          Back
+        </button>
       </div>
-      <!-- Add more navigation or info here if desired -->
+      
+      <div id="modules-container">
+        <!-- Modules will be generated here -->
+      </div>
     </aside>
     
-    <!-- Main Content -->
-    <main class="flex-1 p-10">
-      <h1 class="text-3xl font-extrabold mb-6 text-white">Screener Training Modules</h1>
-      <!-- Modules/Practices List -->
-      <div class="bg-zinc-900/90 rounded-3xl p-8 shadow-2xl mb-8">
-        <div class="font-semibold text-white text-lg mb-6">Modules</div>
-        <div id="modules-list" class="flex gap-6"></div>
+    <!-- Right Content Area -->
+    <main class="training-content">
+      <!-- Welcome Information -->
+      <div class="welcome-section" id="welcome-section">
+        <div class="welcome-card">
+          <div class="welcome-header">
+            <i class="fas fa-video welcome-icon"></i>
+            <h2 class="welcome-title">Welcome to Screener Training</h2>
+          </div>
+          <div class="welcome-content">
+            <p class="welcome-text">
+              Screener Training helps you practice writing formatted calls based on video surveillance.
+            </p>
+            <p class="welcome-text">
+              Start by choosing a module and selecting a practice scenario. You'll see a short surveillance video.
+            </p>
+            <p class="welcome-text">
+              Then, write your SITREP in the text box provided. Use clear format based on what you observed.
+            </p>
+            <p class="welcome-text">
+              When you submit, you'll see your callout side-by-side with a reference answer for comparison. You can pause, play, or zoom the video to help your analysis.
+            </p>
+            <p class="welcome-text highlight">
+              This tool builds skills in observation, reporting, and situational awareness.
+            </p>
+          </div>
+          <div class="welcome-footer">
+            <div class="instruction-badge">
+              <i class="fas fa-arrow-left"></i>
+              Select a module to begin training
+            </div>
+          </div>
+        </div>
       </div>
-      <!-- Practices for selected module -->
-      <div id="practices-list" class="mb-8"></div>
+      
+      <!-- Instruction Header -->
+      <div class="instruction-header hidden" id="instruction-header">
+        <p class="instruction-text">Create a SITREP for the Named Area of Interest, NAI-078 at 2111Z. </p>
+      </div>
+      
+      <!-- Video Section -->
+      <div class="video-section hidden" id="video-section">
+        <div class="video-container">
+          <video id="training-video" class="training-video" loop muted>
+            <source src="Screener Training.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+          </video>
+        </div>
+        
+        <div class="video-controls">
+          <button class="play-pause-btn" id="play-pause-btn">
+            <i class="fas fa-play"></i>
+          </button>
+          
+          <div class="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+          </div>
+          
+          <div class="zoom-controls">
+            <button class="zoom-btn" onclick="zoomVideo(-0.1)">
+              <i class="fas fa-search-minus"></i>
+            </button>
+            <button class="zoom-btn" onclick="zoomVideo(0.1)">
+              <i class="fas fa-search-plus"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Input Section -->
+      <div class="input-section hidden" id="input-section">
+        <textarea 
+          id="sitrep-textarea" 
+          class="sitrep-textarea" 
+          placeholder="Enter your SITREP here..."
+        ></textarea>
+        <button class="submit-btn" id="submit-btn" onclick="submitSitrep()">
+          Submit SITREP
+        </button>
+      </div>
     </main>
   </div>
   
-  <!-- Overlay: Video Feed + Callout -->
-  <div id="screenerOverlay" class="fixed inset-0 bg-[#10131b]/90 flex items-center justify-center z-50 hidden">
-    <div class="flex bg-zinc-900/95 rounded-2xl shadow-2xl overflow-hidden w-[1000px] max-w-full">
-      <!-- Left: Video Feed with Zoom -->
-      <div class="w-[480px] flex flex-col items-center justify-center p-8">
-        <div class="video-container w-full h-[270px] mb-4 bg-black relative">
-          <video id="screenerVideo" src="demo-loop.mp4" autoplay loop muted class="rounded-xl w-full h-full object-cover zoom-out"></video>
-          <button id="zoomBtn" class="absolute top-3 right-3 bg-zinc-800/70 rounded-lg px-3 py-1 text-xs text-white shadow" onclick="toggleZoom()">Toggle Zoom</button>
-        </div>
+  <!-- Feedback Overlay -->
+  <div class="feedback-overlay" id="feedback-overlay">
+    <div class="feedback-content">
+      <button class="close-overlay-btn" onclick="closeFeedback()">
+        <i class="fas fa-times"></i>
+      </button>
+      <div class="feedback-column">
+        <h3 class="feedback-title">Your SITREP</h3>
+        <div class="feedback-text" id="user-sitrep"></div>
       </div>
-      <!-- Right: Prefilled + User Callout -->
-      <div class="flex-1 flex flex-col p-8">
-        <label class="mb-2 text-sm text-blue-400 font-semibold" for="prefilledCallout">Previous Callout</label>
-        <textarea id="prefilledCallout" rows="4" class="w-full bg-zinc-800/70 border border-zinc-700 rounded-lg p-2 text-white mb-4" readonly>Vehicle observed arriving at objective. 2x males dismount, one moves to main entrance, other maintains security at vehicle.</textarea>
-        <label class="mb-2 text-sm text-blue-400 font-semibold" for="userCallout">Your Callout</label>
-        <textarea id="userCallout" rows="4" class="w-full bg-zinc-800/70 border border-zinc-700 rounded-lg p-2 text-white mb-4" placeholder="Type your callout here..."></textarea>
-        <button onclick="submitCallout()" class="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-3 rounded-xl transition mt-2">
-          Submit Callout
-        </button>
+      <div class="feedback-column">
+        <h3 class="feedback-title">Reference SITREP</h3>
+        <div class="feedback-text" id="reference-sitrep">
+          SITREP: Upon arrival to a NAI-078 at 2111Z, three adult males, one in western wear that arrived from the W FOV and entered the S side of the residence, one in traditional wear that stood under a tree on the N side of the residence, and one in western wear on the N balcony that utilized a POSS COMMS device. One quad cab truck and one sedan were parked on the S side of the residence. SLANT 3/0/0        </div>
       </div>
     </div>
-    <!-- Close overlay -->
-    <button onclick="closeOverlay()" class="absolute top-6 right-8 bg-zinc-800/70 px-4 py-2 rounded-lg text-white font-bold text-xl hover:bg-red-700">✕</button>
   </div>
 
   <script>
-    // Render modules and practices dynamically
-    const NUM_MODULES = 5, PRACTICES_PER_MODULE = 10;
-    let currentModule = null, currentPractice = null;
+    // Global variables
+    let currentModule = null;
+    let currentPractice = null;
+    let currentZoom = 1;
+    let video = null;
+    let isPlaying = false;
+
+    // Initialize the application
+    function init() {
+      console.log('Initializing Screener Training application');
+      renderModules();
+      setupVideoControls();
+      console.log('Application initialized');
+    }
+
+    // Render modules in sidebar
     function renderModules() {
-      const modulesDiv = document.getElementById('modules-list');
-      modulesDiv.innerHTML = '';
-      for (let i = 1; i <= NUM_MODULES; i++) {
-        const btn = document.createElement('button');
-        btn.className = "bg-blue-800/80 hover:bg-blue-600 text-white rounded-xl px-6 py-3 font-bold text-lg shadow transition";
-        btn.textContent = "Module " + i;
-        btn.onclick = () => renderPractices(i);
-        modulesDiv.appendChild(btn);
+      const container = document.getElementById('modules-container');
+      if (!container) {
+        console.error('modules-container not found');
+        return;
+      }
+      
+      container.innerHTML = '';
+      
+      for (let i = 1; i <= 5; i++) {
+        const moduleCard = document.createElement('div');
+        moduleCard.className = 'tool-card';
+        
+        const moduleTitle = document.createElement('div');
+        moduleTitle.className = 'tool-title';
+        moduleTitle.textContent = 'Module ' + i;
+        
+        const practicesList = document.createElement('div');
+        practicesList.className = 'practices-list';
+        practicesList.id = 'practices-' + i;
+        
+        // Generate practices
+        for (let p = 1; p <= 10; p++) {
+          const practiceBtn = document.createElement('button');
+          practiceBtn.className = 'practice-button';
+          practiceBtn.textContent = 'Practice ' + p;
+          practiceBtn.onclick = function() {
+            selectPractice(i, p, this);
+          };
+          practicesList.appendChild(practiceBtn);
+        }
+        
+        moduleCard.appendChild(moduleTitle);
+        moduleCard.appendChild(practicesList);
+        
+        moduleCard.addEventListener('click', function(e) {
+          if (e.target.classList.contains('practice-button')) return;
+          toggleModule(i);
+        });
+        
+        container.appendChild(moduleCard);
       }
     }
-    function renderPractices(moduleNum) {
+
+    // Toggle module expansion
+    function toggleModule(moduleNum) {
+      const practicesList = document.getElementById('practices-' + moduleNum);
+      if (!practicesList) {
+        console.error('Practices list not found for module', moduleNum);
+        return;
+      }
+      
+      const moduleCard = practicesList.closest('.tool-card');
+      
+      // Close all other modules
+      const allPracticesLists = document.querySelectorAll('.practices-list');
+      allPracticesLists.forEach(function(list) {
+        if (list.id !== 'practices-' + moduleNum) {
+          list.classList.remove('active');
+          const card = list.closest('.tool-card');
+          if (card) card.classList.remove('active');
+        }
+      });
+      
+      // Toggle current module
+      practicesList.classList.toggle('active');
+      if (moduleCard) moduleCard.classList.toggle('active');
+    }
+
+    // Select a practice
+    function selectPractice(moduleNum, practiceNum, buttonElement) {
+      console.log('=== SELECT PRACTICE CALLED ===');
+      console.log('Module:', moduleNum, 'Practice:', practiceNum);
+      console.log('Button element:', buttonElement);
+      
       currentModule = moduleNum;
-      const practicesDiv = document.getElementById('practices-list');
-      practicesDiv.innerHTML = `<div class="font-semibold text-white text-lg mb-3">Practices for Module ${moduleNum}</div><div class="flex gap-4 flex-wrap">`;
-      for (let p = 1; p <= PRACTICES_PER_MODULE; p++) {
-        const btn = document.createElement('button');
-        btn.className = "bg-zinc-700/90 hover:bg-blue-600 text-white rounded-xl px-4 py-2 font-bold shadow transition mb-2";
-        btn.textContent = "Practice " + p;
-        btn.onclick = () => openOverlay(moduleNum, p);
-        practicesDiv.appendChild(btn);
-      }
-      practicesDiv.innerHTML += '</div>';
-    }
-    // Overlay controls
-    function openOverlay(module, practice) {
-      currentModule = module;
-      currentPractice = practice;
-      document.getElementById('screenerOverlay').classList.remove('hidden');
-      // Optionally load a different video or prefilled callout per module/practice
-      // document.getElementById('screenerVideo').src = `video-mod${module}-prac${practice}.mp4`;
-      // document.getElementById('prefilledCallout').value = "...";
-    }
-    function closeOverlay() {
-      document.getElementById('screenerOverlay').classList.add('hidden');
-      document.getElementById('userCallout').value = '';
-    }
-    // Zoom button
-    function toggleZoom() {
-      const vid = document.getElementById('screenerVideo');
-      if (vid.classList.contains('zoom-in')) {
-        vid.classList.remove('zoom-in');
-        vid.classList.add('zoom-out');
+      currentPractice = practiceNum;
+      
+      // Update active practice button
+      const allPracticeButtons = document.querySelectorAll('.practice-button');
+      console.log('Found practice buttons:', allPracticeButtons.length);
+      
+      allPracticeButtons.forEach(function(btn) {
+        btn.classList.remove('active');
+      });
+      
+      if (buttonElement) {
+        buttonElement.classList.add('active');
+        console.log('Button marked as active:', buttonElement.textContent);
       } else {
-        vid.classList.remove('zoom-out');
-        vid.classList.add('zoom-in');
+        console.error('No button element provided!');
+      }
+      
+      // Show training interface
+      console.log('About to call showTrainingInterface...');
+      showTrainingInterface();
+    }
+
+    // Show the training interface
+    function showTrainingInterface() {
+      console.log('=== SHOWING TRAINING INTERFACE ===');
+      console.log('Module:', currentModule, 'Practice:', currentPractice);
+      
+      // Hide welcome section
+      const welcomeSection = document.getElementById('welcome-section');
+      console.log('Welcome section element:', welcomeSection);
+      if (welcomeSection) {
+        console.log('Welcome section classes before:', welcomeSection.className);
+        welcomeSection.classList.add('hidden');
+        console.log('Welcome section classes after:', welcomeSection.className);
+        console.log('Welcome section style display:', window.getComputedStyle(welcomeSection).display);
+      } else {
+        console.error('Welcome section element not found!');
+      }
+      
+      const instructionHeader = document.getElementById('instruction-header');
+      const videoSection = document.getElementById('video-section');
+      const inputSection = document.getElementById('input-section');
+      
+      console.log('Found elements:');
+      console.log('- Instruction header:', instructionHeader);
+      console.log('- Video section:', videoSection);
+      console.log('- Input section:', inputSection);
+      
+      if (instructionHeader) {
+        console.log('Instruction header classes before:', instructionHeader.className);
+        instructionHeader.classList.remove('hidden');
+        console.log('Instruction header classes after:', instructionHeader.className);
+        console.log('Instruction header display:', window.getComputedStyle(instructionHeader).display);
+      } else {
+        console.error('Instruction header element not found');
+      }
+      
+      if (videoSection) {
+        console.log('Video section classes before:', videoSection.className);
+        videoSection.classList.remove('hidden');
+        console.log('Video section classes after:', videoSection.className);
+        console.log('Video section display:', window.getComputedStyle(videoSection).display);
+      } else {
+        console.error('Video section element not found');
+      }
+      
+      if (inputSection) {
+        console.log('Input section classes before:', inputSection.className);
+        inputSection.classList.remove('hidden');
+        console.log('Input section classes after:', inputSection.className);
+        console.log('Input section display:', window.getComputedStyle(inputSection).display);
+      } else {
+        console.error('Input section element not found');
+      }
+      
+      // Initialize video
+      video = document.getElementById('training-video');
+      if (video) {
+        video.load();
+        setupVideoEventListeners();
+        console.log('Video loaded and event listeners setup');
+      } else {
+        console.error('Video element not found');
+      }
+      
+      // Clear previous input
+      const textarea = document.getElementById('sitrep-textarea');
+      if (textarea) {
+        textarea.value = '';
+        console.log('Textarea cleared');
+      } else {
+        console.error('Textarea element not found');
       }
     }
-    // Demo: Submit callout
-    function submitCallout() {
-      const userCall = document.getElementById('userCallout').value;
-      alert(`Submitted for grading:\n\nSCREENER TRAINING: Module ${currentModule}/Practice ${currentPractice}\n\n${userCall}`);
-      closeOverlay();
+
+    // Setup video controls
+    function setupVideoControls() {
+      const playPauseBtn = document.getElementById('play-pause-btn');
+      const progressBar = document.getElementById('progress-bar');
+      
+      if (playPauseBtn) {
+        playPauseBtn.addEventListener('click', togglePlayPause);
+      }
+      
+      // Setup video container for mouse wheel zoom
+      const videoContainer = document.querySelector('.video-container');
+      if (videoContainer) {
+        videoContainer.addEventListener('wheel', function(e) {
+          e.preventDefault();
+          const delta = e.deltaY > 0 ? -0.1 : 0.1;
+          zoomVideo(delta);
+        });
+      }
     }
+
+    // Toggle play/pause
+    function togglePlayPause() {
+      if (!video) {
+        console.error('Video not initialized');
+        return;
+      }
+      
+      const playPauseBtn = document.getElementById('play-pause-btn');
+      const icon = playPauseBtn ? playPauseBtn.querySelector('i') : null;
+      
+      if (!icon) {
+        console.error('Play/pause button or icon not found');
+        return;
+      }
+      
+      try {
+        if (video.paused) {
+          video.play();
+          icon.className = 'fas fa-pause';
+          isPlaying = true;
+          console.log('Video playing');
+        } else {
+          video.pause();
+          icon.className = 'fas fa-play';
+          isPlaying = false;
+          console.log('Video paused');
+        }
+      } catch (error) {
+        console.error('Error toggling video playback:', error);
+      }
+    }
+
+    // Update progress bar
+    function updateProgress() {
+      if (!video) return;
+      
+      const progressBar = document.getElementById('progress-bar');
+      const progress = (video.currentTime / video.duration) * 100;
+      progressBar.style.width = progress + '%';
+    }
+
+    // Zoom video function
+    function zoomVideo(delta) {
+      if (!video) return;
+      
+      currentZoom += delta;
+      currentZoom = Math.max(0.5, Math.min(3, currentZoom)); // Limit zoom between 0.5x and 3x
+      
+      video.style.transform = 'scale(' + currentZoom + ')';
+    }
+
+    // Setup video event listeners when video is loaded
+    function setupVideoEventListeners() {
+      const video = document.getElementById('training-video');
+      if (video) {
+        video.addEventListener('timeupdate', updateProgress);
+        video.addEventListener('loadedmetadata', function() {
+          video.currentTime = 0;
+        });
+        console.log('Video event listeners setup');
+      }
+    }
+
+    // Submit SITREP
+    function submitSitrep() {
+      const userSitrep = document.getElementById('sitrep-textarea').value.trim();
+      
+      if (!userSitrep) {
+        alert('Please enter your SITREP before submitting.');
+        return;
+      }
+      
+      // Show feedback overlay
+      showFeedback(userSitrep);
+    }
+
+    // Show feedback overlay
+    function showFeedback(userSitrep) {
+      const overlay = document.getElementById('feedback-overlay');
+      const userSitrepDiv = document.getElementById('user-sitrep');
+      
+      userSitrepDiv.textContent = userSitrep;
+      overlay.classList.add('active');
+    }
+
+    // Close feedback overlay
+    function closeFeedback() {
+      const overlay = document.getElementById('feedback-overlay');
+      overlay.classList.remove('active');
+      
+      // Reset for next practice
+      document.getElementById('sitrep-textarea').value = '';
+      if (video) {
+        video.currentTime = 0;
+        video.pause();
+        const playPauseBtn = document.getElementById('play-pause-btn');
+        const icon = playPauseBtn.querySelector('i');
+        icon.className = 'fas fa-play';
+        isPlaying = false;
+      }
+    }
+
+    // Close feedback when clicking outside
+    document.addEventListener('click', function(e) {
+      const overlay = document.getElementById('feedback-overlay');
+      if (e.target === overlay) {
+        closeFeedback();
+      }
+    });
+
+    // Show welcome section
+    function showWelcomeSection() {
+      // Hide training interface
+      document.getElementById('instruction-header').classList.add('hidden');
+      document.getElementById('video-section').classList.add('hidden');
+      document.getElementById('input-section').classList.add('hidden');
+      
+      // Show welcome section
+      const welcomeSection = document.getElementById('welcome-section');
+      if (welcomeSection) {
+        welcomeSection.classList.remove('hidden');
+      }
+      
+      // Reset active states
+      document.querySelectorAll('.practice-button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.querySelectorAll('.tool-card').forEach(card => {
+        card.classList.remove('active');
+      });
+      document.querySelectorAll('.practices-list').forEach(list => {
+        list.classList.remove('active');
+      });
+      
+      currentModule = null;
+      currentPractice = null;
+    }
+
     // Navigation
     function goBack() {
-      window.location.href = '/dashboard.html';
+      window.location.href = 'dashboard.html';
     }
-    // Init
-    renderModules();
+
+    // Test function to manually show training interface
+    function testShowTraining() {
+      console.log('TEST: Manually showing training interface');
+      currentModule = 1;
+      currentPractice = 1;
+      showTrainingInterface();
+    }
+
+    // Initialize when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('DOM loaded, initializing...');
+      init();
+      
+      // Add test button for debugging
+      setTimeout(function() {
+        console.log('Adding test button for debugging');
+        const testBtn = document.createElement('button');
+        testBtn.textContent = 'TEST: Show Training';
+        testBtn.style.position = 'fixed';
+        testBtn.style.top = '10px';
+        testBtn.style.right = '10px';
+        testBtn.style.zIndex = '9999';
+        testBtn.style.background = 'red';
+        testBtn.style.color = 'white';
+        testBtn.style.padding = '10px';
+        testBtn.onclick = testShowTraining;
+        document.body.appendChild(testBtn);
+      }, 1000);
+    });
   </script>
 </body>
 </html>

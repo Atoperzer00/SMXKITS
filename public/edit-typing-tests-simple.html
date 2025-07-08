@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Edit Typing Tests - Admin Controls</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    :root {
+      --primary-gradient: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+      --secondary-gradient: linear-gradient(135deg, #ff8c42 0%, #ff6b35 100%);
+      --accent-gradient: linear-gradient(135deg, #ffa726 0%, #ff9800 100%);
+      --dark-gradient: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 100%);
+      --card-gradient: linear-gradient(145deg, #2d1810 0%, #1a0f08 100%);
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --text-primary: #ffffff;
+      --text-secondary: #b8c5d6;
+      --text-accent: #ffa726;
+      --shadow-primary: 0 20px 40px rgba(0, 0, 0, 0.3);
+      --shadow-hover: 0 30px 60px rgba(0, 0, 0, 0.4);
+      --border-radius: 20px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--dark-gradient);
+      color: var(--text-primary);
+      overflow-x: hidden;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .admin-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .admin-sidebar {
+      width: 280px;
+      background: rgba(15, 20, 25, 0.95);
+      backdrop-filter: blur(20px);
+      border-right: 1px solid var(--glass-border);
+      display: flex;
+      flex-direction: column;
+      padding: 2rem 0;
+    }
+
+    .admin-logo {
+      width: 200px;
+      margin: 0 auto 3rem;
+      filter: drop-shadow(0 10px 30px rgba(255, 107, 53, 0.3));
+    }
+
+    .nav-item {
+      margin: 0.5rem 1.5rem;
+      border-radius: 15px;
+      overflow: hidden;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: var(--transition);
+      background: var(--glass-bg);
+      border: 1px solid transparent;
+    }
+
+    .nav-link:hover, .nav-link.active {
+      color: var(--text-primary);
+      background: var(--primary-gradient);
+      border-color: var(--text-accent);
+      box-shadow: 0 8px 25px rgba(255, 107, 53, 0.3);
+    }
+
+    .nav-link i {
+      margin-right: 1rem;
+      font-size: 1.2rem;
+      width: 20px;
+      text-align: center;
+    }
+
+    .admin-main {
+      flex: 1;
+      padding: 2rem;
+      overflow-y: auto;
+    }
+
+    .dashboard-header {
+      margin-bottom: 3rem;
+      text-align: center;
+    }
+
+    .dashboard-title {
+      font-size: 3rem;
+      font-weight: 800;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1rem;
+    }
+
+    .module-card {
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      margin-bottom: 2rem;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+    }
+
+    .module-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    .module-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .btn {
+      padding: 0.8rem 2rem;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      font-size: 1rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .btn-primary {
+      background: var(--primary-gradient);
+      color: white;
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+      color: white;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(255, 107, 53, 0.4);
+    }
+
+    .practice-item {
+      margin-bottom: 1.5rem;
+    }
+
+    .practice-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: var(--text-accent);
+    }
+
+    .practice-textarea {
+      width: 100%;
+      min-height: 80px;
+      padding: 1rem;
+      border: 2px solid var(--glass-border);
+      border-radius: 10px;
+      background: var(--glass-bg);
+      color: var(--text-primary);
+      font-family: 'Courier New', monospace;
+      font-size: 1rem;
+      resize: vertical;
+      transition: var(--transition);
+    }
+
+    .practice-textarea:focus {
+      outline: none;
+      border-color: var(--text-accent);
+      box-shadow: 0 0 20px rgba(255, 167, 38, 0.3);
+    }
+
+    .controls {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <img src="smx-logo.png" alt="SMX KITS Logo" class="admin-logo">
+      
+      <nav>
+        <div class="nav-item">
+          <a href="dashboard.html" class="nav-link">
+            <i class="fas fa-tachometer-alt"></i>Dashboard
+          </a>
+        </div>
+        <div class="nav-item">
+          <a href="edit-typing-tests-simple.html" class="nav-link active">
+            <i class="fas fa-keyboard"></i>Edit Typing Tests
+          </a>
+        </div>
+        <div class="nav-item">
+          <a href="keyboard-training.html" class="nav-link">
+            <i class="fas fa-graduation-cap"></i>Keyboard Training
+          </a>
+        </div>
+        <div class="nav-item">
+          <a href="#" onclick="logout()" class="nav-link">
+            <i class="fas fa-sign-out-alt"></i>Logout
+          </a>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+      <div class="dashboard-header">
+        <h1 class="dashboard-title">Edit Typing Tests</h1>
+        <p style="color: var(--text-secondary); font-size: 1.1rem;">Simple editor with instant updates via socket connection.</p>
+      </div>
+      
+      <div class="controls">
+        <button onclick="addModule()" class="btn btn-primary">
+          <i class="fas fa-plus" style="margin-right: 0.5rem;"></i>
+          Add New Module
+        </button>
+      </div>
+      
+      <div id="modules-container"></div>
+    </main>
+  </div>
+
+  <script>
+    let socket = null;
+    let typingModules = [];
+
+    // Initialize the application
+    document.addEventListener('DOMContentLoaded', async function() {
+      console.log('Simple Edit Typing Tests - Initializing...');
+      
+      // Initialize socket
+      socket = io();
+      
+      socket.on('connect', () => {
+        console.log('✅ Socket connected:', socket.id);
+      });
+      
+      // Load initial data
+      await loadTypingModules();
+      renderEditor();
+    });
+
+    // Load typing modules from API
+    async function loadTypingModules() {
+      try {
+        console.log('📚 Loading typing modules...');
+        const response = await fetch('/api/typing-tests');
+        
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.data) {
+            typingModules = result.data.modules || [];
+            console.log(`✅ Loaded ${typingModules.length} modules`);
+            return;
+          }
+        }
+        
+        throw new Error('Failed to load from API');
+      } catch (error) {
+        console.warn('⚠️ Using default modules:', error.message);
+        
+        // Use default modules
+        typingModules = [
+          [
+            'The quick brown fox jumps over the lazy dog. This sentence contains every letter of the alphabet.',
+            'Practice makes perfect. Keep typing to improve your speed and accuracy with consistent daily training.',
+            'Touch typing is a skill that will serve you well throughout your career and personal computing tasks.'
+          ],
+          [
+            '1234567890 !@#$%^&*() The numbers and symbols are important for data entry and programming tasks.',
+            'Email addresses like user@example.com require symbol typing skills for professional communication.',
+            'Special characters: ~`!@#$%^&*()_+-={}[]|\\:";\'<>?,./ are used in coding and technical writing.'
+          ],
+          [
+            'Military ranks: Private, Corporal, Sergeant, Lieutenant, Captain, Major, Colonel, General.',
+            'Military time: 0600 hours, 1200 hours, 1800 hours, 2400 hours for precise time coordination.',
+            'NATO phonetic alphabet: Alpha, Bravo, Charlie, Delta, Echo, Foxtrot, Golf, Hotel, India, Juliet.'
+          ],
+          [
+            'One adult male in dark traditional wear. Two adult females in light clothing observed at location.',
+            'Personnel count: Three adult males, one adult female, two children observed entering the compound.',
+            'Description: Individual wearing dark jacket, light pants, carrying backpack, proceeding north.'
+          ],
+          [
+            'SITREP: At 0630Z, one adult male departed E gate on red motorcycle, rode S out of FOV 0635Z. SLANT 1/0/0',
+            'SITREP: At 0745Z, white sedan entered compound through W gate, parked E side. SLANT 1/0/0',
+            'SITREP: At 0900Z, two adult males on foot entered compound, proceeded to building A. SLANT 2/0/0'
+          ]
+        ];
+        
+        console.log(`Using ${typingModules.length} default modules`);
+      }
+    }
+
+    // Render the editor
+    function renderEditor() {
+      const container = document.getElementById('modules-container');
+      container.innerHTML = '';
+      
+      const moduleNames = [
+        'Module 1: Basic Typing',
+        'Module 2: Numbers and Symbols', 
+        'Module 3: Military Terminology',
+        'Module 4: POL Basic Descriptors',
+        'Module 5: POL SITREP Format'
+      ];
+      
+      typingModules.forEach((practices, moduleIndex) => {
+        const moduleDiv = document.createElement('div');
+        moduleDiv.className = 'module-card';
+        
+        moduleDiv.innerHTML = `
+          <div class="module-header">
+            <h3 class="module-title">${moduleNames[moduleIndex] || `Module ${moduleIndex + 1}`}</h3>
+            <button onclick="saveModule(${moduleIndex})" class="btn btn-success">
+              <i class="fas fa-save" style="margin-right: 0.5rem;"></i>
+              Save Module
+            </button>
+          </div>
+          <div class="practices">
+            ${practices.map((practice, practiceIndex) => `
+              <div class="practice-item">
+                <label class="practice-label">Practice ${practiceIndex + 1}:</label>
+                <textarea 
+                  class="practice-textarea"
+                  onchange="updatePractice(${moduleIndex}, ${practiceIndex}, this.value)"
+                  rows="3"
+                >${practice}</textarea>
+              </div>
+            `).join('')}
+          </div>
+        `;
+        
+        container.appendChild(moduleDiv);
+      });
+    }
+
+    // Update practice text
+    function updatePractice(moduleIndex, practiceIndex, value) {
+      typingModules[moduleIndex][practiceIndex] = value;
+    }
+
+    // Save a single module
+    async function saveModule(moduleIndex) {
+      try {
+        console.log(`💾 Saving module ${moduleIndex}...`);
+        
+        const token = localStorage.getItem('token');
+        if (!token) {
+          alert('Please log in again.');
+          window.location.href = '/login.html';
+          return;
+        }
+        
+        // Save to API
+        const response = await fetch('/api/typing-tests', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            modules: typingModules
+          })
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            // Emit socket event to update training page
+            socket.emit('typing-modules-updated', { modules: typingModules });
+            
+            showNotification(`✅ Module ${moduleIndex + 1} saved!`);
+            console.log(`✅ Module ${moduleIndex} saved and broadcasted`);
+          }
+        } else {
+          throw new Error('Save failed');
+        }
+      } catch (error) {
+        console.error('❌ Save error:', error);
+        showNotification('❌ Save failed', true);
+      }
+    }
+
+    // Add new module
+    function addModule() {
+      const newModule = [
+        'New practice text 1',
+        'New practice text 2', 
+        'New practice text 3'
+      ];
+      typingModules.push(newModule);
+      renderEditor();
+    }
+
+    // Show notification
+    function showNotification(message, isError = false) {
+      const existing = document.getElementById('notification');
+      if (existing) existing.remove();
+      
+      const notification = document.createElement('div');
+      notification.id = 'notification';
+      notification.textContent = message;
+      notification.style.cssText = `
+        position: fixed; top: 20px; right: 20px; z-index: 1000;
+        background: ${isError ? '#ef4444' : '#22c55e'}; color: white;
+        padding: 12px 20px; border-radius: 10px; font-weight: 600;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      `;
+      
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.remove();
+        }
+      }, 3000);
+    }
+
+    // Logout function
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      localStorage.removeItem('userName');
+      localStorage.removeItem('classId');
+      window.location.replace('/login.html');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Slideshow</title>
+</head>
+<body>
+    <h1>Slideshow Test</h1>
+    <p>This page tests if the slideshow images are accessible.</p>
+    
+    <div id="imageTest">
+        <h2>Testing Image Access:</h2>
+    </div>
+    
+    <script>
+        const images = [
+            'images/Mission 1 Reference Product/1.jpg',
+            'images/Mission 1 Reference Product/2.jpg',
+            'images/Mission 1 Reference Product/3.jpg',
+            'images/Mission 1 Reference Product/4.jpg',
+            'images/Mission 1 Reference Product/5.jpg',
+            'images/Mission 1 Reference Product/6.jpg',
+            'images/Mission 1 Reference Product/7.jpg',
+            'images/Mission 1 Reference Product/8.jpg'
+        ];
+        
+        const testDiv = document.getElementById('imageTest');
+        
+        images.forEach((imagePath, index) => {
+            const img = new Image();
+            const p = document.createElement('p');
+            
+            img.onload = function() {
+                p.innerHTML = `✅ Image ${index + 1}: ${imagePath} - Loaded successfully (${img.naturalWidth}x${img.naturalHeight})`;
+                p.style.color = 'green';
+            };
+            
+            img.onerror = function() {
+                p.innerHTML = `❌ Image ${index + 1}: ${imagePath} - Failed to load`;
+                p.style.color = 'red';
+            };
+            
+            testDiv.appendChild(p);
+            img.src = imagePath;
+        });
+    </script>
+</body>
+</html>

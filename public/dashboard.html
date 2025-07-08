@@ -8,18 +8,18 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary-gradient: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
-      --secondary-gradient: linear-gradient(135deg, #ff8c42 0%, #ff6b35 100%);
-      --accent-gradient: linear-gradient(135deg, #ffa726 0%, #ff9800 100%);
+      --primary-gradient: linear-gradient(135deg, #ff7b00 0%, #ff5722 100%);
+      --secondary-gradient: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+      --accent-gradient: linear-gradient(135deg, #ffab40 0%, #ff9800 100%);
       --dark-gradient: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 100%);
       --card-gradient: linear-gradient(145deg, #2d1810 0%, #1a0f08 100%);
-      --glass-bg: rgba(255, 255, 255, 0.05);
-      --glass-border: rgba(255, 255, 255, 0.1);
+      --glass-bg: rgba(255, 123, 0, 0.05);
+      --glass-border: rgba(255, 152, 0, 0.1);
       --text-primary: #ffffff;
-      --text-secondary: #b8c5d6;
-      --text-accent: #ffa726;
-      --shadow-primary: 0 20px 40px rgba(0, 0, 0, 0.3);
-      --shadow-hover: 0 30px 60px rgba(0, 0, 0, 0.4);
+      --text-secondary: #ffcc80;
+      --text-accent: #ffab40;
+      --shadow-primary: 0 20px 40px rgba(255, 123, 0, 0.3);
+      --shadow-hover: 0 30px 60px rgba(255, 123, 0, 0.4);
       --border-radius: 20px;
       --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
@@ -35,6 +35,7 @@
       background: var(--dark-gradient);
       color: var(--text-primary);
       overflow-x: hidden;
+      overflow-y: auto;
       line-height: 1.6;
     }
 
@@ -47,9 +48,9 @@
       width: 100%;
       height: 100%;
       background: 
-        radial-gradient(circle at 20% 80%, rgba(255, 107, 53, 0.3) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(247, 147, 30, 0.15) 0%, transparent 50%),
-        radial-gradient(circle at 40% 40%, rgba(255, 140, 66, 0.1) 0%, transparent 50%);
+        radial-gradient(circle at 20% 80%, rgba(255, 123, 0, 0.2) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 152, 0, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(255, 171, 64, 0.08) 0%, transparent 50%);
       z-index: -1;
       animation: float 20s ease-in-out infinite;
     }
@@ -85,20 +86,20 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: linear-gradient(180deg, rgba(255, 107, 53, 0.1) 0%, transparent 100%);
+      background: linear-gradient(180deg, rgba(255, 123, 0, 0.1) 0%, transparent 100%);
       z-index: -1;
     }
 
     .admin-logo {
       width: 200px;
       margin: 0 auto 3rem;
-      filter: drop-shadow(0 10px 30px rgba(255, 107, 53, 0.3));
+      filter: drop-shadow(0 10px 30px rgba(255, 123, 0, 0.3));
       transition: var(--transition);
     }
 
     .admin-logo:hover {
       transform: scale(1.05);
-      filter: drop-shadow(0 15px 40px rgba(255, 107, 53, 0.5));
+      filter: drop-shadow(0 15px 40px rgba(74, 85, 104, 0.5));
     }
 
     .admin-nav {
@@ -141,7 +142,7 @@
     .admin-nav li.active {
       color: white;
       transform: translateX(5px);
-      box-shadow: 0 10px 25px rgba(255, 107, 53, 0.3);
+      box-shadow: 0 10px 25px rgba(74, 85, 104, 0.3);
     }
 
     /* Main Content Area */
@@ -149,7 +150,9 @@
       flex: 1;
       padding: 2rem;
       background: transparent;
-      overflow-y: auto;
+      overflow: visible !important;
+      position: relative;
+      z-index: 1;
     }
 
     /* Header Section */
@@ -164,6 +167,8 @@
       border-radius: var(--border-radius);
       border: 1px solid var(--glass-border);
       box-shadow: var(--shadow-primary);
+      position: relative;
+      z-index: 100;
     }
 
     .dashboard-title {
@@ -175,6 +180,211 @@
       background-clip: text;
       margin: 0;
       letter-spacing: -0.02em;
+    }
+
+    .dashboard-header,
+    .header-actions {
+      position: relative;
+      z-index: 100;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      overflow: visible !important;
+      position: relative;
+      z-index: 1000;
+    }
+
+    .notification-bubble, .inbox-bubble {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+    }
+
+    /* Remove hover scale effect to prevent dropdown misalignment */
+    .notification-bubble:hover, .inbox-bubble:hover {
+      transform: none !important;
+      background: var(--accent-gradient) !important;
+      box-shadow: 0 10px 25px rgba(255, 123, 0, 0.4) !important;
+    }
+
+    .notification-bubble i, .inbox-bubble i {
+      font-size: 1.2rem;
+      color: var(--text-accent);
+      transition: var(--transition);
+    }
+
+    .notification-bubble:hover i, .inbox-bubble:hover i {
+      color: white;
+    }
+
+    .notification-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: var(--secondary-gradient);
+      color: white;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--dark-gradient);
+    }
+
+    /* Fixed dropdown positioning and z-index */
+    .notification-dropdown {
+      position: absolute;
+      top: 60px;
+      right: 0;
+      width: 300px;
+      max-height: 400px;
+      background: #1e1e2f;
+      border: 1px solid #333;
+      border-radius: 10px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+      z-index: 9999 !important;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: var(--transition);
+      overflow-y: auto;
+    }
+
+    .inbox-dropdown {
+      position: absolute;
+      top: 60px;
+      right: 0;
+      width: 300px;
+      max-height: 400px;
+      background: #1e1e2f;
+      border: 1px solid #333;
+      border-radius: 10px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+      z-index: 9999 !important;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: var(--transition);
+      overflow-y: auto;
+    }
+
+    .inbox-dropdown.active, .notification-dropdown.active {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .inbox-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--glass-border);
+      font-weight: 600;
+      color: var(--text-accent);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .dropdown-header.clickable {
+      cursor: pointer;
+      font-weight: bold;
+      padding: 1rem;
+      border-bottom: 1px solid #444;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-accent);
+    }
+
+    .dropdown-header.clickable:hover {
+      background: rgba(255, 123, 0, 0.1);
+    }
+
+    .no-messages {
+      padding: 1rem;
+      text-align: center;
+      color: var(--text-secondary);
+    }
+
+    .inbox-messages {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .inbox-message {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+    }
+
+    .inbox-message:hover {
+      background: rgba(102, 126, 234, 0.1);
+    }
+
+    .inbox-message.unread {
+      background: rgba(255, 123, 0, 0.05);
+    }
+
+    .inbox-message.unread::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 3px;
+      height: 100%;
+      background: var(--accent-gradient);
+    }
+
+    .message-sender {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .message-preview {
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      line-height: 1.4;
+      margin-bottom: 0.3rem;
+    }
+
+    .message-time {
+      color: var(--text-secondary);
+      font-size: 0.7rem;
+    }
+
+    .message-unread-badge {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      background: var(--accent-gradient);
+      color: white;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      font-size: 0.6rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid var(--dark-gradient);
     }
 
     .user-info {
@@ -222,6 +432,9 @@
       grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       gap: 2rem;
       margin-bottom: 2rem;
+      overflow: visible !important;
+      position: relative;
+      z-index: 1;
     }
 
     .tool-card {
@@ -233,7 +446,8 @@
       cursor: pointer;
       transition: var(--transition);
       position: relative;
-      overflow: hidden;
+      overflow: visible;
+      z-index: 1;
     }
 
     .tool-card::before {
@@ -418,6 +632,190 @@
     .stagger-2 { animation-delay: 0.2s; }
     .stagger-3 { animation-delay: 0.3s; }
 
+    /* Ensure parent containers don't clip dropdowns */
+    .dashboard-header, .admin-content, .header-actions, .notification-bubble, .inbox-bubble {
+      overflow: visible !important;
+    }
+
+    /* Ensure body and html don't clip dropdowns */
+    body, html {
+      overflow-x: visible;
+    }
+
+    /* Ensure dropdowns appear above tool cards */
+    .inbox-dropdown,
+    .notification-dropdown {
+      position: absolute !important;
+      z-index: 9999 !important;
+    }
+
+    /* Daily Schedule Styles */
+    .daily-schedule-container {
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+      overflow: hidden;
+      position: relative;
+      z-index: 1;
+    }
+
+    .schedule-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem 2rem;
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .schedule-date {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .schedule-date i {
+      color: var(--text-accent);
+      font-size: 1.4rem;
+    }
+
+    .schedule-calendar-btn {
+      background: var(--accent-gradient);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 25px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .schedule-calendar-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(255, 171, 64, 0.4);
+    }
+
+    .schedule-timeline {
+      max-height: 400px;
+      overflow-y: auto;
+      padding: 1rem 0;
+    }
+
+    .schedule-hour {
+      display: flex;
+      align-items: stretch;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      min-height: 60px;
+      transition: var(--transition);
+      cursor: pointer;
+      position: relative;
+    }
+
+    .schedule-hour:hover {
+      background: rgba(255, 123, 0, 0.05);
+    }
+
+    .schedule-hour.has-event {
+      background: rgba(255, 123, 0, 0.1);
+      border-left: 4px solid var(--accent-gradient);
+    }
+
+    .schedule-hour.has-event:hover {
+      background: rgba(255, 123, 0, 0.15);
+    }
+
+    .schedule-time {
+      width: 100px;
+      padding: 1rem 1.5rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-right: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .schedule-content {
+      flex: 1;
+      padding: 1rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .schedule-event {
+      margin-bottom: 0.5rem;
+    }
+
+    .schedule-event:last-child {
+      margin-bottom: 0;
+    }
+
+    .event-title {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 1rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .event-description {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+
+    .event-type {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 0.5rem;
+    }
+
+    .event-type.training {
+      background: rgba(255, 107, 53, 0.2);
+      color: #ff6b35;
+      border: 1px solid rgba(255, 107, 53, 0.3);
+    }
+
+    .event-type.exam {
+      background: rgba(106, 168, 79, 0.2);
+      color: #6aa84f;
+      border: 1px solid rgba(106, 168, 79, 0.3);
+    }
+
+    .event-type.deadline {
+      background: rgba(204, 65, 37, 0.2);
+      color: #cc4125;
+      border: 1px solid rgba(204, 65, 37, 0.3);
+    }
+
+    .event-type.meeting {
+      background: rgba(61, 133, 198, 0.2);
+      color: #3d85c6;
+      border: 1px solid rgba(61, 133, 198, 0.3);
+    }
+
+    .schedule-empty {
+      color: var(--text-secondary);
+      font-style: italic;
+      font-size: 0.9rem;
+    }
+
     /* Custom Scrollbar */
     ::-webkit-scrollbar {
       width: 8px;
@@ -465,6 +863,32 @@
       .tools-grid {
         grid-template-columns: 1fr;
       }
+
+      .schedule-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+      }
+
+      .schedule-hour {
+        flex-direction: column;
+        min-height: auto;
+      }
+
+      .schedule-time {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        padding: 0.75rem;
+      }
+
+      .schedule-content {
+        padding: 1rem;
+      }
+
+      .schedule-timeline {
+        max-height: 300px;
+      }
     }
   </style>
 </head>
@@ -494,6 +918,7 @@
         <li onclick="window.location.href='keyboard-training.html'"><i class="fas fa-keyboard"></i> Keyboard Training</li>
         <li onclick="window.location.href='Screener Training.html'"><i class="fas fa-user-shield"></i> Screener Training</li>
         <li onclick="window.location.href='IA Training.html'"><i class="fas fa-satellite-dish"></i> IA Training</li>
+        <li onclick="window.location.href='course-content.html'"><i class="fas fa-book-open"></i> Course Content</li>
         <li onclick="window.location.href='student-grading.html'"><i class="fas fa-clipboard-list"></i> Grading</li>
         <li onclick="window.location.href='schedule.html'"><i class="fas fa-calendar-alt"></i> Schedule</li>
         <li onclick="goToFeedback()"><i class="fas fa-comments"></i> Feedback</li>
@@ -511,13 +936,50 @@
             Welcome back! Access live training, modules, progress, and instructor info here.
           </p>
         </div>
-        <div class="user-info">
-          <div class="user-avatar">
-            <i class="fas fa-user"></i>
+        <div class="header-actions">
+          <!-- Notification Bell -->
+          <div class="notification-bubble" onclick="toggleNotifications()">
+            <i class="fas fa-bell"></i>
+            <div class="notification-badge" id="notificationCount" style="display: none;">0</div>
+            
+            <!-- Notification Dropdown -->
+            <div class="notification-dropdown" id="notificationDropdown">
+              <div onclick="window.location.href='student-messenger.html'" class="dropdown-header clickable">
+                <i class="fas fa-bell"></i>
+                Notifications
+              </div>
+              <div class="inbox-messages">
+                <div class="dropdown-item no-messages">No notifications to display</div>
+              </div>
+            </div>
           </div>
-          <div>
-            <div style="font-weight: 600;" id="studentName">Student</div>
-            <div style="font-size: 0.9rem; color: var(--text-secondary);" id="studentDay">Day 3/7</div>
+          
+          <!-- Inbox -->
+          <div class="inbox-bubble" onclick="toggleInbox()">
+            <i class="fas fa-envelope"></i>
+            <div class="notification-badge" id="unreadCount" style="display: none;">0</div>
+            
+            <!-- Inbox Dropdown -->
+            <div class="inbox-dropdown" id="inboxDropdown">
+              <div onclick="window.location.href='student-messenger.html'" class="dropdown-header clickable">
+                <i class="fas fa-inbox"></i>
+                Messages
+              </div>
+              <div class="inbox-messages" id="inboxMessages">
+                <div class="dropdown-item no-messages">No messages to display</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- User Info -->
+          <div class="user-info">
+            <div class="user-avatar">
+              <i class="fas fa-user"></i>
+            </div>
+            <div>
+              <div style="font-weight: 600;" id="studentName">Student</div>
+              <div style="font-size: 0.9rem; color: var(--text-secondary);" id="studentDay">Day 3/7</div>
+            </div>
           </div>
         </div>
       </header>
@@ -568,28 +1030,40 @@
             <p class="tool-description" id="gradingDescription">View your grades, performance metrics, and instructor feedback.</p>
           </div>
           
-          <div class="tool-card" onclick="window.location.href='schedule.html'">
-            <div class="tool-icon"><i class="fas fa-calendar-alt"></i></div>
-            <h3 class="tool-title">Training Schedule</h3>
-            <p class="tool-description">View upcoming training sessions, deadlines, and important dates.</p>
-          </div>
-          
-          <div class="tool-card">
+          <div class="tool-card" onclick="window.location.href='student-messenger.html'">
             <div class="tool-icon"><i class="fas fa-comments"></i></div>
-            <h3 class="tool-title">Feedback & Support</h3>
-            <p class="tool-description">Submit feedback, ask questions, and get help from instructors.</p>
+            <h3 class="tool-title">Student Messenger</h3>
+            <p class="tool-description">Send messages to instructors, ask questions, and communicate with your training team.</p>
           </div>
-          
-          <div class="tool-card" onclick="showInstructorInfo()">
-            <div class="tool-icon"><i class="fas fa-chalkboard-teacher"></i></div>
-            <h3 class="tool-title">Instructor Information</h3>
-            <p class="tool-description">View instructor profiles, contact information, and office hours.</p>
+        </div>
+      </section>
+
+      <!-- Daily Schedule Section -->
+      <section class="fade-in stagger-3">
+        <h2 class="section-title">
+          <i class="fas fa-clock"></i>
+          Today's Schedule
+        </h2>
+        <div class="daily-schedule-container">
+          <div class="schedule-header">
+            <div class="schedule-date" id="scheduleDate">
+              <i class="fas fa-calendar-day"></i>
+              <span id="currentDate">Loading...</span>
+            </div>
+            <button class="schedule-calendar-btn" onclick="window.location.href='schedule.html'">
+              <i class="fas fa-calendar-alt"></i>
+              View Full Calendar
+            </button>
+          </div>
+          <div class="schedule-timeline" id="scheduleTimeline">
+            <!-- Timeline will be populated by JavaScript -->
           </div>
         </div>
       </section>
     </main>
   </div>
 
+  <script src="/socket.io/socket.io.js"></script>
   <script>
     // Load student data
     document.addEventListener('DOMContentLoaded', function() {
@@ -607,7 +1081,175 @@
       } else {
         gradingDescription.textContent = 'View your grades, performance metrics, and instructor feedback.';
       }
+
+      // Initialize daily schedule
+      initializeDailySchedule();
     });
+
+    // Daily Schedule Functions
+    function initializeDailySchedule() {
+      // Set current date
+      const today = new Date();
+      const options = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      };
+      document.getElementById('currentDate').textContent = today.toLocaleDateString('en-US', options);
+
+      // Generate timeline
+      generateScheduleTimeline();
+    }
+
+    function generateScheduleTimeline() {
+      const timeline = document.getElementById('scheduleTimeline');
+      const startHour = 7; // 7 AM
+      const endHour = 18; // 6 PM
+      
+      // Sample schedule data - this would come from your backend
+      const todayEvents = getTodayEvents();
+      
+      timeline.innerHTML = '';
+      
+      for (let hour = startHour; hour <= endHour; hour++) {
+        const hourDiv = document.createElement('div');
+        hourDiv.className = 'schedule-hour';
+        
+        // Check if there are events for this hour
+        const hourEvents = todayEvents.filter(event => event.hour === hour);
+        if (hourEvents.length > 0) {
+          hourDiv.classList.add('has-event');
+        }
+        
+        // Time column
+        const timeDiv = document.createElement('div');
+        timeDiv.className = 'schedule-time';
+        timeDiv.textContent = formatHour(hour);
+        
+        // Content column
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'schedule-content';
+        
+        if (hourEvents.length > 0) {
+          hourEvents.forEach(event => {
+            const eventDiv = document.createElement('div');
+            eventDiv.className = 'schedule-event';
+            
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'event-title';
+            titleDiv.textContent = event.title;
+            
+            const descDiv = document.createElement('div');
+            descDiv.className = 'event-description';
+            descDiv.textContent = event.description;
+            
+            const typeDiv = document.createElement('div');
+            typeDiv.className = `event-type ${event.type}`;
+            typeDiv.textContent = event.type;
+            
+            eventDiv.appendChild(titleDiv);
+            eventDiv.appendChild(descDiv);
+            eventDiv.appendChild(typeDiv);
+            
+            contentDiv.appendChild(eventDiv);
+          });
+        } else {
+          const emptyDiv = document.createElement('div');
+          emptyDiv.className = 'schedule-empty';
+          emptyDiv.textContent = 'No scheduled activities';
+          contentDiv.appendChild(emptyDiv);
+        }
+        
+        // Add click handler for time blocks
+        hourDiv.addEventListener('click', () => openTimeBlockDetails(hour, hourEvents));
+        
+        hourDiv.appendChild(timeDiv);
+        hourDiv.appendChild(contentDiv);
+        timeline.appendChild(hourDiv);
+      }
+    }
+
+    function getTodayEvents() {
+      // This would typically come from your backend API
+      // For now, using sample data based on current day of week
+      const today = new Date();
+      const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
+      
+      const weeklySchedule = {
+        1: [ // Monday
+          {
+            hour: 9,
+            title: "Keyboard Training Session",
+            description: "Improve typing speed and accuracy with military terminology",
+            type: "training"
+          },
+          {
+            hour: 15,
+            title: "Live PED Exercise",
+            description: "Real-time pattern of life exercises and mission scenarios",
+            type: "training"
+          }
+        ],
+        2: [ // Tuesday
+          {
+            hour: 14,
+            title: "Screener Training",
+            description: "Advanced screening techniques and threat identification",
+            type: "training"
+          }
+        ],
+        3: [ // Wednesday
+          {
+            hour: 10,
+            title: "IA Training Exam",
+            description: "Intelligence analysis assessment",
+            type: "exam"
+          }
+        ],
+        4: [ // Thursday
+          {
+            hour: 13,
+            title: "Assignment Review",
+            description: "Review completed assignments and prepare submissions",
+            type: "meeting"
+          }
+        ],
+        5: [ // Friday
+          {
+            hour: 13,
+            title: "Weekly Progress Review",
+            description: "Meet with instructor to discuss weekly progress",
+            type: "meeting"
+          }
+        ]
+      };
+      
+      return weeklySchedule[dayOfWeek] || [];
+    }
+
+    function formatHour(hour) {
+      if (hour === 0) return '12:00 AM';
+      if (hour < 12) return `${hour}:00 AM`;
+      if (hour === 12) return '12:00 PM';
+      return `${hour - 12}:00 PM`;
+    }
+
+    function openTimeBlockDetails(hour, events) {
+      const timeStr = formatHour(hour);
+      
+      if (events.length === 0) {
+        alert(`${timeStr}\n\nNo scheduled activities for this time slot.\n\nClick "View Full Calendar" to see your complete schedule or add new events.`);
+      } else {
+        let message = `${timeStr}\n\n`;
+        events.forEach((event, index) => {
+          message += `${event.title}\n${event.description}\nType: ${event.type.toUpperCase()}`;
+          if (index < events.length - 1) message += '\n\n';
+        });
+        message += '\n\nClick "View Full Calendar" to manage your schedule.';
+        alert(message);
+      }
+    }
 
     function goToGrading() {
       const role = localStorage.getItem('role');
@@ -622,9 +1264,7 @@
       window.location.href = 'OpsLog.html';
     }
 
-    function showInstructorInfo() {
-      alert('Instructor information feature coming soon!');
-    }
+
 
     function logout() {
       localStorage.removeItem('token');
@@ -638,6 +1278,529 @@
     function goToFeedback() {
       window.location.href = 'feedback.html';
     }
+
+    // Fixed inbox and notification functions with proper positioning
+    async function toggleInbox() {
+      const dropdown = document.getElementById('inboxDropdown');
+      const isOpening = !dropdown.classList.contains('active');
+      
+      if (isOpening) {
+        // Load recent messages when opening
+        await loadRecentMessages();
+      }
+      
+      dropdown.classList.toggle('active');
+      
+      // Close dropdown when clicking outside
+      if (isOpening) {
+        document.addEventListener('click', function closeDropdown(e) {
+          if (!e.target.closest('.inbox-bubble')) {
+            dropdown.classList.remove('active');
+            document.removeEventListener('click', closeDropdown);
+          }
+        });
+      }
+    }
+
+    function toggleNotifications() {
+      const dropdown = document.getElementById('notificationDropdown');
+      const isOpening = !dropdown.classList.contains('active');
+      
+      dropdown.classList.toggle('active');
+      
+      if (isOpening) {
+        loadNotifications();
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function closeDropdown(e) {
+          if (!e.target.closest('.notification-bubble')) {
+            dropdown.classList.remove('active');
+            document.removeEventListener('click', closeDropdown);
+          }
+        });
+      }
+    }
+
+    // Load recent message notifications
+    async function loadNotifications() {
+      try {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user || !user.token) return;
+
+        const response = await fetch('/api/direct-messages/conversations', {
+          headers: {
+            'Authorization': `Bearer ${user.token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const conversations = await response.json();
+          renderNotifications(conversations);
+        } else {
+          console.error('Failed to load notifications');
+        }
+      } catch (error) {
+        console.error('Error loading notifications:', error);
+      }
+    }
+
+    // Render notifications in dropdown
+    function renderNotifications(conversations) {
+      const notificationDropdown = document.getElementById('notificationDropdown');
+      
+      // Filter conversations with unread messages
+      const unreadConversations = conversations.filter(conv => conv.unreadCount > 0);
+      
+      if (unreadConversations.length === 0) {
+        notificationDropdown.innerHTML = `
+          <div class="dropdown-header">
+            <i class="fas fa-bell"></i>
+            <span>Notifications</span>
+          </div>
+          <div class="no-messages">
+            <i class="fas fa-check-circle" style="font-size: 2rem; color: var(--text-accent); margin-bottom: 0.5rem;"></i>
+            <p>All caught up!</p>
+            <p style="font-size: 0.8rem; margin-top: 0.5rem;">No new notifications</p>
+          </div>
+        `;
+        return;
+      }
+
+      const notificationsHtml = unreadConversations.map(conversation => {
+        const otherParticipant = conversation.otherParticipant;
+        if (!otherParticipant) return '';
+        
+        const initials = otherParticipant.name.split(' ').map(n => n[0]).join('').toUpperCase();
+        const lastMessage = conversation.lastMessage;
+        const lastMessageText = lastMessage ? lastMessage.content : 'New conversation';
+        const timeAgo = lastMessage ? formatTimeAgo(new Date(lastMessage.timestamp)) : 'now';
+        
+        return `
+          <div class="inbox-message unread" onclick="openConversation('${otherParticipant.id}', '${otherParticipant.name}')">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+              <div style="width: 35px; height: 35px; border-radius: 50%; background: var(--accent-gradient); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem; color: white;">
+                ${initials}
+              </div>
+              <div style="flex: 1; min-width: 0;">
+                <div class="message-sender">${otherParticipant.name}</div>
+                <div class="message-preview">${lastMessageText}</div>
+                <div class="message-time">${timeAgo}</div>
+              </div>
+              <div class="message-unread-badge">${conversation.unreadCount}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      notificationDropdown.innerHTML = `
+        <div class="dropdown-header">
+          <i class="fas fa-bell"></i>
+          <span>New Messages (${unreadConversations.length})</span>
+        </div>
+        <div style="max-height: 300px; overflow-y: auto;">
+          ${notificationsHtml}
+        </div>
+        <div style="padding: 1rem; border-top: 1px solid var(--glass-border); text-align: center;">
+          <button onclick="openMessenger()" style="background: var(--accent-gradient); border: none; border-radius: 15px; padding: 0.5rem 1rem; color: white; font-size: 0.8rem; cursor: pointer;">
+            <i class="fas fa-comments" style="margin-right: 0.5rem;"></i>
+            Open Messenger
+          </button>
+        </div>
+      `;
+    }
+
+    async function loadRecentMessages() {
+      try {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user || !user.token) {
+          console.log('No user token found');
+          return;
+        }
+
+        // Load conversations
+        const response = await fetch('/api/direct-messages/conversations', {
+          headers: {
+            'Authorization': `Bearer ${user.token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const conversations = await response.json();
+          renderInboxMessages(conversations);
+          updateUnreadCount(conversations);
+        } else {
+          console.error('Failed to load conversations');
+        }
+      } catch (error) {
+        console.error('Error loading recent messages:', error);
+      }
+    }
+
+    function renderInboxMessages(conversations) {
+      const inboxMessages = document.getElementById('inboxMessages');
+      
+      if (conversations.length === 0) {
+        inboxMessages.innerHTML = `<div class="dropdown-item no-messages">No messages to display</div>`;
+        return;
+      }
+
+      // Show only the 5 most recent conversations
+      const recentConversations = conversations.slice(0, 5);
+      
+      inboxMessages.innerHTML = recentConversations.map(conversation => {
+        const otherParticipant = conversation.otherParticipant;
+        if (!otherParticipant) return '';
+        
+        const lastMessage = conversation.lastMessage;
+        const lastMessageText = lastMessage ? 
+          (lastMessage.content.length > 50 ? lastMessage.content.substring(0, 50) + '...' : lastMessage.content) : 
+          'No messages yet';
+        const lastMessageTime = lastMessage ? formatTimeAgo(new Date(lastMessage.timestamp)) : '';
+        const unreadCount = conversation.unreadCount || 0;
+        const isUnread = unreadCount > 0;
+        
+        return `
+          <div class="inbox-message ${isUnread ? 'unread' : ''}" onclick="openConversation('${otherParticipant.id}', '${otherParticipant.name}')">
+            <div class="message-sender">${otherParticipant.name}</div>
+            <div class="message-preview">${lastMessageText}</div>
+            <div class="message-time">${lastMessageTime}</div>
+            ${isUnread ? `<div class="message-unread-badge">${unreadCount}</div>` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateUnreadCount(conversations) {
+      const unreadBadge = document.getElementById('unreadCount');
+      const totalUnread = conversations.reduce((total, conv) => total + (conv.unreadCount || 0), 0);
+      
+      if (totalUnread > 0) {
+        unreadBadge.textContent = totalUnread > 99 ? '99+' : totalUnread;
+        unreadBadge.style.display = 'flex';
+      } else {
+        unreadBadge.style.display = 'none';
+      }
+    }
+
+    function formatTimeAgo(date) {
+      const now = new Date();
+      const diff = now - date;
+      const minutes = Math.floor(diff / 60000);
+      const hours = Math.floor(diff / 3600000);
+      const days = Math.floor(diff / 86400000);
+      
+      if (minutes < 1) return 'now';
+      if (minutes < 60) return `${minutes}m ago`;
+      if (hours < 24) return `${hours}h ago`;
+      if (days < 7) return `${days}d ago`;
+      return date.toLocaleDateString();
+    }
+
+    function openConversation(userId, userName) {
+      // Store the selected contact and open messenger
+      localStorage.setItem('selectedContact', JSON.stringify({
+        id: userId,
+        name: userName
+      }));
+      
+      // Close both dropdowns
+      document.getElementById('inboxDropdown').classList.remove('active');
+      document.getElementById('notificationDropdown').classList.remove('active');
+      
+      // Open messenger
+      openMessenger();
+    }
+
+    function openMessenger() {
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (user && user.role === 'student') {
+        window.location.href = 'student-messenger.html';
+      } else {
+        window.location.href = 'instructor-messaging.html';
+      }
+    }
+
+    function openMessage(messageId) {
+      console.log('Opening message:', messageId);
+      // Legacy function - now handled by openConversation
+    }
+
+    function openStudentChat(contactId) {
+      // Store contact ID for the messaging page
+      localStorage.setItem('selectedContact', contactId);
+      localStorage.setItem('userRole', 'student'); // Set role for proper messaging interface
+      // Navigate to student messaging page
+      window.location.href = 'student-messenger.html';
+    }
+
+    // Notification system
+    function showNotification(message, type = 'info') {
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 1rem 1.5rem;
+        background: ${type === 'success' ? 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'};
+        color: white;
+        border-radius: 10px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        z-index: 10000;
+        font-weight: 500;
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+      `;
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      
+      setTimeout(() => notification.style.transform = 'translateX(0)', 100);
+      setTimeout(() => {
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => document.body.removeChild(notification), 300);
+      }, 3000);
+    }
+
+    // Load unread message count
+    async function loadUnreadCount() {
+      try {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user || !user.token) return;
+
+        const response = await fetch('/api/direct-messages/unread-count', {
+          headers: {
+            'Authorization': `Bearer ${user.token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const unreadBadge = document.getElementById('unreadCount');
+          const notificationBadge = document.getElementById('notificationCount');
+          
+          if (data.unreadCount > 0) {
+            const displayCount = data.unreadCount > 99 ? '99+' : data.unreadCount;
+            
+            // Update inbox badge
+            unreadBadge.textContent = displayCount;
+            unreadBadge.style.display = 'flex';
+            
+            // Update notification badge
+            notificationBadge.textContent = displayCount;
+            notificationBadge.style.display = 'flex';
+          } else {
+            unreadBadge.style.display = 'none';
+            notificationBadge.style.display = 'none';
+          }
+        }
+      } catch (error) {
+        console.error('Error loading unread count:', error);
+      }
+    }
+
+    // Initialize unread count checking
+    setTimeout(() => {
+      loadUnreadCount();
+      // Check for new messages every 30 seconds
+      setInterval(loadUnreadCount, 30000);
+    }, 1000);
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(e) {
+      const inboxBubble = document.querySelector('.inbox-bubble');
+      const inboxDropdown = document.getElementById('inboxDropdown');
+      const notificationBubble = document.querySelector('.notification-bubble');
+      const notificationDropdown = document.getElementById('notificationDropdown');
+      
+      // Close inbox dropdown if clicking outside
+      if (inboxBubble && inboxDropdown && !inboxBubble.contains(e.target)) {
+        inboxDropdown.classList.remove('active');
+      }
+      
+      // Close notification dropdown if clicking outside
+      if (notificationBubble && notificationDropdown && !notificationBubble.contains(e.target)) {
+        notificationDropdown.classList.remove('active');
+      }
+    });
+
+    // ===== REAL-TIME MESSAGING INTEGRATION =====
+    let socket;
+    let currentUser;
+
+    // Initialize Socket.IO connection for real-time notifications
+    function initializeRealTimeNotifications() {
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (!user || !user.token) return;
+
+      currentUser = user;
+      socket = io();
+
+      socket.on('connect', function() {
+        console.log('✅ Connected to server for real-time notifications');
+        console.log('👤 Current user:', currentUser);
+        
+        // Join user's private room for direct messages
+        socket.emit('join_user_room', { userId: user.id });
+        console.log('🏠 Joined user room:', `user:${user.id}`);
+      });
+
+      socket.on('disconnect', function() {
+        console.log('Disconnected from server');
+      });
+
+      // Handle incoming direct messages
+      socket.on('direct_message', function(message) {
+        console.log('📨 Received direct message:', message);
+        handleIncomingMessage(message);
+      });
+
+      // Handle conversation updates
+      socket.on('conversation_updated', function(data) {
+        console.log('🔄 Conversation updated:', data);
+        handleConversationUpdate(data);
+      });
+
+      socket.on('error', function(data) {
+        console.error('❌ Socket error:', data.message);
+      });
+    }
+
+    // Handle incoming messages
+    function handleIncomingMessage(message) {
+      console.log('🔔 Processing incoming message:', message);
+      console.log('👤 Current user ID:', currentUser?.id);
+      console.log('📤 Message sender ID:', message.sender.id);
+      
+      // Only show notification if message is not from current user
+      if (message.sender.id !== currentUser.id) {
+        console.log('✅ Message is from another user, showing notification');
+        
+        // Update unread count
+        loadUnreadCount();
+        
+        // Show notification
+        showMessageNotification(message);
+        
+        // Update inbox if it's open
+        if (document.getElementById('inboxDropdown').classList.contains('active')) {
+          loadRecentMessages();
+        }
+        
+        // Also update the inbox badge immediately for better UX
+        setTimeout(() => {
+          loadUnreadCount();
+        }, 500);
+      } else {
+        console.log('ℹ️ Message is from current user, skipping notification');
+      }
+    }
+
+    // Handle conversation updates
+    function handleConversationUpdate(data) {
+      // Update unread count
+      loadUnreadCount();
+      
+      // Update inbox if it's open
+      if (document.getElementById('inboxDropdown').classList.contains('active')) {
+        loadRecentMessages();
+      }
+    }
+
+    // Show message notification
+    function showMessageNotification(message) {
+      // Create notification sound (optional)
+      playNotificationSound();
+      
+      // Show browser notification if permission granted
+      if (Notification.permission === 'granted') {
+        const notification = new Notification(`New message from ${message.sender.name}`, {
+          body: message.content.substring(0, 100) + (message.content.length > 100 ? '...' : ''),
+          icon: '/images/logo.png', // Add your logo path here
+          tag: 'smx-message'
+        });
+        
+        notification.onclick = function() {
+          window.focus();
+          openConversation(message.sender.id, message.sender.name);
+          notification.close();
+        };
+        
+        // Auto close after 5 seconds
+        setTimeout(() => notification.close(), 5000);
+      }
+      
+      // Show in-app notification
+      showNotification(`New message from ${message.sender.name}`, 'info');
+      
+      // Add visual indicator to notification bubble
+      animateNotificationBubble();
+    }
+
+    // Play notification sound
+    function playNotificationSound() {
+      try {
+        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT');
+        audio.volume = 0.3;
+        audio.play().catch(e => console.log('Could not play notification sound:', e));
+      } catch (e) {
+        console.log('Could not create notification sound:', e);
+      }
+    }
+
+    // Animate notification bubble
+    function animateNotificationBubble() {
+      const notificationBubble = document.querySelector('.notification-bubble');
+      if (notificationBubble) {
+        notificationBubble.style.animation = 'pulse 0.6s ease-in-out';
+        setTimeout(() => {
+          notificationBubble.style.animation = '';
+        }, 600);
+      }
+    }
+
+    // Request notification permission
+    function requestNotificationPermission() {
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission().then(function(permission) {
+          if (permission === 'granted') {
+            console.log('Notification permission granted');
+          }
+        });
+      }
+    }
+
+    // Enhanced initialization
+    document.addEventListener('DOMContentLoaded', function() {
+      // Request notification permission
+      requestNotificationPermission();
+      
+      // Initialize real-time notifications after user check
+      setTimeout(() => {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (user && user.token) {
+          console.log('🚀 Initializing real-time notifications for user:', user.name);
+          initializeRealTimeNotifications();
+          
+          // Load initial unread count for inbox
+          loadUnreadCount();
+        } else {
+          console.log('⚠️ No user found, skipping real-time notifications');
+        }
+      }, 1000);
+    });
+
+    // Add CSS for pulse animation
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); box-shadow: 0 0 20px rgba(255, 123, 0, 0.6); }
+        100% { transform: scale(1); }
+      }
+    `;
+    document.head.appendChild(style);
   </script>
 </body>
 </html>

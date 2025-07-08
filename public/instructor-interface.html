@@ -1,0 +1,2713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Instructor Interface – SMX KITS</title>
+  <style>
+    body { 
+      background: #181f25; 
+      color: #fff; 
+      font-family: 'Segoe UI', sans-serif; 
+      margin: 0; 
+      padding: 0;
+      overflow-x: hidden;
+    }
+    
+    .layout {
+      display: flex;
+      min-height: 100vh;
+    }
+    
+    /* Sidebar Styles */
+    .sidebar {
+      width: 280px;
+      background: #0f1419;
+      border-right: 1px solid #25344a;
+      padding: 2rem 0;
+      position: fixed;
+      height: 100vh;
+      overflow-y: auto;
+    }
+    
+    .sidebar h2 {
+      color: #89bcf4;
+      text-align: center;
+      margin-bottom: 2rem;
+      font-size: 1.5rem;
+    }
+    
+    .sidebar-nav {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .sidebar-nav li {
+      padding: 0.75rem 1.5rem;
+      cursor: pointer;
+      transition: background 0.3s;
+      border-left: 3px solid transparent;
+    }
+    
+    .sidebar-nav li:hover {
+      background: #1a2530;
+      border-left-color: #89bcf4;
+    }
+    
+    .sidebar-nav li.active {
+      background: #162536;
+      border-left-color: #1da1f2;
+      color: #89bcf4;
+    }
+    
+    .sidebar-nav li i {
+      margin-right: 0.75rem;
+      width: 16px;
+    }
+    
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      margin-left: 280px;
+      padding: 2rem;
+    }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #25344a;
+    }
+    
+    .header h1 {
+      color: #89bcf4;
+      margin: 0;
+    }
+    
+    .back-link {
+      color: #89bcf4;
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+    
+    .back-link:hover {
+      color: #ffffff;
+    }
+    
+    /* Tab Content */
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    /* Form Styles */
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: #e0e6ed;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      max-width: 400px;
+      padding: 12px 14px;
+      background: #1e2a35;
+      border: 1px solid #2e3c4d;
+      border-radius: 8px;
+      color: #e0e6ed;
+      font-size: 15px;
+      transition: border 0.3s ease;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #70b8ff;
+    }
+    
+    .form-row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    
+    .form-row .form-group {
+      flex: 1;
+      min-width: 200px;
+    }
+    
+    /* Button Styles */
+    .btn {
+      padding: 12px 28px;
+      background: #1da1f2;
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-weight: bold;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      margin-right: 10px;
+    }
+    
+    .btn:hover {
+      background: #0d8ddb;
+    }
+    
+    .btn-secondary {
+      background: #64748b;
+    }
+    
+    .btn-secondary:hover {
+      background: #475569;
+    }
+    
+    .btn-danger {
+      background: #d32f2f;
+    }
+    
+    .btn-danger:hover {
+      background: #b71c1c;
+    }
+    
+    .btn-small {
+      padding: 6px 12px;
+      font-size: 14px;
+    }
+    
+    /* Table Styles */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      background: #1e2a35;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    .data-table th,
+    .data-table td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #2e3c4d;
+    }
+    
+    .data-table th {
+      background: #162536;
+      color: #70b8ff;
+      font-weight: 600;
+    }
+    
+    .data-table tr:hover {
+      background: #1a2530;
+    }
+    
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+    }
+    
+    .modal-content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #1e2a35;
+      border-radius: 12px;
+      padding: 2rem;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #2e3c4d;
+    }
+    
+    .modal-header h3 {
+      margin: 0;
+      color: #70b8ff;
+    }
+    
+    .close-btn {
+      background: none;
+      border: none;
+      color: #aaa;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 0;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .close-btn:hover {
+      color: #fff;
+    }
+    
+    /* Message Styles */
+    .message {
+      padding: 16px;
+      border-radius: 8px;
+      margin: 1rem 0;
+    }
+    
+    .message.success {
+      background: #162536;
+      border: 1px solid #28425e;
+      color: #70b8ff;
+    }
+    
+    .message.error {
+      background: #362021;
+      border: 1px solid #5e2828;
+      color: #ff7070;
+    }
+    
+    .message.info {
+      background: #1a2530;
+      border: 1px solid #2e3c4d;
+      color: #e0e6ed;
+    }
+    
+    /* Template Display */
+    .template-modules {
+      margin-top: 1rem;
+    }
+    
+    .module-item {
+      background: #162536;
+      border: 1px solid #28425e;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    
+    .module-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+    
+    .module-title {
+      color: #70b8ff;
+      font-weight: 600;
+      margin: 0;
+    }
+    
+    .module-duration {
+      color: #aaa;
+      font-size: 0.9rem;
+    }
+    
+    .module-lessons {
+      margin-top: 0.5rem;
+      padding-left: 1rem;
+    }
+    
+    .lesson-item {
+      color: #e0e6ed;
+      margin-bottom: 0.25rem;
+      font-size: 0.9rem;
+    }
+    
+    /* Loading States */
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: #70b8ff;
+      font-style: italic;
+    }
+    
+    .no-data {
+      text-align: center;
+      padding: 2rem;
+      color: #aaa;
+      font-style: italic;
+    }
+    
+    /* Calendar Styles */
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding: 1rem;
+      background: #162536;
+      border-radius: 8px;
+    }
+    
+    .template-selector {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+    
+    .template-selector select {
+      padding: 8px 12px;
+      background: #1e2a35;
+      border: 1px solid #2e3c4d;
+      border-radius: 6px;
+      color: #e0e6ed;
+    }
+    
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 1px;
+      background: #2e3c4d;
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+    
+    .calendar-header-cell {
+      background: #162536;
+      padding: 1rem;
+      text-align: center;
+      font-weight: 600;
+      color: #70b8ff;
+    }
+    
+    .calendar-day {
+      background: #1e2a35;
+      min-height: 140px;
+      padding: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+      position: relative;
+      border: 2px solid transparent;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .calendar-day:hover {
+      background: #1a2530;
+      border-color: #70b8ff;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(112, 184, 255, 0.2);
+    }
+    
+    .calendar-day.has-content {
+      background: #162536;
+      border-color: #1da1f2;
+    }
+    
+    .calendar-day.other-month {
+      background: #0f1419;
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .calendar-day.weekend {
+      background: #1a1f25;
+    }
+    
+    .calendar-day.today {
+      border-color: #f093fb;
+      box-shadow: 0 0 10px rgba(240, 147, 251, 0.3);
+    }
+    
+    .day-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    
+    .day-number {
+      font-weight: 600;
+      color: #e0e6ed;
+      font-size: 0.9rem;
+    }
+    
+    .day-week-indicator {
+      font-size: 0.7rem;
+      color: #70b8ff;
+      background: rgba(112, 184, 255, 0.1);
+      padding: 2px 6px;
+      border-radius: 10px;
+    }
+    
+    .day-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    
+    .content-preview {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.7rem;
+      color: #aaa;
+      padding: 2px 0;
+    }
+    
+    .content-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    
+    .mission-indicator { background: #ff6b6b; }
+    .course-indicator { background: #4ecdc4; }
+    .typing-indicator { background: #ffe66d; }
+    
+    .content-count {
+      font-weight: 600;
+      margin-left: 2px;
+    }
+    
+    .content-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+    }
+    
+    .day-summary {
+      position: absolute;
+      bottom: 4px;
+      right: 4px;
+      font-size: 0.7rem;
+      color: #70b8ff;
+      background: rgba(112, 184, 255, 0.1);
+      padding: 2px 6px;
+      border-radius: 8px;
+    }
+    
+    .no-content-day {
+      color: #555;
+      font-style: italic;
+      font-size: 0.7rem;
+      text-align: center;
+      margin-top: auto;
+      margin-bottom: auto;
+    }
+    
+    /* Day Edit Modal */
+    .day-modal .modal-content {
+      max-width: 900px;
+      max-height: 90vh;
+    }
+    
+    .day-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #2e3c4d;
+    }
+    
+    .day-date {
+      color: #70b8ff;
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+    
+    .content-sections {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .content-section {
+      background: #162536;
+      border-radius: 8px;
+      padding: 1rem;
+    }
+    
+    .content-section h4 {
+      color: #70b8ff;
+      margin: 0 0 1rem 0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .content-list {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    
+    .content-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 12px;
+      background: #1e2a35;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      border-left: 3px solid transparent;
+      transition: all 0.3s;
+    }
+    
+    .content-item:hover {
+      background: #1a2530;
+      border-left-color: #70b8ff;
+    }
+    
+    .content-item:last-child {
+      margin-bottom: 0;
+    }
+    
+    .content-item.mission-item {
+      border-left-color: #ff6b6b;
+    }
+    
+    .content-item.course-item {
+      border-left-color: #4ecdc4;
+    }
+    
+    .content-item.typing-item {
+      border-left-color: #ffe66d;
+    }
+    
+    .content-item-info {
+      flex: 1;
+    }
+    
+    .content-item-title {
+      font-weight: 600;
+      color: #e0e6ed;
+      margin-bottom: 4px;
+    }
+    
+    .content-item-description {
+      font-size: 0.8rem;
+      color: #aaa;
+      line-height: 1.3;
+    }
+    
+    .content-item-meta {
+      font-size: 0.7rem;
+      color: #70b8ff;
+      margin-top: 4px;
+    }
+    
+    .content-item-actions {
+      display: flex;
+      gap: 4px;
+      margin-left: 8px;
+    }
+    
+    .add-content-btn {
+      width: 100%;
+      padding: 8px;
+      background: #1e2a35;
+      border: 1px dashed #2e3c4d;
+      border-radius: 4px;
+      color: #70b8ff;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .add-content-btn:hover {
+      background: #162536;
+      border-color: #70b8ff;
+    }
+    
+    .remove-btn {
+      background: #d32f2f;
+      border: none;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+    
+    .remove-btn:hover {
+      background: #b71c1c;
+    }
+    
+    /* Content Selection Modal */
+    .content-selection-modal .modal-content {
+      max-width: 600px;
+    }
+    
+    .content-options {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    
+    .content-option {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      background: #1e2a35;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    
+    .content-option:hover {
+      background: #162536;
+    }
+    
+    .content-option.selected {
+      background: #162536;
+      border: 1px solid #70b8ff;
+    }
+    
+    .legend {
+      display: flex;
+      gap: 2rem;
+      margin-bottom: 1rem;
+      padding: 1rem;
+      background: #162536;
+      border-radius: 8px;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+    }
+    
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+      }
+      
+      .main-content {
+        margin-left: 0;
+      }
+      
+      .form-row {
+        flex-direction: column;
+      }
+      
+      .modal-content {
+        width: 95%;
+        padding: 1rem;
+      }
+      
+      .calendar-grid {
+        grid-template-columns: repeat(7, 1fr);
+        gap: 1px;
+      }
+      
+      .calendar-day {
+        min-height: 80px;
+        padding: 4px;
+      }
+      
+      .content-sections {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+  <!-- Authentication Check -->
+  <script>
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    
+    if (!token || !role) {
+      window.location.replace('/login.html');
+    } else if (role !== 'admin' && role !== 'instructor') {
+      alert('Access denied. Admin or Instructor privileges required.');
+      window.location.replace('/dashboard.html');
+    }
+  </script>
+
+  <div class="layout">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <h2><i class="fas fa-chalkboard-teacher"></i> Instructor Hub</h2>
+      <ul class="sidebar-nav">
+        <li class="nav-item active" data-tab="dashboard">
+          <i class="fas fa-tachometer-alt"></i> Dashboard
+        </li>
+        <li class="nav-item" data-tab="add-class">
+          <i class="fas fa-plus-circle"></i> Add Class
+        </li>
+        <li class="nav-item" data-tab="add-student">
+          <i class="fas fa-user-plus"></i> Add Student
+        </li>
+        <li class="nav-item" data-tab="templates">
+          <i class="fas fa-layer-group"></i> Templates
+        </li>
+        <li class="nav-item" data-tab="calendar-view">
+          <i class="fas fa-calendar-alt"></i> Calendar View
+        </li>
+        <li class="nav-item" data-tab="user-roles">
+          <i class="fas fa-users-cog"></i> User Roles
+        </li>
+      </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <div class="header">
+        <h1 id="page-title">Instructor Dashboard</h1>
+        <a href="admin-dashboard.html" class="back-link">← Back to Dashboard</a>
+      </div>
+
+      <!-- Dashboard Tab -->
+      <div id="dashboard" class="tab-content active">
+        <div class="message info">
+          <h3><i class="fas fa-info-circle"></i> Welcome to the Instructor Interface</h3>
+          <p>Use the sidebar to navigate between different functions:</p>
+          <ul>
+            <li><strong>Add Class:</strong> Create new classes with template-based modules</li>
+            <li><strong>Add Student:</strong> Manage student accounts and class assignments</li>
+            <li><strong>Templates:</strong> Create and edit class templates for different difficulty levels</li>
+            <li><strong>User Roles:</strong> Manage all user accounts and permissions</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Add Class Tab -->
+      <div id="add-class" class="tab-content">
+        <form id="classForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="className">Class Name *</label>
+              <input type="text" id="className" required>
+            </div>
+            <div class="form-group">
+              <label for="organization">Organization *</label>
+              <input type="text" id="organization" required>
+            </div>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="country">Country</label>
+              <select id="country">
+                <option>United States</option>
+                <option>United Kingdom</option>
+                <option>Canada</option>
+                <option>Australia</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="instructor">Instructor</label>
+              <select id="instructor">
+                <option>Loading instructors...</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="difficulty">Difficulty Level</label>
+              <select id="difficulty">
+                <option value="">-- Select Difficulty --</option>
+                <option value="Easy">Easy</option>
+                <option value="Medium">Medium</option>
+                <option value="Hard">Hard</option>
+              </select>
+            </div>
+          </div>
+          
+          <div id="template-preview" style="display: none;">
+            <h3>Template Preview</h3>
+            <div id="template-details"></div>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="startDate">Course Start Date *</label>
+              <input type="date" id="startDate" required>
+            </div>
+            <div class="form-group">
+              <label for="endDate">Course End Date *</label>
+              <input type="date" id="endDate" required>
+            </div>
+          </div>
+          
+          <button type="submit" class="btn">Create Class</button>
+        </form>
+        
+        <div id="class-result"></div>
+      </div>
+
+      <!-- Add Student Tab -->
+      <div id="add-student" class="tab-content">
+        <form id="studentForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="studentName">Name *</label>
+              <input type="text" id="studentName" required>
+            </div>
+            <div class="form-group">
+              <label for="studentEmail">Email *</label>
+              <input type="email" id="studentEmail" required>
+            </div>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="studentUsername">Username *</label>
+              <input type="text" id="studentUsername" required>
+            </div>
+            <div class="form-group">
+              <label for="studentPassword">Password *</label>
+              <input type="password" id="studentPassword" required>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="studentClass">Assign to Class</label>
+            <select id="studentClass">
+              <option value="">Loading classes...</option>
+            </select>
+          </div>
+          
+          <button type="submit" class="btn">Add Student</button>
+        </form>
+        
+        <div id="student-result"></div>
+        
+        <h3>Student List</h3>
+        <div id="student-table">
+          <div class="loading">Loading students...</div>
+        </div>
+      </div>
+
+      <!-- Templates Tab -->
+      <div id="templates" class="tab-content">
+        <div style="margin-bottom: 2rem;">
+          <button class="btn" onclick="showCreateTemplateModal()">
+            <i class="fas fa-plus"></i> Create New Template
+          </button>
+          <a href="template-editor.html" class="btn" style="margin-left: 1rem;">
+            <i class="fas fa-calendar-edit"></i> Advanced Template Editor
+          </a>
+        </div>
+        
+        <div id="templates-list">
+          <div class="loading">Loading templates...</div>
+        </div>
+      </div>
+
+      <!-- User Roles Tab -->
+      <div id="user-roles" class="tab-content">
+        <div style="margin-bottom: 2rem;">
+          <button class="btn" onclick="showAddUserModal()">
+            <i class="fas fa-user-plus"></i> Add User
+          </button>
+        </div>
+        
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="users-table">
+            <tr><td colspan="5" class="loading">Loading users...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Calendar View Tab -->
+      <div id="calendar-view" class="tab-content">
+        <div class="calendar-header">
+          <div class="template-selector">
+            <label for="calendar-template">Template:</label>
+            <select id="calendar-template">
+              <option value="">Select a template...</option>
+            </select>
+            <label for="calendar-class">Or Class:</label>
+            <select id="calendar-class">
+              <option value="">Select a class...</option>
+            </select>
+          </div>
+          <div>
+            <button class="btn btn-secondary" onclick="previousMonth()">
+              <i class="fas fa-chevron-left"></i> Previous
+            </button>
+            <span id="current-month-year" style="margin: 0 1rem; font-weight: 600;"></span>
+            <button class="btn btn-secondary" onclick="nextMonth()">
+              Next <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="legend">
+          <div class="legend-item">
+            <span class="content-indicator mission-indicator"></span>
+            Mission References
+          </div>
+          <div class="legend-item">
+            <span class="content-indicator course-indicator"></span>
+            Course Content
+          </div>
+          <div class="legend-item">
+            <span class="content-indicator typing-indicator"></span>
+            Typing Tests
+          </div>
+          <div style="margin-left: auto; color: #aaa; font-size: 0.8rem;">
+            💡 Click any day to view and edit content
+          </div>
+        </div>
+
+        <div id="template-summary" style="display: none; margin-bottom: 1rem;">
+          <!-- Template/Class summary will be shown here -->
+        </div>
+
+        <div id="calendar-container">
+          <div class="message info">
+            <p>Select a template or class above to view the calendar schedule.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Student Edit Modal -->
+  <div id="student-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="student-modal-title">Edit Student</h3>
+        <button class="close-btn" onclick="closeStudentModal()">&times;</button>
+      </div>
+      <form id="student-edit-form">
+        <input type="hidden" id="edit-student-id">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="edit-student-name">Name *</label>
+            <input type="text" id="edit-student-name" required>
+          </div>
+          <div class="form-group">
+            <label for="edit-student-email">Email *</label>
+            <input type="email" id="edit-student-email" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="edit-student-username">Username *</label>
+            <input type="text" id="edit-student-username" required>
+          </div>
+          <div class="form-group">
+            <label for="edit-student-password">Password</label>
+            <input type="password" id="edit-student-password" placeholder="Leave blank to keep current">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="edit-student-class">Assign to Class</label>
+          <select id="edit-student-class">
+            <option value="">Loading classes...</option>
+          </select>
+        </div>
+        <div style="margin-top: 1.5rem;">
+          <button type="submit" class="btn">Save Changes</button>
+          <button type="button" class="btn btn-secondary" onclick="closeStudentModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- User Modal -->
+  <div id="user-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="user-modal-title">Add User</h3>
+        <button class="close-btn" onclick="closeUserModal()">&times;</button>
+      </div>
+      <form id="user-form">
+        <input type="hidden" id="user-id">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="user-name">Name *</label>
+            <input type="text" id="user-name" required>
+          </div>
+          <div class="form-group">
+            <label for="user-email">Email *</label>
+            <input type="email" id="user-email" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="user-username">Username *</label>
+            <input type="text" id="user-username" required>
+          </div>
+          <div class="form-group">
+            <label for="user-password">Password</label>
+            <input type="password" id="user-password">
+            <small style="color: #aaa; font-size: 0.8rem;">Leave blank to keep existing password when editing</small>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="user-role">Role *</label>
+            <select id="user-role" required>
+              <option value="admin">Admin</option>
+              <option value="instructor">Instructor</option>
+              <option value="student">Student</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="user-status">Status</label>
+            <select id="user-status">
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+        <div id="user-class-group" class="form-group" style="display: none;">
+          <label for="user-class">Assign to Class</label>
+          <select id="user-class">
+            <option value="">-- Select Class --</option>
+          </select>
+        </div>
+        <div style="margin-top: 1.5rem;">
+          <button type="submit" class="btn">Save User</button>
+          <button type="button" class="btn btn-secondary" onclick="closeUserModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Template Modal -->
+  <div id="template-modal" class="modal">
+    <div class="modal-content" style="max-width: 800px;">
+      <div class="modal-header">
+        <h3 id="template-modal-title">Create Template</h3>
+        <button class="close-btn" onclick="closeTemplateModal()">&times;</button>
+      </div>
+      <form id="template-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="template-difficulty">Difficulty *</label>
+            <select id="template-difficulty" required>
+              <option value="">-- Select Difficulty --</option>
+              <option value="Easy">Easy</option>
+              <option value="Medium">Medium</option>
+              <option value="Hard">Hard</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="template-name">Template Name *</label>
+            <input type="text" id="template-name" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="template-description">Description</label>
+          <textarea id="template-description" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="template-duration">Duration (Weeks) *</label>
+          <input type="number" id="template-duration" min="1" max="52" required>
+        </div>
+        <div style="margin-top: 1.5rem;">
+          <button type="submit" class="btn">Save Template</button>
+          <button type="button" class="btn btn-secondary" onclick="closeTemplateModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Day Edit Modal -->
+  <div id="day-modal" class="modal day-modal">
+    <div class="modal-content">
+      <div class="day-modal-header">
+        <div>
+          <div class="day-date" id="day-modal-date"></div>
+          <div style="color: #aaa; font-size: 0.9rem;" id="day-modal-info"></div>
+        </div>
+        <button class="close-btn" onclick="closeDayModal()">&times;</button>
+      </div>
+      
+      <div class="content-sections">
+        <!-- Mission References Section -->
+        <div class="content-section">
+          <h4>
+            <span class="content-indicator mission-indicator"></span>
+            Mission References
+          </h4>
+          <div class="content-list" id="mission-content-list">
+            <!-- Mission items will be populated here -->
+          </div>
+          <button class="add-content-btn" onclick="showContentSelection('mission')">
+            <i class="fas fa-plus"></i> Add Mission Reference
+          </button>
+        </div>
+
+        <!-- Course Content Section -->
+        <div class="content-section">
+          <h4>
+            <span class="content-indicator course-indicator"></span>
+            Course Content
+          </h4>
+          <div class="content-list" id="course-content-list">
+            <!-- Course items will be populated here -->
+          </div>
+          <button class="add-content-btn" onclick="showContentSelection('course')">
+            <i class="fas fa-plus"></i> Add Course Content
+          </button>
+        </div>
+
+        <!-- Typing Tests Section -->
+        <div class="content-section">
+          <h4>
+            <span class="content-indicator typing-indicator"></span>
+            Typing Tests
+          </h4>
+          <div class="content-list" id="typing-content-list">
+            <!-- Typing test items will be populated here -->
+          </div>
+          <button class="add-content-btn" onclick="showContentSelection('typing')">
+            <i class="fas fa-plus"></i> Add Typing Test
+          </button>
+        </div>
+      </div>
+
+      <div style="margin-top: 2rem; text-align: center;">
+        <button class="btn" onclick="saveDayContent()">
+          <i class="fas fa-save"></i> Save Day Content
+        </button>
+        <button class="btn btn-secondary" onclick="closeDayModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Content Selection Modal -->
+  <div id="content-selection-modal" class="modal content-selection-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="content-selection-title">Select Content</h3>
+        <button class="close-btn" onclick="closeContentSelectionModal()">&times;</button>
+      </div>
+      
+      <div class="form-group">
+        <input type="text" id="content-search" placeholder="Search content..." style="width: 100%;">
+      </div>
+      
+      <div class="content-options" id="content-options-list">
+        <!-- Content options will be populated here -->
+      </div>
+      
+      <div style="margin-top: 1.5rem; text-align: center;">
+        <button class="btn" onclick="addSelectedContent()">
+          <i class="fas fa-plus"></i> Add Selected
+        </button>
+        <button class="btn btn-secondary" onclick="closeContentSelectionModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Global variables
+    let currentTab = 'dashboard';
+    let classes = [];
+    let students = [];
+    let users = [];
+    let templates = [];
+    let instructors = [];
+    
+    // Calendar variables
+    let currentDate = new Date();
+    let selectedTemplate = null;
+    let selectedClass = null;
+    let currentDayData = null;
+    let currentContentType = null;
+    
+    // Available content (loaded from API)
+    let availableContent = {
+      mission: [],
+      course: [],
+      typing: []
+    };
+
+    // Listen for template updates from other windows/tabs
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'templatesUpdated') {
+        console.log('Templates updated in another window, refreshing...');
+        showSyncNotification('Templates synchronized from another window');
+        fetchTemplates();
+      }
+    });
+
+    // Show sync notification
+    function showSyncNotification(message) {
+      // Create notification element if it doesn't exist
+      let notification = document.getElementById('sync-notification');
+      if (!notification) {
+        notification = document.createElement('div');
+        notification.id = 'sync-notification';
+        notification.style.cssText = `
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+          color: white;
+          padding: 1rem 1.5rem;
+          border-radius: 8px;
+          box-shadow: 0 8px 25px rgba(56, 161, 105, 0.3);
+          z-index: 10000;
+          transform: translateX(400px);
+          transition: transform 0.3s ease;
+          max-width: 300px;
+        `;
+        document.body.appendChild(notification);
+      }
+      
+      notification.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <i class="fas fa-sync-alt" style="animation: spin 1s linear infinite;"></i>
+          <span>${message}</span>
+        </div>
+      `;
+      
+      // Show notification
+      setTimeout(() => {
+        notification.style.transform = 'translateX(0)';
+      }, 100);
+      
+      // Hide after 3 seconds
+      setTimeout(() => {
+        notification.style.transform = 'translateX(400px)';
+      }, 3000);
+    }
+
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        setupNavigation();
+        initializeCalendar();
+        
+        // Load data with individual error handling to prevent one failure from breaking everything
+        const promises = [
+          fetchClasses().catch(err => console.error('Failed to fetch classes:', err)),
+          fetchInstructors().catch(err => console.error('Failed to fetch instructors:', err)),
+          fetchStudents().catch(err => console.error('Failed to fetch students:', err)),
+          fetchUsers().catch(err => console.error('Failed to fetch users:', err)),
+          fetchTemplates().catch(err => console.error('Failed to fetch templates:', err)),
+          fetchAvailableContent().catch(err => console.error('Failed to fetch available content:', err))
+        ];
+        
+        await Promise.allSettled(promises);
+        console.log('Page initialization completed');
+      } catch (error) {
+        console.error('Error during page initialization:', error);
+      }
+    });
+
+    // Navigation setup
+    function setupNavigation() {
+      const navItems = document.querySelectorAll('.nav-item');
+      navItems.forEach(item => {
+        item.addEventListener('click', () => {
+          const tabName = item.dataset.tab;
+          switchTab(tabName);
+        });
+      });
+    }
+
+    function switchTab(tabName) {
+      // Update navigation
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+      // Update content
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      document.getElementById(tabName).classList.add('active');
+
+      // Update title
+      const titles = {
+        'dashboard': 'Instructor Dashboard',
+        'add-class': 'Add Class',
+        'add-student': 'Add Student',
+        'templates': 'Manage Templates',
+        'user-roles': 'User Roles',
+        'calendar-view': 'Calendar View'
+      };
+      document.getElementById('page-title').textContent = titles[tabName] || 'Instructor Interface';
+
+      currentTab = tabName;
+    }
+
+    // API Helper function
+    async function apiCall(url, options = {}) {
+      const token = localStorage.getItem('token');
+      const role = localStorage.getItem('role');
+      
+      console.log('Making API call to:', url);
+      console.log('Token exists:', !!token);
+      console.log('User role:', role);
+      
+      if (!token) {
+        console.error('No authentication token found');
+        alert('Authentication token missing. Please log in again.');
+        window.location.href = '/login.html';
+        return null;
+      }
+
+      const defaultOptions = {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      };
+
+      try {
+        const response = await fetch(url, { ...defaultOptions, ...options });
+        
+        console.log('API Response status:', response.status);
+        
+        if (!response.ok) {
+          if (response.status === 401 || response.status === 403) {
+            console.error('Authentication/Authorization failed for:', url);
+            const errorText = await response.text();
+            console.error('Error details:', errorText);
+            alert('Session expired or access denied. Please login again.');
+            window.location.href = '/login.html';
+            return null;
+          }
+          throw new Error(`API call failed: ${response.status} ${response.statusText}`);
+        }
+
+        return response.json();
+      } catch (error) {
+        console.error('API call error:', error);
+        throw error;
+      }
+    }
+
+    // Fetch functions
+    async function fetchClasses() {
+      try {
+        classes = await apiCall('/api/classes');
+        fillClassDropdowns();
+        fillCalendarClassDropdown();
+      } catch (error) {
+        console.error('Error fetching classes:', error);
+        showMessage('error', 'Failed to load classes');
+      }
+    }
+
+    async function fetchInstructors() {
+      try {
+        const allUsers = await apiCall('/api/users');
+        instructors = allUsers.filter(u => (u.role === 'instructor' || u.role === 'admin') && u.status === true);
+        fillInstructorDropdown();
+      } catch (error) {
+        console.error('Error fetching instructors:', error);
+        showMessage('error', 'Failed to load instructors');
+      }
+    }
+
+    async function fetchStudents() {
+      try {
+        const allUsers = await apiCall('/api/users');
+        students = allUsers.filter(u => u.role === 'student');
+        renderStudentTable();
+      } catch (error) {
+        console.error('Error fetching students:', error);
+        showMessage('error', 'Failed to load students');
+      }
+    }
+
+    async function fetchUsers() {
+      try {
+        users = await apiCall('/api/users');
+        renderUsersTable();
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        showMessage('error', 'Failed to load users');
+      }
+    }
+
+    async function fetchTemplates() {
+      try {
+        templates = await apiCall('/api/class-templates');
+        renderTemplatesList();
+        fillCalendarTemplateDropdown();
+      } catch (error) {
+        console.error('Error fetching templates:', error);
+        showMessage('error', 'Failed to load templates');
+      }
+    }
+
+    async function fetchAvailableContent() {
+      try {
+        availableContent = await apiCall('/api/class-templates/content/available');
+      } catch (error) {
+        console.error('Error fetching available content:', error);
+        // Use fallback content if API fails
+        availableContent = {
+          mission: [
+            { id: 'mission1', name: 'Basic Navigation Mission', description: 'Learn basic system navigation' },
+            { id: 'mission2', name: 'Communication Protocols', description: 'Standard communication procedures' }
+          ],
+          course: [
+            { id: 'course1', name: 'Introduction to SMX', description: 'Basic SMX concepts and overview' },
+            { id: 'course2', name: 'System Architecture', description: 'Understanding system components' }
+          ],
+          typing: [
+            { id: 'typing1', name: 'Basic Typing Test', description: '30 WPM accuracy test' },
+            { id: 'typing2', name: 'Speed Challenge', description: '50 WPM speed test' }
+          ]
+        };
+      }
+    }
+
+    // Fill dropdown functions
+    function fillClassDropdowns() {
+      const dropdowns = ['studentClass', 'edit-student-class', 'user-class'];
+      dropdowns.forEach(id => {
+        const dropdown = document.getElementById(id);
+        if (dropdown) {
+          if (classes.length === 0) {
+            dropdown.innerHTML = '<option value="">No classes available</option>';
+          } else {
+            const options = classes.map(c => `<option value="${c._id}">${c.name}</option>`).join('');
+            dropdown.innerHTML = `<option value="">-- Select Class --</option>${options}`;
+          }
+        }
+      });
+    }
+
+    function fillInstructorDropdown() {
+      const dropdown = document.getElementById('instructor');
+      if (instructors.length === 0) {
+        dropdown.innerHTML = '<option value="">No instructors available</option>';
+      } else {
+        const options = instructors.map(i => `<option value="${i._id}">${i.name} ✔️</option>`).join('');
+        dropdown.innerHTML = options;
+      }
+    }
+
+    function fillCalendarTemplateDropdown() {
+      const dropdown = document.getElementById('calendar-template');
+      if (templates.length === 0) {
+        dropdown.innerHTML = '<option value="">No templates available</option>';
+      } else {
+        const options = templates.map(t => `<option value="${t.difficulty}">${t.difficulty} - ${t.name}</option>`).join('');
+        dropdown.innerHTML = `<option value="">Select a template...</option>${options}`;
+      }
+    }
+
+    function fillCalendarClassDropdown() {
+      const dropdown = document.getElementById('calendar-class');
+      if (classes.length === 0) {
+        dropdown.innerHTML = '<option value="">No classes available</option>';
+      } else {
+        const options = classes.map(c => `<option value="${c._id}">${c.name} (${c.organization})</option>`).join('');
+        dropdown.innerHTML = `<option value="">Select a class...</option>${options}`;
+      }
+    }
+
+    // Calendar Functions
+    function initializeCalendar() {
+      updateCalendarHeader();
+      
+      // Setup event listeners
+      document.getElementById('calendar-template').addEventListener('change', onTemplateChange);
+      document.getElementById('calendar-class').addEventListener('change', onClassChange);
+    }
+
+    function updateCalendarHeader() {
+      const monthNames = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+      ];
+      
+      const monthYear = `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+      document.getElementById('current-month-year').textContent = monthYear;
+    }
+
+    function onTemplateChange() {
+      const templateDifficulty = document.getElementById('calendar-template').value;
+      document.getElementById('calendar-class').value = '';
+      
+      if (templateDifficulty) {
+        selectedTemplate = templates.find(t => t.difficulty === templateDifficulty);
+        selectedClass = null;
+        showTemplateSummary();
+        renderCalendar();
+      } else {
+        selectedTemplate = null;
+        hideTemplateSummary();
+        renderEmptyCalendar();
+      }
+    }
+
+    function onClassChange() {
+      const classId = document.getElementById('calendar-class').value;
+      document.getElementById('calendar-template').value = '';
+      
+      if (classId) {
+        selectedClass = classes.find(c => c._id === classId);
+        selectedTemplate = null;
+        showClassSummary();
+        renderCalendar();
+      } else {
+        selectedClass = null;
+        hideTemplateSummary();
+        renderEmptyCalendar();
+      }
+    }
+
+    function showTemplateSummary() {
+      const summary = document.getElementById('template-summary');
+      if (!selectedTemplate) return;
+      
+      const totalModules = selectedTemplate.modules.length;
+      const totalLessons = selectedTemplate.modules.reduce((sum, m) => sum + m.lessons.length, 0);
+      
+      summary.innerHTML = `
+        <div class="message info">
+          <h4 style="margin: 0 0 8px 0; color: #70b8ff;">
+            📚 ${selectedTemplate.name} (${selectedTemplate.difficulty})
+          </h4>
+          <div style="display: flex; gap: 2rem; font-size: 0.9rem;">
+            <span>📅 Duration: ${selectedTemplate.durationWeeks} weeks</span>
+            <span>📖 Modules: ${totalModules}</span>
+            <span>🎯 Lessons: ${totalLessons}</span>
+          </div>
+          ${selectedTemplate.description ? `<p style="margin: 8px 0 0 0; font-size: 0.9rem;">${selectedTemplate.description}</p>` : ''}
+        </div>
+      `;
+      summary.style.display = 'block';
+    }
+    
+    function showClassSummary() {
+      const summary = document.getElementById('template-summary');
+      if (!selectedClass) return;
+      
+      const startDate = new Date(selectedClass.startDate).toLocaleDateString();
+      const endDate = new Date(selectedClass.endDate).toLocaleDateString();
+      const totalModules = selectedClass.modules ? selectedClass.modules.length : 0;
+      
+      summary.innerHTML = `
+        <div class="message info">
+          <h4 style="margin: 0 0 8px 0; color: #70b8ff;">
+            🏫 ${selectedClass.name} - ${selectedClass.organization}
+          </h4>
+          <div style="display: flex; gap: 2rem; font-size: 0.9rem; flex-wrap: wrap;">
+            <span>📅 ${startDate} - ${endDate}</span>
+            <span>📖 Modules: ${totalModules}</span>
+            <span>🌍 ${selectedClass.country}</span>
+            ${selectedClass.difficulty ? `<span>📊 Level: ${selectedClass.difficulty}</span>` : ''}
+          </div>
+        </div>
+      `;
+      summary.style.display = 'block';
+    }
+    
+    function hideTemplateSummary() {
+      document.getElementById('template-summary').style.display = 'none';
+    }
+
+    function renderEmptyCalendar() {
+      const container = document.getElementById('calendar-container');
+      hideTemplateSummary();
+      container.innerHTML = `
+        <div class="message info">
+          <p>Select a template or class above to view the calendar schedule.</p>
+        </div>
+      `;
+    }
+
+    function getSampleDayContent(daysSinceStart) {
+      // Generate sample content based on day pattern
+      const dayInWeek = (daysSinceStart % 7) + 1;
+      const weekNumber = Math.floor(daysSinceStart / 7) + 1;
+      
+      let content = { mission: [], course: [], typing: [] };
+      
+      // Pattern: Different content types on different days
+      if (dayInWeek <= 3 && availableContent.mission.length > 0) {
+        // Mission content on Mon-Wed
+        const missionIndex = (daysSinceStart % availableContent.mission.length);
+        content.mission = [availableContent.mission[missionIndex]];
+      }
+      
+      if (dayInWeek <= 4 && availableContent.course.length > 0) {
+        // Course content on Mon-Thu
+        const courseIndex = (daysSinceStart % availableContent.course.length);
+        content.course = [availableContent.course[courseIndex]];
+      }
+      
+      if (dayInWeek === 5 && availableContent.typing.length > 0) {
+        // Typing tests on Friday
+        const typingIndex = (weekNumber - 1) % availableContent.typing.length;
+        content.typing = [availableContent.typing[typingIndex]];
+      }
+      
+      return content;
+    }
+
+    function renderCalendar() {
+      const container = document.getElementById('calendar-container');
+      
+      if (!selectedTemplate && !selectedClass) {
+        renderEmptyCalendar();
+        return;
+      }
+
+      const startDate = selectedClass ? new Date(selectedClass.startDate) : new Date();
+      const durationWeeks = selectedTemplate ? selectedTemplate.durationWeeks : 
+                           selectedClass ? selectedClass.modules.reduce((sum, m) => sum + m.estimatedWeeks, 0) : 4;
+      
+      // Generate calendar grid
+      const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+      const startCalendar = new Date(firstDay);
+      startCalendar.setDate(startCalendar.getDate() - firstDay.getDay());
+      
+      let html = `
+        <div class="calendar-grid">
+          <div class="calendar-header-cell">Sun</div>
+          <div class="calendar-header-cell">Mon</div>
+          <div class="calendar-header-cell">Tue</div>
+          <div class="calendar-header-cell">Wed</div>
+          <div class="calendar-header-cell">Thu</div>
+          <div class="calendar-header-cell">Fri</div>
+          <div class="calendar-header-cell">Sat</div>
+      `;
+
+      const currentCalendarDate = new Date(startCalendar);
+      const today = new Date();
+      
+      for (let week = 0; week < 6; week++) {
+        for (let day = 0; day < 7; day++) {
+          const dayNumber = currentCalendarDate.getDate();
+          const isCurrentMonth = currentCalendarDate.getMonth() === currentDate.getMonth();
+          const isWeekend = currentCalendarDate.getDay() === 0 || currentCalendarDate.getDay() === 6;
+          const isToday = currentCalendarDate.toDateString() === today.toDateString();
+          
+          // Calculate if this day is within the course duration
+          const daysSinceStart = Math.floor((currentCalendarDate - startDate) / (1000 * 60 * 60 * 24));
+          const isCourseDays = daysSinceStart >= 0 && daysSinceStart < (durationWeeks * 7) && !isWeekend;
+          
+          let dayClass = 'calendar-day';
+          if (!isCurrentMonth) dayClass += ' other-month';
+          if (isWeekend) dayClass += ' weekend';
+          if (isToday) dayClass += ' today';
+          if (isCourseDays) dayClass += ' has-content';
+          
+          // Generate content preview for course days
+          let dayContent = '';
+          let weekIndicator = '';
+          let contentSummary = '';
+          
+          if (isCourseDays) {
+            const weekNumber = Math.floor(daysSinceStart / 7) + 1;
+            const dayInWeek = (daysSinceStart % 7) + 1;
+            weekIndicator = `<div class="day-week-indicator">W${weekNumber}D${dayInWeek}</div>`;
+            
+            // Get actual content for this day (async, so we'll use sample data for now)
+            const sampleContent = getSampleDayContent(daysSinceStart);
+            
+            dayContent = '<div class="day-content">';
+            
+            if (sampleContent.mission.length > 0) {
+              dayContent += `
+                <div class="content-preview">
+                  <span class="content-indicator mission-indicator"></span>
+                  <span class="content-count">${sampleContent.mission.length}</span>
+                  <span class="content-name">${sampleContent.mission[0].name}</span>
+                </div>
+              `;
+            }
+            
+            if (sampleContent.course.length > 0) {
+              dayContent += `
+                <div class="content-preview">
+                  <span class="content-indicator course-indicator"></span>
+                  <span class="content-count">${sampleContent.course.length}</span>
+                  <span class="content-name">${sampleContent.course[0].name}</span>
+                </div>
+              `;
+            }
+            
+            if (sampleContent.typing.length > 0) {
+              dayContent += `
+                <div class="content-preview">
+                  <span class="content-indicator typing-indicator"></span>
+                  <span class="content-count">${sampleContent.typing.length}</span>
+                  <span class="content-name">${sampleContent.typing[0].name}</span>
+                </div>
+              `;
+            }
+            
+            dayContent += '</div>';
+            
+            const totalContent = sampleContent.mission.length + sampleContent.course.length + sampleContent.typing.length;
+            if (totalContent > 0) {
+              contentSummary = `<div class="day-summary">${totalContent} items</div>`;
+            }
+          } else if (isCurrentMonth && !isWeekend) {
+            dayContent = '<div class="no-content-day">No content</div>';
+          }
+          
+          const clickHandler = isCurrentMonth ? `openDayModal('${currentCalendarDate.toISOString()}', ${isCourseDays})` : '';
+          
+          html += `
+            <div class="${dayClass}" ${clickHandler ? `onclick="${clickHandler}"` : ''}>
+              <div class="day-header">
+                <div class="day-number">${dayNumber}</div>
+                ${weekIndicator}
+              </div>
+              ${dayContent}
+              ${contentSummary}
+            </div>
+          `;
+          
+          currentCalendarDate.setDate(currentCalendarDate.getDate() + 1);
+        }
+      }
+
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    function previousMonth() {
+      currentDate.setMonth(currentDate.getMonth() - 1);
+      updateCalendarHeader();
+      if (selectedTemplate || selectedClass) {
+        renderCalendar();
+      }
+    }
+
+    function nextMonth() {
+      currentDate.setMonth(currentDate.getMonth() + 1);
+      updateCalendarHeader();
+      if (selectedTemplate || selectedClass) {
+        renderCalendar();
+      }
+    }
+
+    // Day Modal Functions
+    async function openDayModal(dateString, hasContent) {
+      const date = new Date(dateString);
+      
+      // Show loading state
+      document.getElementById('day-modal').style.display = 'block';
+      document.getElementById('mission-content-list').innerHTML = '<div class="loading">Loading...</div>';
+      document.getElementById('course-content-list').innerHTML = '<div class="loading">Loading...</div>';
+      document.getElementById('typing-content-list').innerHTML = '<div class="loading">Loading...</div>';
+      
+      const dayData = await getDayData(date);
+      
+      currentDayData = {
+        date: date,
+        mission: dayData.mission || [],
+        course: dayData.course || [],
+        typing: dayData.typing || []
+      };
+      
+      // Update modal header
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      document.getElementById('day-modal-date').textContent = date.toLocaleDateString('en-US', options);
+      
+      let infoText = '';
+      if (selectedTemplate) {
+        infoText = `Template: ${selectedTemplate.name}`;
+      } else if (selectedClass) {
+        infoText = `Class: ${selectedClass.name}`;
+      }
+      document.getElementById('day-modal-info').textContent = infoText;
+      
+      // Populate content lists
+      renderDayContent('mission');
+      renderDayContent('course');
+      renderDayContent('typing');
+    }
+
+    async function getDayData(date) {
+      if (!selectedTemplate && !selectedClass) {
+        return { mission: [], course: [], typing: [] };
+      }
+
+      try {
+        // Calculate day number from start
+        const startDate = selectedClass ? new Date(selectedClass.startDate) : new Date();
+        const dayNumber = Math.floor((date - startDate) / (1000 * 60 * 60 * 24)) + 1;
+        
+        if (dayNumber < 1) {
+          return { mission: [], course: [], typing: [] };
+        }
+
+        if (selectedTemplate) {
+          // Fetch from template API
+          const response = await apiCall(`/api/class-templates/${selectedTemplate.difficulty}/day/${dayNumber}`);
+          return {
+            mission: response.missionReferences || [],
+            course: response.courseContent || [],
+            typing: response.typingTests || []
+          };
+        } else if (selectedClass) {
+          // For classes, we'd fetch from class-specific API (not implemented yet)
+          // For now, return sample data
+          const dayOfWeek = date.getDay();
+          return {
+            mission: dayOfWeek <= 3 && availableContent.mission.length > 0 ? [availableContent.mission[0]] : [],
+            course: dayOfWeek <= 4 && availableContent.course.length > 0 ? [availableContent.course[0]] : [],
+            typing: dayOfWeek === 5 && availableContent.typing.length > 0 ? [availableContent.typing[0]] : []
+          };
+        }
+      } catch (error) {
+        console.error('Error fetching day data:', error);
+        return { mission: [], course: [], typing: [] };
+      }
+    }
+
+    function renderDayContent(contentType) {
+      const container = document.getElementById(`${contentType}-content-list`);
+      const items = currentDayData[contentType] || [];
+      
+      if (items.length === 0) {
+        container.innerHTML = '<div style="color: #aaa; font-style: italic; padding: 12px; text-align: center;">No content assigned</div>';
+        return;
+      }
+      
+      let html = '';
+      items.forEach((item, index) => {
+    let meta = '';
+        if (item.duration) {
+          const minutes = Math.floor(item.duration / 60);
+          meta += `Duration: ${minutes} min`;
+        }
+        if (item.targetWPM) {
+          meta += `Target: ${item.targetWPM} WPM`;
+        }
+        
+        html += `
+          <div class="content-item ${contentType}-item">
+            <div class="content-item-info">
+              <div class="content-item-title">${item.name}</div>
+              <div class="content-item-description">${item.description || 'No description available'}</div>
+              ${meta ? `<div class="content-item-meta">${meta}</div>` : ''}
+            </div>
+            <div class="content-item-actions">
+              <button class="btn btn-small" onclick="viewContentDetails('${contentType}', ${index})" title="View Details">
+                <i class="fas fa-eye"></i>
+              </button>
+                  <button class="remove-btn" onclick="removeContent('${contentType}', ${index})" title="Remove">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      });
+      
+      container.innerHTML = html;
+    }
+
+    function closeDayModal() {
+      document.getElementById('day-modal').style.display = 'none';
+      currentDayData = null;
+    }
+
+    function showContentSelection(contentType) {
+      currentContentType = contentType;
+      
+      const titles = {
+        mission: 'Select Mission Reference',
+        course: 'Select Course Content',
+        typing: 'Select Typing Test'
+      };
+      
+      document.getElementById('content-selection-title').textContent = titles[contentType];
+      
+      // Populate content options
+      renderContentOptions();
+      
+      document.getElementById('content-selection-modal').style.display = 'block';
+    }
+
+    function renderContentOptions() {
+      const container = document.getElementById('content-options-list');
+      const items = availableContent[currentContentType] || [];
+      const assignedIds = (currentDayData[currentContentType] || []).map(item => item.id);
+      
+      if (items.length === 0) {
+        container.innerHTML = '<div style="text-align: center; color: #aaa; padding: 2rem;">No content available</div>';
+        return;
+      }
+      
+      let html = '';
+      items.forEach(item => {
+        const isAssigned = assignedIds.includes(item.id);
+        const itemClass = isAssigned ? 'content-option assigned' : 'content-option';
+        let meta = '';
+        if (item.duration) {
+          const minutes = Math.floor(item.duration / 60);
+          meta += `<span style="color: #70b8ff;">⏱️ ${minutes}min</span>`;
+        }
+        if (item.targetWPM) {
+          meta += `<span style="color: #ffe66d;">⚡ ${item.targetWPM} WPM</span>`;
+        }
+        
+        html += `
+          <div class="${itemClass}" onclick="toggleContentSelection('${item.id}')" data-id="${item.id}">
+            <div style="flex: 1;">
+              <div style="font-weight: 600; margin-bottom: 4px;">${item.name}</div>
+              <div style="font-size: 0.8rem; color: #aaa; margin-bottom: 4px;">${item.description}</div>
+              ${meta ? `<div style="font-size: 0.7rem; display: flex; gap: 8px;">${meta}</div>` : ''}
+            </div>
+            <div style="margin-left: 12px; display: flex; align-items: center;">
+              ${isAssigned ? 
+                '<div style="color: #70b8ff; font-size: 0.8rem;">Already assigned</div>' : 
+                '<i class="fas fa-plus" style="color: #70b8ff;"></i>'
+              }
+            </div>
+          </div>
+        `;
+      });
+      
+      container.innerHTML = html;
+    }
+
+    function toggleContentSelection(itemId) {
+      const option = document.querySelector(`[data-id="${itemId}"]`);
+      option.classList.toggle('selected');
+    }
+
+    function addSelectedContent() {
+      const selectedOptions = document.querySelectorAll('.content-option.selected');
+      
+      selectedOptions.forEach(option => {
+        const itemId = option.dataset.id;
+        const item = availableContent[currentContentType].find(i => i.id === itemId);
+        
+        if (item && !currentDayData[currentContentType].find(i => i.id === itemId)) {
+          currentDayData[currentContentType].push(item);
+        }
+      });
+      
+      renderDayContent(currentContentType);
+      closeContentSelectionModal();
+    }
+
+    function viewContentDetails(contentType, index) {
+      const item = currentDayData[contentType][index];
+      if (!item) return;
+      
+      let details = `
+        <div style="padding: 1rem;">
+          <h3 style="color: #70b8ff; margin-top: 0;">${item.name}</h3>
+          <p><strong>Description:</strong> ${item.description || 'No description available'}</p>
+      `;
+      
+      if (item.duration) {
+        const minutes = Math.floor(item.duration / 60);
+        details += `<p><strong>Duration:</strong> ${minutes} minutes</p>`;
+      }
+      
+      if (item.targetWPM) {
+        details += `<p><strong>Target WPM:</strong> ${item.targetWPM}</p>`;
+      }
+      
+      if (item.filePath) {
+        details += `<p><strong>File:</strong> ${item.filePath}</p>`;
+      }
+      
+      details += `
+          <div style="margin-top: 1rem;">
+            <button class="btn btn-secondary" onclick="closeContentDetails()">Close</button>
+          </div>
+        </div>
+      `;
+      
+      // Create or update details modal
+      let detailsModal = document.getElementById('content-details-modal');
+      if (!detailsModal) {
+        detailsModal = document.createElement('div');
+        detailsModal.id = 'content-details-modal';
+        detailsModal.className = 'modal';
+        detailsModal.innerHTML = `
+          <div class="modal-content" style="max-width: 500px;">
+            <div id="content-details-body"></div>
+          </div>
+        `;
+        document.body.appendChild(detailsModal);
+      }
+      
+      document.getElementById('content-details-body').innerHTML = details;
+      detailsModal.style.display = 'block';
+    }
+    
+    function closeContentDetails() {
+      const modal = document.getElementById('content-details-modal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function removeContent(contentType, index) {
+      if (confirm('Are you sure you want to remove this content?')) {
+        currentDayData[contentType].splice(index, 1);
+        renderDayContent(contentType);
+      }
+        
+    }
+
+    function closeContentSelectionModal() {
+      document.getElementById('content-selection-modal').style.display = 'none';
+      currentContentType = null;
+    }
+
+    async function saveDayContent() {
+      if (!currentDayData || (!selectedTemplate && !selectedClass)) {
+        alert('No data to save');
+        return;
+      }
+
+      try {
+        // Calculate day number from start
+        const startDate = selectedClass ? new Date(selectedClass.startDate) : new Date();
+        const dayNumber = Math.floor((currentDayData.date - startDate) / (1000 * 60 * 60 * 24)) + 1;
+        
+        if (selectedTemplate) {
+          // Save to template
+          const saveData = {
+            missionReferences: currentDayData.mission,
+            courseContent: currentDayData.course,
+            typingTests: currentDayData.typing,
+            notes: ''
+          };
+          
+          await apiCall(`/api/class-templates/${selectedTemplate.difficulty}/day/${dayNumber}`, {
+            method: 'PUT',
+            body: JSON.stringify(saveData)
+          });
+          
+          alert('Day content saved to template successfully!');
+        } else if (selectedClass) {
+          // For classes, we'd save to class-specific API (not implemented yet)
+          console.log('Saving to class:', currentDayData);
+          alert('Day content saved to class successfully! (Note: Class-specific saving not yet implemented)');
+        }
+        
+        // Re-render calendar to show updated content
+        if (selectedTemplate || selectedClass) {
+          renderCalendar();
+        }
+        
+        closeDayModal();
+      } catch (error) {
+        console.error('Error saving day content:', error);
+        alert(`Failed to save day content: ${error.message}`);
+      }
+    }
+
+    // Search functionality for content selection
+    document.addEventListener('DOMContentLoaded', () => {
+      const searchInput = document.getElementById('content-search');
+      if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+          const searchTerm = e.target.value.toLowerCase();
+          const options = document.querySelectorAll('.content-option');
+          
+          options.forEach(option => {
+            const text = option.textContent.toLowerCase();
+            option.style.display = text.includes(searchTerm) ? 'flex' : 'none';
+          });
+        });
+      }
+    });
+
+    // Class form handling
+    document.getElementById('classForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      try {
+        const difficulty = document.getElementById('difficulty').value;
+        let classData = {
+          name: document.getElementById('className').value,
+          organization: document.getElementById('organization').value,
+          country: document.getElementById('country').value,
+          instructorId: document.getElementById('instructor').value,
+          startDate: document.getElementById('startDate').value,
+          endDate: document.getElementById('endDate').value
+        };
+
+        // If difficulty is selected, get template and clone modules
+        if (difficulty) {
+          const template = templates.find(t => t.difficulty === difficulty);
+          if (template) {
+            classData.difficulty = difficulty;
+            classData.modules = JSON.parse(JSON.stringify(template.modules)); // Deep copy
+          }
+        }
+
+        const result = await apiCall('/api/classes', {
+          method: 'POST',
+          body: JSON.stringify(classData)
+        });
+
+        showMessage('success', `Class "${result.name}" created successfully!`);
+        document.getElementById('classForm').reset();
+        document.getElementById('template-preview').style.display = 'none';
+        await fetchClasses(); // Refresh classes list
+      } catch (error) {
+        console.error('Error creating class:', error);
+        showMessage('error', `Failed to create class: ${error.message}`);
+      }
+    });
+
+    // Difficulty change handler
+    document.getElementById('difficulty').addEventListener('change', async (e) => {
+      const difficulty = e.target.value;
+      const preview = document.getElementById('template-preview');
+      const details = document.getElementById('template-details');
+      
+      if (!difficulty) {
+        preview.style.display = 'none';
+        return;
+      }
+
+      try {
+        const template = await apiCall(`/api/class-templates/${difficulty}`);
+        if (template) {
+          // Auto-fill dates based on template duration
+          const startDate = document.getElementById('startDate').value;
+          if (startDate) {
+            const start = new Date(startDate);
+            const end = new Date(start);
+            end.setDate(end.getDate() + (template.durationWeeks * 7));
+            document.getElementById('endDate').value = end.toISOString().split('T')[0];
+          }
+
+          // Show template preview
+          details.innerHTML = renderTemplatePreview(template);
+          preview.style.display = 'block';
+        }
+      } catch (error) {
+        console.error('Error fetching template:', error);
+        showMessage('error', 'Failed to load template');
+      }
+    });
+
+    function renderTemplatePreview(template) {
+      let html = `
+        <div class="message info">
+          <h4>${template.name}</h4>
+          <p>${template.description || 'No description'}</p>
+          <p><strong>Duration:</strong> ${template.durationWeeks} weeks</p>
+        </div>
+        <div class="template-modules">
+      `;
+
+      template.modules.forEach(module => {
+        html += `
+          <div class="module-item">
+            <div class="module-header">
+              <h5 class="module-title">${module.name}</h5>
+              <span class="module-duration">${module.estimatedWeeks} week(s)</span>
+            </div>
+            <p>${module.description || 'No description'}</p>
+            <div class="module-lessons">
+        `;
+        
+        module.lessons.forEach(lesson => {
+          const duration = Math.floor(lesson.duration / 60);
+          html += `<div class="lesson-item">• ${lesson.title} (${duration} min)</div>`;
+        });
+        
+        html += `
+            </div>
+          </div>
+        `;
+      });
+
+      html += '</div>';
+      return html;
+    }
+
+    // Student form handling
+    document.getElementById('studentForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      try {
+        const studentData = {
+          name: document.getElementById('studentName').value,
+          email: document.getElementById('studentEmail').value,
+          username: document.getElementById('studentUsername').value,
+          password: document.getElementById('studentPassword').value,
+          role: 'student',
+          status: 'Active'
+        };
+
+        const classId = document.getElementById('studentClass').value;
+
+        const result = await apiCall('/api/users', {
+          method: 'POST',
+          body: JSON.stringify(studentData)
+        });
+
+        // If class selected, add student to class
+        if (classId && result._id) {
+          await apiCall(`/api/classes/${classId}/students/${result._id}`, {
+            method: 'POST'
+          });
+        }
+
+        showMessage('success', `Student "${result.name}" added successfully!`);
+        document.getElementById('studentForm').reset();
+        await fetchStudents();
+        await fetchClasses(); // Refresh to update student counts
+      } catch (error) {
+        console.error('Error adding student:', error);
+        showMessage('error', `Failed to add student: ${error.message}`);
+      }
+    });
+
+    function renderStudentTable() {
+      const container = document.getElementById('student-table');
+      
+      if (students.length === 0) {
+        container.innerHTML = '<div class="no-data">No students found</div>';
+        return;
+      }
+
+      let html = `
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Class</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      students.forEach(student => {
+        let className = 'Not Assigned';
+        if (student.classId) {
+          const classObj = classes.find(c => c._id === student.classId);
+          if (classObj) className = classObj.name;
+        }
+
+        html += `
+          <tr>
+            <td>${student.name || ''}</td>
+            <td>${student.username || ''}</td>
+            <td>${student.email || ''}</td>
+            <td>${className}</td>
+            <td>${student.status ? 'Active' : 'Inactive'}</td>
+            <td>
+              <button onclick="editStudent('${student._id}')" class="btn btn-small">Edit</button>
+              <button onclick="deleteStudent('${student._id}')" class="btn btn-small btn-danger">Delete</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+
+    function editStudent(studentId) {
+      const student = students.find(s => s._id === studentId);
+      if (!student) return;
+
+      document.getElementById('edit-student-id').value = student._id;
+      document.getElementById('edit-student-name').value = student.name || '';
+      document.getElementById('edit-student-email').value = student.email || '';
+      document.getElementById('edit-student-username').value = student.username || '';
+      document.getElementById('edit-student-password').value = '';
+      document.getElementById('edit-student-class').value = student.classId || '';
+
+      document.getElementById('student-modal').style.display = 'block';
+    }
+
+    async function deleteStudent(studentId) {
+      if (!confirm('Are you sure you want to delete this student?')) return;
+
+      try {
+        await apiCall(`/api/users/${studentId}`, { method: 'DELETE' });
+        showMessage('success', 'Student deleted successfully');
+        await fetchStudents();
+        await fetchClasses();
+      } catch (error) {
+        console.error('Error deleting student:', error);
+        showMessage('error', `Failed to delete student: ${error.message}`);
+      }
+    }
+
+    function closeStudentModal() {
+      document.getElementById('student-modal').style.display = 'none';
+    }
+
+    // Student edit form handling
+    document.getElementById('student-edit-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      try {
+        const studentId = document.getElementById('edit-student-id').value;
+        const oldStudent = students.find(s => s._id === studentId);
+        const newClassId = document.getElementById('edit-student-class').value;
+        
+        const updateData = {
+          name: document.getElementById('edit-student-name').value,
+          email: document.getElementById('edit-student-email').value,
+          username: document.getElementById('edit-student-username').value,
+          role: 'student',
+          status: 'Active'
+        };
+
+        const password = document.getElementById('edit-student-password').value;
+        if (password) updateData.password = password;
+
+        await apiCall(`/api/users/${studentId}`, {
+          method: 'PUT',
+          body: JSON.stringify(updateData)
+        });
+
+        // Handle class change
+        if (oldStudent.classId !== newClassId) {
+          // Remove from old class
+          if (oldStudent.classId) {
+            await apiCall(`/api/classes/${oldStudent.classId}/students/${studentId}`, {
+              method: 'DELETE'
+            });
+          }
+          
+          // Add to new class
+          if (newClassId) {
+            await apiCall(`/api/classes/${newClassId}/students/${studentId}`, {
+              method: 'POST'
+            });
+          }
+        }
+
+        showMessage('success', 'Student updated successfully');
+        closeStudentModal();
+        await fetchStudents();
+        await fetchClasses();
+      } catch (error) {
+        console.error('Error updating student:', error);
+        showMessage('error', `Failed to update student: ${error.message}`);
+      }
+    });
+
+    // Templates functions
+    function renderTemplatesList() {
+      const container = document.getElementById('templates-list');
+      
+      if (templates.length === 0) {
+        container.innerHTML = '<div class="no-data">No templates found</div>';
+        return;
+      }
+
+      let html = `
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Difficulty</th>
+              <th>Name</th>
+              <th>Duration</th>
+              <th>Modules</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      templates.forEach(template => {
+        html += `
+          <tr>
+            <td><strong>${template.difficulty}</strong></td>
+            <td>${template.name}</td>
+            <td>${template.durationWeeks} weeks</td>
+            <td>${template.modules.length} modules</td>
+            <td>
+              <button onclick="editTemplate('${template.difficulty}')" class="btn btn-small">Edit</button>
+              <button onclick="deleteTemplate('${template.difficulty}')" class="btn btn-small btn-danger">Delete</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    }
+
+    function showCreateTemplateModal() {
+      document.getElementById('template-modal-title').textContent = 'Create Template';
+      document.getElementById('template-form').reset();
+      document.getElementById('template-modal').style.display = 'block';
+    }
+
+    function closeTemplateModal() {
+      document.getElementById('template-modal').style.display = 'none';
+    }
+
+    async function editTemplate(difficulty) {
+      // Open the Advanced Template Editor with the selected template
+      const url = `template-editor.html?template=${encodeURIComponent(difficulty)}`;
+      window.open(url, '_blank');
+    }
+
+    async function deleteTemplate(difficulty) {
+      if (!confirm(`Are you sure you want to delete the ${difficulty} template?`)) return;
+
+      try {
+        await apiCall(`/api/class-templates/${difficulty}`, { method: 'DELETE' });
+        showMessage('success', 'Template deleted successfully');
+        await fetchTemplates();
+        
+        // Notify other windows/tabs that templates have been updated
+        if (window.localStorage) {
+          localStorage.setItem('templatesUpdated', Date.now().toString());
+        }
+      } catch (error) {
+        console.error('Error deleting template:', error);
+        showMessage('error', `Failed to delete template: ${error.message}`);
+      }
+    }
+
+    // Template form handling
+    document.getElementById('template-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      try {
+        const templateData = {
+          difficulty: document.getElementById('template-difficulty').value,
+          name: document.getElementById('template-name').value,
+          description: document.getElementById('template-description').value,
+          durationWeeks: parseInt(document.getElementById('template-duration').value),
+          modules: [] // Start with empty modules - would be edited separately
+        };
+
+        await apiCall('/api/class-templates', {
+          method: 'POST',
+          body: JSON.stringify(templateData)
+        });
+
+        showMessage('success', 'Template created successfully');
+        closeTemplateModal();
+        await fetchTemplates();
+        
+        // Notify other windows/tabs that templates have been updated
+        if (window.localStorage) {
+          localStorage.setItem('templatesUpdated', Date.now().toString());
+        }
+      } catch (error) {
+        console.error('Error creating template:', error);
+        showMessage('error', `Failed to create template: ${error.message}`);
+      }
+    });
+
+    // Users functions
+    function renderUsersTable() {
+      const tbody = document.getElementById('users-table');
+      
+      if (users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="no-data">No users found</td></tr>';
+        return;
+      }
+
+      let html = '';
+      users.forEach(user => {
+        html += `
+          <tr>
+            <td>${user.name || ''}</td>
+            <td>${user.email || ''}</td>
+            <td><span style="text-transform: capitalize;">${user.role}</span></td>
+            <td>${user.status ? 'Active' : 'Inactive'}</td>
+            <td>
+              <button onclick="editUser('${user._id}')" class="btn btn-small">Edit</button>
+              <button onclick="deleteUser('${user._id}')" class="btn btn-small btn-danger">Delete</button>
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
+    }
+
+    function showAddUserModal() {
+      document.getElementById('user-modal-title').textContent = 'Add User';
+      document.getElementById('user-form').reset();
+      document.getElementById('user-id').value = '';
+      document.getElementById('user-password').required = true;
+      toggleUserClassField();
+      document.getElementById('user-modal').style.display = 'block';
+    }
+
+    function editUser(userId) {
+      const user = users.find(u => u._id === userId);
+      if (!user) return;
+
+      document.getElementById('user-modal-title').textContent = 'Edit User';
+      document.getElementById('user-id').value = user._id;
+      document.getElementById('user-name').value = user.name || '';
+      document.getElementById('user-email').value = user.email || '';
+      document.getElementById('user-username').value = user.username || '';
+      document.getElementById('user-password').value = '';
+      document.getElementById('user-password').required = false;
+      document.getElementById('user-role').value = user.role;
+      document.getElementById('user-status').value = user.status ? 'Active' : 'Inactive';
+      document.getElementById('user-class').value = user.classId || '';
+      
+      toggleUserClassField();
+      document.getElementById('user-modal').style.display = 'block';
+    }
+
+    async function deleteUser(userId) {
+      if (!confirm('Are you sure you want to delete this user?')) return;
+
+      try {
+        await apiCall(`/api/users/${userId}`, { method: 'DELETE' });
+        showMessage('success', 'User deleted successfully');
+        await fetchUsers();
+      } catch (error) {
+        console.error('Error deleting user:', error);
+        showMessage('error', `Failed to delete user: ${error.message}`);
+      }
+    }
+
+    function closeUserModal() {
+      document.getElementById('user-modal').style.display = 'none';
+    }
+
+    function toggleUserClassField() {
+      const role = document.getElementById('user-role').value;
+      const classGroup = document.getElementById('user-class-group');
+      classGroup.style.display = role === 'student' ? 'block' : 'none';
+    }
+
+    // User role change handler
+    document.getElementById('user-role').addEventListener('change', toggleUserClassField);
+
+    // User form handling
+    document.getElementById('user-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      try {
+        const userId = document.getElementById('user-id').value;
+        const isEdit = !!userId;
+        
+        const userData = {
+          name: document.getElementById('user-name').value,
+          email: document.getElementById('user-email').value,
+          username: document.getElementById('user-username').value,
+          role: document.getElementById('user-role').value,
+          status: document.getElementById('user-status').value
+        };
+
+        const password = document.getElementById('user-password').value;
+        if (password) userData.password = password;
+
+        if (userData.role === 'student') {
+          const classId = document.getElementById('user-class').value;
+          if (classId) userData.classId = classId;
+        }
+
+        let result;
+        if (isEdit) {
+          result = await apiCall(`/api/users/${userId}`, {
+            method: 'PUT',
+            body: JSON.stringify(userData)
+          });
+        } else {
+          result = await apiCall('/api/users', {
+            method: 'POST',
+            body: JSON.stringify(userData)
+          });
+        }
+
+        showMessage('success', `User ${isEdit ? 'updated' : 'created'} successfully`);
+        closeUserModal();
+        await fetchUsers();
+        
+        // If it's a student with a class, add to class
+        if (!isEdit && userData.role === 'student' && userData.classId && result._id) {
+          await apiCall(`/api/classes/${userData.classId}/students/${result._id}`, {
+            method: 'POST'
+          });
+          await fetchClasses();
+        }
+      } catch (error) {
+        console.error('Error saving user:', error);
+        showMessage('error', `Failed to save user: ${error.message}`);
+      }
+    });
+
+    // Utility functions
+    function showMessage(type, message) {
+      const resultDivs = ['class-result', 'student-result'];
+      resultDivs.forEach(id => {
+        const div = document.getElementById(id);
+        if (div && currentTab === id.replace('-result', '').replace('class', 'add-class').replace('student', 'add-student')) {
+          div.innerHTML = `<div class="message ${type}">${message}</div>`;
+          setTimeout(() => {
+            div.innerHTML = '';
+          }, 5000);
+        }
+      });
+    }
+
+    // Close modals when clicking outside
+    window.addEventListener('click', (e) => {
+      const modals = ['student-modal', 'user-modal', 'template-modal', 'day-modal', 'content-selection-modal', 'content-details-modal'];
+      modals.forEach(modalId => {
+        const modal = document.getElementById(modalId);
+        if (modal && e.target === modal) {
+          modal.style.display = 'none';
+        }
+      });
+    });
+  </script>
+</body>
+</html>
