@@ -280,7 +280,8 @@
       z-index: 10;
     }
 
-    .slideshow-container:hover .slideshow-header {
+    .slideshow-container:hover .slideshow-header,
+    .slideshow-container.show-controls .slideshow-header {
       opacity: 1;
       transform: translateY(0);
     }
@@ -318,8 +319,13 @@
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      color: var(--text-secondary);
-      font-size: 0.9rem;
+      color: var(--text-primary);
+      font-weight: 500;
+      font-size: 0.85rem;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
     }
 
     .slide-viewer {
@@ -356,7 +362,8 @@
       z-index: 10;
     }
 
-    .slideshow-container:hover .slide-controls {
+    .slideshow-container:hover .slide-controls,
+    .slideshow-container.show-controls .slide-controls {
       opacity: 1;
       transform: translateY(0);
     }
@@ -395,18 +402,7 @@
       transform: none;
     }
 
-    .slide-counter {
-      color: var(--text-primary);
-      font-weight: 500;
-      font-size: 0.85rem;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      background: rgba(255, 255, 255, 0.1);
-      padding: 0.5rem 1rem;
-      border-radius: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    }
+
 
     .slide-tools {
       display: flex;
@@ -879,10 +875,6 @@
             <option value="f3ead">F3EAD</option>
           </select>
         </div>
-        <div class="slide-info">
-          <i class="fas fa-images"></i>
-          <span>Slide <span id="currentSlideNum">1</span> of <span id="totalSlides">20</span></span>
-        </div>
       </div>
 
       <!-- Slide Viewer -->
@@ -903,9 +895,9 @@
           </button>
         </div>
 
-        <div class="slide-counter">
-          <i class="fas fa-presentation"></i>
-          <span id="slideProgress">1 / 20</span>
+        <div class="slide-info">
+          <i class="fas fa-images"></i>
+          <span>Slide <span id="currentSlideNum">1</span> of <span id="totalSlides">20</span></span>
         </div>
 
         <div class="slide-tools">
@@ -1022,7 +1014,7 @@
       const previewSlideEl = document.getElementById('previewSlide');
       const currentSlideNumEl = document.getElementById('currentSlideNum');
       const totalSlidesEl = document.getElementById('totalSlides');
-      const slideProgressEl = document.getElementById('slideProgress');
+
       const moduleSelectEl = document.getElementById('moduleSelect');
       const courseTitle = document.getElementById('courseTitle');
       const previewTitle = document.getElementById('previewTitle');
@@ -1060,6 +1052,27 @@
 
       // Initialize drag functionality
       makePanelDraggable();
+      
+      // Auto-hide controls functionality
+      let hideControlsTimeout;
+      
+      function showControls() {
+        slideshowContainer.classList.add('show-controls');
+        clearTimeout(hideControlsTimeout);
+        hideControlsTimeout = setTimeout(() => {
+          slideshowContainer.classList.remove('show-controls');
+        }, 2000); // Hide after 2 seconds of inactivity
+      }
+      
+      function hideControls() {
+        slideshowContainer.classList.remove('show-controls');
+        clearTimeout(hideControlsTimeout);
+      }
+      
+      // Show controls on mouse movement
+      slideshowContainer.addEventListener('mousemove', showControls);
+      slideshowContainer.addEventListener('mouseenter', showControls);
+      slideshowContainer.addEventListener('mouseleave', hideControls);
       
       // Event Listeners
       moduleSelectEl.addEventListener('change', function() {
@@ -1113,7 +1126,6 @@
         const module = modules[currentModule];
         totalSlidesEl.textContent = module.slideCount;
         currentSlideNumEl.textContent = currentSlide;
-        slideProgressEl.textContent = `${currentSlide} / ${module.slideCount}`;
       }
 
       function updateCourseTitle() {
