@@ -732,6 +732,7 @@
     let currentUser = null;
     let contacts = [];
     let conversations = [];
+    let onlineUsers = new Set(); // Track online users
 
     // Initialize Socket.IO connection
     function initializeSocket() {
@@ -773,6 +774,26 @@
       socket.on('error', function(data) {
         showNotification(data.message, 'error');
       });
+
+      // Handle online status updates
+      socket.on('user_online', function(data) {
+        console.log('👤 User came online:', data.userId);
+        onlineUsers.add(data.userId);
+        updateContactOnlineStatus(data.userId, true);
+      });
+
+      socket.on('user_offline', function(data) {
+        console.log('👤 User went offline:', data.userId);
+        onlineUsers.delete(data.userId);
+        updateContactOnlineStatus(data.userId, false);
+      });
+
+      // Handle online users list
+      socket.on('online_users', function(data) {
+        console.log('👥 Online users list:', data.users);
+        onlineUsers = new Set(data.users);
+        updateAllContactsOnlineStatus();
+      });
     }
 
     // Initialize the messaging interface
@@ -811,23 +832,44 @@
 
     // Initialize current user from localStorage/token
     async function initializeUser() {
+      // Try to get user data from the user object first (dashboard format)
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          currentUser = {
+            id: user.id,
+            name: user.name,
+            role: user.role,
+            token: user.token
+          };
+          console.log('✅ Current user initialized from user object:', currentUser);
+          return;
+        } catch (e) {
+          console.warn('⚠️ Failed to parse user data from localStorage');
+        }
+      }
+
+      // Fallback to individual localStorage items
       const token = localStorage.getItem('token');
       const userName = localStorage.getItem('userName');
       const userRole = localStorage.getItem('role');
+      const userId = localStorage.getItem('userId');
       
       if (!token || !userName) {
+        console.error('❌ Missing user data, redirecting to login');
         window.location.href = 'login.html';
         return;
       }
 
       currentUser = {
-        id: localStorage.getItem('userId') || 'temp-id',
+        id: userId || 'temp-id',
         name: userName,
         role: userRole || 'student',
         token: token
       };
 
-      console.log('Current user initialized:', currentUser);
+      console.log('✅ Current user initialized from individual items:', currentUser);
     }
 
     // Load available contacts based on user role
@@ -910,11 +952,14 @@
         const lastMessageTime = lastMessage ? formatTime(new Date(lastMessage.timestamp)) : '';
         const unreadCount = conversation.unreadCount || 0;
         
+        const isOnline = onlineUsers.has(otherParticipant.id);
+        const statusClass = isOnline ? 'status-online' : 'status-offline';
+        
         return `
-          <div class="contact-item" onclick="selectContact('${otherParticipant.id}', '${otherParticipant.name}', '${otherParticipant.role}')">
+          <div class="contact-item" data-contact-id="${otherParticipant.id}" onclick="selectContact('${otherParticipant.id}', '${otherParticipant.name}', '${otherParticipant.role}')">
             <div class="contact-avatar" style="background: ${roleColor};">
               ${initials}
-              <div class="status-indicator status-online"></div>
+              <div class="status-indicator ${statusClass}"></div>
             </div>
             <div class="contact-info">
               <div class="contact-name">${otherParticipant.name}</div>
@@ -1077,11 +1122,17 @@
         return;
       }
 
+      console.log('🔍 Rendering messages:');
+      console.log('   - Current user ID:', currentUser?.id);
+      console.log('   - Messages count:', messages.length);
+      
       messagesContainer.innerHTML = messages.map(message => {
-        const isFromCurrentUser = message.sender.id === currentUser.id;
+        const isFromCurrentUser = message.sender.id === currentUser?.id;
         const messageClass = isFromCurrentUser ? 'sent' : 'received';
         const senderInitials = message.sender.name.split(' ').map(n => n[0]).join('').toUpperCase();
         const time = new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        console.log(`   - Message from ${message.sender.name} (${message.sender.id}): ${isFromCurrentUser ? 'SENT' : 'RECEIVED'}`);
         
         return `
           <div class="message ${messageClass}">
@@ -1123,7 +1174,7 @@
           const message = await response.json();
           
           // Add message to UI immediately
-          addMessageToUI(message, true);
+          addMessageToUI(message);
           
           // Clear input
           messageInput.value = '';
@@ -1141,8 +1192,19 @@
     }
 
     // Add message to UI
-    function addMessageToUI(message, isFromCurrentUser = false) {
+    function addMessageToUI(message, isFromCurrentUser = null) {
       const messagesContainer = document.querySelector('.messages-container');
+      
+      // Determine if message is from current user
+      if (isFromCurrentUser === null) {
+        isFromCurrentUser = message.sender.id === currentUser?.id;
+      }
+      
+      console.log('🔍 Adding message to UI:');
+      console.log('   - Message sender ID:', message.sender.id);
+      console.log('   - Current user ID:', currentUser?.id);
+      console.log('   - Is from current user:', isFromCurrentUser);
+      
       const messageClass = isFromCurrentUser ? 'sent' : 'received';
       const senderInitials = message.sender.name.split(' ').map(n => n[0]).join('').toUpperCase();
       const time = new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -1172,7 +1234,7 @@
       // Only show if it's for the current conversation
       if (currentContactId && 
           (message.sender.id === currentContactId || message.recipient.id === currentContactId)) {
-        addMessageToUI(message, false);
+        addMessageToUI(message);
       }
       
       // Update conversation list
@@ -1201,9 +1263,12 @@
 
       if (chatUserName) chatUserName.textContent = contactName;
       if (chatUserStatus) {
-        const statusText = contactRole === 'instructor' ? 'Online - Available for questions' :
-                          contactRole === 'admin' ? 'Online - Administrative support' :
-                          'Online - Student';
+        const isOnline = onlineUsers.has(currentContactId);
+        const statusText = isOnline ? 
+          (contactRole === 'instructor' ? 'Online - Available for questions' :
+           contactRole === 'admin' ? 'Online - Administrative support' :
+           'Online - Student') :
+          'Offline';
         chatUserStatus.textContent = statusText;
       }
       
@@ -1218,12 +1283,44 @@
         
         // Add status indicator
         const existingIndicator = chatUserAvatar.querySelector('.status-indicator');
-        if (!existingIndicator) {
-          const statusIndicator = document.createElement('div');
-          statusIndicator.className = 'status-indicator status-online';
-          chatUserAvatar.appendChild(statusIndicator);
+        if (existingIndicator) {
+          existingIndicator.remove();
+        }
+        
+        const statusIndicator = document.createElement('div');
+        const isOnline = onlineUsers.has(currentContactId);
+        statusIndicator.className = `status-indicator ${isOnline ? 'status-online' : 'status-offline'}`;
+        chatUserAvatar.appendChild(statusIndicator);
+      }
+    }
+
+    // Update contact online status
+    function updateContactOnlineStatus(userId, isOnline) {
+      // Update in contacts list
+      const contactElements = document.querySelectorAll('.contact-item');
+      contactElements.forEach(element => {
+        if (element.dataset.contactId === userId) {
+          const statusIndicator = element.querySelector('.status-indicator');
+          if (statusIndicator) {
+            statusIndicator.className = `status-indicator ${isOnline ? 'status-online' : 'status-offline'}`;
+          }
+        }
+      });
+
+      // Update chat header if this is the current contact
+      if (currentContactId === userId) {
+        const contact = contacts.find(c => c._id === userId);
+        if (contact) {
+          updateChatHeader(contact.name, contact.role);
         }
       }
+    }
+
+    // Update all contacts online status
+    function updateAllContactsOnlineStatus() {
+      contacts.forEach(contact => {
+        updateContactOnlineStatus(contact._id, onlineUsers.has(contact._id));
+      });
     }
 
     // Handle key down events for message input

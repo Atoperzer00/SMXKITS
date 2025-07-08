@@ -940,6 +940,7 @@
           <!-- Notification Bell -->
           <div class="notification-bubble" onclick="toggleNotifications()">
             <i class="fas fa-bell"></i>
+            <div class="notification-badge" id="notificationCount" style="display: none;">0</div>
             
             <!-- Notification Dropdown -->
             <div class="notification-dropdown" id="notificationDropdown">
@@ -1062,6 +1063,7 @@
     </main>
   </div>
 
+  <script src="/socket.io/socket.io.js"></script>
   <script>
     // Load student data
     document.addEventListener('DOMContentLoaded', function() {
@@ -1306,8 +1308,10 @@
       
       dropdown.classList.toggle('active');
       
-      // Close dropdown when clicking outside
       if (isOpening) {
+        loadNotifications();
+        
+        // Close dropdown when clicking outside
         document.addEventListener('click', function closeDropdown(e) {
           if (!e.target.closest('.notification-bubble')) {
             dropdown.classList.remove('active');
@@ -1315,6 +1319,95 @@
           }
         });
       }
+    }
+
+    // Load recent message notifications
+    async function loadNotifications() {
+      try {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user || !user.token) return;
+
+        const response = await fetch('/api/direct-messages/conversations', {
+          headers: {
+            'Authorization': `Bearer ${user.token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const conversations = await response.json();
+          renderNotifications(conversations);
+        } else {
+          console.error('Failed to load notifications');
+        }
+      } catch (error) {
+        console.error('Error loading notifications:', error);
+      }
+    }
+
+    // Render notifications in dropdown
+    function renderNotifications(conversations) {
+      const notificationDropdown = document.getElementById('notificationDropdown');
+      
+      // Filter conversations with unread messages
+      const unreadConversations = conversations.filter(conv => conv.unreadCount > 0);
+      
+      if (unreadConversations.length === 0) {
+        notificationDropdown.innerHTML = `
+          <div class="dropdown-header">
+            <i class="fas fa-bell"></i>
+            <span>Notifications</span>
+          </div>
+          <div class="no-messages">
+            <i class="fas fa-check-circle" style="font-size: 2rem; color: var(--text-accent); margin-bottom: 0.5rem;"></i>
+            <p>All caught up!</p>
+            <p style="font-size: 0.8rem; margin-top: 0.5rem;">No new notifications</p>
+          </div>
+        `;
+        return;
+      }
+
+      const notificationsHtml = unreadConversations.map(conversation => {
+        const otherParticipant = conversation.otherParticipant;
+        if (!otherParticipant) return '';
+        
+        const initials = otherParticipant.name.split(' ').map(n => n[0]).join('').toUpperCase();
+        const lastMessage = conversation.lastMessage;
+        const lastMessageText = lastMessage ? lastMessage.content : 'New conversation';
+        const timeAgo = lastMessage ? formatTimeAgo(new Date(lastMessage.timestamp)) : 'now';
+        
+        return `
+          <div class="inbox-message unread" onclick="openConversation('${otherParticipant.id}', '${otherParticipant.name}')">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+              <div style="width: 35px; height: 35px; border-radius: 50%; background: var(--accent-gradient); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem; color: white;">
+                ${initials}
+              </div>
+              <div style="flex: 1; min-width: 0;">
+                <div class="message-sender">${otherParticipant.name}</div>
+                <div class="message-preview">${lastMessageText}</div>
+                <div class="message-time">${timeAgo}</div>
+              </div>
+              <div class="message-unread-badge">${conversation.unreadCount}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      notificationDropdown.innerHTML = `
+        <div class="dropdown-header">
+          <i class="fas fa-bell"></i>
+          <span>New Messages (${unreadConversations.length})</span>
+        </div>
+        <div style="max-height: 300px; overflow-y: auto;">
+          ${notificationsHtml}
+        </div>
+        <div style="padding: 1rem; border-top: 1px solid var(--glass-border); text-align: center;">
+          <button onclick="openMessenger()" style="background: var(--accent-gradient); border: none; border-radius: 15px; padding: 0.5rem 1rem; color: white; font-size: 0.8rem; cursor: pointer;">
+            <i class="fas fa-comments" style="margin-right: 0.5rem;"></i>
+            Open Messenger
+          </button>
+        </div>
+      `;
     }
 
     async function loadRecentMessages() {
@@ -1412,8 +1505,9 @@
         name: userName
       }));
       
-      // Close the inbox dropdown
+      // Close both dropdowns
       document.getElementById('inboxDropdown').classList.remove('active');
+      document.getElementById('notificationDropdown').classList.remove('active');
       
       // Open messenger
       openMessenger();
@@ -1484,12 +1578,21 @@
         if (response.ok) {
           const data = await response.json();
           const unreadBadge = document.getElementById('unreadCount');
+          const notificationBadge = document.getElementById('notificationCount');
           
           if (data.unreadCount > 0) {
-            unreadBadge.textContent = data.unreadCount > 99 ? '99+' : data.unreadCount;
+            const displayCount = data.unreadCount > 99 ? '99+' : data.unreadCount;
+            
+            // Update inbox badge
+            unreadBadge.textContent = displayCount;
             unreadBadge.style.display = 'flex';
+            
+            // Update notification badge
+            notificationBadge.textContent = displayCount;
+            notificationBadge.style.display = 'flex';
           } else {
             unreadBadge.style.display = 'none';
+            notificationBadge.style.display = 'none';
           }
         }
       } catch (error) {
@@ -1521,6 +1624,175 @@
         notificationDropdown.classList.remove('active');
       }
     });
+
+    // ===== REAL-TIME MESSAGING INTEGRATION =====
+    let socket;
+    let currentUser;
+
+    // Initialize Socket.IO connection for real-time notifications
+    function initializeRealTimeNotifications() {
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (!user || !user.token) return;
+
+      currentUser = user;
+      socket = io();
+
+      socket.on('connect', function() {
+        console.log('✅ Connected to server for real-time notifications');
+        console.log('👤 Current user:', currentUser);
+        
+        // Join user's private room for direct messages
+        socket.emit('join_user_room', { userId: user.id });
+        console.log('🏠 Joined user room:', `user:${user.id}`);
+      });
+
+      socket.on('disconnect', function() {
+        console.log('Disconnected from server');
+      });
+
+      // Handle incoming direct messages
+      socket.on('direct_message', function(message) {
+        console.log('📨 Received direct message:', message);
+        handleIncomingMessage(message);
+      });
+
+      // Handle conversation updates
+      socket.on('conversation_updated', function(data) {
+        console.log('🔄 Conversation updated:', data);
+        handleConversationUpdate(data);
+      });
+
+      socket.on('error', function(data) {
+        console.error('❌ Socket error:', data.message);
+      });
+    }
+
+    // Handle incoming messages
+    function handleIncomingMessage(message) {
+      console.log('🔔 Processing incoming message:', message);
+      console.log('👤 Current user ID:', currentUser?.id);
+      console.log('📤 Message sender ID:', message.sender.id);
+      
+      // Only show notification if message is not from current user
+      if (message.sender.id !== currentUser.id) {
+        console.log('✅ Message is from another user, showing notification');
+        
+        // Update unread count
+        loadUnreadCount();
+        
+        // Show notification
+        showMessageNotification(message);
+        
+        // Update inbox if it's open
+        if (document.getElementById('inboxDropdown').classList.contains('active')) {
+          loadInboxMessages();
+        }
+      } else {
+        console.log('ℹ️ Message is from current user, skipping notification');
+      }
+    }
+
+    // Handle conversation updates
+    function handleConversationUpdate(data) {
+      // Update unread count
+      loadUnreadCount();
+      
+      // Update inbox if it's open
+      if (document.getElementById('inboxDropdown').classList.contains('active')) {
+        loadInboxMessages();
+      }
+    }
+
+    // Show message notification
+    function showMessageNotification(message) {
+      // Create notification sound (optional)
+      playNotificationSound();
+      
+      // Show browser notification if permission granted
+      if (Notification.permission === 'granted') {
+        const notification = new Notification(`New message from ${message.sender.name}`, {
+          body: message.content.substring(0, 100) + (message.content.length > 100 ? '...' : ''),
+          icon: '/images/logo.png', // Add your logo path here
+          tag: 'smx-message'
+        });
+        
+        notification.onclick = function() {
+          window.focus();
+          openConversation(message.sender.id, message.sender.name);
+          notification.close();
+        };
+        
+        // Auto close after 5 seconds
+        setTimeout(() => notification.close(), 5000);
+      }
+      
+      // Show in-app notification
+      showNotification(`New message from ${message.sender.name}`, 'info');
+      
+      // Add visual indicator to notification bubble
+      animateNotificationBubble();
+    }
+
+    // Play notification sound
+    function playNotificationSound() {
+      try {
+        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUarm7blmGgU7k9n1unEiBC13yO/eizEIHWq+8+OWT');
+        audio.volume = 0.3;
+        audio.play().catch(e => console.log('Could not play notification sound:', e));
+      } catch (e) {
+        console.log('Could not create notification sound:', e);
+      }
+    }
+
+    // Animate notification bubble
+    function animateNotificationBubble() {
+      const notificationBubble = document.querySelector('.notification-bubble');
+      if (notificationBubble) {
+        notificationBubble.style.animation = 'pulse 0.6s ease-in-out';
+        setTimeout(() => {
+          notificationBubble.style.animation = '';
+        }, 600);
+      }
+    }
+
+    // Request notification permission
+    function requestNotificationPermission() {
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission().then(function(permission) {
+          if (permission === 'granted') {
+            console.log('Notification permission granted');
+          }
+        });
+      }
+    }
+
+    // Enhanced initialization
+    document.addEventListener('DOMContentLoaded', function() {
+      // Request notification permission
+      requestNotificationPermission();
+      
+      // Initialize real-time notifications after user check
+      setTimeout(() => {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (user && user.token) {
+          console.log('🚀 Initializing real-time notifications for user:', user.name);
+          initializeRealTimeNotifications();
+        } else {
+          console.log('⚠️ No user found, skipping real-time notifications');
+        }
+      }, 1000);
+    });
+
+    // Add CSS for pulse animation
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); box-shadow: 0 0 20px rgba(255, 123, 0, 0.6); }
+        100% { transform: scale(1); }
+      }
+    `;
+    document.head.appendChild(style);
   </script>
 </body>
 </html>

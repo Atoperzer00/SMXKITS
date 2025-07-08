@@ -718,6 +718,9 @@ app.post('/api/stream/state/:classId', async (req, res) => {
   }
 });
 
+// Track online users
+const onlineUsers = new Map(); // userId -> socketId
+
 // Real-time chat and streaming with MongoDB storage
 io.on('connection', socket => {
   console.log('🔌 New socket connection established');
@@ -1831,7 +1834,17 @@ io.on('connection', socket => {
     const room = `user:${userId}`;
     socket.join(room);
     socket.userId = userId; // Store user ID on socket
-    console.log(`👤 User ${userId} joined their private room: ${room}`);
+    
+    // Track user as online
+    onlineUsers.set(userId, socket.id);
+    console.log(`👤 User ${userId} joined their private room: ${room} (Online users: ${onlineUsers.size})`);
+    
+    // Notify all users about this user coming online
+    socket.broadcast.emit('user_online', { userId });
+    
+    // Send current online users list to the newly connected user
+    const onlineUsersList = Array.from(onlineUsers.keys());
+    socket.emit('online_users', { users: onlineUsersList });
   });
 
   // Handle direct message sending via socket
@@ -2024,6 +2037,15 @@ io.on('connection', socket => {
   
   socket.on('disconnect', () => {
     console.log('🔌 Socket disconnected');
+    
+    // Handle online user tracking
+    if (socket.userId) {
+      onlineUsers.delete(socket.userId);
+      console.log(`👤 User ${socket.userId} went offline (Online users: ${onlineUsers.size})`);
+      
+      // Notify all users about this user going offline
+      socket.broadcast.emit('user_offline', { userId: socket.userId });
+    }
     
     // Handle WebRTC disconnection
     if (socket.classId && socket.role) {
