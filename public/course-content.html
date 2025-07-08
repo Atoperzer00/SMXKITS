@@ -473,7 +473,7 @@
       background: rgba(255, 0, 0, 0.8);
     }
 
-    /* Notes Panel - Hover Based */
+    /* Notes Panel - Draggable */
     .notes-panel {
       position: absolute;
       bottom: 80px;
@@ -491,6 +491,7 @@
       z-index: 20;
       max-height: 60vh;
       overflow: hidden;
+      cursor: default;
     }
 
     .notes-panel.expanded {
@@ -498,9 +499,40 @@
       visibility: visible;
     }
 
+    .notes-panel.dragging {
+      transition: none;
+      cursor: grabbing;
+    }
+
+    .notes-header {
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .drag-handle {
+      padding: 0.75rem 1rem;
+      color: rgba(255, 255, 255, 0.5);
+      cursor: grab;
+      transition: var(--transition);
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .drag-handle:hover {
+      color: var(--text-accent);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .drag-handle:active {
+      cursor: grabbing;
+    }
+
     .notes-tabs {
       display: flex;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      flex: 1;
     }
 
     .notes-tab {
@@ -794,19 +826,20 @@
 
       <!-- Notes Panel (Hidden by default) -->
       <div class="notes-panel" id="notesPanel">
-        <div class="notes-tabs">
-          <button class="notes-tab active" onclick="switchNotesTab('instructor')">
-            <i class="fas fa-chalkboard-teacher"></i>
-            Instructor Notes
-          </button>
-          <button class="notes-tab" onclick="switchNotesTab('student')">
-            <i class="fas fa-sticky-note"></i>
-            My Notes
-          </button>
-          <button class="notes-tab" onclick="switchNotesTab('module')">
-            <i class="fas fa-book"></i>
-            Module Notes
-          </button>
+        <div class="notes-header">
+          <div class="drag-handle" title="Drag to move">
+            <i class="fas fa-grip-horizontal"></i>
+          </div>
+          <div class="notes-tabs">
+            <button class="notes-tab active" onclick="switchNotesTab('instructor')">
+              <i class="fas fa-chalkboard-teacher"></i>
+              Instructor Notes
+            </button>
+            <button class="notes-tab" onclick="switchNotesTab('student')">
+              <i class="fas fa-sticky-note"></i>
+              My Notes
+            </button>
+          </div>
         </div>
         <div class="notes-content">
           <div id="instructorNotesContent" class="instructor-notes">
@@ -819,16 +852,6 @@
               placeholder="Student notes here..."
             ></textarea>
             <div class="save-indicator" id="saveIndicator">
-              <i class="fas fa-check"></i> Saved
-            </div>
-          </div>
-          <div id="moduleNotesContent" class="student-notes-bubble" style="display: none;">
-            <textarea 
-              id="moduleNotesInputSlideshow" 
-              class="student-notes-input" 
-              placeholder="Add your general notes for this module..."
-            ></textarea>
-            <div class="save-indicator" id="moduleSaveIndicator">
               <i class="fas fa-check"></i> Saved
             </div>
           </div>
@@ -1031,19 +1054,8 @@
         autoSaveStudentNotes();
       });
 
-      // Auto-save functionality for module notes in slideshow
-      const moduleNotesInputSlideshow = document.getElementById('moduleNotesInputSlideshow');
-      let moduleSaveTimeout;
-      moduleNotesInputSlideshow.addEventListener('input', function() {
-        clearTimeout(moduleSaveTimeout);
-        moduleSaveTimeout = setTimeout(() => {
-          autoSaveModuleNotes();
-        }, 1000); // Auto-save after 1 second of no typing
-      });
-      
-      moduleNotesInputSlideshow.addEventListener('blur', function() {
-        autoSaveModuleNotes();
-      });
+      // Initialize drag functionality
+      makePanelDraggable();
       
       // Event Listeners
       moduleSelectEl.addEventListener('change', function() {
@@ -1207,7 +1219,6 @@
         // Hide all content areas
         document.getElementById('instructorNotesContent').style.display = 'none';
         document.getElementById('studentNotesContent').style.display = 'none';
-        document.getElementById('moduleNotesContent').style.display = 'none';
         
         if (tab === 'instructor') {
           tabs[0].classList.add('active');
@@ -1215,11 +1226,6 @@
         } else if (tab === 'student') {
           tabs[1].classList.add('active');
           document.getElementById('studentNotesContent').style.display = 'block';
-        } else if (tab === 'module') {
-          tabs[2].classList.add('active');
-          document.getElementById('moduleNotesContent').style.display = 'block';
-          // Load module notes when switching to this tab
-          loadModuleNotesInSlideshow();
         }
       }
 
@@ -1271,26 +1277,60 @@
         document.getElementById('moduleNotesInput').value = notes;
       }
 
-      function loadModuleNotesInSlideshow() {
-        const key = `moduleNotes_${currentModule}`;
-        const notes = localStorage.getItem(key) || '';
-        document.getElementById('moduleNotesInputSlideshow').value = notes;
-      }
+      // Drag functionality for notes panel
+      function makePanelDraggable() {
+        const panel = document.getElementById('notesPanel');
+        const dragHandle = panel.querySelector('.drag-handle');
+        let isDragging = false;
+        let startX, startY, startLeft, startTop;
 
-      function autoSaveModuleNotes() {
-        const notes = document.getElementById('moduleNotesInputSlideshow').value;
-        const key = `moduleNotes_${currentModule}`;
-        localStorage.setItem(key, notes);
-        
-        // Also update the hidden module notes input
-        document.getElementById('moduleNotesInput').value = notes;
-        
-        // Show save indicator
-        const moduleSaveIndicator = document.getElementById('moduleSaveIndicator');
-        moduleSaveIndicator.classList.add('show');
-        setTimeout(() => {
-          moduleSaveIndicator.classList.remove('show');
-        }, 2000);
+        dragHandle.addEventListener('mousedown', function(e) {
+          isDragging = true;
+          panel.classList.add('dragging');
+          
+          const rect = panel.getBoundingClientRect();
+          startX = e.clientX;
+          startY = e.clientY;
+          startLeft = rect.left;
+          startTop = rect.top;
+          
+          // Convert to fixed positioning for dragging
+          panel.style.position = 'fixed';
+          panel.style.left = startLeft + 'px';
+          panel.style.top = startTop + 'px';
+          panel.style.transform = 'none';
+          panel.style.bottom = 'auto';
+          
+          e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', function(e) {
+          if (!isDragging) return;
+          
+          const deltaX = e.clientX - startX;
+          const deltaY = e.clientY - startY;
+          
+          let newLeft = startLeft + deltaX;
+          let newTop = startTop + deltaY;
+          
+          // Keep panel within viewport bounds
+          const panelRect = panel.getBoundingClientRect();
+          const maxLeft = window.innerWidth - panelRect.width;
+          const maxTop = window.innerHeight - panelRect.height;
+          
+          newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+          newTop = Math.max(0, Math.min(newTop, maxTop));
+          
+          panel.style.left = newLeft + 'px';
+          panel.style.top = newTop + 'px';
+        });
+
+        document.addEventListener('mouseup', function() {
+          if (isDragging) {
+            isDragging = false;
+            panel.classList.remove('dragging');
+          }
+        });
       }
 
       function enterSlideshow() {
@@ -1342,15 +1382,7 @@
           let moduleHasNotes = false;
           let moduleNotes = '';
           
-          // Check for general module notes
-          const moduleNotesKey = `moduleNotes_${moduleKey}`;
-          const generalNotes = localStorage.getItem(moduleNotesKey);
-          if (generalNotes && generalNotes.trim()) {
-            moduleNotes += `\nGENERAL MODULE NOTES:\n${'-'.repeat(25)}\n${generalNotes}\n\n`;
-            moduleHasNotes = true;
-          }
-          
-          // Check for slide-specific notes
+          // Check for slide-specific notes only
           for (let slideNum = 1; slideNum <= module.slideCount; slideNum++) {
             const slideNotesKey = `studentNotes_${moduleKey}_slide_${slideNum}`;
             const slideNotes = localStorage.getItem(slideNotesKey);
