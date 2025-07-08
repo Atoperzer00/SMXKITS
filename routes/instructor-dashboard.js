@@ -703,7 +703,6 @@ function getActivityStatus(lastActive) {
 
 // Create missing models if they don't exist
 const Assignment = require('../models/Assignment') || createAssignmentModel();
-const Material = require('../models/Material') || createMaterialModel();
 
 function createAssignmentModel() {
   const mongoose = require('mongoose');
