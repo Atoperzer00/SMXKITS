@@ -280,12 +280,6 @@
       z-index: 10;
     }
 
-    .export-notes-section {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
     .slideshow-container:hover .slideshow-header {
       opacity: 1;
       transform: translateY(0);
@@ -449,7 +443,7 @@
       border-color: transparent;
     }
 
-    /* Exit Fullscreen Button */
+    /* Exit to Dashboard Button */
     .exit-fullscreen {
       position: absolute;
       top: 1rem;
@@ -467,10 +461,13 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      text-decoration: none;
     }
 
     .exit-fullscreen:hover {
-      background: rgba(255, 0, 0, 0.8);
+      background: var(--primary-gradient);
+      color: white;
+      text-decoration: none;
     }
 
     /* Notes Panel - Draggable */
@@ -533,6 +530,13 @@
     .notes-tabs {
       display: flex;
       flex: 1;
+    }
+
+    .notes-actions {
+      display: flex;
+      align-items: center;
+      padding: 0 0.5rem;
+      border-left: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     .notes-tab {
@@ -819,10 +823,10 @@
 
     <!-- Slideshow Container -->
     <div class="slideshow-container" id="slideshowContainer">
-      <!-- Exit Fullscreen Button -->
-      <button class="exit-fullscreen" onclick="exitSlideshow()" title="Exit Slideshow">
-        <i class="fas fa-times"></i>
-      </button>
+      <!-- Exit to Dashboard Button -->
+      <a href="dashboard.html" class="exit-fullscreen" title="Back to Dashboard">
+        <i class="fas fa-home"></i>
+      </a>
 
       <!-- Notes Panel (Hidden by default) -->
       <div class="notes-panel" id="notesPanel">
@@ -838,6 +842,11 @@
             <button class="notes-tab" onclick="switchNotesTab('student')">
               <i class="fas fa-sticky-note"></i>
               My Notes
+            </button>
+          </div>
+          <div class="notes-actions">
+            <button class="tool-btn" onclick="exportAllStudentNotes()" title="Export All Student Notes">
+              <i class="fas fa-download"></i>
             </button>
           </div>
         </div>
@@ -873,11 +882,6 @@
         <div class="slide-info">
           <i class="fas fa-images"></i>
           <span>Slide <span id="currentSlideNum">1</span> of <span id="totalSlides">20</span></span>
-        </div>
-        <div class="export-notes-section">
-          <button class="tool-btn" onclick="exportAllStudentNotes()" title="Export All Student Notes">
-            <i class="fas fa-download"></i>
-          </button>
         </div>
       </div>
 
