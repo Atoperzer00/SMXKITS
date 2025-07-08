@@ -175,7 +175,7 @@
       height: 100vh;
       background: #000;
       z-index: 2000;
-      display: none;
+      display: flex;
       flex-direction: column;
     }
 
@@ -280,6 +280,12 @@
       z-index: 10;
     }
 
+    .export-notes-section {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
     .slideshow-container:hover .slideshow-header {
       opacity: 1;
       transform: translateY(0);
@@ -294,13 +300,18 @@
 
     .module-select {
       background: rgba(255, 255, 255, 0.1);
-      color: var(--text-primary);
+      color: #000000;
       border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 6px;
       padding: 0.4rem 0.8rem;
       font-size: 0.9rem;
       cursor: pointer;
       transition: var(--transition);
+    }
+
+    .module-select option {
+      background: #ffffff;
+      color: #000000;
     }
 
     .module-select:focus {
@@ -792,6 +803,10 @@
             <i class="fas fa-sticky-note"></i>
             My Notes
           </button>
+          <button class="notes-tab" onclick="switchNotesTab('module')">
+            <i class="fas fa-book"></i>
+            Module Notes
+          </button>
         </div>
         <div class="notes-content">
           <div id="instructorNotesContent" class="instructor-notes">
@@ -804,6 +819,16 @@
               placeholder="Student notes here..."
             ></textarea>
             <div class="save-indicator" id="saveIndicator">
+              <i class="fas fa-check"></i> Saved
+            </div>
+          </div>
+          <div id="moduleNotesContent" class="student-notes-bubble" style="display: none;">
+            <textarea 
+              id="moduleNotesInputSlideshow" 
+              class="student-notes-input" 
+              placeholder="Add your general notes for this module..."
+            ></textarea>
+            <div class="save-indicator" id="moduleSaveIndicator">
               <i class="fas fa-check"></i> Saved
             </div>
           </div>
@@ -825,6 +850,11 @@
         <div class="slide-info">
           <i class="fas fa-images"></i>
           <span>Slide <span id="currentSlideNum">1</span> of <span id="totalSlides">20</span></span>
+        </div>
+        <div class="export-notes-section">
+          <button class="tool-btn" onclick="exportAllStudentNotes()" title="Export All Student Notes">
+            <i class="fas fa-download"></i>
+          </button>
         </div>
       </div>
 
@@ -863,7 +893,7 @@
     </div>
 
     <!-- Course Content Preview (when not in slideshow) -->
-    <div class="course-preview" id="coursePreview">
+    <div class="course-preview" id="coursePreview" style="display: none;">
       <div class="preview-card" onclick="enterSlideshow()">
         <div class="preview-image">
           <img id="previewSlide" src="" alt="Course Preview" />
@@ -879,7 +909,7 @@
     </div>
 
     <!-- General Module Notes -->
-    <div class="module-notes-section">
+    <div class="module-notes-section" style="display: none;">
       <div class="module-notes-header" onclick="toggleModuleNotes()">
         <div class="module-notes-title">
           <i class="fas fa-book"></i>
@@ -978,12 +1008,15 @@
       const studentNotesInput = document.getElementById('studentNotesInput');
       const saveIndicator = document.getElementById('saveIndicator');
       
-      // Initialize the viewer
+      // Initialize the viewer - Start directly in slideshow mode
       updateModuleInfo();
       updateSlideDisplay();
       updatePreview();
       loadStudentNotes();
       loadModuleNotes();
+      
+      // Start in slideshow mode immediately
+      enterSlideshow();
       
       // Auto-save functionality for student notes
       let saveTimeout;
@@ -996,6 +1029,20 @@
       
       studentNotesInput.addEventListener('blur', function() {
         autoSaveStudentNotes();
+      });
+
+      // Auto-save functionality for module notes in slideshow
+      const moduleNotesInputSlideshow = document.getElementById('moduleNotesInputSlideshow');
+      let moduleSaveTimeout;
+      moduleNotesInputSlideshow.addEventListener('input', function() {
+        clearTimeout(moduleSaveTimeout);
+        moduleSaveTimeout = setTimeout(() => {
+          autoSaveModuleNotes();
+        }, 1000); // Auto-save after 1 second of no typing
+      });
+      
+      moduleNotesInputSlideshow.addEventListener('blur', function() {
+        autoSaveModuleNotes();
       });
       
       // Event Listeners
@@ -1157,14 +1204,22 @@
         const tabs = document.querySelectorAll('.notes-tab');
         tabs.forEach(t => t.classList.remove('active'));
         
+        // Hide all content areas
+        document.getElementById('instructorNotesContent').style.display = 'none';
+        document.getElementById('studentNotesContent').style.display = 'none';
+        document.getElementById('moduleNotesContent').style.display = 'none';
+        
         if (tab === 'instructor') {
           tabs[0].classList.add('active');
           document.getElementById('instructorNotesContent').style.display = 'block';
-          document.getElementById('studentNotesContent').style.display = 'none';
-        } else {
+        } else if (tab === 'student') {
           tabs[1].classList.add('active');
-          document.getElementById('instructorNotesContent').style.display = 'none';
           document.getElementById('studentNotesContent').style.display = 'block';
+        } else if (tab === 'module') {
+          tabs[2].classList.add('active');
+          document.getElementById('moduleNotesContent').style.display = 'block';
+          // Load module notes when switching to this tab
+          loadModuleNotesInSlideshow();
         }
       }
 
@@ -1216,6 +1271,28 @@
         document.getElementById('moduleNotesInput').value = notes;
       }
 
+      function loadModuleNotesInSlideshow() {
+        const key = `moduleNotes_${currentModule}`;
+        const notes = localStorage.getItem(key) || '';
+        document.getElementById('moduleNotesInputSlideshow').value = notes;
+      }
+
+      function autoSaveModuleNotes() {
+        const notes = document.getElementById('moduleNotesInputSlideshow').value;
+        const key = `moduleNotes_${currentModule}`;
+        localStorage.setItem(key, notes);
+        
+        // Also update the hidden module notes input
+        document.getElementById('moduleNotesInput').value = notes;
+        
+        // Show save indicator
+        const moduleSaveIndicator = document.getElementById('moduleSaveIndicator');
+        moduleSaveIndicator.classList.add('show');
+        setTimeout(() => {
+          moduleSaveIndicator.classList.remove('show');
+        }, 2000);
+      }
+
       function enterSlideshow() {
         slideshowContainer.classList.add('active');
         coursePreview.style.display = 'none';
@@ -1249,6 +1326,78 @@
         }, 2000);
       }
 
+      function exportAllStudentNotes() {
+        let allNotes = '';
+        const studentName = localStorage.getItem('studentName') || 'Student';
+        const timestamp = new Date().toLocaleString();
+        
+        allNotes += `SMX KITS - Student Notes Export\n`;
+        allNotes += `Student: ${studentName}\n`;
+        allNotes += `Export Date: ${timestamp}\n`;
+        allNotes += `${'='.repeat(50)}\n\n`;
+        
+        // Export notes from all modules
+        Object.keys(modules).forEach(moduleKey => {
+          const module = modules[moduleKey];
+          let moduleHasNotes = false;
+          let moduleNotes = '';
+          
+          // Check for general module notes
+          const moduleNotesKey = `moduleNotes_${moduleKey}`;
+          const generalNotes = localStorage.getItem(moduleNotesKey);
+          if (generalNotes && generalNotes.trim()) {
+            moduleNotes += `\nGENERAL MODULE NOTES:\n${'-'.repeat(25)}\n${generalNotes}\n\n`;
+            moduleHasNotes = true;
+          }
+          
+          // Check for slide-specific notes
+          for (let slideNum = 1; slideNum <= module.slideCount; slideNum++) {
+            const slideNotesKey = `studentNotes_${moduleKey}_slide_${slideNum}`;
+            const slideNotes = localStorage.getItem(slideNotesKey);
+            if (slideNotes && slideNotes.trim()) {
+              moduleNotes += `SLIDE ${slideNum} NOTES:\n${'-'.repeat(15)}\n${slideNotes}\n\n`;
+              moduleHasNotes = true;
+            }
+          }
+          
+          // Add module section if it has notes
+          if (moduleHasNotes) {
+            allNotes += `MODULE: ${module.title}\n`;
+            allNotes += `${'='.repeat(module.title.length + 8)}\n`;
+            allNotes += moduleNotes;
+            allNotes += `\n${'*'.repeat(60)}\n\n`;
+          }
+        });
+        
+        if (allNotes.split('\n').length <= 6) {
+          allNotes += 'No student notes found to export.\n';
+        }
+        
+        // Create and download the file
+        const blob = new Blob([allNotes], { type: 'text/plain' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `SMX_KITS_Student_Notes_${studentName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        
+        // Show confirmation
+        const exportBtn = event.target.closest('.tool-btn');
+        const originalHTML = exportBtn.innerHTML;
+        exportBtn.innerHTML = '<i class="fas fa-check"></i>';
+        exportBtn.style.background = 'var(--primary-gradient)';
+        exportBtn.style.color = 'white';
+        
+        setTimeout(() => {
+          exportBtn.innerHTML = originalHTML;
+          exportBtn.style.background = '';
+          exportBtn.style.color = '';
+        }, 2000);
+      }
+
       // Make functions globally available
       window.switchNotesTab = switchNotesTab;
       window.saveStudentNotes = saveStudentNotes;
@@ -1257,6 +1406,7 @@
       window.toggleFullscreen = toggleFullscreen;
       window.enterSlideshow = enterSlideshow;
       window.exitSlideshow = exitSlideshow;
+      window.exportAllStudentNotes = exportAllStudentNotes;
     });
 
     // Module Notes Toggle
