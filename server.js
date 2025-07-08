@@ -24,6 +24,12 @@ const io = socketio(server, { cors: { origin: "*" } });
 app.use(cors());
 app.use(express.json());
 
+// Middleware to pass io instance to routes
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
+
 // Define root route before static middleware to ensure it takes precedence
 app.get('/', (req, res) => {
   console.log('Root route accessed - redirecting to login page');
@@ -477,6 +483,18 @@ app.use('/api/feedback', feedbackRoutes);
 app.use('/api/typing-tests', require('./routes/typing-tests'));
 app.use('/api/submissions', require('./routes/submissions'));
 
+// Add middleware to make io available in routes
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
+
+// Instructor Dashboard Routes
+app.use('/api', require('./routes/instructor-dashboard'));
+app.use('/api/schedule', require('./routes/schedule'));
+app.use('/api/collaboration', require('./routes/collaboration'));
+app.use('/api/analytics', require('./routes/analytics'));
+
 // ===== OpsLog API Routes =====
 // Get all callouts for a room
 app.get('/api/callouts/:roomId', async (req, res) => {
@@ -718,12 +736,300 @@ app.post('/api/stream/state/:classId', async (req, res) => {
   }
 });
 
+// Import instructor socket handler
+const InstructorSocketHandler = require('./socket-handlers/instructor-socket');
+
 // Track online users
 const onlineUsers = new Map(); // userId -> socketId
+
+// Initialize instructor socket handler
+const instructorHandler = new InstructorSocketHandler(io);
 
 // Real-time chat and streaming with MongoDB storage
 io.on('connection', socket => {
   console.log('🔌 New socket connection established');
+  
+  // ===== INSTRUCTOR DASHBOARD HANDLERS =====
+  
+  // Handle instructor connections with enhanced features
+  instructorHandler.handleConnection(socket);
+  
+  // Handle instructor joining dashboard (legacy support)
+  socket.on('join-instructor', (data) => {
+    const { userId, classId } = data;
+    console.log(`👨‍🏫 Instructor ${userId} joined dashboard for class: ${classId}`);
+    
+    // Store instructor info on socket
+    socket.instructorId = userId;
+    socket.classId = classId;
+    
+    // Join instructor room for this class
+    socket.join(`instructor-${classId}`);
+    
+    // Join general class room for updates
+    socket.join(`class-${classId}`);
+    
+    // Track online instructor
+    onlineUsers.set(userId, socket.id);
+    
+    // Emit instructor online status to students
+    socket.to(`class-${classId}`).emit('instructor-online', {
+      instructorId: userId,
+      timestamp: new Date().toISOString()
+    });
+  });
+  
+  // Handle student activity updates
+  socket.on('student-activity', (data) => {
+    const { studentId, classId, activity, status } = data;
+    console.log(`👤 Student activity update: ${studentId} - ${activity}`);
+    
+    // Broadcast to instructors
+    socket.to(`instructor-${classId}`).emit('student-activity', {
+      studentId,
+      studentName: data.studentName,
+      activity,
+      status,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Update instructor handler
+    instructorHandler.updateStudentOnlineStatus(classId, studentId, status === 'online');
+  });
+  
+  // Handle real-time messaging
+  socket.on('send-message', async (data) => {
+    try {
+      const { classId, message, type, recipientId, senderId, senderName } = data;
+      console.log(`💬 Message from ${senderName}: ${message}`);
+      
+      // Save message to database
+      const Message = require('./models/Message');
+      const messageDoc = new Message({
+        senderId,
+        classId,
+        message,
+        type: type || 'broadcast',
+        recipientId: recipientId || null
+      });
+      await messageDoc.save();
+      
+      const messageData = {
+        ...messageDoc.toObject(),
+        senderName,
+        timestamp: messageDoc.createdAt
+      };
+      
+      // Broadcast message based on type
+      if (type === 'broadcast') {
+        io.to(`class-${classId}`).emit('new-message', messageData);
+      } else if (type === 'direct' && recipientId) {
+        io.to(`user-${recipientId}`).emit('new-message', messageData);
+        socket.emit('new-message', messageData); // Send back to sender
+      }
+      
+    } catch (error) {
+      console.error('❌ Error handling message:', error);
+      socket.emit('message-error', { error: 'Failed to send message' });
+    }
+  });
+  
+  // Handle typing indicators
+  socket.on('typing-start', (data) => {
+    const { classId, userId, userName } = data;
+    socket.to(`class-${classId}`).emit('user-typing', {
+      userId,
+      userName,
+      typing: true
+    });
+  });
+  
+  socket.on('typing-stop', (data) => {
+    const { classId, userId, userName } = data;
+    socket.to(`class-${classId}`).emit('user-typing', {
+      userId,
+      userName,
+      typing: false
+    });
+  });
+  
+  // Handle progress updates
+  socket.on('progress-update', async (data) => {
+    try {
+      const { studentId, classId, lessonId, progress, completionPercentage } = data;
+      
+      // Update progress in database
+      const Progress = require('./models/Progress');
+      await Progress.findOneAndUpdate(
+        { userId: studentId, classId, lessonId },
+        { 
+          progress,
+          completionPercentage,
+          lastAccessed: new Date()
+        },
+        { upsert: true, new: true }
+      );
+      
+      // Notify instructors
+      socket.to(`instructor-${classId}`).emit('student-progress-update', {
+        studentId,
+        lessonId,
+        progress,
+        completionPercentage,
+        timestamp: new Date().toISOString()
+      });
+      
+    } catch (error) {
+      console.error('❌ Error updating progress:', error);
+    }
+  });
+  
+  // Handle assignment submissions
+  socket.on('assignment-submitted', async (data) => {
+    try {
+      const { studentId, classId, assignmentId, submissionData } = data;
+      
+      // Notify instructors
+      socket.to(`instructor-${classId}`).emit('new-submission', {
+        studentId,
+        assignmentId,
+        submissionData,
+        timestamp: new Date().toISOString()
+      });
+      
+      console.log(`📝 New assignment submission from student ${studentId}`);
+      
+    } catch (error) {
+      console.error('❌ Error handling assignment submission:', error);
+    }
+  });
+  
+  // Handle quiz/test submissions
+  socket.on('quiz-submitted', (data) => {
+    const { studentId, classId, quizId, answers, score } = data;
+    
+    // Notify instructors
+    socket.to(`instructor-${classId}`).emit('quiz-submission', {
+      studentId,
+      quizId,
+      answers,
+      score,
+      timestamp: new Date().toISOString()
+    });
+    
+    console.log(`🧪 Quiz submission from student ${studentId}, score: ${score}`);
+  });
+  
+  // Handle screen sharing requests
+  socket.on('request-screen-share', (data) => {
+    const { classId, instructorId } = data;
+    
+    // Notify students about screen sharing
+    socket.to(`class-${classId}`).emit('screen-share-started', {
+      instructorId,
+      timestamp: new Date().toISOString()
+    });
+    
+    console.log(`🖥️ Screen sharing started by instructor ${instructorId}`);
+  });
+  
+  socket.on('stop-screen-share', (data) => {
+    const { classId, instructorId } = data;
+    
+    // Notify students that screen sharing stopped
+    socket.to(`class-${classId}`).emit('screen-share-stopped', {
+      instructorId,
+      timestamp: new Date().toISOString()
+    });
+    
+    console.log(`🖥️ Screen sharing stopped by instructor ${instructorId}`);
+  });
+  
+  // Handle live polls/questions
+  socket.on('create-poll', (data) => {
+    const { classId, question, options, duration } = data;
+    
+    const pollData = {
+      id: Date.now().toString(),
+      question,
+      options,
+      duration,
+      startTime: new Date().toISOString(),
+      responses: new Map()
+    };
+    
+    // Store poll in memory (could be moved to database)
+    if (!io.activePolls) {
+      io.activePolls = new Map();
+    }
+    io.activePolls.set(pollData.id, pollData);
+    
+    // Send poll to students
+    socket.to(`class-${classId}`).emit('new-poll', pollData);
+    
+    console.log(`📊 New poll created: ${question}`);
+  });
+  
+  socket.on('poll-response', (data) => {
+    const { pollId, classId, studentId, response } = data;
+    
+    if (io.activePolls && io.activePolls.has(pollId)) {
+      const poll = io.activePolls.get(pollId);
+      poll.responses.set(studentId, response);
+      
+      // Send updated results to instructors
+      socket.to(`instructor-${classId}`).emit('poll-update', {
+        pollId,
+        totalResponses: poll.responses.size,
+        responses: Array.from(poll.responses.values())
+      });
+    }
+  });
+  
+  // Handle breakout rooms
+  socket.on('create-breakout-room', (data) => {
+    const { classId, roomName, studentIds } = data;
+    
+    const breakoutRoom = `breakout-${classId}-${Date.now()}`;
+    
+    // Move students to breakout room
+    studentIds.forEach(studentId => {
+      const studentSocket = Array.from(io.sockets.sockets.values())
+        .find(s => s.userId === studentId);
+      
+      if (studentSocket) {
+        studentSocket.join(breakoutRoom);
+        studentSocket.emit('joined-breakout-room', {
+          roomName,
+          roomId: breakoutRoom
+        });
+      }
+    });
+    
+    console.log(`🏠 Breakout room created: ${roomName} with ${studentIds.length} students`);
+  });
+  
+  // Handle user authentication for socket
+  socket.on('authenticate', (data) => {
+    const { userId, role, classId } = data;
+    
+    socket.userId = userId;
+    socket.userRole = role;
+    socket.classId = classId;
+    
+    // Join appropriate rooms based on role
+    if (role === 'instructor' || role === 'admin') {
+      socket.join(`instructor-${classId}`);
+    }
+    
+    socket.join(`user-${userId}`);
+    socket.join(`class-${classId}`);
+    
+    // Track online user
+    onlineUsers.set(userId, socket.id);
+    
+    console.log(`🔐 User authenticated: ${userId} (${role})`);
+  });
   
   // ===== TYPING MODULES HANDLERS =====
   socket.on('typing-modules-updated', (data) => {
