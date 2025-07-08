@@ -1685,8 +1685,13 @@
         
         // Update inbox if it's open
         if (document.getElementById('inboxDropdown').classList.contains('active')) {
-          loadInboxMessages();
+          loadRecentMessages();
         }
+        
+        // Also update the inbox badge immediately for better UX
+        setTimeout(() => {
+          loadUnreadCount();
+        }, 500);
       } else {
         console.log('ℹ️ Message is from current user, skipping notification');
       }
@@ -1699,7 +1704,7 @@
       
       // Update inbox if it's open
       if (document.getElementById('inboxDropdown').classList.contains('active')) {
-        loadInboxMessages();
+        loadRecentMessages();
       }
     }
 
@@ -1777,6 +1782,9 @@
         if (user && user.token) {
           console.log('🚀 Initializing real-time notifications for user:', user.name);
           initializeRealTimeNotifications();
+          
+          // Load initial unread count for inbox
+          loadUnreadCount();
         } else {
           console.log('⚠️ No user found, skipping real-time notifications');
         }
