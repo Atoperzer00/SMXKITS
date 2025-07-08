@@ -1320,16 +1320,25 @@
 
     // Initialize page
     document.addEventListener('DOMContentLoaded', async () => {
-      setupNavigation();
-      initializeCalendar();
-      await Promise.all([
-        fetchClasses(),
-        fetchInstructors(),
-        fetchStudents(),
-        fetchUsers(),
-        fetchTemplates(),
-        fetchAvailableContent()
-      ]);
+      try {
+        setupNavigation();
+        initializeCalendar();
+        
+        // Load data with individual error handling to prevent one failure from breaking everything
+        const promises = [
+          fetchClasses().catch(err => console.error('Failed to fetch classes:', err)),
+          fetchInstructors().catch(err => console.error('Failed to fetch instructors:', err)),
+          fetchStudents().catch(err => console.error('Failed to fetch students:', err)),
+          fetchUsers().catch(err => console.error('Failed to fetch users:', err)),
+          fetchTemplates().catch(err => console.error('Failed to fetch templates:', err)),
+          fetchAvailableContent().catch(err => console.error('Failed to fetch available content:', err))
+        ];
+        
+        await Promise.allSettled(promises);
+        console.log('Page initialization completed');
+      } catch (error) {
+        console.error('Error during page initialization:', error);
+      }
     });
 
     // Navigation setup
@@ -1373,7 +1382,14 @@
     // API Helper function
     async function apiCall(url, options = {}) {
       const token = localStorage.getItem('token');
+      const role = localStorage.getItem('role');
+      
+      console.log('Making API call to:', url);
+      console.log('Token exists:', !!token);
+      console.log('User role:', role);
+      
       if (!token) {
+        console.error('No authentication token found');
         alert('Authentication token missing. Please log in again.');
         window.location.href = '/login.html';
         return null;
@@ -1386,18 +1402,28 @@
         }
       };
 
-      const response = await fetch(url, { ...defaultOptions, ...options });
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          alert('Session expired. Please login again.');
-          window.location.href = '/login.html';
-          return null;
+      try {
+        const response = await fetch(url, { ...defaultOptions, ...options });
+        
+        console.log('API Response status:', response.status);
+        
+        if (!response.ok) {
+          if (response.status === 401 || response.status === 403) {
+            console.error('Authentication/Authorization failed for:', url);
+            const errorText = await response.text();
+            console.error('Error details:', errorText);
+            alert('Session expired or access denied. Please login again.');
+            window.location.href = '/login.html';
+            return null;
+          }
+          throw new Error(`API call failed: ${response.status} ${response.statusText}`);
         }
-        throw new Error(`API call failed: ${response.status} ${response.statusText}`);
-      }
 
-      return response.json();
+        return response.json();
+      } catch (error) {
+        console.error('API call error:', error);
+        throw error;
+      }
     }
 
     // Fetch functions
