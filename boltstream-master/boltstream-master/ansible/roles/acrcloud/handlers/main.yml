@@ -1,6 +1,0 @@
----
-- name: restart acrcloud streamer
-  systemd:
-    name: acrcloud-streamer
-    state: restarted
-    daemon_reload: yes
