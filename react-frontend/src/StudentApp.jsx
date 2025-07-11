@@ -13,12 +13,16 @@ import StudentMessenger from './components/messaging/StudentMessenger';
 import StudentGrading from './components/grading/StudentGrading';
 import Feedback from './components/feedback/Feedback';
 import Schedule from './components/schedule/Schedule';
+import Calendar from './components/schedule/Calendar';
 import TrackPoint from './components/tools/TrackPoint';
+import TrackPointFixed from './components/tools/TrackPointFixed';
 import Altis from './components/tools/Altis';
 import KitComm from './components/tools/KitComm';
 import OpsLog from './components/tools/OpsLog';
+import OpsLogCalls from './components/tools/OpsLogCalls';
 import SMXKits from './components/tools/SMXKits';
 import StreamMode from './components/tools/StreamMode';
+import SMXStreamNew from './components/tools/SMXStreamNew';
 
 function StudentApp() {
   return (
@@ -41,14 +45,18 @@ function StudentApp() {
           <Route path="/student-grading.html" element={<StudentGrading />} />
           <Route path="/feedback.html" element={<Feedback />} />
           <Route path="/schedule.html" element={<Schedule />} />
+          <Route path="/calendar.html" element={<Calendar />} />
           
           {/* Tools */}
           <Route path="/Trackpoint.html" element={<TrackPoint />} />
+          <Route path="/TrackPoint-fixed.html" element={<TrackPointFixed />} />
           <Route path="/altis.html" element={<Altis />} />
           <Route path="/KitComm.html" element={<KitComm />} />
           <Route path="/OpsLog.html" element={<OpsLog />} />
+          <Route path="/OpsLog_CALLS_STYLED.html" element={<OpsLogCalls />} />
           <Route path="/SMXKITS.html" element={<SMXKits />} />
           <Route path="/Stream Mode.html" element={<StreamMode />} />
+          <Route path="/SMX-Stream-NEW.html" element={<SMXStreamNew />} />
           
           {/* Default redirect */}
           <Route path="/" element={<Navigate to="/dashboard.html" replace />} />

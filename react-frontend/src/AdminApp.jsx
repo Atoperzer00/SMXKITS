@@ -14,7 +14,20 @@ import EditMissionLinks from './components/admin/EditMissionLinks';
 import EditScreenerTraining from './components/admin/EditScreenerTraining';
 import EditIATraining from './components/admin/EditIATraining';
 import EditTypingTests from './components/admin/EditTypingTests';
+import EditTypingTestsSimple from './components/admin/EditTypingTestsSimple';
 import Schedule from './components/schedule/Schedule';
+import Calendar from './components/schedule/Calendar';
+
+// Import tools that admins can access
+import TrackPoint from './components/tools/TrackPoint';
+import TrackPointFixed from './components/tools/TrackPointFixed';
+import Altis from './components/tools/Altis';
+import KitComm from './components/tools/KitComm';
+import OpsLog from './components/tools/OpsLog';
+import OpsLogCalls from './components/tools/OpsLogCalls';
+import SMXKits from './components/tools/SMXKits';
+import StreamMode from './components/tools/StreamMode';
+import SMXStreamNew from './components/tools/SMXStreamNew';
 
 function AdminApp() {
   return (
@@ -38,9 +51,22 @@ function AdminApp() {
           <Route path="/edit-screener-training.html" element={<EditScreenerTraining />} />
           <Route path="/edit-ia-training.html" element={<EditIATraining />} />
           <Route path="/edit-typing-tests.html" element={<EditTypingTests />} />
+          <Route path="/edit-typing-tests-simple.html" element={<EditTypingTestsSimple />} />
           
           {/* Shared Components */}
           <Route path="/schedule.html" element={<Schedule />} />
+          <Route path="/calendar.html" element={<Calendar />} />
+          
+          {/* Tools (Admin Access) */}
+          <Route path="/Trackpoint.html" element={<TrackPoint />} />
+          <Route path="/TrackPoint-fixed.html" element={<TrackPointFixed />} />
+          <Route path="/altis.html" element={<Altis />} />
+          <Route path="/KitComm.html" element={<KitComm />} />
+          <Route path="/OpsLog.html" element={<OpsLog />} />
+          <Route path="/OpsLog_CALLS_STYLED.html" element={<OpsLogCalls />} />
+          <Route path="/SMXKITS.html" element={<SMXKits />} />
+          <Route path="/Stream Mode.html" element={<StreamMode />} />
+          <Route path="/SMX-Stream-NEW.html" element={<SMXStreamNew />} />
           
           {/* Default redirect */}
           <Route path="/" element={<Navigate to="/admin-dashboard.html" replace />} />
