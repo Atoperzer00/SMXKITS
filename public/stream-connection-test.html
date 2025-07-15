@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stream Connection Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .test-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #444;
+        }
+        .test-link {
+            display: inline-block;
+            background: #22c55e;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 8px;
+            margin: 10px 10px 10px 0;
+            font-weight: bold;
+        }
+        .test-link:hover {
+            background: #16a34a;
+        }
+        .instructor-link {
+            background: #ef4444;
+        }
+        .instructor-link:hover {
+            background: #dc2626;
+        }
+        .instructions {
+            background: #1e40af;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .warning {
+            background: #f59e0b;
+            color: #000;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        code {
+            background: #333;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔗 Stream Connection Test</h1>
+    
+    <div class="warning">
+        ⚠️ <strong>CRITICAL FIX APPLIED:</strong> The Stream Mode.html and SMXStream-new.html systems are now connected!
+    </div>
+    
+    <div class="instructions">
+        <h3>🎯 Test the Fixed Connection:</h3>
+        <ol>
+            <li><strong>Step 1:</strong> Open "Stream Mode.html" (instructor control)</li>
+            <li><strong>Step 2:</strong> Select a class and start WebRTC streaming</li>
+            <li><strong>Step 3:</strong> Open "SMXStream-new.html" viewers (students)</li>
+            <li><strong>Step 4:</strong> Check that viewer count updates in Stream Mode</li>
+            <li><strong>Step 5:</strong> Verify students can see the WebRTC stream</li>
+        </ol>
+    </div>
+    
+    <div class="test-container">
+        <div class="test-section">
+            <h2>🎛️ Instructor Control (Stream Mode)</h2>
+            <p>This is where you control the stream and see viewer count:</p>
+            <a href="/Stream Mode.html" class="test-link instructor-link" target="_blank">
+                🎛️ Open Stream Mode.html
+            </a>
+            <p><small>
+                • Select class: "test-class"<br>
+                • Start camera/screen share<br>
+                • Click "Go Live"<br>
+                • Watch viewer count update
+            </small></p>
+        </div>
+        
+        <div class="test-section">
+            <h2>👨‍🎓 Student Viewers (SMXStream)</h2>
+            <p>This is where students watch the stream:</p>
+            <a href="/SMXStream-new.html?class=test-class&role=student" class="test-link" target="_blank">
+                👨‍🎓 Student Viewer #1
+            </a>
+            <a href="/SMXStream-new.html?class=test-class&role=student" class="test-link" target="_blank">
+                👨‍🎓 Student Viewer #2
+            </a>
+            <p><small>
+                • Should show "Instructor will start stream soon"<br>
+                • When instructor goes live, should see WebRTC stream<br>
+                • Each viewer should increment count in Stream Mode
+            </small></p>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>🔍 What Was Fixed:</h2>
+        <ul>
+            <li><strong>URL Parameter Mismatch:</strong> Stream Mode was using <code>?classId=</code> but SMXStream expected <code>?class=</code></li>
+            <li><strong>Room Connection:</strong> Both systems now use the same room format: <code>class:test-class</code></li>
+            <li><strong>Event Compatibility:</strong> Stream Mode now emits events that SMXStream-new.html understands</li>
+            <li><strong>Viewer Count Sync:</strong> Stream Mode now receives viewer count updates from SMXStream viewers</li>
+            <li><strong>WebRTC Bridge:</strong> The two WebRTC systems are now connected</li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h2>📊 Expected Results:</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div>
+                <h4>Stream Mode.html should show:</h4>
+                <ul>
+                    <li>✅ "2 viewers" (or however many you open)</li>
+                    <li>✅ "LIVE" status when streaming</li>
+                    <li>✅ Console: "Student joined" messages</li>
+                </ul>
+            </div>
+            <div>
+                <h4>SMXStream-new.html should show:</h4>
+                <ul>
+                    <li>✅ "👨‍🎓 Student" role indicator</li>
+                    <li>✅ WebRTC video stream from instructor</li>
+                    <li>✅ Console: "WebRTC connection established"</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>🐛 Debug Console Commands:</h2>
+        <p>Run these in browser console to check connection:</p>
+        <pre style="background: #333; padding: 10px; border-radius: 5px; overflow-x: auto;">
+// In Stream Mode.html:
+console.log('Current class:', currentClassId);
+console.log('Socket connected:', socket?.connected);
+console.log('Streaming:', isStreaming);
+
+// In SMXStream-new.html:
+console.log('Current room:', currentRoom);
+console.log('Is instructor:', isInstructor);
+console.log('Socket connected:', socket?.connected);
+        </pre>
+    </div>
+</body>
+</html>

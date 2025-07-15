@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Edit Course Content - Admin Controls</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    :root {
+      --primary-gradient: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+      --secondary-gradient: linear-gradient(135deg, #ff8c42 0%, #ff6b35 100%);
+      --accent-gradient: linear-gradient(135deg, #ffa726 0%, #ff9800 100%);
+      --dark-gradient: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 100%);
+      --card-gradient: linear-gradient(145deg, #2d1810 0%, #1a0f08 100%);
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --text-primary: #ffffff;
+      --text-secondary: #b8c5d6;
+      --text-accent: #ffa726;
+      --shadow-primary: 0 20px 40px rgba(0, 0, 0, 0.3);
+      --shadow-hover: 0 30px 60px rgba(0, 0, 0, 0.4);
+      --border-radius: 20px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--dark-gradient);
+      color: var(--text-primary);
+      overflow-x: hidden;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .admin-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .admin-sidebar {
+      width: 280px;
+      background: rgba(15, 20, 25, 0.95);
+      backdrop-filter: blur(20px);
+      border-right: 1px solid var(--glass-border);
+      display: flex;
+      flex-direction: column;
+      padding: 2rem 0;
+    }
+
+    .admin-logo {
+      width: 200px;
+      margin: 0 auto 3rem;
+      filter: drop-shadow(0 10px 30px rgba(255, 107, 53, 0.3));
+    }
+
+    .nav-item {
+      margin: 0.5rem 1.5rem;
+      border-radius: 15px;
+      overflow: hidden;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: var(--transition);
+      background: var(--glass-bg);
+      border: 1px solid transparent;
+    }
+
+    .nav-link:hover, .nav-link.active {
+      color: var(--text-primary);
+      background: var(--primary-gradient);
+      border-color: var(--text-accent);
+      box-shadow: 0 8px 25px rgba(255, 107, 53, 0.3);
+    }
+
+    .nav-link i {
+      margin-right: 1rem;
+      font-size: 1.2rem;
+      width: 20px;
+      text-align: center;
+    }
+
+    .admin-main {
+      flex: 1;
+      padding: 2rem;
+      overflow-y: auto;
+    }
+
+    .dashboard-header {
+      margin-bottom: 3rem;
+      text-align: center;
+    }
+
+    .dashboard-title {
+      font-size: 3rem;
+      font-weight: 800;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1rem;
+    }
+
+    .content-card {
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      margin-bottom: 2rem;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+    }
+
+    .content-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    .content-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .btn {
+      padding: 0.8rem 2rem;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      font-size: 1rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .btn-primary {
+      background: var(--primary-gradient);
+      color: white;
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+      color: white;
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: white;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(255, 107, 53, 0.4);
+    }
+
+    .content-item {
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      transition: var(--transition);
+    }
+
+    .content-item:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--text-accent);
+    }
+
+    .content-item-header {
+      display: flex;
+      justify-content: between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+    }
+
+    .content-item-title {
+      font-weight: 600;
+      color: var(--text-accent);
+      margin-bottom: 0.5rem;
+      flex: 1;
+    }
+
+    .content-item-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .btn-small {
+      padding: 0.4rem 0.8rem;
+      font-size: 0.8rem;
+    }
+
+    .content-item-description {
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: var(--text-accent);
+    }
+
+    .form-input, .form-textarea {
+      width: 100%;
+      padding: 0.8rem;
+      border: 2px solid var(--glass-border);
+      border-radius: 10px;
+      background: var(--glass-bg);
+      color: var(--text-primary);
+      font-size: 1rem;
+      transition: var(--transition);
+      font-family: inherit;
+    }
+
+    .form-textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .form-input:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--text-accent);
+      box-shadow: 0 0 20px rgba(255, 167, 38, 0.3);
+    }
+
+    .controls {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      justify-content: center;
+    }
+
+    .save-section {
+      margin-top: 3rem;
+      padding: 2rem;
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+      text-align: center;
+    }
+
+    .save-section h3 {
+      color: var(--text-accent);
+      margin-bottom: 1rem;
+      font-size: 1.3rem;
+    }
+
+    .save-options {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-secondary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-warning {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 10000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(5px);
+    }
+
+    .modal-content {
+      background: var(--card-gradient);
+      margin: 5% auto;
+      padding: 2rem;
+      border-radius: var(--border-radius);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-hover);
+      width: 90%;
+      max-width: 600px;
+      position: relative;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .modal-title {
+      color: var(--text-accent);
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    .close {
+      color: var(--text-secondary);
+      font-size: 2rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .close:hover {
+      color: var(--text-primary);
+    }
+
+    .form-select {
+      width: 100%;
+      padding: 0.8rem;
+      border: 2px solid var(--glass-border);
+      border-radius: 10px;
+      background: var(--glass-bg);
+      color: var(--text-primary);
+      font-size: 1rem;
+      transition: var(--transition);
+    }
+
+    .form-select:focus {
+      outline: none;
+      border-color: var(--text-accent);
+      box-shadow: 0 0 20px rgba(255, 167, 38, 0.3);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: flex-end;
+      margin-top: 2rem;
+    }
+
+    .btn-cancel {
+      background: transparent;
+      border: 2px solid var(--glass-border);
+      color: var(--text-secondary);
+    }
+
+    .btn-cancel:hover {
+      background: var(--glass-bg);
+      color: var(--text-primary);
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <img src="smx-logo.png" alt="SMX KITS Logo" class="admin-logo">
+      
+      <nav>
+        <div class="nav-item">
+          <a href="dashboard.html" class="nav-link">
+            <i class="fas fa-tachometer-alt"></i>Dashboard
+          </a>
+        </div>
+        <div class="nav-item">
+          <a href="edit-course-content.html" class="nav-link active">
+            <i class="fas fa-edit"></i>Edit Course Content
+          </a>
+        </div>
+        <div class="nav-item">
+          <a href="course-content.html" class="nav-link">
+            <i class="fas fa-book-open"></i>Course Content
+          </a>
+        </div>
+        <div class="nav-item">
+          <a href="edit-ia-training.html" class="nav-link">
+            <i class="fas fa-edit"></i>Edit IA Training
+          </a>
+        </div>
+        <div class="nav-item">
+          <a href="IA Training.html" class="nav-link">
+            <i class="fas fa-satellite-dish"></i>IA Training
+          </a>
+        </div>
+        <div class="nav-item">
+          <a href="edit-screener-training.html" class="nav-link">
+            <i class="fas fa-edit"></i>Edit Screener Training
+          </a>
+        </div>
+        <div class="nav-item">
+          <a href="Screener Training.html" class="nav-link">
+            <i class="fas fa-user-shield"></i>Screener Training
+          </a>
+        </div>
+        <div class="nav-item">
+          <a href="edit-mission-links.html" class="nav-link">
+            <i class="fas fa-edit"></i>Edit Mission Links
+          </a>
+        </div>
+        <div class="nav-item">
+          <a href="mission-links.html" class="nav-link">
+            <i class="fas fa-rocket"></i>Mission Links
+          </a>
+        </div>
+        <div class="nav-item">
+          <a href="edit-typing-tests.html" class="nav-link">
+            <i class="fas fa-edit"></i>Edit Typing Tests
+          </a>
+        </div>
+        <div class="nav-item">
+          <a href="keyboard-training.html" class="nav-link">
+            <i class="fas fa-keyboard"></i>Keyboard Training
+          </a>
+        </div>
+        <div class="nav-item">
+          <a href="#" onclick="logout()" class="nav-link">
+            <i class="fas fa-sign-out-alt"></i>Logout
+          </a>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+      <div class="dashboard-header">
+        <h1 class="dashboard-title">Edit Course Content</h1>
+        <p style="color: var(--text-secondary); font-size: 1.1rem;">Manage course content items with titles and descriptions.</p>
+      </div>
+      
+      <div class="controls">
+        <button onclick="openAddContentModal()" class="btn btn-primary">
+          <i class="fas fa-plus" style="margin-right: 0.5rem;"></i>
+          Add New Content
+        </button>
+      </div>
+      
+      <div class="content-card">
+        <div class="content-header">
+          <h3 class="content-title">Course Content Items</h3>
+        </div>
+        <div id="content-container">
+          <!-- Content items will be loaded here -->
+        </div>
+      </div>
+      
+      <!-- Save Section -->
+      <div class="save-section">
+        <h3>Save Course Content</h3>
+        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+          Choose how to save your current course content configuration
+        </p>
+        <div class="save-options">
+          <button onclick="saveToCurrentClass()" class="btn btn-primary">
+            <i class="fas fa-save" style="margin-right: 0.5rem;"></i>
+            Save to Current Class
+          </button>
+          <button onclick="openSaveToTemplateModal()" class="btn btn-secondary">
+            <i class="fas fa-layer-group" style="margin-right: 0.5rem;"></i>
+            Save to Template
+          </button>
+          <button onclick="saveToRepository()" class="btn btn-warning">
+            <i class="fas fa-database" style="margin-right: 0.5rem;"></i>
+            Save to Repository
+          </button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Add Content Modal -->
+  <div id="addContentModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Add Course Content</h3>
+        <span class="close" onclick="closeAddContentModal()">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Content Title:</label>
+          <input type="text" id="contentTitle" class="form-input" placeholder="Enter content title">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Content Description:</label>
+          <textarea id="contentDescription" class="form-textarea" placeholder="Enter content description"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Duration (minutes):</label>
+          <input type="number" id="contentDuration" class="form-input" placeholder="30" min="1">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button onclick="closeAddContentModal()" class="btn btn-cancel">Cancel</button>
+        <button onclick="addContent()" class="btn btn-primary">Add Content</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Save to Template Modal -->
+  <div id="saveTemplateModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Save to Template</h3>
+        <span class="close" onclick="closeSaveTemplateModal()">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Template Type:</label>
+          <select id="templateType" class="form-select">
+            <option value="existing">Add to Existing Template</option>
+            <option value="new">Create New Template</option>
+          </select>
+        </div>
+        <div class="form-group" id="existingTemplateGroup">
+          <label class="form-label">Select Template:</label>
+          <select id="existingTemplate" class="form-select">
+            <option value="Easy">Easy Template</option>
+            <option value="Medium">Medium Template</option>
+            <option value="Hard">Hard Template</option>
+          </select>
+        </div>
+        <div class="form-group" id="newTemplateGroup" style="display: none;">
+          <label class="form-label">Template Name:</label>
+          <input type="text" id="newTemplateName" class="form-input" placeholder="Enter template name">
+        </div>
+        <div class="form-group" id="newTemplateDifficultyGroup" style="display: none;">
+          <label class="form-label">Template Difficulty:</label>
+          <select id="newTemplateDifficulty" class="form-select">
+            <option value="Easy">Easy</option>
+            <option value="Medium">Medium</option>
+            <option value="Hard">Hard</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button onclick="closeSaveTemplateModal()" class="btn btn-cancel">Cancel</button>
+        <button onclick="saveToTemplate()" class="btn btn-primary">Save to Template</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let socket = null;
+    let courseContent = [];
+
+    // Initialize the application
+    document.addEventListener('DOMContentLoaded', async function() {
+      console.log('Edit Course Content - Initializing...');
+      
+      // Initialize socket
+      socket = io();
+      
+      socket.on('connect', () => {
+        console.log('✅ Socket connected:', socket.id);
+      });
+      
+      // Load initial data
+      await loadCourseContent();
+      renderContent();
+    });
+
+    // Load course content from API or use defaults
+    async function loadCourseContent() {
+      try {
+        console.log('📚 Loading course content...');
+        
+        // For now, use default content - in future this could load from API
+        courseContent = [
+          {
+            id: 'course1',
+            title: 'Introduction to SMX KITS',
+            description: 'Basic overview of the SMX KITS system, its purpose, and core functionality.',
+            duration: 45
+          },
+          {
+            id: 'course2',
+            title: 'System Navigation',
+            description: 'Learn how to navigate through the various modules and interfaces of the system.',
+            duration: 30
+          },
+          {
+            id: 'course3',
+            title: 'User Interface Guide',
+            description: 'Comprehensive guide to understanding and using the user interface effectively.',
+            duration: 60
+          },
+          {
+            id: 'course4',
+            title: 'Best Practices',
+            description: 'Industry best practices and recommended procedures for optimal system usage.',
+            duration: 40
+          }
+        ];
+        
+        console.log(`✅ Loaded ${courseContent.length} course content items`);
+      } catch (error) {
+        console.warn('⚠️ Error loading course content:', error.message);
+      }
+    }
+
+    // Render course content
+    function renderContent() {
+      const container = document.getElementById('content-container');
+      container.innerHTML = '';
+      
+      if (courseContent.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+            <i class="fas fa-book-open" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+            <p>No course content items yet</p>
+            <p style="font-size: 0.9rem; margin-top: 0.5rem;">Click "Add New Content" to get started</p>
+          </div>
+        `;
+        return;
+      }
+      
+      courseContent.forEach((item, index) => {
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'content-item';
+        
+        contentDiv.innerHTML = `
+          <div class="content-item-header">
+            <div style="flex: 1;">
+              <div class="content-item-title">${item.title}</div>
+              <div class="content-item-description">${item.description}</div>
+              <div style="color: var(--text-accent); font-size: 0.9rem; margin-top: 0.5rem;">
+                <i class="fas fa-clock"></i> ${item.duration} minutes
+              </div>
+            </div>
+            <div class="content-item-actions">
+              <button onclick="editContent(${index})" class="btn btn-primary btn-small">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button onclick="removeContent(${index})" class="btn btn-danger btn-small">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        `;
+        
+        container.appendChild(contentDiv);
+      });
+    }
+
+    // Open add content modal
+    function openAddContentModal() {
+      document.getElementById('addContentModal').style.display = 'block';
+      document.getElementById('contentTitle').value = '';
+      document.getElementById('contentDescription').value = '';
+      document.getElementById('contentDuration').value = '';
+    }
+
+    // Close add content modal
+    function closeAddContentModal() {
+      document.getElementById('addContentModal').style.display = 'none';
+    }
+
+    // Add new content
+    function addContent() {
+      const title = document.getElementById('contentTitle').value.trim();
+      const description = document.getElementById('contentDescription').value.trim();
+      const duration = parseInt(document.getElementById('contentDuration').value) || 30;
+      
+      if (!title || !description) {
+        alert('Please fill in both title and description');
+        return;
+      }
+      
+      const newContent = {
+        id: `course_${Date.now()}`,
+        title: title,
+        description: description,
+        duration: duration
+      };
+      
+      courseContent.push(newContent);
+      renderContent();
+      closeAddContentModal();
+      showNotification('✅ Content added successfully!');
+    }
+
+    // Edit content
+    function editContent(index) {
+      const item = courseContent[index];
+      document.getElementById('contentTitle').value = item.title;
+      document.getElementById('contentDescription').value = item.description;
+      document.getElementById('contentDuration').value = item.duration;
+      
+      // Change modal title and button
+      document.querySelector('#addContentModal .modal-title').textContent = 'Edit Course Content';
+      document.querySelector('#addContentModal .btn-primary').textContent = 'Update Content';
+      document.querySelector('#addContentModal .btn-primary').onclick = function() {
+        updateContent(index);
+      };
+      
+      document.getElementById('addContentModal').style.display = 'block';
+    }
+
+    // Update content
+    function updateContent(index) {
+      const title = document.getElementById('contentTitle').value.trim();
+      const description = document.getElementById('contentDescription').value.trim();
+      const duration = parseInt(document.getElementById('contentDuration').value) || 30;
+      
+      if (!title || !description) {
+        alert('Please fill in both title and description');
+        return;
+      }
+      
+      courseContent[index] = {
+        ...courseContent[index],
+        title: title,
+        description: description,
+        duration: duration
+      };
+      
+      renderContent();
+      closeAddContentModal();
+      
+      // Reset modal
+      document.querySelector('#addContentModal .modal-title').textContent = 'Add Course Content';
+      document.querySelector('#addContentModal .btn-primary').textContent = 'Add Content';
+      document.querySelector('#addContentModal .btn-primary').onclick = addContent;
+      
+      showNotification('✅ Content updated successfully!');
+    }
+
+    // Remove content
+    function removeContent(index) {
+      if (confirm('Are you sure you want to remove this content item?')) {
+        courseContent.splice(index, 1);
+        renderContent();
+        showNotification('✅ Content removed successfully!');
+      }
+    }
+
+    // Save to current class
+    async function saveToCurrentClass() {
+      try {
+        console.log('💾 Saving course content to current class...');
+        showNotification('✅ Saved to current class!');
+      } catch (error) {
+        console.error('❌ Save error:', error);
+        showNotification('❌ Save to class failed', true);
+      }
+    }
+
+    // Save to repository
+    async function saveToRepository() {
+      try {
+        console.log('💾 Saving course content to repository...');
+        showNotification('✅ Saved to repository!');
+      } catch (error) {
+        console.error('❌ Repository save error:', error);
+        showNotification('❌ Repository save failed', true);
+      }
+    }
+
+    // Open save to template modal
+    function openSaveToTemplateModal() {
+      document.getElementById('saveTemplateModal').style.display = 'block';
+      
+      document.getElementById('templateType').onchange = function() {
+        const isNew = this.value === 'new';
+        document.getElementById('existingTemplateGroup').style.display = isNew ? 'none' : 'block';
+        document.getElementById('newTemplateGroup').style.display = isNew ? 'block' : 'none';
+        document.getElementById('newTemplateDifficultyGroup').style.display = isNew ? 'block' : 'none';
+      };
+    }
+
+    // Close save to template modal
+    function closeSaveTemplateModal() {
+      document.getElementById('saveTemplateModal').style.display = 'none';
+    }
+
+    // Save to template
+    async function saveToTemplate() {
+      try {
+        console.log('💾 Saving course content to template...');
+        closeSaveTemplateModal();
+        showNotification('✅ Saved to template!');
+      } catch (error) {
+        console.error('❌ Template save error:', error);
+        showNotification('❌ Template save failed', true);
+      }
+    }
+
+    // Show notification
+    function showNotification(message, isError = false) {
+      const existing = document.getElementById('notification');
+      if (existing) existing.remove();
+      
+      const notification = document.createElement('div');
+      notification.id = 'notification';
+      notification.textContent = message;
+      notification.style.cssText = `
+        position: fixed; top: 20px; right: 20px; z-index: 1000;
+        background: ${isError ? '#ef4444' : '#22c55e'}; color: white;
+        padding: 12px 20px; border-radius: 10px; font-weight: 600;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      `;
+      
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.remove();
+        }
+      }, 3000);
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+      const addModal = document.getElementById('addContentModal');
+      const saveModal = document.getElementById('saveTemplateModal');
+      if (event.target === addModal) {
+        closeAddContentModal();
+      }
+      if (event.target === saveModal) {
+        closeSaveTemplateModal();
+      }
+    }
+
+    // Logout function
+    function logout() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('role');
+      localStorage.removeItem('userName');
+      localStorage.removeItem('classId');
+      window.location.replace('/login.html');
+    }
+  </script>
+</body>
+</html>

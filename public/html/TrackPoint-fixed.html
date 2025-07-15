@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrackPoint - Altis Tactical Map (Fixed)</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css">
+  <link rel="stylesheet" href="mapUtils.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      font-family: Arial, sans-serif;
+    }
+
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0, 0, 0, 0.9);
+      color: white;
+      padding: 10px 20px;
+      z-index: 1000;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #3498db;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background 0.3s;
+    }
+
+    .btn:hover {
+      background: #2980b9;
+    }
+
+    .btn.cities {
+      background: #27ae60;
+    }
+
+    .btn.cities:hover {
+      background: #229954;
+    }
+
+    .btn.danger {
+      background: #e74c3c;
+    }
+
+    .btn.danger:hover {
+      background: #c0392b;
+    }
+
+    .btn.debug {
+      background: #f39c12;
+    }
+
+    .btn.debug:hover {
+      background: #e67e22;
+    }
+
+    .map-container {
+      width: 100%;
+      height: 100vh;
+      padding-top: 60px;
+    }
+
+    #map {
+      width: 100%;
+      height: calc(100vh - 60px);
+    }
+
+    .debug-panel {
+      position: fixed;
+      top: 70px;
+      right: 10px;
+      width: 300px;
+      max-height: 400px;
+      background: rgba(0, 0, 0, 0.9);
+      color: white;
+      padding: 15px;
+      border-radius: 5px;
+      font-size: 12px;
+      overflow-y: auto;
+      z-index: 999;
+      display: none;
+    }
+
+    .debug-panel.visible {
+      display: block;
+    }
+
+    .debug-panel h3 {
+      margin: 0 0 10px 0;
+      color: #3498db;
+    }
+
+    .debug-log {
+      margin: 5px 0;
+      padding: 3px 5px;
+      border-radius: 3px;
+    }
+
+    .debug-log.success { background: rgba(39, 174, 96, 0.3); }
+    .debug-log.error { background: rgba(231, 76, 60, 0.3); }
+    .debug-log.warning { background: rgba(243, 156, 18, 0.3); }
+    .debug-log.info { background: rgba(52, 152, 219, 0.3); }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🗺️ TrackPoint - Altis Tactical Map (Fixed)</h1>
+    <div class="header-controls">
+      <button class="btn cities" onclick="toggleCities()">Toggle Cities</button>
+      <button class="btn" onclick="toggleBorder()">Toggle Border</button>
+      <button class="btn" onclick="centerMap()">Center Map</button>
+      <button class="btn debug" onclick="toggleDebug()">Debug Panel</button>
+      <button class="btn danger" onclick="goBack()">← Back to Dashboard</button>
+    </div>
+  </div>
+
+  <div class="debug-panel" id="debug-panel">
+    <h3>🔍 Debug Information</h3>
+    <div id="debug-content"></div>
+  </div>
+
+  <div class="map-container">
+    <div id="map"></div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script>
+    let citiesVisible = false;
+    let borderVisible = true;
+    let mapBorder;
+    let cityMarkers = [];
+    let debugVisible = false;
+    let debugLogs = [];
+
+    // Enhanced logging system
+    function debugLog(message, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString();
+      const logEntry = { message, type, timestamp };
+      debugLogs.push(logEntry);
+      
+      // Keep only last 50 logs
+      if (debugLogs.length > 50) {
+        debugLogs.shift();
+      }
+      
+      updateDebugPanel();
+      
+      // Also log to console with emoji
+      const emoji = {
+        success: '✅',
+        error: '❌',
+        warning: '⚠️',
+        info: 'ℹ️'
+      };
+      console.log(`${emoji[type]} [${timestamp}] ${message}`);
+    }
+
+    function updateDebugPanel() {
+      const debugContent = document.getElementById('debug-content');
+      debugContent.innerHTML = debugLogs.map(log => 
+        `<div class="debug-log ${log.type}">[${log.timestamp}] ${log.message}</div>`
+      ).reverse().join('');
+    }
+
+    function toggleDebug() {
+      debugVisible = !debugVisible;
+      const panel = document.getElementById('debug-panel');
+      panel.classList.toggle('visible', debugVisible);
+    }
+
+    // Improved Altis configuration with better coordinate system
+    const AltisConfig = {
+      minZoom: 0,
+      maxZoom: 6,
+      CRS: L.extend({}, L.CRS.Simple, {
+        transformation: new L.Transformation(1/256, 0, -1/256, 30720)
+      }),
+      tilePattern: 'altis/{z}/{x}/{y}.png',
+      attribution: 'Altis Map - Arma 3',
+      tileSize: 256,
+      center: [15360, 15360],
+      defaultZoom: 2,
+      cities: [
+        { name: "Kavala", x: 26800, y: 21300 },
+        { name: "Pyrgos", x: 15200, y: 17000 },
+        { name: "Sofia", x: 25900, y: 21900 },
+        { name: "Athira", x: 13400, y: 19600 },
+        { name: "Paros", x: 23300, y: 16600 },
+        { name: "Zaros", x: 8600, y: 15900 },
+        { name: "Poliakko", x: 12200, y: 14200 },
+        { name: "Galati", x: 20800, y: 13600 }
+      ]
+    };
+
+    // Test tile accessibility before initializing map
+    function testTileAccess() {
+      debugLog('Testing tile accessibility...', 'info');
+      
+      const testTiles = [
+        'altis/0/0/0.png',
+        'altis/1/0/0.png',
+        'altis/2/0/0.png',
+        'altis/6/16/9.png'
+      ];
+      
+      let successCount = 0;
+      let totalTests = testTiles.length;
+      
+      testTiles.forEach(tilePath => {
+        const img = new Image();
+        img.onload = function() {
+          successCount++;
+          debugLog(`Tile accessible: ${tilePath}`, 'success');
+          
+          if (successCount === totalTests) {
+            debugLog('All test tiles accessible - proceeding with map initialization', 'success');
+            initializeMap();
+          }
+        };
+        
+        img.onerror = function() {
+          debugLog(`Tile NOT accessible: ${tilePath}`, 'error');
+          totalTests--;
+          
+          if (successCount === totalTests) {
+            if (successCount > 0) {
+              debugLog(`${successCount} tiles accessible - proceeding with map initialization`, 'warning');
+              initializeMap();
+            } else {
+              debugLog('No tiles accessible - check server configuration', 'error');
+            }
+          }
+        };
+        
+        img.src = tilePath;
+      });
+    }
+
+    function initializeMap() {
+      debugLog('Initializing map with enhanced configuration...', 'info');
+      
+      try {
+        const map = L.map('map', {
+          minZoom: AltisConfig.minZoom,
+          maxZoom: AltisConfig.maxZoom,
+          crs: AltisConfig.CRS,
+          zoomControl: true,
+          attributionControl: true
+        });
+
+        debugLog('Map object created successfully', 'success');
+
+        // Enhanced tile layer with better error handling
+        const AltisLayer = L.TileLayer.extend({
+          getTileUrl: function (coords) {
+            const url = AltisConfig.tilePattern
+              .replace('{z}', coords.z)
+              .replace('{x}', coords.x)
+              .replace('{y}', coords.y);
+            
+            debugLog(`Requesting tile: ${url} (z=${coords.z}, x=${coords.x}, y=${coords.y})`, 'info');
+            return url;
+          }
+        });
+
+        const tileLayer = new AltisLayer('', {
+          attribution: AltisConfig.attribution,
+          tileSize: AltisConfig.tileSize,
+          minZoom: AltisConfig.minZoom,
+          maxZoom: AltisConfig.maxZoom,
+          errorTileUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+          bounds: [[-1000, -1000], [31000, 31000]] // Set reasonable bounds
+        });
+
+        // Enhanced tile event listeners
+        let tilesLoaded = 0;
+        let tilesErrored = 0;
+
+        tileLayer.on('tileloadstart', function(e) {
+          debugLog(`Tile loading: ${e.url}`, 'info');
+        });
+
+        tileLayer.on('tileload', function(e) {
+          tilesLoaded++;
+          debugLog(`Tile loaded: ${e.url} (${tilesLoaded} total)`, 'success');
+        });
+
+        tileLayer.on('tileerror', function(e) {
+          tilesErrored++;
+          debugLog(`Tile error: ${e.url} (${tilesErrored} errors)`, 'error');
+          debugLog(`Error coords: z=${e.coords.z}, x=${e.coords.x}, y=${e.coords.y}`, 'error');
+        });
+
+        tileLayer.on('loading', function() {
+          debugLog('Map tiles loading started...', 'info');
+        });
+
+        tileLayer.on('load', function() {
+          debugLog(`All tiles loaded! Success: ${tilesLoaded}, Errors: ${tilesErrored}`, 'success');
+        });
+
+        tileLayer.addTo(map);
+        map.setView(AltisConfig.center, AltisConfig.defaultZoom);
+
+        // Add scale control
+        L.control.scale({ maxWidth: 200, imperial: false }).addTo(map);
+
+        // Make map globally accessible
+        window.map = map;
+        window.tileLayer = tileLayer;
+
+        debugLog(`Map initialized at center: [${AltisConfig.center}], zoom: ${AltisConfig.defaultZoom}`, 'success');
+
+        // Add border after map is ready
+        setTimeout(() => {
+          addMapBorder();
+        }, 500);
+
+      } catch (error) {
+        debugLog(`Map initialization failed: ${error.message}`, 'error');
+        console.error('Map initialization error:', error);
+      }
+    }
+
+    function addMapBorder() {
+      if (!window.map) {
+        debugLog('Cannot add border - map not available', 'error');
+        return;
+      }
+
+      try {
+        const bounds = window.map.getBounds();
+        mapBorder = L.rectangle(bounds, {
+          color: '#ff0000',
+          weight: 3,
+          opacity: 0.8,
+          fillOpacity: 0,
+          dashArray: '10, 10'
+        }).addTo(window.map);
+
+        debugLog('Map border added successfully', 'success');
+      } catch (error) {
+        debugLog(`Failed to add border: ${error.message}`, 'error');
+      }
+    }
+
+    function addCities() {
+      if (!window.map) {
+        debugLog('Cannot add cities - map not available', 'error');
+        return;
+      }
+
+      // Clear existing city markers
+      cityMarkers.forEach(marker => window.map.removeLayer(marker));
+      cityMarkers = [];
+
+      try {
+        AltisConfig.cities.forEach(city => {
+          const marker = L.marker([city.y, city.x]).addTo(window.map);
+          marker.bindPopup(`<b>${city.name}</b><br>Coords: [${city.x}, ${city.y}]`);
+          cityMarkers.push(marker);
+        });
+
+        debugLog(`Added ${AltisConfig.cities.length} city markers`, 'success');
+      } catch (error) {
+        debugLog(`Failed to add cities: ${error.message}`, 'error');
+      }
+    }
+
+    function removeCities() {
+      if (!window.map) return;
+      
+      cityMarkers.forEach(marker => window.map.removeLayer(marker));
+      cityMarkers = [];
+      debugLog('Removed all city markers', 'info');
+    }
+
+    function toggleCities() {
+      if (citiesVisible) {
+        removeCities();
+        window.location.hash = '';
+        citiesVisible = false;
+        debugLog('Cities hidden', 'info');
+      } else {
+        addCities();
+        window.location.hash = '#cities';
+        citiesVisible = true;
+        debugLog('Cities shown', 'info');
+      }
+    }
+
+    function centerMap() {
+      if (window.map) {
+        window.map.setView(AltisConfig.center, AltisConfig.defaultZoom);
+        debugLog(`Map centered at [${AltisConfig.center}], zoom: ${AltisConfig.defaultZoom}`, 'info');
+      }
+    }
+
+    function toggleBorder() {
+      if (!mapBorder || !window.map) return;
+
+      if (borderVisible) {
+        window.map.removeLayer(mapBorder);
+        borderVisible = false;
+        debugLog('Map border hidden', 'info');
+      } else {
+        mapBorder.addTo(window.map);
+        borderVisible = true;
+        debugLog('Map border shown', 'info');
+      }
+    }
+
+    function goBack() {
+      if (confirm('Are you sure you want to leave TrackPoint?')) {
+        window.location.href = '/admin-dashboard.html';
+      }
+    }
+
+    // Initialize when DOM is ready
+    $(document).ready(function() {
+      debugLog('DOM ready - starting TrackPoint initialization', 'info');
+      debugLog(`Current URL: ${window.location.href}`, 'info');
+      debugLog(`Leaflet version: ${L.version}`, 'info');
+      debugLog(`jQuery version: ${$.fn.jquery}`, 'info');
+
+      // Check if cities should be visible on load
+      if (window.location.hash === '#cities') {
+        citiesVisible = true;
+        debugLog('Cities will be shown after map loads', 'info');
+      }
+
+      // Start tile testing and map initialization
+      testTileAccess();
+    });
+  </script>
+</body>
+</html>

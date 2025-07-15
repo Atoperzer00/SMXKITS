@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Button Debug Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #1e1e1e; color: white; }
+    button { padding: 10px 20px; margin: 10px; background: #22c55e; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    button:hover { background: #16a34a; }
+    .log { background: #333; padding: 10px; margin: 10px 0; border-radius: 5px; font-family: monospace; max-height: 400px; overflow-y: auto; }
+  </style>
+</head>
+<body>
+  <h1>🧪 Button Debug Test</h1>
+  
+  <div>
+    <h3>Test Buttons (Same IDs as OpsLog)</h3>
+    <button id="editCalloutBtn">Edit Callout</button>
+    <button id="viewHistoryBtn">View History</button>
+    <button id="gradingBtn">Grading System</button>
+    <button id="createFollowBtn">Create Follow</button>
+    <button id="dashboardBtn">Dashboard</button>
+  </div>
+  
+  <div id="log" class="log">
+    <div id="logContent">Initializing...</div>
+  </div>
+
+  <script>
+    function log(message) {
+      const logContent = document.getElementById('logContent');
+      const timestamp = new Date().toLocaleTimeString();
+      logContent.innerHTML += `<br>[${timestamp}] ${message}`;
+    }
+
+    // Clear initial content
+    document.getElementById('logContent').innerHTML = '';
+    
+    log("🔍 Script started");
+
+    // Test DOMContentLoaded - EXACT same logic as OpsLog
+    document.addEventListener('DOMContentLoaded', function() {
+      log("🚀 DOM loaded - initializing event handlers");
+      log(`Document ready state: ${document.readyState}`);
+      log(`Total elements in DOM: ${document.querySelectorAll('*').length}`);
+      
+      // EXACT same button array structure as OpsLog
+      const buttons = [
+        ['dashboardBtn', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          log('Dashboard button clicked');
+        }],
+        ['editCalloutBtn', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          log('Edit Callout button clicked');
+        }],
+        ['viewHistoryBtn', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          log('View History button clicked');
+        }],
+        ['gradingBtn', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          log('Grading button clicked');
+        }],
+        ['createFollowBtn', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          log('Create Follow button clicked');
+        }]
+      ];
+      
+      // EXACT same binding logic as OpsLog
+      log(`📋 Attempting to bind ${buttons.length} button handlers...`);
+      buttons.forEach(([id, handler]) => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener('click', handler);
+          log(`🟢 Bound: ${id} (${el.tagName})`);
+        } else {
+          log(`❌ Missing element: ${id}`);
+        }
+      });
+      log("📋 Button binding complete.");
+      
+      log("🎉 All event handlers attached, page ready!");
+      log("🔍 If buttons don't work, check console for ❌ Missing element messages above.");
+    });
+  </script>
+</body>
+</html>

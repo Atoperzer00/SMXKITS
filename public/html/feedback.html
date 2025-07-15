@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SMX KITS - Course Feedback</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-gradient: linear-gradient(135deg, #ff7b00 0%, #ff5722 100%);
+      --secondary-gradient: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+      --accent-gradient: linear-gradient(135deg, #ffab40 0%, #ff9800 100%);
+      --dark-gradient: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 100%);
+      --card-gradient: linear-gradient(145deg, #2d1810 0%, #1a0f08 100%);
+      --glass-bg: rgba(255, 123, 0, 0.05);
+      --glass-border: rgba(255, 152, 0, 0.1);
+      --text-primary: #ffffff;
+      --text-secondary: #ffcc80;
+      --text-accent: #ffab40;
+      --shadow-primary: 0 20px 40px rgba(255, 123, 0, 0.3);
+      --shadow-hover: 0 30px 60px rgba(255, 123, 0, 0.4);
+      --border-radius: 20px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--dark-gradient);
+      color: var(--text-primary);
+      overflow-x: hidden;
+      overflow-y: auto;
+      line-height: 1.6;
+    }
+
+    /* Animated background particles */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(255, 123, 0, 0.2) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 152, 0, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(255, 171, 64, 0.08) 0%, transparent 50%);
+      z-index: -1;
+      animation: float 20s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      33% { transform: translateY(-20px) rotate(1deg); }
+      66% { transform: translateY(10px) rotate(-1deg); }
+    }
+
+    .admin-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar Redesign */
+    .admin-sidebar {
+      width: 280px;
+      background: rgba(15, 20, 25, 0.95);
+      backdrop-filter: blur(20px);
+      border-right: 1px solid var(--glass-border);
+      display: flex;
+      flex-direction: column;
+      padding: 2rem 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .admin-sidebar::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, rgba(255, 123, 0, 0.1) 0%, transparent 100%);
+      z-index: -1;
+    }
+
+    .admin-logo {
+      width: 200px;
+      margin: 0 auto 3rem;
+      filter: drop-shadow(0 10px 30px rgba(255, 123, 0, 0.3));
+      transition: var(--transition);
+    }
+
+    .admin-logo:hover {
+      transform: scale(1.05);
+      filter: drop-shadow(0 15px 40px rgba(74, 85, 104, 0.5));
+    }
+
+    .admin-nav {
+      list-style: none;
+      padding: 0 1rem;
+    }
+
+    .admin-nav li {
+      margin-bottom: 0.5rem;
+      padding: 1rem 1.5rem;
+      border-radius: 15px;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .admin-nav li::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: var(--primary-gradient);
+      transition: var(--transition);
+      z-index: -1;
+    }
+
+    .admin-nav li:hover::before,
+    .admin-nav li.active::before {
+      left: 0;
+    }
+
+    .admin-nav li:hover,
+    .admin-nav li.active {
+      color: white;
+      transform: translateX(5px);
+      box-shadow: 0 10px 25px rgba(74, 85, 104, 0.3);
+    }
+
+    .admin-nav a {
+      color: inherit;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+    }
+
+    /* Main Content Area */
+    .admin-content {
+      flex: 1;
+      padding: 2rem;
+      background: transparent;
+      overflow: visible !important;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header Section */
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 3rem;
+      padding: 2rem;
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border-radius: var(--border-radius);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+      position: relative;
+      z-index: 100;
+    }
+
+    .dashboard-title {
+      font-size: 3rem;
+      font-weight: 800;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin: 0;
+      letter-spacing: -0.02em;
+    }
+
+    .dashboard-subtitle {
+      color: var(--text-secondary);
+      font-size: 1.2rem;
+      margin-top: 0.5rem;
+    }
+
+    /* Feedback Section */
+    .feedback-section {
+      background: var(--card-gradient);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow-primary);
+      margin-bottom: 2rem;
+    }
+
+    .week-selector {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 3rem;
+    }
+
+    .week-tabs {
+      display: flex;
+      background: var(--glass-bg);
+      border-radius: 15px;
+      padding: 0.5rem;
+      border: 1px solid var(--glass-border);
+    }
+
+    .week-tab {
+      padding: 1rem 2rem;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: var(--transition);
+      font-weight: 500;
+      color: var(--text-secondary);
+      border: none;
+      background: transparent;
+    }
+
+    .week-tab.active {
+      background: var(--primary-gradient);
+      color: white;
+      box-shadow: 0 4px 15px rgba(255, 123, 0, 0.3);
+    }
+
+    .week-tab:hover:not(.active) {
+      background: rgba(255, 123, 0, 0.1);
+      color: var(--text-primary);
+    }
+
+    .feedback-form {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .form-group {
+      margin-bottom: 2rem;
+    }
+
+    .form-label {
+      display: block;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.8rem;
+      font-size: 1.1rem;
+    }
+
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      padding: 1rem;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      color: var(--text-primary);
+      font-size: 1rem;
+      transition: var(--transition);
+      font-family: inherit;
+    }
+
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--text-accent);
+      box-shadow: 0 0 20px rgba(255, 171, 64, 0.2);
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+
+    .rating-group {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+    }
+
+    .rating-option {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.8rem 1.2rem;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: var(--transition);
+      font-weight: 500;
+    }
+
+    .rating-option:hover {
+      background: rgba(255, 123, 0, 0.1);
+      border-color: var(--text-accent);
+    }
+
+    .rating-option input[type="radio"] {
+      margin: 0;
+    }
+
+    .rating-option.selected {
+      background: var(--accent-gradient);
+      color: white;
+      border-color: var(--text-accent);
+    }
+
+    .btn {
+      padding: 1rem 2rem;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      font-size: 1rem;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: var(--primary-gradient);
+      color: white;
+      box-shadow: 0 4px 15px rgba(255, 123, 0, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(255, 123, 0, 0.4);
+    }
+
+    .btn-secondary {
+      background: var(--glass-bg);
+      color: var(--text-primary);
+      border: 1px solid var(--glass-border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--glass-border);
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 3rem;
+    }
+
+    .week-content {
+      display: none;
+    }
+
+    .week-content.active {
+      display: block;
+    }
+
+    .success-message {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      padding: 1rem 1.5rem;
+      border-radius: 10px;
+      margin-bottom: 2rem;
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .success-message.show {
+      display: flex;
+    }
+  </style>
+</head>
+<body>
+  <!-- Authentication Check - This runs BEFORE any content loads -->
+  <script>
+    // Immediate authentication check
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    
+    if (!token || !role) {
+      // No authentication found, redirect immediately
+      window.location.replace('/login.html');
+      // Stop execution to prevent content from loading
+      throw new Error('Authentication required');
+    }
+    
+    // We are authenticated, continue loading feedback page
+    console.log('✅ Authentication verified - loading feedback page');
+  </script>
+
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <img src="images/SE66806_logo_orig.png" alt="SMX KITS Logo" class="admin-logo">
+      
+      <nav>
+        <ul class="admin-nav">
+          <li><a href="dashboard.html"><i class="fas fa-tachometer-alt"></i>Dashboard</a></li>
+          <li><a href="#" onclick="goToPEDTraining();"><i class="fas fa-plane"></i>Live PED Exercise</a></li>
+          <li><a href="keyboard-training.html"><i class="fas fa-keyboard"></i>Keyboard Training</a></li>
+          <li><a href="#" onclick="goToPEDTraining();"><i class="fas fa-user-tie"></i>Screener Training</a></li>
+          <li><a href="mission-links.html"><i class="fas fa-satellite-dish"></i>IA Training</a></li>
+          <li><a href="#" onclick="goToOpsLog();"><i class="fas fa-clipboard-list"></i>Grading</a></li>
+          <li><a href="#"><i class="fas fa-calendar"></i>Schedule</a></li>
+          <li class="active"><a href="feedback.html"><i class="fas fa-comments"></i>Feedback</a></li>
+        </ul>
+      </nav>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="admin-content">
+      <!-- Page Header -->
+      <div class="dashboard-header">
+        <div>
+          <h1 class="dashboard-title">Course Feedback</h1>
+          <p class="dashboard-subtitle">Share your thoughts to help us improve the training experience</p>
+        </div>
+      </div>
+
+      <!-- Success Message -->
+      <div id="successMessage" class="success-message">
+        <i class="fas fa-check-circle"></i>
+        <span>Feedback submitted successfully! Thank you for your input.</span>
+      </div>
+
+      <!-- Feedback Section -->
+      <div class="feedback-section">
+        <!-- Week Selector -->
+        <div class="week-selector">
+          <div class="week-tabs">
+            <button class="week-tab active" onclick="switchWeek('week1', this)">Week 1</button>
+            <button class="week-tab" onclick="switchWeek('week2', this)">Week 2</button>
+            <button class="week-tab" onclick="switchWeek('week3', this)">Week 3</button>
+          </div>
+        </div>
+
+        <!-- Week 1 Content -->
+        <div id="week1Content" class="week-content active">
+          <form class="feedback-form" onsubmit="submitFeedback(event, 'week1')">
+            <div class="form-group">
+              <label class="form-label">How would you rate the first week of training?</label>
+              <div class="rating-group">
+                <label class="rating-option">
+                  <input type="radio" name="week1Rating" value="5" required>
+                  <span>Excellent</span>
+                </label>
+                <label class="rating-option">
+                  <input type="radio" name="week1Rating" value="4">
+                  <span>Good</span>
+                </label>
+                <label class="rating-option">
+                  <input type="radio" name="week1Rating" value="3">
+                  <span>Average</span>
+                </label>
+                <label class="rating-option">
+                  <input type="radio" name="week1Rating" value="2">
+                  <span>Below Average</span>
+                </label>
+                <label class="rating-option">
+                  <input type="radio" name="week1Rating" value="1">
+                  <span>Poor</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">What aspects of the training were most valuable?</label>
+              <textarea class="form-textarea" name="week1Valuable" placeholder="Please describe what you found most helpful during the first week..."></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">What could be improved?</label>
+              <textarea class="form-textarea" name="week1Improvements" placeholder="Please share any suggestions for improvement..."></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Additional Comments</label>
+              <textarea class="form-textarea" name="week1Comments" placeholder="Any other thoughts or feedback about Week 1..."></textarea>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-paper-plane" style="margin-right: 0.5rem;"></i>
+                Submit Week 1 Feedback
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Week 2 Content -->
+        <div id="week2Content" class="week-content">
+          <form class="feedback-form" onsubmit="submitFeedback(event, 'week2')">
+            <div class="form-group">
+              <label class="form-label">How would you rate the second week of training?</label>
+              <div class="rating-group">
+                <label class="rating-option">
+                  <input type="radio" name="week2Rating" value="5" required>
+                  <span>Excellent</span>
+                </label>
+                <label class="rating-option">
+                  <input type="radio" name="week2Rating" value="4">
+                  <span>Good</span>
+                </label>
+                <label class="rating-option">
+                  <input type="radio" name="week2Rating" value="3">
+                  <span>Average</span>
+                </label>
+                <label class="rating-option">
+                  <input type="radio" name="week2Rating" value="2">
+                  <span>Below Average</span>
+                </label>
+                <label class="rating-option">
+                  <input type="radio" name="week2Rating" value="1">
+                  <span>Poor</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Was the pace of instruction appropriate?</label>
+              <div class="rating-group">
+                <label class="rating-option">
+                  <input type="radio" name="week2Pace" value="too-fast" required>
+                  <span>Too Fast</span>
+                </label>
+                <label class="rating-option">
+                  <input type="radio" name="week2Pace" value="slightly-fast">
+                  <span>Slightly Fast</span>
+                </label>
+                <label class="rating-option">
+                  <input type="radio" name="week2Pace" value="just-right">
+                  <span>Just Right</span>
+                </label>
+                <label class="rating-option">
+                  <input type="radio" name="week2Pace" value="slightly-slow">
+                  <span>Slightly Slow</span>
+                </label>
+                <label class="rating-option">
+                  <input type="radio" name="week2Pace" value="too-slow">
+                  <span>Too Slow</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">What topics were most engaging?</label>
+              <textarea class="form-textarea" name="week2Engaging" placeholder="Tell us about the topics that captured your interest..."></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Additional Comments</label>
+              <textarea class="form-textarea" name="week2Comments" placeholder="Any other thoughts or feedback about Week 2..."></textarea>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-paper-plane" style="margin-right: 0.5rem;"></i>
+                Submit Week 2 Feedback
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Week 3 Content -->
+        <div id="week3Content" class="week-content">
+          <form class="feedback-form" onsubmit="submitFeedback(event, 'week3')">
+            <div class="form-group">
+              <label class="form-label">How would you rate your overall course experience?</label>
+              <div class="rating-group">
+                <label class="rating-option">
+                  <input type="radio" name="overallRating" value="5" required>
+                  <span>Excellent</span>
+                </label>
+                <label class="rating-option">
+                  <input type="radio" name="overallRating" value="4">
+                  <span>Good</span>
+                </label>
+                <label class="rating-option">
+                  <input type="radio" name="overallRating" value="3">
+                  <span>Average</span>
+                </label>
+                <label class="rating-option">
+                  <input type="radio" name="overallRating" value="2">
+                  <span>Below Average</span>
+                </label>
+                <label class="rating-option">
+                  <input type="radio" name="overallRating" value="1">
+                  <span>Poor</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Which aspects of the course were most helpful to your learning?</label>
+              <textarea class="form-textarea" name="mostHelpful" placeholder="Describe the most valuable parts of the course..."></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Which aspects could be improved?</label>
+              <textarea class="form-textarea" name="leastHelpful" placeholder="Share what could be enhanced or changed..."></textarea>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Course Organization</label>
+              <div class="rating-group">
+                <label class="rating-option">
+                  <input type="radio" name="organized" value="5" required>
+                  <span>Strongly Agree</span>
+                </label>
+                <label class="rating-option">
+                  <input type="radio" name="organized" value="4">
+                  <span>Agree</span>
+                </label>
+                <label class="rating-option">
+                  <input type="radio" name="organized" value="3">
+                  <span>Neutral</span>
+                </label>
+                <label class="rating-option">
+                  <input type="radio" name="organized" value="2">
+                  <span>Disagree</span>
+                </label>
+                <label class="rating-option">
+                  <input type="radio" name="organized" value="1">
+                  <span>Strongly Disagree</span>
+                </label>
+              </div>
+              <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.5rem;">The course was well organized and structured</p>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Course Materials Quality</label>
+              <div class="rating-group">
+                <label class="rating-option">
+                  <input type="radio" name="materialsHelpful" value="5" required>
+                  <span>Strongly Agree</span>
+                </label>
+                <label class="rating-option">
+                  <input type="radio" name="materialsHelpful" value="4">
+                  <span>Agree</span>
+                </label>
+                <label class="rating-option">
+                  <input type="radio" name="materialsHelpful" value="3">
+                  <span>Neutral</span>
+                </label>
+                <label class="rating-option">
+                  <input type="radio" name="materialsHelpful" value="2">
+                  <span>Disagree</span>
+                </label>
+                <label class="rating-option">
+                  <input type="radio" name="materialsHelpful" value="1">
+                  <span>Strongly Disagree</span>
+                </label>
+              </div>
+              <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.5rem;">The course materials helped me understand the content</p>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Instructor Feedback Quality</label>
+              <div class="rating-group">
+                <label class="rating-option">
+                  <input type="radio" name="feedbackHelpful" value="5" required>
+                  <span>Strongly Agree</span>
+                </label>
+                <label class="rating-option">
+                  <input type="radio" name="feedbackHelpful" value="4">
+                  <span>Agree</span>
+                </label>
+                <label class="rating-option">
+                  <input type="radio" name="feedbackHelpful" value="3">
+                  <span>Neutral</span>
+                </label>
+                <label class="rating-option">
+                  <input type="radio" name="feedbackHelpful" value="2">
+                  <span>Disagree</span>
+                </label>
+                <label class="rating-option">
+                  <input type="radio" name="feedbackHelpful" value="1">
+                  <span>Strongly Disagree</span>
+                </label>
+              </div>
+              <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.5rem;">Feedback on my work was helpful and constructive</p>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Overall Course Recommendation</label>
+              <textarea class="form-textarea" name="recommendation" placeholder="Would you recommend this course to others? Why or why not?"></textarea>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">
+                <i class="fas fa-paper-plane" style="margin-right: 0.5rem;"></i>
+                Submit Final Evaluation
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- JavaScript for functionality -->
+  <script>
+    /**
+     * FEEDBACK SYSTEM
+     * Modern feedback collection interface with week-based organization
+     */
+
+    // Initialize the feedback system when DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('Feedback System - Initializing...');
+      
+      // Setup rating option interactions
+      setupRatingInteractions();
+      
+      // Load user info
+      loadUserInfo();
+      
+      console.log('Feedback System - Ready!');
+    });
+
+    /**
+     * Setup interactive rating options
+     */
+    function setupRatingInteractions() {
+      const ratingOptions = document.querySelectorAll('.rating-option');
+      
+      ratingOptions.forEach(option => {
+        option.addEventListener('click', function() {
+          const input = this.querySelector('input[type="radio"]');
+          const groupName = input.name;
+          
+          // Remove selected class from all options in this group
+          document.querySelectorAll(`input[name="${groupName}"]`).forEach(radio => {
+            radio.closest('.rating-option').classList.remove('selected');
+          });
+          
+          // Add selected class to clicked option
+          this.classList.add('selected');
+          input.checked = true;
+        });
+      });
+    }
+
+    /**
+     * Switch between week tabs
+     */
+    function switchWeek(weekId, tabElement) {
+      // Remove active class from all tabs and content
+      document.querySelectorAll('.week-tab').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('.week-content').forEach(content => content.classList.remove('active'));
+      
+      // Add active class to clicked tab and corresponding content
+      tabElement.classList.add('active');
+      document.getElementById(weekId + 'Content').classList.add('active');
+    }
+
+    /**
+     * Submit feedback form
+     */
+    function submitFeedback(event, weekType) {
+      event.preventDefault();
+      
+      const form = event.target;
+      const formData = new FormData(form);
+      const feedbackData = {};
+      
+      // Convert FormData to object
+      for (let [key, value] of formData.entries()) {
+        feedbackData[key] = value;
+      }
+      
+      // Add metadata
+      feedbackData.week = weekType;
+      feedbackData.timestamp = new Date().toISOString();
+      feedbackData.studentId = localStorage.getItem('userId') || 'anonymous';
+      feedbackData.studentName = localStorage.getItem('userName') || 'Anonymous Student';
+      
+      console.log('Submitting feedback:', feedbackData);
+      
+      // Show loading state
+      const submitButton = form.querySelector('button[type="submit"]');
+      const originalText = submitButton.innerHTML;
+      submitButton.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 0.5rem;"></i>Submitting...';
+      submitButton.disabled = true;
+      
+      // Simulate API call (replace with actual endpoint)
+      setTimeout(() => {
+        // Show success message
+        showSuccessMessage();
+        
+        // Reset form
+        form.reset();
+        
+        // Remove selected classes from rating options
+        form.querySelectorAll('.rating-option').forEach(option => {
+          option.classList.remove('selected');
+        });
+        
+        // Reset button
+        submitButton.innerHTML = originalText;
+        submitButton.disabled = false;
+        
+        // In a real implementation, you would send this to your backend:
+        // fetch('/api/feedback', {
+        //   method: 'POST',
+        //   headers: { 'Content-Type': 'application/json' },
+        //   body: JSON.stringify(feedbackData)
+        // });
+        
+      }, 1500);
+    }
+
+    /**
+     * Show success message
+     */
+    function showSuccessMessage() {
+      const successMessage = document.getElementById('successMessage');
+      successMessage.classList.add('show');
+      
+      // Hide after 5 seconds
+      setTimeout(() => {
+        successMessage.classList.remove('show');
+      }, 5000);
+    }
+
+    /**
+     * Load user information
+     */
+    function loadUserInfo() {
+      const userName = localStorage.getItem('userName') || 'Student';
+      // Update any user-specific elements if needed
+      console.log('Loaded user info for:', userName);
+    }
+
+    /**
+     * Navigation functions
+     */
+    function logout() {
+      // Clear local storage
+      localStorage.clear();
+      // Redirect to login page
+      window.location.href = '/login.html';
+    }
+    
+    function goToPEDTraining() {
+      localStorage.setItem('activeSection', 'screen-ped-training');
+      window.location.href = "/SMXKITS.html#screen-ped-training";
+    }
+    
+    function goToOpsLog() {
+      window.open('/OpsLog.html', '_blank');
+    }
+  </script>
+</body>
+</html>

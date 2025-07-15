@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced Tile Diagnostics - TrackPoint</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .btn:hover {
+            background: #2980b9;
+        }
+        
+        .btn.success {
+            background: #27ae60;
+        }
+        
+        .btn.success:hover {
+            background: #229954;
+        }
+        
+        .btn.warning {
+            background: #f39c12;
+        }
+        
+        .btn.warning:hover {
+            background: #e67e22;
+        }
+        
+        .btn.danger {
+            background: #e74c3c;
+        }
+        
+        .btn.danger:hover {
+            background: #c0392b;
+        }
+        
+        .results {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .tile-grid {
+            display: grid;
+            gap: 2px;
+            margin: 10px 0;
+        }
+        
+        .tile-cell {
+            width: 20px;
+            height: 20px;
+            border: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            cursor: pointer;
+        }
+        
+        .tile-exists {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .tile-missing {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .tile-unknown {
+            background: #95a5a6;
+            color: white;
+        }
+        
+        .map-container {
+            height: 400px;
+            border: 2px solid #3498db;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            background: #34495e;
+            color: white;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #ecf0f1;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: #3498db;
+            transition: width 0.3s ease;
+        }
+        
+        .log {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .tile-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin: 10px 0;
+        }
+        
+        .tile-preview img {
+            width: 64px;
+            height: 64px;
+            border: 1px solid #ddd;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Enhanced Tile Diagnostics - TrackPoint</h1>
+            <p>Advanced tile detection, analysis, and placeholder generation for Leaflet tactical maps</p>
+        </div>
+        
+        <div class="section">
+            <h2>🎛️ Controls</h2>
+            <div class="controls">
+                <button class="btn" onclick="detectTiles()">🔍 Detect Available Tiles</button>
+                <button class="btn success" onclick="generatePlaceholders()">🎨 Generate Placeholders</button>
+                <button class="btn warning" onclick="testMapWithDetection()">🗺️ Test Map with Detection</button>
+                <button class="btn" onclick="downloadTileReport()">📊 Download Report</button>
+                <button class="btn danger" onclick="clearResults()">🗑️ Clear Results</button>
+            </div>
+            
+            <div class="progress-bar" id="progress-container" style="display: none;">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📊 Detection Statistics</h2>
+            <div class="stats" id="stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="total-tiles">-</div>
+                    <div class="stat-label">Total Tiles Found</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="zoom-levels">-</div>
+                    <div class="stat-label">Zoom Levels</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="coverage">-</div>
+                    <div class="stat-label">Coverage %</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="recommended-zoom">-</div>
+                    <div class="stat-label">Recommended Zoom</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>🗺️ Test Map</h2>
+            <div class="map-container">
+                <div id="map"></div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📋 Detection Results</h2>
+            <div class="results" id="results">Click "Detect Available Tiles" to start analysis...</div>
+        </div>
+        
+        <div class="section">
+            <h2>🎨 Generated Placeholders</h2>
+            <div id="placeholder-preview"></div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 Activity Log</h2>
+            <div class="log" id="log"></div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/jquery@3.5.1/dist/jquery.min.js"></script>
+    <script src="mapUtils.js"></script>
+    <script src="tileDetector.js"></script>
+    <script src="generatePlaceholderTiles.js"></script>
+    <script src="defaultMap.js"></script>
+    <script src="altis.js"></script>
+    
+    <script>
+        let detectionResults = null;
+        let testMap = null;
+        let placeholderGenerator = null;
+        
+        // Initialize
+        $(document).ready(function() {
+            log('🚀 Enhanced Tile Diagnostics initialized');
+            log('📍 Leaflet version: ' + L.version);
+            log('💰 jQuery version: ' + $.fn.jquery);
+            
+            // Check if required classes are available
+            log('🔧 TileDetector available: ' + (typeof TileDetector !== 'undefined'));
+            log('🔧 PlaceholderTileGenerator available: ' + (typeof PlaceholderTileGenerator !== 'undefined'));
+            log('🔧 Arma3Map available: ' + (typeof Arma3Map !== 'undefined'));
+            
+            placeholderGenerator = new PlaceholderTileGenerator();
+        });
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('log');
+            logElement.textContent += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+            console.log(message);
+        }
+        
+        function updateProgress(percent) {
+            const container = document.getElementById('progress-container');
+            const fill = document.getElementById('progress-fill');
+            
+            if (percent > 0) {
+                container.style.display = 'block';
+                fill.style.width = percent + '%';
+            } else {
+                container.style.display = 'none';
+            }
+        }
+        
+        function updateStats(results) {
+            if (!results) return;
+            
+            const totalTiles = Array.from(results.availableTiles.values())
+                .reduce((sum, tiles) => sum + tiles.size, 0);
+            
+            document.getElementById('total-tiles').textContent = totalTiles;
+            document.getElementById('zoom-levels').textContent = results.detectedZoomLevels.length;
+            document.getElementById('recommended-zoom').textContent = results.recommendedZoom;
+            
+            // Calculate coverage (simplified)
+            const maxPossibleTiles = results.detectedZoomLevels
+                .reduce((sum, zoom) => sum + Math.pow(4, zoom), 0);
+            const coverage = maxPossibleTiles > 0 ? Math.round((totalTiles / maxPossibleTiles) * 100) : 0;
+            document.getElementById('coverage').textContent = coverage + '%';
+        }
+        
+        async function detectTiles() {
+            log('🔍 Starting tile detection...');
+            updateProgress(10);
+            
+            try {
+                const detector = new TileDetector('altis');
+                updateProgress(30);
+                
+                detectionResults = await detector.detectAvailableTiles(6, 200);
+                updateProgress(100);
+                
+                log('✅ Tile detection completed');
+                log(`📊 Found tiles in ${detectionResults.detectedZoomLevels.length} zoom levels`);
+                log(`📍 Recommended center: [${detectionResults.recommendedCenter.join(', ')}]`);
+                log(`🔍 Recommended zoom: ${detectionResults.recommendedZoom}`);
+                
+                // Display results
+                const resultsElement = document.getElementById('results');
+                resultsElement.textContent = JSON.stringify(detectionResults, null, 2);
+                
+                updateStats(detectionResults);
+                
+                setTimeout(() => updateProgress(0), 1000);
+                
+            } catch (error) {
+                log('❌ Tile detection failed: ' + error.message);
+                updateProgress(0);
+            }
+        }
+        
+        async function generatePlaceholders() {
+            log('🎨 Generating placeholder tiles...');
+            
+            try {
+                const tiles = placeholderGenerator.generateBasicTilePyramid();
+                log(`✅ Generated ${tiles.length} placeholder tiles`);
+                
+                // Show preview
+                placeholderGenerator.createTilePreview(tiles, 'placeholder-preview');
+                
+                log('💡 Placeholder tiles ready for download or server deployment');
+                
+            } catch (error) {
+                log('❌ Placeholder generation failed: ' + error.message);
+            }
+        }
+        
+        async function testMapWithDetection() {
+            log('🗺️ Testing map with tile detection...');
+            
+            try {
+                // Clear existing map
+                if (testMap) {
+                    testMap.remove();
+                    testMap = null;
+                }
+                
+                // Initialize map with detection
+                if (typeof Arma3Map !== 'undefined' && Arma3Map.Maps.altis) {
+                    // Create a copy of the configuration
+                    const mapConfig = JSON.parse(JSON.stringify(Arma3Map.Maps.altis));
+                    
+                    // Initialize with tile detection
+                    const detector = new TileDetector('altis');
+                    const tileInfo = await detector.detectAvailableTiles(6);
+                    
+                    // Update configuration with detected values
+                    if (tileInfo.detectedBounds) {
+                        mapConfig.bounds = tileInfo.detectedBounds;
+                    }
+                    if (tileInfo.recommendedCenter) {
+                        mapConfig.center = tileInfo.recommendedCenter;
+                    }
+                    if (tileInfo.recommendedZoom) {
+                        mapConfig.defaultZoom = tileInfo.recommendedZoom;
+                    }
+                    if (tileInfo.detectedZoomLevels.length > 0) {
+                        mapConfig.minZoom = Math.min(...tileInfo.detectedZoomLevels);
+                        mapConfig.maxZoom = Math.max(...tileInfo.detectedZoomLevels);
+                    }
+                    
+                    // Create map manually for testing
+                    testMap = L.map('map', {
+                        minZoom: mapConfig.minZoom,
+                        maxZoom: mapConfig.maxZoom,
+                        crs: mapConfig.CRS,
+                        maxBounds: mapConfig.bounds,
+                        maxBoundsViscosity: 1.0,
+                        noWrap: true
+                    });
+                    
+                    const tileLayer = L.tileLayer(mapConfig.tilePattern, {
+                        attribution: mapConfig.attribution,
+                        tileSize: mapConfig.tileSize,
+                        bounds: mapConfig.bounds
+                    });
+                    
+                    tileLayer.addTo(testMap);
+                    testMap.setView(mapConfig.center, mapConfig.defaultZoom);
+                    
+                    // Add bounds rectangle
+                    if (mapConfig.bounds) {
+                        L.rectangle(mapConfig.bounds, {
+                            color: '#ff0000',
+                            weight: 2,
+                            opacity: 0.8,
+                            fillOpacity: 0,
+                            dashArray: '5, 5'
+                        }).addTo(testMap);
+                    }
+                    
+                    log('✅ Test map created with detected tile constraints');
+                    log(`📐 Bounds: ${JSON.stringify(mapConfig.bounds)}`);
+                    log(`📍 Center: ${JSON.stringify(mapConfig.center)}`);
+                    log(`🔍 Zoom range: ${mapConfig.minZoom} - ${mapConfig.maxZoom}`);
+                    
+                } else {
+                    log('❌ Arma3Map configuration not available');
+                }
+                
+            } catch (error) {
+                log('❌ Test map creation failed: ' + error.message);
+            }
+        }
+        
+        function downloadTileReport() {
+            if (!detectionResults) {
+                log('⚠️ No detection results available. Run tile detection first.');
+                return;
+            }
+            
+            const report = {
+                timestamp: new Date().toISOString(),
+                detectionResults: detectionResults,
+                summary: {
+                    totalTiles: Array.from(detectionResults.availableTiles.values())
+                        .reduce((sum, tiles) => sum + tiles.size, 0),
+                    zoomLevels: detectionResults.detectedZoomLevels,
+                    recommendedSettings: {
+                        center: detectionResults.recommendedCenter,
+                        zoom: detectionResults.recommendedZoom,
+                        bounds: detectionResults.detectedBounds
+                    }
+                }
+            };
+            
+            const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `tile-detection-report-${Date.now()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            log('📊 Tile detection report downloaded');
+        }
+        
+        function clearResults() {
+            document.getElementById('results').textContent = 'Results cleared...';
+            document.getElementById('log').textContent = '';
+            document.getElementById('placeholder-preview').innerHTML = '';
+            
+            // Reset stats
+            document.getElementById('total-tiles').textContent = '-';
+            document.getElementById('zoom-levels').textContent = '-';
+            document.getElementById('coverage').textContent = '-';
+            document.getElementById('recommended-zoom').textContent = '-';
+            
+            detectionResults = null;
+            
+            if (testMap) {
+                testMap.remove();
+                testMap = null;
+            }
+            
+            log('🗑️ Results cleared');
+        }
+    </script>
+</body>
+</html>

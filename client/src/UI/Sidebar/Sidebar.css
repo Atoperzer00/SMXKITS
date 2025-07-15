@@ -1,0 +1,43 @@
+.admin-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 250px;
+    /* or whatever your sidebar width is */
+    height: 100vh;
+    /* full height of the viewport */
+    overflow-y: auto;
+    /* if sidebar has a lot of content */
+    z-index: 1000;
+    /* make sure it’s above other elements */
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+}
+
+/* Optional: Keep your background effect */
+.admin-sidebar::before {
+    content: '';
+    position: absolute;
+    /* change from fixed to absolute */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, rgba(102, 126, 234, 0.1) 0%, transparent 100%);
+    z-index: -1;
+}
+
+
+.admin-logo {
+    width: 150px;
+    height: auto;
+    margin: 1rem 0;
+    filter: drop-shadow(0 10px 30px rgba(102, 126, 234, 0.3));
+    transition: var(--transition);
+}
+
+.admin-logo:hover {
+    transform: scale(1.05);
+    filter: drop-shadow(0 15px 40px rgba(102, 126, 234, 0.5));
+}

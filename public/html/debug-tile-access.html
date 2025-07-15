@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Debug Tile Access</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+    .tile-test { margin: 10px 0; }
+    .tile-test img { border: 2px solid #ccc; margin: 5px; }
+    .success { color: green; }
+    .error { color: red; }
+    .info { background: #f0f8ff; padding: 10px; border-radius: 5px; margin: 10px 0; }
+  </style>
+</head>
+<body>
+  <h1>🔍 Tile Access Debug</h1>
+  
+  <div class="info">
+    <strong>Purpose:</strong> This page tests direct access to Altis map tiles to identify routing issues.
+  </div>
+
+  <div class="test-section">
+    <h3>Direct Image Tests</h3>
+    <div class="tile-test">
+      <strong>Test 1: altis/2/0/0.png</strong><br>
+      <img src="altis/2/0/0.png" alt="Tile 2/0/0" onload="reportSuccess(this)" onerror="reportError(this)" width="128" height="128">
+      <span id="result-1"></span>
+    </div>
+    
+    <div class="tile-test">
+      <strong>Test 2: altis/6/0/0.png</strong><br>
+      <img src="altis/6/0/0.png" alt="Tile 6/0/0" onload="reportSuccess(this)" onerror="reportError(this)" width="128" height="128">
+      <span id="result-2"></span>
+    </div>
+    
+    <div class="tile-test">
+      <strong>Test 3: altis/4/1/2.png</strong><br>
+      <img src="altis/4/1/2.png" alt="Tile 4/1/2" onload="reportSuccess(this)" onerror="reportError(this)" width="128" height="128">
+      <span id="result-3"></span>
+    </div>
+  </div>
+
+  <div class="test-section">
+    <h3>JavaScript Fetch Tests</h3>
+    <div id="fetch-results"></div>
+    <button onclick="runFetchTests()">Run Fetch Tests</button>
+  </div>
+
+  <div class="test-section">
+    <h3>Current Page Info</h3>
+    <div id="page-info"></div>
+  </div>
+
+  <script>
+    let testCounter = 1;
+
+    function reportSuccess(img) {
+      const resultId = 'result-' + testCounter;
+      const resultSpan = document.getElementById(resultId);
+      if (resultSpan) {
+        resultSpan.innerHTML = '<span class="success">✅ SUCCESS - Image loaded (' + img.naturalWidth + 'x' + img.naturalHeight + ')</span>';
+      }
+      testCounter++;
+    }
+
+    function reportError(img) {
+      const resultId = 'result-' + testCounter;
+      const resultSpan = document.getElementById(resultId);
+      if (resultSpan) {
+        resultSpan.innerHTML = '<span class="error">❌ FAILED - Image could not load</span>';
+      }
+      testCounter++;
+    }
+
+    function runFetchTests() {
+      const fetchResults = document.getElementById('fetch-results');
+      fetchResults.innerHTML = '<div>🔄 Running fetch tests...</div>';
+      
+      const testUrls = [
+        'altis/2/0/0.png',
+        'altis/6/0/0.png',
+        'altis/4/1/2.png'
+      ];
+
+      testUrls.forEach((url, index) => {
+        fetch(url)
+          .then(response => {
+            if (response.ok) {
+              fetchResults.innerHTML += '<div class="success">✅ FETCH SUCCESS: ' + url + ' (Status: ' + response.status + ')</div>';
+            } else {
+              fetchResults.innerHTML += '<div class="error">❌ FETCH FAILED: ' + url + ' (Status: ' + response.status + ')</div>';
+            }
+          })
+          .catch(error => {
+            fetchResults.innerHTML += '<div class="error">❌ FETCH ERROR: ' + url + ' - ' + error.message + '</div>';
+          });
+      });
+    }
+
+    // Display page info
+    document.getElementById('page-info').innerHTML = `
+      <strong>Current URL:</strong> ${window.location.href}<br>
+      <strong>Protocol:</strong> ${window.location.protocol}<br>
+      <strong>Host:</strong> ${window.location.host}<br>
+      <strong>Pathname:</strong> ${window.location.pathname}<br>
+      <strong>Base URL:</strong> ${window.location.origin}
+    `;
+
+    // Auto-run fetch tests after a delay
+    setTimeout(runFetchTests, 2000);
+  </script>
+</body>
+</html>

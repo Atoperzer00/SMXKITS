@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TrackPoint Debug - Simple Test</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" />
+  <style>
+    body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+    #map { width: 100%; height: 500px; border: 2px solid #ccc; }
+    .debug { background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 5px; }
+    .error { background: #ffebee; color: #c62828; }
+    .success { background: #e8f5e8; color: #2e7d32; }
+  </style>
+</head>
+<body>
+  <h1>🔍 TrackPoint Debug - Simple Test</h1>
+  
+  <div class="debug">
+    <h3>File Loading Test:</h3>
+    <div id="file-status">Testing...</div>
+  </div>
+  
+  <div class="debug">
+    <h3>Tile Access Test:</h3>
+    <div id="tile-status">Testing...</div>
+  </div>
+  
+  <div class="debug">
+    <h3>Map Container:</h3>
+    <div id="map"></div>
+  </div>
+  
+  <div class="debug">
+    <h3>Console Output:</h3>
+    <div id="console-output"></div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script>
+    let logOutput = [];
+    
+    function log(message) {
+      console.log(message);
+      logOutput.push(message);
+      document.getElementById('console-output').innerHTML = logOutput.join('<br>');
+    }
+    
+    // Test file loading
+    function testFileLoading() {
+      const files = ['mapUtils.js', 'defaultMap.js', 'altis.js'];
+      let loadedFiles = 0;
+      
+      files.forEach(file => {
+        const script = document.createElement('script');
+        script.onload = function() {
+          log('✅ Loaded: ' + file);
+          loadedFiles++;
+          if (loadedFiles === files.length) {
+            testMapInitialization();
+          }
+        };
+        script.onerror = function() {
+          log('❌ Failed to load: ' + file);
+          document.getElementById('file-status').innerHTML = '<span class="error">❌ Failed to load ' + file + '</span>';
+        };
+        script.src = file;
+        document.head.appendChild(script);
+      });
+    }
+    
+    // Test tile access
+    function testTileAccess() {
+      const testTiles = [
+        'altis/0/0/0.png',
+        'altis/2/0/0.png',
+        'altis/6/0/0.png'
+      ];
+      
+      let tileResults = [];
+      let tilesChecked = 0;
+      
+      testTiles.forEach(tileUrl => {
+        const img = new Image();
+        img.onload = function() {
+          log('✅ Tile accessible: ' + tileUrl + ' (' + this.naturalWidth + 'x' + this.naturalHeight + ')');
+          tileResults.push('✅ ' + tileUrl);
+          tilesChecked++;
+          if (tilesChecked === testTiles.length) {
+            document.getElementById('tile-status').innerHTML = tileResults.join('<br>');
+          }
+        };
+        img.onerror = function() {
+          log('❌ Tile NOT accessible: ' + tileUrl);
+          tileResults.push('❌ ' + tileUrl);
+          tilesChecked++;
+          if (tilesChecked === testTiles.length) {
+            document.getElementById('tile-status').innerHTML = tileResults.join('<br>');
+          }
+        };
+        img.src = tileUrl;
+      });
+    }
+    
+    // Test map initialization
+    function testMapInitialization() {
+      log('🗺️ Testing map initialization...');
+      
+      // Check if required objects exist
+      if (typeof Arma3Map === 'undefined') {
+        log('❌ Arma3Map not defined');
+        return;
+      }
+      
+      if (!Arma3Map.Maps || !Arma3Map.Maps.altis) {
+        log('❌ Arma3Map.Maps.altis not found');
+        return;
+      }
+      
+      log('✅ Arma3Map.Maps.altis found:', JSON.stringify(Arma3Map.Maps.altis, null, 2));
+      
+      // Try to initialize map
+      try {
+        if (typeof InitMap === 'function') {
+          log('✅ InitMap function found, calling...');
+          InitMap(Arma3Map.Maps.altis);
+          
+          // Check if map was created
+          setTimeout(() => {
+            if (window.map) {
+              log('✅ Map created successfully');
+              log('📍 Map center:', window.map.getCenter());
+              log('🔍 Map zoom:', window.map.getZoom());
+            } else {
+              log('❌ Map not found after InitMap call');
+            }
+          }, 2000);
+        } else {
+          log('❌ InitMap function not found');
+        }
+      } catch (error) {
+        log('❌ Error initializing map: ' + error.message);
+      }
+    }
+    
+    // Start tests
+    document.addEventListener('DOMContentLoaded', function() {
+      log('🚀 Starting TrackPoint debug tests...');
+      log('📍 Current URL: ' + window.location.href);
+      
+      testTileAccess();
+      testFileLoading();
+    });
+  </script>
+</body>
+</html>

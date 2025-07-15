@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Initialize Grading Demo Data - SMXKITS</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #1e1e1e;
+      color: #fafafa;
+      padding: 40px;
+      text-align: center;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+    h1 {
+      color: #22c55e;
+      margin-bottom: 30px;
+    }
+    .btn {
+      background: linear-gradient(135deg, #22c55e, #28dd6c);
+      color: #fff;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.1em;
+      padding: 14px 24px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
+      margin: 10px;
+    }
+    .btn:hover {
+      background: linear-gradient(135deg, #28dd6c, #22c55e);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+    }
+    .status {
+      margin: 20px 0;
+      padding: 15px;
+      border-radius: 8px;
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Grading System Demo Setup</h1>
+    <p>This page will initialize demo data for the grading system.</p>
+    
+    <button class="btn" onclick="initializeDemoData()">Initialize Demo Data</button>
+    <button class="btn" onclick="clearAllData()">Clear All Data</button>
+    <button class="btn" onclick="goToDashboard()">Go to Dashboard</button>
+    
+    <div id="status" style="display: none;"></div>
+  </div>
+
+  <script>
+    function initializeDemoData() {
+      // Sample exercises
+      const exercises = [
+        {
+          id: 'exercise_1',
+          name: 'Exercise 1 - Basic Operations',
+          timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
+          active: false
+        },
+        {
+          id: 'exercise_2',
+          name: 'Exercise 2 - Advanced Scenarios',
+          timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days ago
+          active: true
+        }
+      ];
+
+      // Sample submissions
+      const submissions = [
+        {
+          id: 'sub_1',
+          student: 'Alice Johnson',
+          class: 'Class A',
+          exercise: 'exercise_1',
+          mission: 'Mission Alpha',
+          submittedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
+          fileUrl: null
+        },
+        {
+          id: 'sub_2',
+          student: 'Alice Johnson',
+          class: 'Class A',
+          exercise: 'exercise_2',
+          mission: 'Mission Bravo',
+          submittedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+          fileUrl: null
+        },
+        {
+          id: 'sub_3',
+          student: 'Bob Smith',
+          class: 'Class A',
+          exercise: 'exercise_1',
+          mission: 'Mission Alpha',
+          submittedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
+          fileUrl: null
+        },
+        {
+          id: 'sub_4',
+          student: 'Charlie Brown',
+          class: 'Class A',
+          exercise: 'exercise_2',
+          mission: 'Mission Charlie',
+          submittedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+          fileUrl: null
+        }
+      ];
+
+      // Sample grades
+      const grades = [
+        {
+          id: 'grade_1',
+          student: 'Alice Johnson',
+          class: 'Class A',
+          exercise: 'Exercise 1 - Basic Operations',
+          exerciseId: 'exercise_1',
+          mission: 'Mission Alpha',
+          submittedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
+          gradedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+          scores: {
+            'Accuracy': 8,
+            'Analytic Judgment': 7,
+            'Attention to Detail': 9,
+            'Communication': 6,
+            'Format': 8,
+            'Mission Awareness': 7,
+            'Products': 8,
+            'Teamwork': 9,
+            'Timeliness': 6,
+            'Tool Proficiency': 7
+          },
+          instructorNotes: 'Good overall performance. Need to work on communication and timeliness. Excellent attention to detail.',
+          feedbackFile: null
+        },
+        {
+          id: 'grade_2',
+          student: 'Alice Johnson',
+          class: 'Class A',
+          exercise: 'Exercise 2 - Advanced Scenarios',
+          exerciseId: 'exercise_2',
+          mission: 'Mission Bravo',
+          submittedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+          gradedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+          scores: {
+            'Accuracy': 9,
+            'Analytic Judgment': 8,
+            'Attention to Detail': 9,
+            'Communication': 8,
+            'Format': 9,
+            'Mission Awareness': 8,
+            'Products': 9,
+            'Teamwork': 8,
+            'Timeliness': 7,
+            'Tool Proficiency': 8
+          },
+          instructorNotes: 'Excellent improvement from Exercise 1! Communication has improved significantly. Keep up the good work.',
+          feedbackFile: 'Alice_Exercise2_Feedback.pdf'
+        },
+        {
+          id: 'grade_3',
+          student: 'Bob Smith',
+          class: 'Class A',
+          exercise: 'Exercise 1 - Basic Operations',
+          exerciseId: 'exercise_1',
+          mission: 'Mission Alpha',
+          submittedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
+          gradedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+          scores: {
+            'Accuracy': 6,
+            'Analytic Judgment': 5,
+            'Attention to Detail': 7,
+            'Communication': 7,
+            'Format': 6,
+            'Mission Awareness': 5,
+            'Products': 6,
+            'Teamwork': 8,
+            'Timeliness': 8,
+            'Tool Proficiency': 5
+          },
+          instructorNotes: 'Needs improvement in accuracy and analytic judgment. Good teamwork and timeliness. Recommend additional practice with analysis techniques.',
+          feedbackFile: null
+        }
+      ];
+
+      // Store data in localStorage
+      localStorage.setItem('exercises', JSON.stringify(exercises));
+      localStorage.setItem('submissions', JSON.stringify(submissions));
+      localStorage.setItem('grades', JSON.stringify(grades));
+
+      // Show status
+      const statusDiv = document.getElementById('status');
+      statusDiv.style.display = 'block';
+      statusDiv.innerHTML = `
+        <h3>Demo Data Initialized Successfully!</h3>
+        <p><strong>Created:</strong></p>
+        <ul style="text-align: left; display: inline-block;">
+          <li>${exercises.length} exercises</li>
+          <li>${submissions.length} submissions</li>
+          <li>${grades.length} grades</li>
+        </ul>
+        <p><strong>Test Users:</strong></p>
+        <ul style="text-align: left; display: inline-block;">
+          <li><strong>Alice Johnson</strong> - Has 2 graded submissions</li>
+          <li><strong>Bob Smith</strong> - Has 1 graded submission</li>
+          <li><strong>Charlie Brown</strong> - Has 1 ungraded submission</li>
+        </ul>
+        <p>You can now test the grading system!</p>
+      `;
+    }
+
+    function clearAllData() {
+      localStorage.removeItem('exercises');
+      localStorage.removeItem('submissions');
+      localStorage.removeItem('grades');
+      
+      const statusDiv = document.getElementById('status');
+      statusDiv.style.display = 'block';
+      statusDiv.innerHTML = '<h3>All grading data cleared!</h3>';
+    }
+
+    function goToDashboard() {
+      window.location.href = '/dashboard.html';
+    }
+  </script>
+</body>
+</html>

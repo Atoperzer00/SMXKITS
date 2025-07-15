@@ -1,0 +1,43 @@
+# -----------------------------------------------------------------------------
+# This Compose file sets up:
+# - A Node.js app container listening on port 5000
+# - An Nginx container acting as a reverse proxy on port 80
+#
+# Nginx forwards incoming HTTP requests to the Node.js app.
+#
+# Make sure MongoDB is running on the same Docker network externally.
+#
+# Start everything with:
+#     docker-compose up
+# -----------------------------------------------------------------------------
+
+version: "3.8"
+
+services:
+  kits:
+    image: 533267336775.dkr.ecr.us-east-1.amazonaws.com/kits:v0.0.1
+    build: .
+    ports:
+      - 5000:5000
+    environment:
+      - MONGO_URI=mongodb://host.docker.internal:27017/smxkits
+      - NODE_ENV=production
+    networks:
+      - kits-network
+    restart: unless-stopped
+
+  nginx:
+    image: 533267336775.dkr.ecr.us-east-1.amazonaws.com/kits-proxy:latest
+    container_name: kits-proxy
+    build:
+      context: ./config/nginx/
+      dockerfile: Dockerfile
+    ports:
+      - 80:80
+    depends_on:
+      - kits
+    networks:
+      - kits-network
+
+networks:
+  kits-network:

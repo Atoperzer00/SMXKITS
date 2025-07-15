@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Function Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #1a1a2e; color: white; }
+    button { background: #ff6b35; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 10px; }
+    .result { background: #333; padding: 10px; border-radius: 5px; margin: 10px 0; font-family: monospace; }
+  </style>
+</head>
+<body>
+  <h1>Function Test Page</h1>
+  <p>Testing if the functions work correctly:</p>
+  
+  <button onclick="testOpenLink()">Test openLink</button>
+  <button onclick="testGenerateReference()">Test generateReference</button>
+  <button onclick="checkFunctions()">Check All Functions</button>
+  
+  <div id="results"></div>
+
+  <script>
+    function addResult(message) {
+      const results = document.getElementById('results');
+      const div = document.createElement('div');
+      div.className = 'result';
+      div.textContent = new Date().toLocaleTimeString() + ': ' + message;
+      results.appendChild(div);
+    }
+
+    function testOpenLink() {
+      try {
+        if (typeof openLink === 'function') {
+          addResult('✅ openLink function exists');
+          openLink('https://www.google.com', 'Test Link');
+          addResult('✅ openLink executed successfully');
+        } else {
+          addResult('❌ openLink function not found');
+        }
+      } catch (error) {
+        addResult('❌ Error testing openLink: ' + error.message);
+      }
+    }
+
+    function testGenerateReference() {
+      try {
+        if (typeof generateReference === 'function') {
+          addResult('✅ generateReference function exists');
+          generateReference();
+          addResult('✅ generateReference executed successfully');
+        } else {
+          addResult('❌ generateReference function not found');
+        }
+      } catch (error) {
+        addResult('❌ Error testing generateReference: ' + error.message);
+      }
+    }
+
+    function checkFunctions() {
+      addResult('=== Function Check ===');
+      addResult('openLink type: ' + typeof openLink);
+      addResult('generateReference type: ' + typeof generateReference);
+      addResult('window.openLink type: ' + typeof window.openLink);
+      addResult('window.generateReference type: ' + typeof window.generateReference);
+    }
+
+    // Define the functions for testing
+    function openLink(url, name) {
+      console.log('Opening:', name, url);
+      alert('openLink called: ' + name + ' -> ' + url);
+    }
+
+    function generateReference() {
+      console.log('generateReference called');
+      alert('generateReference function called successfully!');
+    }
+
+    // Make them global
+    window.openLink = openLink;
+    window.generateReference = generateReference;
+
+    // Auto-check on load
+    window.addEventListener('load', checkFunctions);
+  </script>
+</body>
+</html>

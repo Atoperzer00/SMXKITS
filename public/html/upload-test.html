@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .upload-area {
+            border: 2px dashed #444;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            background: #2a2a2a;
+        }
+        .upload-btn {
+            background: #22c55e;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        .upload-btn:hover {
+            background: #16a34a;
+        }
+        .upload-btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            background: #333;
+        }
+        .success { background: #22c55e; }
+        .error { background: #ef4444; }
+        .info { background: #3b82f6; }
+        .file-info {
+            background: #333;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .progress {
+            width: 100%;
+            height: 20px;
+            background: #333;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #22c55e;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Video Upload Test</h1>
+    
+    <div class="upload-area">
+        <h3>Select MP4 Video File</h3>
+        <input type="file" id="fileInput" accept="video/mp4" style="margin: 20px 0;">
+        <br>
+        <button class="upload-btn" id="uploadBtn" disabled>📤 Upload to Server</button>
+    </div>
+    
+    <div class="progress" id="progressContainer" style="display: none;">
+        <div class="progress-fill" id="progressFill"></div>
+    </div>
+    
+    <div class="status" id="status" style="display: none;"></div>
+    
+    <div class="file-info" id="fileInfo" style="display: none;"></div>
+    
+    <div class="file-info">
+        <h3>📋 Test Results:</h3>
+        <div id="testResults">
+            <p>• Select a video file above</p>
+            <p>• Click upload to test server endpoint</p>
+            <p>• Check console for detailed logs</p>
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const status = document.getElementById('status');
+        const fileInfo = document.getElementById('fileInfo');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const testResults = document.getElementById('testResults');
+        
+        let selectedFile = null;
+        
+        fileInput.addEventListener('change', (e) => {
+            selectedFile = e.target.files[0];
+            if (selectedFile) {
+                console.log('📁 File selected:', selectedFile);
+                uploadBtn.disabled = false;
+                
+                fileInfo.style.display = 'block';
+                fileInfo.innerHTML = `
+                    <h4>📄 Selected File:</h4>
+                    <p><strong>Name:</strong> ${selectedFile.name}</p>
+                    <p><strong>Size:</strong> ${(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                    <p><strong>Type:</strong> ${selectedFile.type}</p>
+                `;
+                
+                testResults.innerHTML = `
+                    <p>✅ File selected: ${selectedFile.name}</p>
+                    <p>📊 Size: ${(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                    <p>🎬 Type: ${selectedFile.type}</p>
+                    <p>⏳ Ready to upload...</p>
+                `;
+            }
+        });
+        
+        uploadBtn.addEventListener('click', async () => {
+            if (!selectedFile) {
+                showStatus('❌ No file selected', 'error');
+                return;
+            }
+            
+            console.log('🚀 Starting upload test...');
+            uploadBtn.disabled = true;
+            progressContainer.style.display = 'block';
+            progressFill.style.width = '0%';
+            
+            try {
+                const formData = new FormData();
+                formData.append('video', selectedFile);
+                formData.append('classId', 'test-class');
+                
+                console.log('📤 Uploading to: /api/stream/upload');
+                console.log('📦 Form data:', {
+                    video: selectedFile.name,
+                    classId: 'test-class',
+                    size: selectedFile.size
+                });
+                
+                showStatus('📤 Uploading...', 'info');
+                progressFill.style.width = '25%';
+                
+                const response = await fetch('/api/stream/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                progressFill.style.width = '75%';
+                console.log('📨 Response status:', response.status);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('❌ Upload failed:', errorText);
+                    throw new Error(`Upload failed: ${response.status} - ${errorText}`);
+                }
+                
+                const result = await response.json();
+                progressFill.style.width = '100%';
+                
+                console.log('✅ Upload successful:', result);
+                showStatus('✅ Upload successful!', 'success');
+                
+                testResults.innerHTML = `
+                    <p>✅ Upload successful!</p>
+                    <p>📁 Server filename: ${result.filename}</p>
+                    <p>🔗 URL: ${result.streamUrl}</p>
+                    <p>📊 Size: ${(result.size / 1024 / 1024).toFixed(2)} MB</p>
+                    <p>🎯 Class: ${result.classId}</p>
+                    <p><a href="${result.streamUrl}" target="_blank" style="color: #22c55e;">🎬 View Video</a></p>
+                `;
+                
+            } catch (error) {
+                console.error('❌ Upload error:', error);
+                showStatus(`❌ Upload failed: ${error.message}`, 'error');
+                
+                testResults.innerHTML = `
+                    <p>❌ Upload failed!</p>
+                    <p>🐛 Error: ${error.message}</p>
+                    <p>💡 Check console for details</p>
+                `;
+            } finally {
+                uploadBtn.disabled = false;
+            }
+        });
+        
+        function showStatus(message, type) {
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

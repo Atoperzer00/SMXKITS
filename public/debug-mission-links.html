@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Mission Links</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #1a1a1a; color: white; }
+        button { margin: 10px; padding: 10px 20px; font-size: 16px; cursor: pointer; }
+        .test-btn { background: #22c55e; color: white; border: none; border-radius: 5px; }
+        .output { background: #2a2a2a; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .error { color: #ff6b6b; }
+        .success { color: #51cf66; }
+    </style>
+</head>
+<body>
+    <h1>Mission Links Function Debug</h1>
+    
+    <div>
+        <button class="test-btn" onclick="testOpenLink()">Test openLink</button>
+        <button class="test-btn" onclick="testGenerateReference()">Test generateReference</button>
+        <button class="test-btn" onclick="testSlideshow()">Test testSlideshow</button>
+        <button class="test-btn" onclick="clearOutput()">Clear Output</button>
+    </div>
+    
+    <div id="output" class="output">
+        <p>Click buttons above to test functions...</p>
+    </div>
+    
+    <script>
+        function log(message, type = 'info') {
+            const output = document.getElementById('output');
+            const p = document.createElement('p');
+            p.className = type;
+            p.textContent = new Date().toLocaleTimeString() + ': ' + message;
+            output.appendChild(p);
+            console.log(message);
+        }
+        
+        function clearOutput() {
+            document.getElementById('output').innerHTML = '<p>Output cleared...</p>';
+        }
+        
+        function testOpenLink() {
+            log('Testing openLink function...');
+            try {
+                if (typeof window.openLink === 'function') {
+                    log('✅ openLink function exists', 'success');
+                    // Don't actually call it to avoid popup
+                    log('Function signature: ' + window.openLink.toString().substring(0, 100) + '...', 'success');
+                } else {
+                    log('❌ openLink function does not exist', 'error');
+                    log('Type: ' + typeof window.openLink, 'error');
+                }
+            } catch (error) {
+                log('❌ Error testing openLink: ' + error.message, 'error');
+            }
+        }
+        
+        function testGenerateReference() {
+            log('Testing generateReference function...');
+            try {
+                if (typeof window.generateReference === 'function') {
+                    log('✅ generateReference function exists', 'success');
+                    log('Function signature: ' + window.generateReference.toString().substring(0, 100) + '...', 'success');
+                } else {
+                    log('❌ generateReference function does not exist', 'error');
+                    log('Type: ' + typeof window.generateReference, 'error');
+                }
+            } catch (error) {
+                log('❌ Error testing generateReference: ' + error.message, 'error');
+            }
+        }
+        
+        function testSlideshow() {
+            log('Testing testSlideshow function...');
+            try {
+                if (typeof window.testSlideshow === 'function') {
+                    log('✅ testSlideshow function exists', 'success');
+                    log('Function signature: ' + window.testSlideshow.toString().substring(0, 100) + '...', 'success');
+                } else {
+                    log('❌ testSlideshow function does not exist', 'error');
+                    log('Type: ' + typeof window.testSlideshow, 'error');
+                }
+            } catch (error) {
+                log('❌ Error testing testSlideshow: ' + error.message, 'error');
+            }
+        }
+        
+        // Test on page load
+        window.addEventListener('load', function() {
+            log('Page loaded, checking global functions...');
+            
+            // Check what's available on window object
+            const funcs = ['openLink', 'generateReference', 'testSlideshow'];
+            funcs.forEach(func => {
+                if (typeof window[func] === 'function') {
+                    log('✅ window.' + func + ' is available', 'success');
+                } else {
+                    log('❌ window.' + func + ' is NOT available (type: ' + typeof window[func] + ')', 'error');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,2355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>OBS Stream Mode - SMXKITS</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #0c0c0c;
+      --secondary: #1a1a2e;
+      --tertiary: #16213e;
+      --accent: #ffa726;
+      --accent-hover: #ff9800;
+      --accent-light: rgba(255, 167, 38, 0.1);
+      --accent-glow: rgba(255, 167, 38, 0.3);
+      --success: #4caf50;
+      --error: #f44336;
+      --warning: #ff9800;
+      --text-primary: #ffffff;
+      --text-secondary: #b8c5d6;
+      --text-muted: #8a9ba8;
+      --border-light: rgba(255, 255, 255, 0.1);
+      --glass: rgba(255, 255, 255, 0.05);
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      --border-radius: 16px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      color: var(--text-primary);
+      overflow-x: hidden;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* Animated background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 80%, rgba(255, 167, 38, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 167, 38, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(255, 167, 38, 0.05) 0%, transparent 50%);
+      z-index: -1;
+      animation: float 20s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      33% { transform: translateY(-20px) rotate(1deg); }
+      66% { transform: translateY(10px) rotate(-1deg); }
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .header h1 {
+      font-size: 3rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent) 0%, #ff9800 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1rem;
+    }
+
+    .header p {
+      color: var(--text-secondary);
+      font-size: 1.2rem;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    .left-panel {
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-light);
+      border-radius: var(--border-radius);
+      padding: 2rem;
+      box-shadow: var(--shadow);
+    }
+
+    .right-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .panel-section {
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-light);
+      border-radius: var(--border-radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+    }
+
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Class Selection */
+    .class-selection {
+      margin-bottom: 2rem;
+    }
+
+    .class-select {
+      width: 100%;
+      background: var(--tertiary);
+      color: var(--text-primary);
+      border: 2px solid var(--border-light);
+      padding: 1rem 1.25rem;
+      font-size: 1rem;
+      border-radius: 12px;
+      font-family: inherit;
+      transition: var(--transition);
+    }
+
+    .class-select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-light);
+    }
+
+    /* Video Preview Container */
+    .video-preview-container {
+      position: relative;
+      width: 100%;
+      height: 400px;
+      background: var(--primary);
+      border: 2px solid var(--border-light);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 2rem;
+      transition: var(--transition);
+    }
+
+    .video-preview-container:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 30px var(--accent-glow);
+    }
+
+    .video-preview {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 14px;
+    }
+
+    /* OBS Status Display */
+    .obs-status-display {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      color: var(--text-primary);
+      padding: 2rem;
+      border-radius: 14px;
+    }
+
+    .obs-status-icon {
+      width: 4rem;
+      height: 4rem;
+      background: var(--accent-light);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .obs-status-text {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    .obs-connection-details {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      width: 100%;
+      max-width: 300px;
+    }
+
+    .connection-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 1rem;
+      background: var(--glass);
+      border-radius: 8px;
+      border: 1px solid var(--border-light);
+    }
+
+    .connection-label {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .connection-status {
+      font-size: 0.875rem;
+      font-weight: 600;
+      padding: 0.25rem 0.75rem;
+      border-radius: 12px;
+      background: var(--tertiary);
+    }
+
+    .connection-status.connected {
+      background: var(--success);
+      color: white;
+    }
+
+    .connection-status.error {
+      background: var(--error);
+      color: white;
+    }
+
+    .stream-ready-indicator {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: var(--error);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 50px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    /* Stream Controls */
+    .stream-controls {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .btn {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      padding: 1rem 2rem;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 15px rgba(255, 167, 38, 0.3);
+    }
+
+    .btn:hover:not(:disabled) {
+      background: var(--accent-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 167, 38, 0.4);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-secondary {
+      background: var(--tertiary);
+      color: var(--text-primary);
+      box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: var(--secondary);
+    }
+
+    .btn-danger {
+      background: var(--error);
+      color: white;
+      box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3);
+    }
+
+    .btn-danger:hover:not(:disabled) {
+      background: #d32f2f;
+    }
+
+    .btn-full {
+      flex: 1;
+      justify-content: center;
+    }
+
+    /* OBS Configuration Panel */
+    .obs-config-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .config-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .config-item label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .config-value {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      background: var(--tertiary);
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+    }
+
+    .config-value span {
+      flex: 1;
+      font-family: 'Consolas', monospace;
+      font-size: 0.875rem;
+      color: var(--text-primary);
+    }
+
+    .config-btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .config-btn:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    .config-instructions {
+      background: var(--glass);
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    .instruction-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+    }
+
+    .instruction-list {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      padding-left: 1.25rem;
+    }
+
+    .instruction-list li {
+      margin-bottom: 0.25rem;
+    }
+
+    /* Settings Section */
+    .settings-section {
+      background: var(--glass);
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+
+    .settings-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 1rem;
+    }
+
+    .settings-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 0.9rem;
+    }
+
+    .settings-row:last-child {
+      border-bottom: none;
+    }
+
+    .settings-row span {
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    /* Connection Log */
+    .connection-log {
+      background: var(--primary);
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      padding: 1rem;
+      max-height: 200px;
+      overflow-y: auto;
+      font-family: 'Consolas', monospace;
+      font-size: 0.8rem;
+    }
+
+    .log-entry {
+      padding: 0.25rem 0;
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .log-entry:last-child {
+      border-bottom: none;
+    }
+
+    .log-entry.success {
+      color: var(--success);
+    }
+
+    .log-entry.error {
+      color: var(--error);
+    }
+
+    .log-entry.warning {
+      color: var(--warning);
+    }
+
+    /* Advanced Stream Controls */
+    .stream-mode-selector {
+      margin: 15px 0;
+      padding: 15px;
+      background: var(--glass);
+      border-radius: 12px;
+      border: 1px solid var(--border-light);
+    }
+
+    .mode-title {
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: var(--text-primary);
+    }
+
+    .mode-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .btn-mode {
+      padding: 12px;
+      background: var(--secondary);
+      border: 2px solid transparent;
+      border-radius: 8px;
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-mode:hover {
+      background: var(--secondary-hover);
+      transform: translateY(-2px);
+    }
+
+    .btn-mode.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      box-shadow: 0 4px 12px rgba(0, 255, 255, 0.3);
+    }
+
+    .video-upload-section {
+      margin: 15px 0;
+      padding: 15px;
+      background: var(--glass);
+      border-radius: 12px;
+      border: 1px solid var(--border-light);
+    }
+
+    .upload-title {
+      font-weight: 600;
+      margin-bottom: 10px;
+      color: var(--text-primary);
+    }
+
+    .upload-progress {
+      margin-top: 10px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: var(--border-light);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .progress-text {
+      margin-top: 5px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .live-controls {
+      margin: 15px 0;
+    }
+
+    .source-switching {
+      margin-top: 15px;
+      padding: 12px;
+      background: rgba(0, 255, 255, 0.1);
+      border-radius: 8px;
+      border: 1px solid var(--accent);
+    }
+
+    .switch-title {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .switch-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-switch {
+      padding: 8px 12px;
+      background: var(--secondary);
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-switch:hover {
+      background: var(--secondary-hover);
+    }
+
+    .btn-switch.active {
+      background: var(--accent);
+      box-shadow: 0 2px 8px rgba(0, 255, 255, 0.4);
+    }
+
+    /* Stream Analytics */
+    .analytics-section {
+      margin-top: 20px;
+      padding: 15px;
+      background: var(--glass);
+      border-radius: 12px;
+      border: 1px solid var(--border-light);
+    }
+
+    .analytics-title {
+      font-weight: 600;
+      margin-bottom: 15px;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    .analytics-card {
+      padding: 12px;
+      background: rgba(0, 255, 255, 0.1);
+      border-radius: 8px;
+      text-align: center;
+      border: 1px solid var(--border-light);
+    }
+
+    .analytics-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+
+    .analytics-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .stream-quality-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      justify-content: center;
+    }
+
+    .quality-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+
+    .quality-dot.warning { background: #ffa500; }
+    .quality-dot.error { background: var(--error); }
+
+    /* Connected Viewers */
+    .viewers-section {
+      margin-top: 20px;
+      padding: 15px;
+      background: var(--glass);
+      border-radius: 12px;
+      border: 1px solid var(--border-light);
+    }
+
+    .viewers-title {
+      font-weight: 600;
+      margin-bottom: 15px;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .viewer-count-badge {
+      background: var(--accent);
+      color: var(--primary);
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 700;
+      min-width: 24px;
+      text-align: center;
+    }
+
+    .viewers-list {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .viewer-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      margin-bottom: 4px;
+      background: rgba(0, 255, 255, 0.1);
+      border-radius: 6px;
+      border: 1px solid var(--border-light);
+      font-size: 12px;
+    }
+
+    .viewer-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .viewer-status {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+
+    .viewer-id {
+      font-family: 'Consolas', monospace;
+      color: var(--text-secondary);
+    }
+
+    .viewer-time {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .no-viewers {
+      text-align: center;
+      color: var(--text-secondary);
+      font-style: italic;
+      padding: 20px;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+
+      .right-panel {
+        order: -1;
+      }
+
+      .header h1 {
+        font-size: 2.5rem;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 1rem;
+      }
+
+      .header h1 {
+        font-size: 2rem;
+      }
+
+      .stream-controls {
+        flex-direction: column;
+      }
+
+      .btn-full {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎥 OBS Stream Mode</h1>
+      <p>Professional live streaming with OBS Studio integration</p>
+    </div>
+
+    <div class="main-grid">
+      <!-- Left: Video Preview and Controls -->
+      <div class="left-panel">
+        <!-- Class Selection -->
+        <div class="class-selection">
+          <div class="section-title">📚 Select Class</div>
+          <select id="classSelect" class="class-select">
+            <option value="">Choose a class to stream to...</option>
+          </select>
+        </div>
+
+        <!-- Video Preview -->
+        <div class="video-preview-container">
+          <!-- OBS Status Display (shown when not streaming) -->
+          <div class="obs-status-display" id="obsStatusDisplay">
+            <div class="obs-status-icon" id="obsStatusIcon">🎥</div>
+            <div class="obs-status-text" id="obsStatusText">OBS Studio Disconnected</div>
+            <div class="obs-connection-details">
+              <div class="connection-item">
+                <span class="connection-label">WebSocket</span>
+                <span class="connection-status" id="wsStatus">Disconnected</span>
+              </div>
+              <div class="connection-item">
+                <span class="connection-label">RTMP Server</span>
+                <span class="connection-status" id="rtmpStatus">Ready</span>
+              </div>
+              <div class="connection-item">
+                <span class="connection-label">Stream Key</span>
+                <span class="connection-status" id="streamKeyStatus">Not Generated</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- HLS Preview (shown when streaming) -->
+          <video id="hlsPreview" class="video-preview" style="display:none;" controls muted></video>
+          <div class="stream-ready-indicator" id="streamReady" style="display:none;">🔴 LIVE - Ready to Stream</div>
+        </div>
+
+        <!-- Advanced Stream Controls -->
+        <div class="stream-controls">
+          <button class="btn btn-secondary btn-full" id="connectObsBtn">
+            🔌 Connect to OBS Studio
+          </button>
+          
+          <!-- Stream Mode Selection -->
+          <div class="stream-mode-selector" id="streamModeSelector" style="display:none;">
+            <div class="mode-title">📹 Select Stream Source:</div>
+            <div class="mode-buttons">
+              <button class="btn btn-mode" id="webcamModeBtn" data-mode="webcam">
+                📷 Webcam
+              </button>
+              <button class="btn btn-mode" id="desktopModeBtn" data-mode="desktop">
+                🖥️ Desktop
+              </button>
+              <button class="btn btn-mode" id="mediaModeBtn" data-mode="media">
+                🎬 Video File
+              </button>
+              <button class="btn btn-mode" id="pipModeBtn" data-mode="pip">
+                📺 Picture-in-Picture
+              </button>
+            </div>
+          </div>
+          
+          <!-- Video Upload Section -->
+          <div class="video-upload-section" id="videoUploadSection" style="display:none;">
+            <div class="upload-title">🎬 Upload Video File</div>
+            <input type="file" id="videoFileInput" accept="video/*" style="display:none;">
+            <button class="btn btn-secondary" id="selectVideoBtn">
+              📁 Select Video File
+            </button>
+            <div class="upload-progress" id="uploadProgress" style="display:none;">
+              <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+              </div>
+              <div class="progress-text" id="progressText">Uploading...</div>
+            </div>
+          </div>
+          
+          <!-- Live Stream Controls -->
+          <div class="live-controls" id="liveControls" style="display:none;">
+            <button class="btn btn-primary btn-full" id="startClassStreamBtn">
+              🔴 Start Live Stream
+            </button>
+            <button class="btn btn-danger btn-full" id="stopClassStreamBtn" disabled>
+              ⏹️ Stop Stream
+            </button>
+            // Detect OBS WebSocket version
+    function detectOBSVersion() {
+      if (!obsWebSocket || obsWebSocket.readyState !== WebSocket.OPEN) {
+        return;
+      }
+      
+      // Try v5 first (OBS v28+)
+      try {
+        const helloMessage = {
+          op: 1, // Hello
+          d: {
+            rpcVersion: 1
+          }
+        };
+        console.log('📤 Sending v5 Hello message:', helloMessage);
+        obsWebSocket.send(JSON.stringify(helloMessage));
+        
+        // Set a timeout to fallback to v4 if no response
+        setTimeout(() => {
+          if (!obsWebSocketVersion) {
+            console.log('🔄 No v5 response, trying v4...');
+            sendOBSRequestV4('GetVersion');
+          }
+        }, 2000);
+      } catch (error) {
+        console.log('🔄 v5 failed, trying v4:', error);
+        sendOBSRequestV4('GetVersion');
+      }
+    }
+    
+    // Send OBS request (auto-detects version)
+    function sendOBSRequest(requestType, requestData = {}) {
+      if (!obsWebSocket || obsWebSocket.readyState !== WebSocket.OPEN) {
+        console.error('❌ OBS WebSocket not connected');
+        return;
+      }
+      
+      if (obsWebSocketVersion === 5) {
+        return sendOBSRequestV5(requestType, requestData);
+      } else {
+        return sendOBSRequestV4(requestType, requestData);
+      }
+    }
+    
+    // Send OBS WebSocket v4 request
+    function sendOBSRequestV4(requestType, requestData = {}) {
+            <!-- Live Source Switching -->
+            <div class="source-switching" id="sourceSwitching" style="display:none;">
+              <div class="switch-title">🔄 Switch Source:</div>
+              <div class="switch-buttons">
+                <button class="btn btn-switch" id="switchWebcamBtn">📷</button>
+                <button class="btn btn-switch" id="switchDesktopBtn">🖥️</button>
+                <button class="btn btn-switch" id="switchMediaBtn">🎬</button>
+                <button class="btn btn-switch" id="switchPipBtn">📺</button>
+              </div>
+            </div>
+          </div>
+          
+          <button class="btn btn-secondary" id="configureObsBtn" disabled>
+            ⚙️ Configure OBS Settings
+          </button>
+        </div>
+      </div>
+
+      <!-- Right: OBS Configuration and Status -->
+      <div class="right-panel">
+         return request['message-id'];
+    }
+    
+    // Send OBS WebSocket v5 request
+    function sendOBSRequestV5(requestType, requestData = {}) {
+      const requestId = `req_${requestIdCounter++}`;
+      const request = {
+        op: 6, // Request
+        d: {
+          requestType: requestType,
+          requestId: requestId,
+          requestData: requestData
+        }
+      };
+      
+      console.log('📤 Sending OBS v5 request:', request);
+      obsWebSocket.send(JSON.stringify(request));
+      return requestId;
+    }
+    
+    function handleOBSMessage(data) {
+      console.log('📥 OBS message received:', data);
+      
+      // Handle OBS WebSocket v5 messages
+      if (data.op !== undefined) {
+        switch (data.op) {
+          case 0: // Hello
+            console.log('📋 OBS v5 Hello received');
+            obsWebSocketVersion = 5;
+            addLogEntry('✅ OBS WebSocket v5 detected', 'success');
+            
+            // Send Identify message
+            const identifyMessage = {
+              op: 1, // Identify
+              d: {
+                rpcVersion: 1,
+                eventSubscriptions: 33 // Subscribe to stream events
+              }
+            };
+            obsWebSocket.send(JSON.stringify(identifyMessage));
+            break;
+            
+          case 2: // Identified
+            console.log('✅ OBS v5 Identified');
+            addLogEntry('✅ OBS WebSocket v5 connection established', 'success');
+            updateOBSStatus('Connected (v5)', 'connected');
+            enableStreamControls();
+            sendOBSRequest('GetVersion');
+            break;
+            
+          case 7: // RequestResponse
+            handleOBSV5Response(data.d);
+            break;
+            
+          case 5: // Event
+            handleOBSV5Event(data.d);
+            break;
+            
+          default:
+            console.log('📥 Unknown OBS v5 op code:', data.op);
+        }
+      }
+      // Handle OBS WebSocket v4 messages
+      else if (data['message-id'] || data['request-type']) {
+        obsWebSocketVersion = 4;
+        addLogEntry('✅ OBS WebSocket v4 detected', 'success');
+        updateOBSStatus('Connected (v4)', 'connected');
+        enableStreamControls();
+        
+        if (data['message-id']) {
+          // Response to a request
+          if (data.status === 'ok') {
+            addLogEntry(`✅ OBS v4: ${data['request-type']} successful`, 'success');
+          } else {
+            addLogEntry(`❌ OBS v4: ${data['request-type']} failed - ${data.error}`, 'error');
+          }
+        } else {
+          // Event from OBS
+          handleOBSV4Event(data);
+        }
+      }
+      else {
+        console.log('📥 Unknown OBS message format:', data);
+      }
+    }
+    
+    function enableStreamControls() {
+      // Enable stream controls
+      document.getElementById('startClassStreamBtn').disabled = !currentClassId;
+      document.getElementById('configureObsBtn').disabled = false;
+    }
+    
+    function handleOBSV5Response(responseData) {
+      console.log('📥 OBS v5 Response:', responseData);
+      
+      if (responseData.requestStatus && responseData.requestStatus.result) {
+        addLogEntry(`✅ OBS v5: ${responseData.requestType} successful`, 'success');
+        
+        // Handle specific responses
+        if (responseData.requestType === 'GetVersion') {
+          addLogEntry(`📋 OBS Version: ${responseData.responseData.obsVersion}`, 'info');
+        }
+      } else {
+        const error = responseData.requestStatus ? responseData.requestStatus.comment : 'Unknown error';
+        addLogEntry(`❌ OBS v5: ${responseData.requestType} failed - ${error}`, 'error');
+      }
+    }
+    
+    function handleOBSV5Event(eventData) {
+      console.log('📥 OBS v5 Event:', eventData);
+      
+      switch (eventData.eventType) {
+        case 'StreamStateChanged':
+          if (eventData.eventData.outputActive) {
+            addLogEntry('🔴 OBS v5: v4: Stream started', 'success');
+            updateStreamStatus('live');
+          } else {
+            addLogEntry('⏹️ OBS v5: v4: Stream stopped', 'info');
+            updateStreamStatus('offline');
+          }
+          break;
+        default:
+          console.log('📥 Unhandled OBS v5 event:', eventData.eventType);
+      }
+    }
+    
+
+    
+    function handleOBSV4 <div class="panel-section">
+          <div class="section-title">🔧 OBS Studio Configuration</div>
+          <div class="obs-config-panel" id="obsConfigPanel">
+            <div class="config-item">
+              <label>WebSocket Connection</label>
+              <div class="config-value">
+                <span id="obsWebSocketUrl">ws://198.211.107.134:4455</span>
+                <button class="config-btn" id="testConnectionBtn">Test</button>
+              </div>
+            </div>
+            <div class="config-item">
+              <label>RTMP Server URL</label>
+              <div class="config-value">
+                <span id="rtmpServerUrl">rtmp://198.211.107.134/live</span>
+                <button class="config-btn" id="copyRtmpBtn">Copy</button>
+              </div>
+            </div>
+            <div class="config-item">
+              <label>Stream Key</label>
+              <div class="config-value">
+                <span id="currentStreamKey">Not Generated</span>
+                <button class="config-btn" id="generateKeyBtn">Generate</button>
+              </div>
+            </div>
+            <div class="config-instructions">
+              <div class="instruction-title">📋 Setup Instructions (OBS v31+):</div>
+              <ol class="instruction-list">
+                <li>Install OBS Studio v31 or later (WebSocket 5+ built-in)</li>
+                <li>Enable WebSocket server in Tools → WebSocket Server Settings</li>
+                <li>Set server port to 4455 (default)</li>
+                <li>Optional: Set authentication password if needed</li>
+                <li>Click "Connect to OBS Studio" below</li>
+                <li>Stream settings will be configured automatically</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-title">📊 Stream Information</div>
+          <div class="settings-row">Class: <span id="classLabel">Not selected</span></div>
+          <div class="settings-row">Status: <span id="streamStatusInfo">Offline</span></div>
+          <div class="settings-row">Viewers: <span id="viewerCountInfo">0</span></div>
+          <div class="settings-row">OBS Status: <span id="obsStatusInfo">Disconnected</span></div>
+          <div class="settings-row">Stream Duration: <span id="streamDurationInfo">00:00:00</span></div>
+          <div class="settings-row">Current Source: <span id="currentSourceInfo">None</span></div>
+        </div>
+        
+        <!-- Stream Analytics -->
+        <div class="analytics-section" id="analyticsSection" style="display:none;">
+          <div class="analytics-title">
+            📈 Live Analytics
+            <div class="stream-quality-indicator">
+              <div class="quality-dot" id="qualityIndicator"></div>
+              <span id="qualityText">Good</span>
+            </div>
+          </div>
+          <div class="analytics-grid">
+            <div class="analytics-card">
+              <div class="analytics-value" id="peakViewers">0</div>
+              <div class="analytics-label">Peak Viewers</div>
+            </div>
+            <div class="analytics-card">
+              <div class="analytics-value" id="avgViewers">0</div>
+              <div class="analytics-label">Avg Viewers</div>
+            </div>
+            <div class="analytics-card">
+              <div class="analytics-value" id="streamBitrate">0</div>
+              <div class="analytics-label">Bitrate (kbps)</div>
+            </div>
+            <div class="analytics-card">
+              <div class="analytics-value" id="droppedFrames">0</div>
+              <div class="analytics-label">Dropped Frames</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Connected Viewers -->
+        <div class="viewers-section" id="viewersSection" style="display:none;">
+          <div class="viewers-title">
+            👥 Connected Viewers
+            <span class="viewer-count-badge" id="viewerCountBadge">0</span>
+          </div>
+          <div class="viewers-list" id="viewersList">
+            <div class="no-viewers" id="noViewers">No viewers connected</div>
+          </div>
+        </div>
+        
+        <div class="panel-section">
+          <div class="section-title">📝 Connection Log</div>
+          <div class="connection-log" id="connectionLog">
+            <div class="log-entry">🔌 Waiting for OBS connection...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/obs-websocket-js@5.0.6/dist/obs-websocket.min.js"></script>
+  <script>
+    // ===== OBS STUDIO v31+ COMPATIBLE STREAM MODE =====
+    // This version uses OBS WebSocket 5+ protocol for compatibility with OBS v31 and later
+    // Requires obs-websocket-js@5.0.6 library loaded above
+    if (obsWebSocketVersion === 5) {
+        // OBS WebSocket v5 - Set stream service settings
+        const streamServiceSettings = {
+          streamServiceType: 'rtmp_custom',
+          streamServiceSettings: {
+            server: RTMP_SERVER_URL,
+            key: streamKey
+          }
+        };
+        
+        sendOBSRequest('SetStreamServiceSettings', streamServiceSettings);
+        addLogEntry('⚙️ OBS v5: Stream service configured', 'info');
+      } else {
+        // OBS WebSocket v4 - Set output settings
+        const outputSettings = {
+          'output-name': 'SMX_RTMP_Output',
+          'output-settings': {
+            'server': RTMP_SERVER_URL,
+            'key': streamKey
+          }
+        };
+        
+        sendOBSRequest('SetOutputSettings', outputSettings);
+        addLogEntry('⚙️ OBS v4: RTMP output configured', 'info');
+      }
+    // --- Configuration ---
+    const apiBaseUrl = '/api';
+    let currentClassId = null;
+    let authToken = localStorage.getItem('token');
+    
+    // --- OBS WebSocket Configuration (v5+ Protocol) ---
+    let obs = null;
+    let obsConnected = false;
+    let streamKey = null;
+    let isStreaming = false;
+    let streamStartTime = null;
+    let streamDurationInterval = null;
+    
+    // --- Advanced Stream Control Variables ---
+    let currentStreamMode = null; // 'webcam', 'desktop', 'media', 'pip'
+    let currentSceneName = null;
+    let uploadedVideoPath = null;
+    let streamAnalytics = {
+      peakViewers: 0,
+      totalViewers: 0,
+      viewerSamples: 0,
+      startTime: null,
+      bitrate: 0,
+      droppedFrames: 0
+    };
+    let analyticsInterval = null;
+    let connectedViewers = new Map(); // viewerId -> { joinTime, lastSeen }
+    
+    // OBS Scene Names (will be auto-created)
+    const OBS_SCENES = {
+      webcam: 'SMX_Webcam_Scene',
+      desktop: 'SMX_Desktop_Scene', 
+      media: 'SMX_Media_Scene',
+      pip: 'SMX_PIP_Scene'
+    };
+    
+    // TESTING WITH YOUTUBE LIVE (Recommended for immediate testing)
+    const OBS_WEBSOCKET_URL = 'ws://localhost:4455';
+    const RTMP_SERVER_URL = 'rtmp://a.rtmp.youtube.com/live2';
+    const HLS_BASE_URL = 'https://www.youtube.com/embed'; // Will show YouTube embed
+    
+    // LOCAL TESTING (Requires Docker/RTMP server)
+    // const RTMP_SERVER_URL = 'rtmp://localhost/live';
+    // const HLS_BASE_URL = 'http://localhost:8888/hls';
+    
+    // PRODUCTION: Use when DigitalOcean server is deployed
+    // const OBS_WEBSOCKET_URL = 'ws://198.211.107.134:4455';
+    // const RTMP_SERVER_URL = 'rtmp://198.211.107.134/live';
+    // const HLS_BASE_URL = 'http://198.211.107.134:8888/hls';
+
+    // Auto-detect class ID from URL parameters or localStorage
+    function initializeClassId() {
+      const urlParams = new URLSearchParams(window.location.search);
+      currentClassId = urlParams.get('classId') || localStorage.getItem('currentClassId');
+      
+      console.log('🔍 Class ID detection:', {
+        fromURL: urlParams.get('classId'),
+        fromStorage: localStorage.getItem('currentClassId'),
+        final: currentClassId,
+        currentURL: window.location.href
+      });
+      
+      return currentClassId;
+    }
+    
+    // Initialize class ID immediately
+    initializeClassId();
+    
+    // Debug initialization
+    console.log('🔧 OBS Stream Mode initialized');
+    console.log('API Base URL:', apiBaseUrl);
+    console.log('Auth token:', authToken ? 'Present' : 'Missing');
+    console.log('Current class ID:', currentClassId);
+
+    // --- OBS WebSocket Functions (v5+ Protocol) ---
+    async function connectToOBS() {
+      if (obs) {
+        try {
+          await obs.disconnect();
+        } catch (e) {
+          // Ignore disconnect errors
+        }
+      }
+      
+      addLogEntry('🔌 Connecting to OBS Studio...', 'info');
+      updateOBSStatus('Connecting...', 'connecting');
+      
+      try {
+        // Initialize OBS WebSocket v5+ client
+        obs = new OBSWebSocket();
+        
+        // Set up event listeners
+        obs.on('ConnectionOpened', () => {
+          console.log('✅ Connected to OBS WebSocket v5+');
+          addLogEntry('✅ Connected to OBS Studio WebSocket v5+', 'success');
+          obsConnected = true;
+          updateOBSStatus('Connected', 'connected');
+          updateConnectionStatus('wsStatus', 'Connected', 'connected');
+          
+          // Enable stream controls
+          document.getElementById('startClassStreamBtn').disabled = !currentClassId;
+          document.getElementById('configureObsBtn').disabled = false;
+        });
+        
+        obs.on('ConnectionClosed', () => {
+          console.log('❌ OBS WebSocket connection closed');
+          addLogEntry('❌ OBS WebSocket connection closed', 'error');
+          obsConnected = false;
+          updateOBSStatus('Disconnected', 'error');
+          updateConnectionStatus('wsStatus', 'Disconnected', 'error');
+          
+          // Disable stream controls
+          document.getElementById('startClassStreamBtn').disabled = true;
+          document.getElementById('stopClassStreamBtn').disabled = true;
+          document.getElementById('configureObsBtn').disabled = true;
+        });
+        
+        obs.on('ConnectionError', (error) => {
+          console.error('❌ OBS WebSocket error:', error);
+          addLogEntry('❌ OBS WebSocket error: ' + error.message, 'error');
+          updateOBSStatus('Connection Error', 'error');
+        });
+        
+        // Listen for stream events
+        obs.on('StreamStateChanged', (data) => {
+          handleOBSStreamEvent(data);
+        });
+        
+        obs.on('RecordStateChanged', (data) => {
+          console.log('📹 Record state changed:', data);
+        });
+        
+        // Connect to OBS (no password by default, add if needed)
+        const url = OBS_WEBSOCKET_URL.replace('ws://', '').replace('wss://', '');
+        await obs.connect(url, undefined, {
+          rpcVersion: 1
+        });
+        
+        // Get OBS version info
+        try {
+          const version = await obs.call('GetVersion');
+          addLogEntry(`📋 OBS Version: ${version.obsVersion} (WebSocket: ${version.obsWebSocketVersion})`, 'success');
+          
+          // Setup OBS scenes automatically
+          await setupOBSScenes();
+          
+          // Show stream mode selector
+          document.getElementById('streamModeSelector').style.display = 'block';
+          
+        } catch (e) {
+          console.warn('Could not get OBS version:', e);
+        }
+        
+      } catch (error) {
+        console.error('❌ Failed to connect to OBS:', error);
+        addLogEntry('❌ Failed to connect to OBS: ' + error.message, 'error');
+        updateOBSStatus('Connection Failed', 'error');
+      }
+    }
+    
+    // --- Advanced OBS Scene Management ---
+    async function setupOBSScenes() {
+      try {
+        addLogEntry('🎬 Setting up OBS scenes...', 'info');
+        
+        // Get current scenes
+        const sceneList = await obs.call('GetSceneList');
+        const existingScenes = sceneList.scenes.map(scene => scene.sceneName);
+        
+        // Create missing scenes
+        for (const [mode, sceneName] of Object.entries(OBS_SCENES)) {
+          if (!existingScenes.includes(sceneName)) {
+            await obs.call('CreateScene', { sceneName });
+            addLogEntry(`✅ Created scene: ${sceneName}`, 'success');
+            
+            // Add appropriate sources to each scene
+            await setupSceneSources(sceneName, mode);
+          }
+        }
+        
+        addLogEntry('🎬 OBS scenes setup complete', 'success');
+      } catch (error) {
+        console.error('❌ Failed to setup OBS scenes:', error);
+        addLogEntry('❌ Failed to setup OBS scenes: ' + error.message, 'error');
+      }
+    }
+    
+    async function setupSceneSources(sceneName, mode) {
+      try {
+        switch (mode) {
+          case 'webcam':
+            // Add video capture device
+            await obs.call('CreateInput', {
+              sceneName,
+              inputName: 'Webcam',
+              inputKind: 'v4l2_input', // Linux/Mac: 'av_capture_input'
+              inputSettings: {
+                device_id: '/dev/video0' // Will need to be detected
+              }
+            });
+            break;
+            
+          case 'desktop':
+            // Add display capture
+            await obs.call('CreateInput', {
+              sceneName,
+              inputName: 'Desktop',
+              inputKind: 'xcomposite_input', // Windows: 'monitor_capture', Mac: 'display_capture'
+              inputSettings: {}
+            });
+            break;
+            
+          case 'media':
+            // Media source will be added dynamically when video is uploaded
+            break;
+            
+          case 'pip':
+            // Add both webcam and desktop for picture-in-picture
+            await obs.call('CreateInput', {
+              sceneName,
+              inputName: 'Desktop_PIP',
+              inputKind: 'xcomposite_input',
+              inputSettings: {}
+            });
+            
+            await obs.call('CreateInput', {
+              sceneName,
+              inputName: 'Webcam_PIP',
+              inputKind: 'v4l2_input',
+              inputSettings: {
+                device_id: '/dev/video0'
+              }
+            });
+            
+            // Position webcam as overlay (smaller, in corner)
+            await obs.call('SetSceneItemTransform', {
+              sceneName,
+              sceneItemId: await getSceneItemId(sceneName, 'Webcam_PIP'),
+              sceneItemTransform: {
+                positionX: 50,
+                positionY: 50,
+                scaleX: 0.3,
+                scaleY: 0.3
+              }
+            });
+            break;
+        }
+      } catch (error) {
+        console.warn(`Could not setup sources for ${sceneName}:`, error);
+      }
+    }
+    
+    async function getSceneItemId(sceneName, sourceName) {
+      try {
+        const sceneItems = await obs.call('GetSceneItemList', { sceneName });
+        const item = sceneItems.sceneItems.find(item => item.sourceName === sourceName);
+        return item ? item.sceneItemId : null;
+      } catch (error) {
+        return null;
+      }
+    }
+    
+    async function switchToScene(mode) {
+      if (!obs || !obsConnected) return;
+      
+      try {
+        const sceneName = OBS_SCENES[mode];
+        await obs.call('SetCurrentProgramScene', { sceneName });
+        
+        currentStreamMode = mode;
+        currentSceneName = sceneName;
+        
+        // Update UI
+        document.querySelectorAll('.btn-mode').forEach(btn => btn.classList.remove('active'));
+        document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+        
+        document.querySelectorAll('.btn-switch').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(`switch${mode.charAt(0).toUpperCase() + mode.slice(1)}Btn`).classList.add('active');
+        
+        document.getElementById('currentSourceInfo').textContent = mode.charAt(0).toUpperCase() + mode.slice(1);
+        
+        addLogEntry(`🔄 Switched to ${mode} scene`, 'success');
+      } catch (error) {
+        addLogEntry(`❌ Failed to switch to ${mode} scene: ` + error.message, 'error');
+      }
+    }
+    
+    // Handle OBS stream state events (v5+ protocol)
+    function handleOBSStreamEvent(data) {
+      console.log('📥 OBS stream event received:', data);
+      
+      if (data.outputActive) {
+        addLogEntry('🔴 OBS Stream started', 'success');
+        updateStreamStatus('live');
+    isStreaming = true;
+        
+        // Update UI
+        document.getElementById('startClassStreamBtn').disabled = true;
+        document.getElementById('stopClassStreamBtn').disabled = false;
+        
+        if (!streamStartTime) {
+          streamStartTime = Date.now();
+          startStreamDurationTimer();
+        }
+      } else {
+        addLogEntry('⏹️ OBS Stream stopped', 'info');
+            updateStreamStatus('offline');
+        isStreaming = false;
+        
+        // Update UI
+        document.getElementById('startClassStreamBtn').disabled = false;
+        document.getElementById('stopClassStreamBtn').disabled = true;
+        
+        stopStreamDurationTimer();
+      }
+    }
+    
+    // --- Video Upload and Processing ---
+    async function handleVideoUpload(file) {
+      if (!file) return;
+      
+      try {
+        addLogEntry('📤 Uploading video file...', 'info');
+        document.getElementById('uploadProgress').style.display = 'block';
+        
+        const formData = new FormData();
+        formData.append('video', file);
+        formData.append('classId', currentClassId);
+        
+        const xhr = new XMLHttpRequest();
+        
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const percentComplete = (e.loaded / e.total) * 100;
+            document.getElementById('progressFill').style.width = percentComplete + '%';
+            document.getElementById('progressText').textContent = `Uploading... ${Math.round(percentComplete)}%`;
+          }
+        });
+        
+        xhr.onload = async function() {
+          if (xhr.status === 200) {
+            const response = JSON.parse(xhr.responseText);
+            uploadedVideoPath = response.videoPath;
+            
+            addLogEntry('✅ Video uploaded successfully', 'success');
+            document.getElementById('progressText').textContent = 'Processing for HLS...';
+            
+            // Add media source to OBS
+            await addMediaSourceToOBS(response.videoPath, file.name);
+            
+            // Hide upload progress
+            document.getElementById('uploadProgress').style.display = 'none';
+            
+            // Show live controls
+            document.getElementById('liveControls').style.display = 'block';
+            
+          } else {
+            throw new Error('Upload failed');
+          }
+        };
+        
+        xhr.onerror = function() {
+          addLogEntry('❌ Video upload failed', 'error');
+          document.getElementById('uploadProgress').style.display = 'none';
+        };
+        
+        xhr.open('POST', `${apiBaseUrl}/stream/upload-video`);
+        xhr.setRequestHeader('Authorization', `Bearer ${authToken}`);
+        xhr.send(formData);
+        
+      } catch (error) {
+        console.error('❌ Video upload error:', error);
+        addLogEntry('❌ Video upload error: ' + error.message, 'error');
+        document.getElementById('uploadProgress').style.display = 'none';
+      }
+    }
+    
+    async function addMediaSourceToOBS(videoPath, fileName) {
+      if (!obs || !obsConnected) return;
+      
+      try {
+        const sceneName = OBS_SCENES.media;
+        
+        // Remove existing media source if any
+        try {
+          await obs.call('RemoveInput', { inputName: 'UploadedVideo' });
+        } catch (e) {
+          // Ignore if source doesn't exist
+        }
+        
+        // Add new media source
+        await obs.call('CreateInput', {
+          sceneName,
+          inputName: 'UploadedVideo',
+          inputKind: 'ffmpeg_source',
+          inputSettings: {
+            local_file: videoPath,
+            looping: false,
+            restart_on_activate: true
+          }
+        });
+        
+        addLogEntry(`🎬 Added video to OBS: ${fileName}`, 'success');
+        
+        // Switch to media scene
+        await switchToScene('media');
+        
+      } catch (error) {
+        console.error('❌ Failed to add media source:', error);
+        addLogEntry('❌ Failed to add media source: ' + error.message, 'error');
+      }
+    }
+
+    // --- Stream Control Functions (v5+ Protocol) ---
+    async function startClassStream() {
+      if (!currentClassId) {
+        addLogEntry('❌ No class selected', 'error');
+        return;
+      }
+      
+      if (!obsConnected || !obs) {
+        addLogEntry('❌ OBS not connected', 'error');
+        return;
+      }
+      
+      if (!currentStreamMode) {
+        addLogEntry('❌ No stream source selected', 'error');
+        return;
+      }
+      
+      try {
+        addLogEntry('🚀 Starting class stream...', 'info');
+        
+        // Generate stream key if not exists
+        if (!streamKey) {
+          await generateStreamKey();
+        }
+        
+        // Configure OBS RTMP output
+        await configureOBSOutput();
+        
+        // Switch to selected scene
+        await switchToScene(currentStreamMode);
+        
+        // Start OBS streaming using v5+ API
+        await obs.call('StartStream');
+        addLogEntry('📤 OBS StartStream command sent', 'info');
+        
+        // Start analytics
+        startStreamAnalytics();
+        
+        // Show source switching controls
+        document.getElementById('sourceSwitching').style.display = 'block';
+        
+        // Notify backend about stream start
+        const response = await fetch(`${apiBaseUrl}/stream/start`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            classId: currentClassId,
+            streamKey: streamKey,
+            rtmpUrl: `${RTMP_SERVER_URL}/${streamKey}`,
+            streamMode: currentStreamMode
+          })
+        });
+        
+        if (response.ok) {
+          addLogEntry('✅ Stream start request sent successfully', 'success');
+          
+          // Show HLS preview
+          showHLSPreview();
+          
+          // Notify students via Socket.IO (frontend status only)
+          if (typeof io !== 'undefined' && socket) {
+            socket.emit('stream:start', {
+              classId: currentClassId,
+              streamKey: streamKey,
+              status: 'live',
+              streamMode: currentStreamMode
+            });
+            console.log('📡 Notified students: stream started');
+          }
+          
+        } else {
+          throw new Error('Failed to start stream on server');
+        }
+        
+      } catch (error) {
+        console.error('❌ Failed to start stream:', error);
+        addLogEntry('❌ Failed to start stream: ' + error.message, 'error');
+      }
+    }
+    
+    async function stopClassStream() {
+      try {
+        addLogEntry('⏹️ Stopping class stream...', 'info');
+        
+        // Stop OBS streaming using v5+ API
+        if (obs && obsConnected) {
+          await obs.call('StopStream');
+          addLogEntry('📤 OBS StopStream command sent', 'info');
+        }
+        
+        // Stop analytics
+        stopStreamAnalytics();
+        
+        // Hide source switching controls
+        document.getElementById('sourceSwitching').style.display = 'none';
+        
+        // Notify backend about stream stop
+        const response = await fetch(`${apiBaseUrl}/stream/stop`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            classId: currentClassId
+          })
+        });
+        
+        if (response.ok) {
+          addLogEntry('✅ Stream stop request sent successfully', 'success');
+          
+          // Hide HLS preview
+          hideHLSPreview();
+          
+          // Notify students via Socket.IO (frontend status only)
+          if (typeof io !== 'undefined' && socket) {
+            socket.emit('stream:stop', {
+              classId: currentClassId,
+              status: 'offline'
+            });
+            console.log('📡 Notified students: stream stopped');
+          }
+          
+        } else {
+          throw new Error('Failed to stop stream on server');
+        }
+        
+      } catch (error) {
+        console.error('❌ Failed to stop stream:', error);
+        addLogEntry('❌ Failed to stop stream: ' + error.message, 'error');
+      }
+    }
+    
+    async function generateStreamKey() {
+      if (!currentClassId) return;
+      
+      // Stream key is simply the class ID
+      streamKey = currentClassId;
+      document.getElementById('currentStreamKey').textContent = streamKey;
+      updateConnectionStatus('streamKeyStatus', 'Generated', 'connected');
+      addLogEntry('🔑 Stream key set to class ID: ' + streamKey, 'success');
+      
+      return streamKey;
+    }
+    
+    async function configureOBSOutput() {
+      if (!obs || !obsConnected) {
+        addLogEntry('❌ OBS not connected', 'error');
+        return;
+      }
+      
+      try {
+        // Configure streaming service settings using v5+ API
+        const streamServiceSettings = {
+          streamServiceType: 'rtmp_custom',
+          streamServiceSettings: {
+            server: RTMP_SERVER_URL,
+            key: streamKey,
+            use_auth: false
+          }
+        };
+          await obs.call('SetStreamServiceSettings', streamServiceSettings);
+        addLogEntry('⚙️ OBS RTMP stream service configured', 'success');
+        
+        // Optionally get current stream service settings to verify
+        try {
+          const currentSettings = await obs.call('GetStreamServiceSettings');
+          console.log('📋 Current stream service settings:', currentSettings);
+        } catch (e) {
+          console.warn('Could not get stream service settings:', e);
+        }
+        
+      } catch (error) {
+        console.error('❌ Failed to configure OBS output:', error);
+        addLogEntry('❌ Failed to configure OBS output: ' + error.message, 'error');
+      }
+      
+    }
+    
+    function showHLSPreview() {
+      const hlsPreview = document.getElementById('hlsPreview');
+      const obsStatusDisplay = document.getElementById('obsStatusDisplay');
+      const streamReady = document.getElementById('streamReady');
+      
+      if (hlsPreview && currentClassId) {
+        const hlsUrl = `${HLS_BASE_URL}/${currentClassId}.m3u8`;
+        hlsPreview.src = hlsUrl;
+        hlsPreview.style.display = 'block';
+        obsStatusDisplay.style.display = 'none';
+        streamReady.style.display = 'block';
+        
+        addLogEntry('📺 HLS preview started: ' + hlsUrl, 'info');
+      }
+    }
+    
+    function hideHLSPreview() {
+      const hlsPreview = document.getElementById('hlsPreview');
+      const obsStatusDisplay = document.getElementById('obsStatusDisplay');
+      const streamReady = document.getElementById('streamReady');
+      
+      if (hlsPreview) {
+        hlsPreview.src = '';
+        hlsPreview.style.display = 'none';
+        obsStatusDisplay.style.display = 'flex';
+        streamReady.style.display = 'none';
+      }
+    }
+    
+    // --- UI Update Functions ---
+    function updateOBSStatus(status, type = 'info') {
+      const obsStatusText = document.getElementById('obsStatusText');
+      const obsStatusIcon = document.getElementById('obsStatusIcon');
+      const obsStatusInfo = document.getElementById('obsStatusInfo');
+      
+      if (obsStatusText) obsStatusText.textContent = `OBS Studio ${status}`;
+      if (obsStatusInfo) obsStatusInfo.textContent = status;
+      
+      if (obsStatusIcon) {
+        switch (type) {
+          case 'connected':
+            obsStatusIcon.textContent = '✅';
+            break;
+          case 'connecting':
+            obsStatusIcon.textContent = '🔄';
+            break;
+          case 'error':
+            obsStatusIcon.textContent = '❌';
+            break;
+          default:
+            obsStatusIcon.textContent = '🎥';
+        }
+      }
+    }
+    
+    function updateConnectionStatus(elementId, status, type = 'info') {
+      const element = document.getElementById(elementId);
+      if (element) {
+        element.textContent = status;
+        element.className = `connection-status ${type}`;
+      }
+    }
+    
+    function addLogEntry(message, type = 'info') {
+      const connectionLog = document.getElementById('connectionLog');
+      if (connectionLog) {
+        const entry = document.createElement('div');
+        entry.className = `log-entry ${type}`;
+        entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+        connectionLog.appendChild(entry);
+        connectionLog.scrollTop = connectionLog.scrollHeight;
+        
+        // Keep only last 50 entries
+        while (connectionLog.children.length > 50) {
+          connectionLog.removeChild(connectionLog.firstChild);
+        }
+      }
+    }
+    
+    function startStreamDurationTimer() {
+      if (streamDurationInterval) {
+        clearInterval(streamDurationInterval);
+      }
+      
+      streamDurationInterval = setInterval(() => {
+        if (streamStartTime) {
+          const duration = Date.now() - streamStartTime;
+          const hours = Math.floor(duration / 3600000);
+          const minutes = Math.floor((duration % 3600000) / 60000);
+          const seconds = Math.floor((duration % 60000) / 1000);
+          
+          const durationText = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+          document.getElementById('streamDurationInfo').textContent = durationText;
+        }
+      }, 1000);
+    }
+    
+    function stopStreamDurationTimer() {
+      if (streamDurationInterval) {
+        clearInterval(streamDurationInterval);
+        streamDurationInterval = null;
+      }
+      document.getElementById('streamDurationInfo').textContent = '00:00:00';
+    }
+    
+    // --- Stream Analytics ---
+    function startStreamAnalytics() {
+      streamAnalytics.startTime = Date.now();
+      streamAnalytics.peakViewers = 0;
+      streamAnalytics.totalViewers = 0;
+      streamAnalytics.viewerSamples = 0;
+      
+      document.getElementById('analyticsSection').style.display = 'block';
+      document.getElementById('viewersSection').style.display = 'block';
+      
+      if (analyticsInterval) {
+        clearInterval(analyticsInterval);
+      }
+      
+      analyticsInterval = setInterval(async () => {
+        await updateStreamAnalytics();
+      }, 5000); // Update every 5 seconds
+    }
+    
+    function stopStreamAnalytics() {
+      if (analyticsInterval) {
+        clearInterval(analyticsInterval);
+        analyticsInterval = null;
+      }
+      
+      // Clear viewer data (real-time only as specified)
+      connectedViewers.clear();
+      updateViewersList();
+      
+      // Keep analytics visible but stop updating
+      setTimeout(() => {
+        document.getElementById('analyticsSection').style.display = 'none';
+        document.getElementById('viewersSection').style.display = 'none';
+      }, 10000); // Hide after 10 seconds
+    }
+    
+    async function updateStreamAnalytics() {
+      try {
+        // Get OBS streaming stats
+        if (obs && obsConnected) {
+          try {
+            const stats = await obs.call('GetStreamStatus');
+            if (stats.outputActive) {
+              streamAnalytics.bitrate = Math.round(stats.outputBytes * 8 / 1024); // Convert to kbps
+              streamAnalytics.droppedFrames = stats.outputSkippedFrames || 0;
+              
+              // Update UI
+              document.getElementById('streamBitrate').textContent = streamAnalytics.bitrate;
+              document.getElementById('droppedFrames').textContent = streamAnalytics.droppedFrames;
+              
+              // Update quality indicator
+              updateQualityIndicator(stats);
+            }
+          } catch (e) {
+            console.warn('Could not get stream stats:', e);
+          }
+        }
+        
+        // Update viewer analytics (from current viewer count)
+        const currentViewers = parseInt(document.getElementById('viewerCountInfo').textContent) || 0;
+        
+        if (currentViewers > streamAnalytics.peakViewers) {
+          streamAnalytics.peakViewers = currentViewers;
+          document.getElementById('peakViewers').textContent = streamAnalytics.peakViewers;
+        }
+        
+        streamAnalytics.totalViewers += currentViewers;
+        streamAnalytics.viewerSamples++;
+        
+        const avgViewers = Math.round(streamAnalytics.totalViewers / streamAnalytics.viewerSamples);
+        document.getElementById('avgViewers').textContent = avgViewers;
+        
+      } catch (error) {
+        console.warn('Analytics update error:', error);
+      }
+    }
+    
+    function updateQualityIndicator(stats) {
+      const qualityDot = document.getElementById('qualityIndicator');
+      const qualityText = document.getElementById('qualityText');
+      
+      const droppedFrameRate = stats.outputSkippedFrames / (stats.outputTotalFrames || 1);
+      
+      if (droppedFrameRate < 0.01) {
+        qualityDot.className = 'quality-dot';
+        qualityText.textContent = 'Excellent';
+      } else if (droppedFrameRate < 0.05) {
+        qualityDot.className = 'quality-dot warning';
+        qualityText.textContent = 'Good';
+      } else {
+        qualityDot.className = 'quality-dot error';
+        qualityText.textContent = 'Poor';
+      }
+    }
+
+    // --- Event Listeners ---
+    function setupOBSEventListeners() {
+      // Connect to OBS button
+      document.getElementById('connectObsBtn').addEventListener('click', connectToOBS);
+      
+      // Stream mode selection buttons
+      document.querySelectorAll('.btn-mode').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const mode = e.target.dataset.mode;
+          
+          // Update UI
+          document.querySelectorAll('.btn-mode').forEach(b => b.classList.remove('active'));
+          e.target.classList.add('active');
+          
+          currentStreamMode = mode;
+          
+          // Show/hide video upload section
+          if (mode === 'media') {
+            document.getElementById('videoUploadSection').style.display = 'block';
+            document.getElementById('liveControls').style.display = uploadedVideoPath ? 'block' : 'none';
+          } else {
+            document.getElementById('videoUploadSection').style.display = 'none';
+            document.getElementById('liveControls').style.display = 'block';
+          }
+          
+          addLogEntry(`📹 Selected ${mode} mode`, 'info');
+        });
+      });
+      
+      // Video file selection
+      document.getElementById('selectVideoBtn').addEventListener('click', () => {
+        document.getElementById('videoFileInput').click();
+      });
+      
+      document.getElementById('videoFileInput').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          handleVideoUpload(file);
+        }
+      });
+      
+      // Start class stream button
+      document.getElementById('startClassStreamBtn').addEventListener('click', startClassStream);
+      
+      // Stop class stream button
+      document.getElementById('stopClassStreamBtn').addEventListener('click', stopClassStream);
+      
+      // Live source switching buttons
+      document.getElementById('switchWebcamBtn').addEventListener('click', () => switchToScene('webcam'));
+      document.getElementById('switchDesktopBtn').addEventListener('click', () => switchToScene('desktop'));
+      document.getElementById('switchMediaBtn').addEventListener('click', () => switchToScene('media'));
+      document.getElementById('switchPipBtn').addEventListener('click', () => switchToScene('pip'));
+      
+      // Generate stream key button
+      document.getElementById('generateKeyBtn').addEventListener('click', generateStreamKey);
+      
+      // Test connection button
+      document.getElementById('testConnectionBtn').addEventListener('click', async () => {
+        if (obsConnected && obs) {
+          try {
+            const version = await obs.call('GetVersion');
+            addLogEntry(`✅ OBS Version: ${version.obsVersion} (WebSocket: ${version.obsWebSocketVersion})`, 'success');
+          } catch (error) {
+            addLogEntry('❌ Failed to get OBS version: ' + error.message, 'error');
+          }
+        } else {
+          connectToOBS();
+        }
+      });
+      
+      // Copy RTMP URL button
+      document.getElementById('copyRtmpBtn').addEventListener('click', () => {
+        const rtmpUrl = document.getElementById('rtmpServerUrl').textContent;
+        navigator.clipboard.writeText(rtmpUrl).then(() => {
+          addLogEntry('📋 RTMP URL copied to clipboard', 'success');
+        });
+      });
+      
+      // Class selection change
+      document.getElementById('classSelect').addEventListener('change', (e) => {
+        currentClassId = e.target.value;
+        document.getElementById('classLabel').textContent = 
+          e.target.options[e.target.selectedIndex].text || 'Not selected';
+        
+        if (currentClassId) {
+          addLogEntry(`📚 Class selected: ${currentClassId}`, 'info');
+        }
+      });
+      
+      // Configure OBS button
+      document.getElementById('configureObsBtn').addEventListener('click', async () => {
+        if (obsConnected && obs) {
+          await configureOBSOutput();
+        } else {
+          addLogEntry('❌ OBS not connected', 'error');
+        }
+      });
+    }
+
+    // --- Load classes on page load ---
+    async function loadClasses() {
+      try {
+        if (!authToken) {
+          console.warn('No auth token found');
+          return;
+        }
+        
+        const response = await fetch(`${apiBaseUrl}/classes`, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
+        
+        if (response.ok) {
+          const classes = await response.json();
+          const classSelect = document.getElementById('classSelect');
+          
+          // Clear existing options except the first one
+          while (classSelect.children.length > 1) {
+            classSelect.removeChild(classSelect.lastChild);
+          }
+          
+          classes.forEach(cls => {
+            const option = document.createElement('option');
+            option.value = cls.id;
+            option.textContent = cls.name;
+            classSelect.appendChild(option);
+          });
+          
+          // Auto-select if class ID is available
+          if (currentClassId) {
+            classSelect.value = currentClassId;
+            const selectedOption = classSelect.options[classSelect.selectedIndex];
+            document.getElementById('classLabel').textContent = selectedOption.text || 'Not selected';
+          }
+          
+          console.log('✅ Classes loaded successfully');
+        } else {
+          console.error('Failed to load classes');
+        }
+      } catch (error) {
+        console.error('Error loading classes:', error);
+      }
+    }
+
+    // ===== SIMPLE SOCKET.IO FOR OBS STREAMING =====
+    let socket = null;
+    
+    function initializeStreamingSocket() {
+      if (!socket) {
+        socket = io();
+        console.log('🔌 Initializing OBS streaming socket');
+        addLogEntry('🔌 Connecting to server...', 'info');
+      }
+      
+      socket.on('connect', () => {
+        console.log('✅ Socket connected');
+        addLogEntry('✅ Connected to server', 'success');
+        
+        // Join instructor room if class is selected
+        if (currentClassId) {
+          socket.emit('instructor-join-class', { classId: currentClassId });
+          addLogEntry(`🏫 Joined class room: ${currentClassId}`, 'info');
+        }
+      });
+      
+      socket.on('disconnect', () => {
+        console.log('❌ Socket disconnected');
+        addLogEntry('❌ Disconnected from server', 'error');
+      });
+      
+      socket.on('reconnect', () => {
+        console.log('🔄 Socket reconnected');
+        addLogEntry('🔄 Reconnected to server', 'success');
+        
+        // Rejoin class room
+        if (currentClassId) {
+          socket.emit('instructor-join-class', { classId: currentClassId });
+        }
+      });
+      
+      // Listen for viewer count updates
+      socket.on('viewerCount', (data) => {
+        console.log('👥 Viewer count:', data.count);
+        const viewerCountInfo = document.getElementById('viewerCountInfo');
+        if (viewerCountInfo) {
+          viewerCountInfo.textContent = data.count || 0;
+        }
+      });
+      
+      socket.on('viewer:count', (data) => {
+        console.log('👥 Viewer count (alt):', data.count);
+        const viewerCountInfo = document.getElementById('viewerCountInfo');
+        if (viewerCountInfo) {
+          viewerCountInfo.textContent = data.count || 0;
+        }
+      });
+      
+      // FMV Viewer tracking events
+      socket.on('viewer-count', (data) => {
+        console.log('📺 FMV Viewer count update:', data);
+        if (data.classId === currentClassId) {
+          updateViewerCount(data.count);
+        }
+      });
+      
+      socket.on('viewer-joined', (data) => {
+        console.log('📺 Viewer joined:', data);
+        if (data.classId === currentClassId) {
+          addViewer(data.viewerId, data.timestamp);
+          addLogEntry(`👤 Viewer connected: ${data.viewerId.substring(0, 8)}...`, 'info');
+        }
+      });
+      
+      socket.on('viewer-left', (data) => {
+        console.log('📺 Viewer left:', data);
+        if (data.classId === currentClassId) {
+          removeViewer(data.viewerId);
+          addLogEntry(`👤 Viewer disconnected: ${data.viewerId.substring(0, 8)}...`, 'info');
+        }
+      });
+      
+      // Stream status updates
+      socket.on('stream:status', (data) => {
+        console.log('📡 Stream status update:', data);
+        updateStreamStatus(data.status);
+      });
+      
+      // Error handling
+      socket.on('error', (error) => {
+        console.error('❌ Socket error:', error);
+        addLogEntry('❌ Socket error: ' + error.message, 'error');
+      });
+    }
+    
+    function updateStreamStatus(status) {
+      const streamStatusInfo = document.getElementById('streamStatusInfo');
+      if (streamStatusInfo) {
+        streamStatusInfo.textContent = status;
+        
+        // Update UI based on status
+        if (status === 'live') {
+          streamStatusInfo.style.color = 'var(--success)';
+          addLogEntry('🔴 Stream is now LIVE', 'success');
+        } else if (status === 'offline') {
+          streamStatusInfo.style.color = 'var(--text-secondary)';
+          addLogEntry('⏹️ Stream is offline', 'info');
+        }
+      }
+    }
+
+    // --- Viewer Management Functions ---
+    function updateViewerCount(count) {
+      // Update analytics
+      streamAnalytics.totalViewers = count;
+      if (count > streamAnalytics.peakViewers) {
+        streamAnalytics.peakViewers = count;
+      }
+      
+      // Update UI
+      document.getElementById('viewerCountInfo').textContent = count;
+      document.getElementById('viewerCountBadge').textContent = count;
+      document.getElementById('peakViewers').textContent = streamAnalytics.peakViewers;
+      
+      // Show/hide viewers section
+      const viewersSection = document.getElementById('viewersSection');
+      if (isStreaming && count > 0) {
+        viewersSection.style.display = 'block';
+      } else {
+        viewersSection.style.display = 'none';
+      }
+      
+      // Update analytics if streaming
+      if (isStreaming) {
+        streamAnalytics.viewerSamples++;
+        const avgViewers = Math.round(streamAnalytics.totalViewers / streamAnalytics.viewerSamples);
+        document.getElementById('avgViewers').textContent = avgViewers;
+      }
+    }
+    
+    function addViewer(viewerId, timestamp) {
+      const joinTime = new Date(timestamp);
+      connectedViewers.set(viewerId, {
+        joinTime: joinTime,
+        lastSeen: joinTime
+      });
+      
+      updateViewersList();
+    }
+    
+    function removeViewer(viewerId) {
+      connectedViewers.delete(viewerId);
+      updateViewersList();
+    }
+    
+    function updateViewersList() {
+      const viewersList = document.getElementById('viewersList');
+      const noViewers = document.getElementById('noViewers');
+      
+      if (connectedViewers.size === 0) {
+        noViewers.style.display = 'block';
+        // Clear any existing viewer items
+        const existingItems = viewersList.querySelectorAll('.viewer-item');
+        existingItems.forEach(item => item.remove());
+        return;
+      }
+      
+      noViewers.style.display = 'none';
+      
+      // Clear existing items
+      const existingItems = viewersList.querySelectorAll('.viewer-item');
+      existingItems.forEach(item => item.remove());
+      
+      // Add current viewers
+      connectedViewers.forEach((data, viewerId) => {
+        const viewerItem = document.createElement('div');
+        viewerItem.className = 'viewer-item';
+        
+        const timeSinceJoin = Math.floor((Date.now() - data.joinTime.getTime()) / 1000);
+        const timeText = timeSinceJoin < 60 ? `${timeSinceJoin}s` : `${Math.floor(timeSinceJoin / 60)}m`;
+        
+        viewerItem.innerHTML = `
+          <div class="viewer-info">
+            <div class="viewer-status"></div>
+            <span class="viewer-id">${viewerId.substring(0, 12)}...</span>
+          </div>
+          <div class="viewer-time">${timeText}</div>
+        `;
+        
+        viewersList.appendChild(viewerItem);
+      });
+    }
+    
+    // Update viewer times every 30 seconds
+    setInterval(() => {
+      if (connectedViewers.size > 0) {
+        updateViewersList();
+      }
+    }, 30000);
+
+    // Initialize everything when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('🚀 OBS Stream Mode initialized');
+      
+      // Initialize URLs in the UI
+      document.getElementById('obsWebSocketUrl').textContent = OBS_WEBSOCKET_URL;
+      document.getElementById('rtmpServerUrl').textContent = RTMP_SERVER_URL;
+      
+      loadClasses();
+      setupOBSEventListeners();
+      initializeStreamingSocket();
+      
+      // Show initial status
+      addLogEntry('🎥 Advanced Stream Mode ready (v31+ Compatible)', 'success');
+      addLogEntry('📋 Select a class and connect to OBS Studio v31+ to begin', 'info');
+      addLogEntry('🔌 Using OBS WebSocket 5+ protocol with auto-scene management', 'info');
+      addLogEntry('📹 Supports: Webcam, Desktop, Video Upload, Picture-in-Picture', 'info');
+      addLogEntry('📊 Includes live analytics and source switching', 'info');
+      addLogEntry('🌐 Using DigitalOcean server: 198.211.107.134', 'info');
+    });
+  </script>
+</body>
+</html>

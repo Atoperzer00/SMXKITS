@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Add Class – SMX KITS</title>
+  <style>
+    body { background:#181f25; color:#fff; font-family:'Segoe UI',sans-serif; padding:24px; }
+    h2 { color:#89bcf4; }
+    label { display:block; margin-top:18px; }
+    input, select { padding:7px 12px; border-radius:8px; border:1px solid #25344a; margin-top:7px; background:#232e3c; color:#fff; }
+    button { background:#1da1f2; color:#fff; padding:9px 24px; border:none; border-radius:8px; margin-top:28px; font-weight:600; }
+  </style>
+</head>
+<body>
+  <!-- Authentication Check -->
+  <script>
+    // Check if user is authenticated and has admin/instructor role
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    
+    if (!token || !role) {
+      // No authentication found, redirect to login
+      window.location.replace('/login.html');
+    } else if (role !== 'admin' && role !== 'instructor') {
+      // User is authenticated but doesn't have admin/instructor privileges
+      alert('Access denied. Admin or Instructor privileges required.');
+      window.location.replace('/dashboard.html');
+    }
+  </script>
+  
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <h2>Add Class</h2>
+    <a href="admin-dashboard.html" style="color: #89bcf4; text-decoration: none;">← Back to Dashboard</a>
+  </div>
+  <form id="classForm" onsubmit="addClass(event)">
+    <label>Class Name <input required id="className" /></label>
+    <label>Organization <input required id="org" /></label>
+    <label>Country
+      <select id="country">
+        <option>United States</option><option>United Kingdom</option>
+        <option>Canada</option><option>Australia</option>
+        <option>Other</option>
+      </select>
+    </label>
+    <label>Instructor
+      <select id="instructor"></select>
+    </label>
+    <label>Course Start Date <input type="date" id="startDate" required /></label>
+    <label>Course End Date <input type="date" id="endDate" required /></label>
+    <button type="submit">Add Class</button>
+  </form>
+  <div id="result" style="margin-top:32px;"></div>
+  <script>
+    // Fetch instructors from backend
+    async function fetchInstructors() {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          alert('Authentication token missing. Please log in again.');
+          window.location.href = '/login.html';
+          return;
+        }
+        
+        document.getElementById('instructor').innerHTML = '<option>Loading instructors...</option>';
+        
+        const response = await fetch('/api/users?role=instructor', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+          if (response.status === 401) {
+            alert('Session expired. Please login again.');
+            window.location.href = '/login.html';
+            return;
+          }
+          throw new Error('Failed to fetch instructors');
+        }
+        
+        const users = await response.json();
+        
+        // Populate instructor dropdown (only instructors/admins with Active status)
+        const options = users
+          .filter(u => (u.role === 'instructor' || u.role === 'admin') && u.status === true)
+          .map(u => `<option value="${u._id}">${u.name} ✔️</option>`)
+          .join('');
+          
+        document.getElementById('instructor').innerHTML = options || '<option value="">No instructor available</option>';
+      } catch (error) {
+        console.error('Error fetching instructors:', error);
+        document.getElementById('instructor').innerHTML = '<option value="">Error loading instructors</option>';
+        document.getElementById('result').innerText = `Error: ${error.message}`;
+      }
+    }
+    
+    // Call function to populate dropdown when page loads
+    document.addEventListener('DOMContentLoaded', fetchInstructors);
+    
+    // Function to add a class
+    async function addClass(e) {
+      e.preventDefault();
+      
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          alert('Authentication token missing. Please log in again.');
+          window.location.href = '/login.html';
+          return;
+        }
+        
+        // Prepare class data
+        const classData = {
+          name: document.getElementById('className').value,
+          organization: document.getElementById('org').value,
+          country: document.getElementById('country').value,
+          instructorId: document.getElementById('instructor').value,
+          startDate: document.getElementById('startDate').value,
+          endDate: document.getElementById('endDate').value
+        };
+        
+        // Make API call to create class
+        const response = await fetch('/api/classes', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(classData)
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          
+          if (response.status === 401) {
+            alert('Session expired. Please login again.');
+            window.location.href = '/login.html';
+            return;
+          }
+          
+          throw new Error(errorData.error || 'Failed to create class');
+        }
+        
+        const createdClass = await response.json();
+        
+        // Display success message
+        document.getElementById('result').innerHTML = `
+          <div style="background:#162536; padding:16px; border-radius:8px; border:1px solid #28425e;">
+            <h3 style="color:#70b8ff; margin-top:0;">✅ Class Created Successfully</h3>
+            <p><strong>Name:</strong> ${createdClass.name}</p>
+            <p><strong>Organization:</strong> ${createdClass.organization || 'N/A'}</p>
+            <p><strong>Dates:</strong> ${new Date(createdClass.startDate).toLocaleDateString()} to ${new Date(createdClass.endDate).toLocaleDateString()}</p>
+            <p><strong>ID:</strong> ${createdClass._id}</p>
+          </div>
+        `;
+        
+        // Reset form
+        document.getElementById('classForm').reset();
+      } catch (error) {
+        console.error('Error creating class:', error);
+        document.getElementById('result').innerHTML = `
+          <div style="background:#362021; padding:16px; border-radius:8px; border:1px solid #5e2828;">
+            <h3 style="color:#ff7070; margin-top:0;">❌ Error</h3>
+            <p>${error.message}</p>
+          </div>
+        `;
+      }
+    }
+  </script>
+</body>
+</html>

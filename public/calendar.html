@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SMX KITS - Calendar</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    /* Calendar Styles */
+    .wrapper {
+      width: 100%;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    
+    header {
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .c-monthyear {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    
+    .c-month {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    
+    .c-paginator__month {
+      color: #fff;
+      font-weight: 600;
+      font-size: 20px;
+      display: none;
+      padding: 0 20px;
+    }
+    
+    .c-paginator__month.is-active {
+      display: block;
+    }
+    
+    .prev, .next {
+      color: #fff;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 0 15px;
+      transition: transform 0.2s;
+    }
+    
+    .prev:hover, .next:hover {
+      transform: scale(1.2);
+    }
+    
+    .c-paginator__year {
+      color: #70b8ff;
+      font-size: 24px;
+      font-weight: 600;
+      margin-left: 15px;
+    }
+    
+    .c-calendar {
+      display: flex;
+      gap: 20px;
+    }
+    
+    .c-calendar__style {
+      background: #1e293b;
+      border-radius: 10px;
+      padding: 20px;
+    }
+    
+    .c-aside {
+      width: 300px;
+    }
+    
+    .c-cal__container {
+      flex: 1;
+      overflow-x: auto;
+    }
+    
+    .c-main {
+      display: none;
+    }
+    
+    .c-main.is-active {
+      display: block;
+    }
+    
+    .c-cal__row {
+      display: flex;
+    }
+    
+    .c-cal__col, .c-cal__cel {
+      flex: 1;
+      min-width: 40px;
+      text-align: center;
+      padding: 12px 0;
+      border: 1px solid #2d3a4f;
+    }
+    
+    .c-cal__col {
+      font-weight: 700;
+      color: #70b8ff;
+      background: #263244;
+    }
+    
+    .c-cal__cel {
+      cursor: pointer;
+      position: relative;
+      transition: background 0.2s;
+    }
+    
+    .c-cal__cel:hover {
+      background: #2c3b4e;
+    }
+    
+    .c-cal__cel.is-selected {
+      background: #3a5a8f;
+    }
+    
+    .c-cal__cel p {
+      margin: 0;
+    }
+    
+    .c-cal__cel.event:after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 10px;
+      height: 10px;
+      background: #e84646;
+      border-radius: 50%;
+    }
+    
+    .c-aside__day {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 30px 0;
+    }
+    
+    .c-aside__num {
+      font-size: 80px;
+      font-weight: 700;
+      color: #fff;
+    }
+    
+    .c-aside__month {
+      font-size: 24px;
+      color: #70b8ff;
+      margin-left: 10px;
+    }
+    
+    .c-aside__eventList {
+      margin-top: 20px;
+    }
+    
+    .o-btn {
+      padding: 10px 20px;
+      background: #3684cc;
+      color: white;
+      font-weight: 600;
+      text-align: center;
+      border-radius: 5px;
+      display: inline-block;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    
+    .o-btn:hover {
+      background: #2a6daf;
+    }
+    
+    .c-event__creator {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      max-width: 500px;
+      width: 90%;
+      z-index: 100;
+      display: none;
+    }
+    
+    .c-event__creator.is-active {
+      display: block;
+    }
+    
+    #addEvent input, #addEvent textarea, #addEvent select {
+      width: 100%;
+      margin-bottom: 15px;
+      padding: 10px;
+      border-radius: 5px;
+      background: #263244;
+      border: 1px solid #384860;
+      color: white;
+    }
+  </style>
+</head>
+<body class="bg-[#0f172a] text-white">
+  <!-- Authentication Check - This runs BEFORE any content loads -->
+  <script>
+    // Immediate authentication check
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    
+    if (!token || !role) {
+      // No authentication found, redirect immediately
+      window.location.replace('/login.html');
+      // Stop execution to prevent content from loading
+      throw new Error('Authentication required');
+    }
+    
+    // We are authenticated, continue loading dashboard
+    console.log('✅ Authentication verified - loading calendar page');
+  </script>
+
+  <!-- Main Content -->
+  <div class="min-h-screen flex font-sans overflow-auto">
+    <!-- Sidebar -->
+    <aside class="flex flex-col w-60 bg-black/60 rounded-3xl m-6 p-4 shadow-2xl">
+      <div class="flex flex-col items-center mb-8">
+        <div class="w-16 h-16 rounded-full bg-gradient-to-br from-zinc-900 via-zinc-700 to-zinc-900 flex items-center justify-center shadow-lg mb-2">
+          <img src="SE66806_logo_orig.png" alt="SMXKITS Logo" class="w-12 h-12" />
+        </div>
+      </div>
+      <nav class="flex-1 space-y-5 text-zinc-200 font-medium">
+        <a href="dashboard.html" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>🏠</span>Dashboard</a>
+        <a href="#" onclick="goToPEDTraining();" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>🛫</span>Live PED Exercise</a>
+        <a href="keyboard-training.html" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>⌨️</span>Keyboard Input Training</a>
+        <a href="#" onclick="goToPEDTraining();" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>🧑‍💻</span>Screener Training</a>
+        <a href="mission-links.html" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>📡</span>IA Training</a>
+        <a href="#" onclick="goToOpsLog();" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>📝</span>Grading</a>
+        <a href="calendar.html" class="flex items-center gap-3 px-4 py-2 rounded-xl bg-blue-900/30 text-blue-300 transition"><span>📅</span>Schedule</a>
+        <a href="feedback.html" class="flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-zinc-800/80 transition"><span>💬</span>Feedback</a>
+      </nav>
+      <a href="#" onclick="logout();" class="mt-auto flex items-center gap-3 px-4 py-2 rounded-xl bg-zinc-900/80 text-red-400 hover:bg-red-900/50 transition">Logout</a>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="flex-1 p-8 overflow-y-auto">
+      <div class="mb-10 text-center">
+        <h1 class="text-3xl font-bold text-white mb-3">Course Schedule</h1>
+        <p class="text-zinc-400">View your training schedule and upcoming events</p>
+      </div>
+      
+      <!-- Calendar Content -->
+      <div class="calendar-content">
+        <header>
+          <div class="wrapper">
+            <div class="c-monthyear">
+              <div class="c-month">
+                <span id="prev" class="prev fa fa-angle-left" aria-hidden="true"></span>
+                <div id="c-paginator">
+                  <span class="c-paginator__month">JANUARY</span>
+                  <span class="c-paginator__month">FEBRUARY</span>
+                  <span class="c-paginator__month">MARCH</span>
+                  <span class="c-paginator__month">APRIL</span>
+                  <span class="c-paginator__month">MAY</span>
+                  <span class="c-paginator__month">JUNE</span>
+                  <span class="c-paginator__month">JULY</span>
+                  <span class="c-paginator__month">AUGUST</span>
+                  <span class="c-paginator__month">SEPTEMBER</span>
+                  <span class="c-paginator__month">OCTOBER</span>
+                  <span class="c-paginator__month">NOVEMBER</span>
+                  <span class="c-paginator__month">DECEMBER</span>
+                </div>
+                <span id="next" class="next fa fa-angle-right" aria-hidden="true"></span>
+              </div>
+              <span class="c-paginator__year">2022</span>
+            </div>
+            <div class="c-sort">
+              <a class="o-btn c-today__btn" href="javascript:;">TODAY</a>
+            </div>
+          </div>
+        </header>
+        <div class="wrapper">
+          <div class="c-calendar">
+            <div class="c-calendar__style c-aside">
+              <a class="c-add o-btn js-event__add" href="javascript:;">add event <span class="fa fa-plus"></span></a>
+              <div class="c-aside__day">
+                <span class="c-aside__num"></span> <span class="c-aside__month"></span>
+              </div>
+              <div class="c-aside__eventList">
+              </div>
+            </div>
+            <div class="c-cal__container c-calendar__style">
+              <script>
+                // fill the month table with column headings
+                function day_title(day_name) {
+                  document.write("<div class='c-cal__col'>" + day_name + "</div>");
+                }
+                // fills the month table with numbers
+                function fill_table(month, month_length, indexMonth) {
+                  day = 1;
+                  // begin the new month table
+                  document.write("<div class='c-main c-main-" + indexMonth + "'>");
+                  //document.write("<b>"+month+" "+year+"</b>")
+                  // column headings
+                  document.write("<div class='c-cal__row'>");
+                  day_title("Sun");
+                  day_title("Mon");
+                  day_title("Tue");
+                  day_title("Wed");
+                  day_title("Thu");
+                  day_title("Fri");
+                  day_title("Sat");
+                  document.write("</div>");
+                  // pad cells before first day of month
+                  document.write("<div class='c-cal__row'>");
+                  for (var i = 1; i < start_day; i++) {
+                    if (start_day > 7) {
+                    } else {
+                      document.write("<div class='c-cal__cel'></div>");
+                    }
+                  }
+                  // fill the first week of days
+                  for (var i = start_day; i < 8; i++) {
+                    document.write(
+                      "<div data-day='2022-" +
+                        indexMonth +
+                        "-0" +
+                        day +
+                        "'class='c-cal__cel'><p>" +
+                        day +
+                        "</p></div>"
+                    );
+                    day++;
+                  }
+                  document.write("</div>");
+                  // fill the remaining weeks
+                  while (day <= month_length) {
+                    document.write("<div class='c-cal__row'>");
+                    for (var i = 1; i <= 7 && day <= month_length; i++) {
+                      if (day >= 1 && day <= 9) {
+                        document.write(
+                          "<div data-day='2022-" +
+                            indexMonth +
+                            "-0" +
+                            day +
+                            "'class='c-cal__cel'><p>" +
+                            day +
+                            "</p></div>"
+                        );
+                        day++;
+                      } else {
+                        document.write(
+                          "<div data-day='2022-" +
+                            indexMonth +
+                            "-" +
+                            day +
+                            "' class='c-cal__cel'><p>" +
+                            day +
+                            "</p></div>"
+                        );
+                        day++;
+                      }
+                    }
+                    document.write("</div>");
+                    // the first day of the next month
+                    start_day = i;
+                  }
+                  document.write("</div>");
+                }
+                
+                // CHANGE the below variable to the CURRENT YEAR
+                year = 2022;
+                // first day of the week of the new year
+                today = new Date("January 1, " + year);
+                start_day = today.getDay() + 1;
+                fill_table("January", 31, "01");
+                fill_table("February", 28, "02");
+                fill_table("March", 31, "03");
+                fill_table("April", 30, "04");
+                fill_table("May", 31, "05");
+                fill_table("June", 30, "06");
+                fill_table("July", 31, "07");
+                fill_table("August", 31, "08");
+                fill_table("September", 30, "09");
+                fill_table("October", 31, "10");
+                fill_table("November", 30, "11");
+                fill_table("December", 31, "12");
+              </script>
+            </div>
+          </div>
+          <div class="c-event__creator c-calendar__style js-event__creator">
+            <a href="javascript:;" class="o-btn js-event__close">CLOSE <span class="fa fa-close"></span></a>
+            <form id="addEvent">
+              <input placeholder="Event name" type="text" name="name">
+              <input type="date" name="date">
+              <textarea placeholder="Notes" name="notes" cols="30" rows="10"></textarea>
+              <select name="tags">
+                <option value="event">event</option>
+                <option value="important">important</option>
+                <option value="birthday">birthday</option>
+                <option value="festivity">festivity</option>
+              </select>
+            </form>
+            <br>
+            <a href="javascript:;" class="o-btn js-event__save">SAVE <span class="fa fa-save"></span></a>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- JavaScript for Calendar functionality -->
+  <script>
+    // DOM elements
+    const calendarEl = document.querySelector('.c-calendar');
+    const jsEvent = document.querySelector('.js-event__creator');
+    const closeBtn = document.querySelector('.js-event__close');
+    const addBtn = document.querySelector('.js-event__add');
+    const saveBtn = document.querySelector('.js-event__save');
+    const addEventForm = document.getElementById('addEvent');
+    const prevBtn = document.getElementById('prev');
+    const nextBtn = document.getElementById('next');
+    const todayBtn = document.querySelector('.c-today__btn');
+    
+    // Month/Day Selection and Event Handling
+    const months = document.querySelectorAll('.c-paginator__month');
+    const mainCalendarViews = document.querySelectorAll('.c-main');
+    let currentMonth = new Date().getMonth();
+    
+    // Set current month active
+    months[currentMonth].classList.add('is-active');
+    mainCalendarViews[currentMonth].classList.add('is-active');
+    
+    // Initialize calendar day selection
+    const calendarDays = document.querySelectorAll('.c-cal__cel');
+    const asideDay = document.querySelector('.c-aside__num');
+    const asideMonth = document.querySelector('.c-aside__month');
+    const eventList = document.querySelector('.c-aside__eventList');
+    
+    // Event data storage (would be fetched from backend in real app)
+    let eventData = {};
+    
+    // Set default values for day display
+    const today = new Date();
+    asideDay.textContent = today.getDate();
+    asideMonth.textContent = months[today.getMonth()].textContent;
+    
+    // Handle calendar day click
+    calendarDays.forEach(day => {
+      day.addEventListener('click', function() {
+        calendarDays.forEach(d => d.classList.remove('is-selected'));
+        this.classList.add('is-selected');
+        
+        const dateStr = this.getAttribute('data-day');
+        const date = new Date(dateStr);
+        asideDay.textContent = date.getDate();
+        asideMonth.textContent = months[date.getMonth()].textContent;
+        
+        // Show events for this day
+        renderEvents(dateStr);
+      });
+    });
+    
+    // Handle next month click
+    nextBtn.addEventListener('click', function() {
+      months.forEach(m => m.classList.remove('is-active'));
+      mainCalendarViews.forEach(v => v.classList.remove('is-active'));
+      
+      currentMonth = (currentMonth + 1) % 12;
+      months[currentMonth].classList.add('is-active');
+      mainCalendarViews[currentMonth].classList.add('is-active');
+    });
+    
+    // Handle previous month click
+    prevBtn.addEventListener('click', function() {
+      months.forEach(m => m.classList.remove('is-active'));
+      mainCalendarViews.forEach(v => v.classList.remove('is-active'));
+      
+      currentMonth = (currentMonth - 1 + 12) % 12;
+      months[currentMonth].classList.add('is-active');
+      mainCalendarViews[currentMonth].classList.add('is-active');
+    });
+    
+    // Handle Add Event button click
+    addBtn.addEventListener('click', function() {
+      jsEvent.classList.add('is-active');
+    });
+    
+    // Handle Close Event Creator button click
+    closeBtn.addEventListener('click', function() {
+      jsEvent.classList.remove('is-active');
+    });
+    
+    // Handle Save Event button click
+    saveBtn.addEventListener('click', function() {
+      const name = addEventForm.name.value;
+      const date = addEventForm.date.value;
+      const notes = addEventForm.notes.value;
+      const tag = addEventForm.tags.value;
+      
+      if (!name || !date) {
+        alert('Please fill in event name and date');
+        return;
+      }
+      
+      // Add event to storage
+      if (!eventData[date]) {
+        eventData[date] = [];
+      }
+      
+      eventData[date].push({
+        name,
+        notes,
+        tag
+      });
+      
+      // Mark date as having an event
+      const matchingDay = document.querySelector(`[data-day="${date}"]`);
+      if (matchingDay) {
+        matchingDay.classList.add('event');
+      }
+      
+      // Close event creator
+      jsEvent.classList.remove('is-active');
+      
+      // Render events for current selected date
+      renderEvents(date);
+      
+      // Reset form
+      addEventForm.reset();
+    });
+    
+    // Function to render events for a specific date
+    function renderEvents(date) {
+      eventList.innerHTML = '';
+      
+      if (eventData[date] && eventData[date].length > 0) {
+        eventData[date].forEach(event => {
+          const eventEl = document.createElement('div');
+          eventEl.classList.add('c-event', `c-event--${event.tag}`);
+          
+          eventEl.innerHTML = `
+            <div class="c-event__name">${event.name}</div>
+            ${event.notes ? `<div class="c-event__notes">${event.notes}</div>` : ''}
+          `;
+          
+          eventList.appendChild(eventEl);
+        });
+      } else {
+        eventList.innerHTML = '<div class="c-event-empty">No events for this day</div>';
+      }
+    }
+    
+    // Handle Today button click
+    todayBtn.addEventListener('click', function() {
+      const today = new Date();
+      const month = today.getMonth();
+      const date = today.getDate();
+      
+      // Change to current month
+      months.forEach(m => m.classList.remove('is-active'));
+      mainCalendarViews.forEach(v => v.classList.remove('is-active'));
+      
+      currentMonth = month;
+      months[currentMonth].classList.add('is-active');
+      mainCalendarViews[currentMonth].classList.add('is-active');
+      
+      // Select today's date
+      const todayStr = `2022-${String(month + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+      const todayCell = document.querySelector(`[data-day="${todayStr}"]`);
+      
+      if (todayCell) {
+        calendarDays.forEach(d => d.classList.remove('is-selected'));
+        todayCell.classList.add('is-selected');
+        
+        asideDay.textContent = date;
+        asideMonth.textContent = months[month].textContent;
+        
+        renderEvents(todayStr);
+      }
+    });
+
+    // Navigation functions
+    function goToPEDTraining() {
+      localStorage.setItem('activeSection', 'screen-ped-training');
+      window.location.href = "/SMXKITS.html#screen-ped-training";
+    }
+    
+    function goToOpsLog() {
+      window.open('/OpsLog.html', '_blank');
+    }
+    
+    function logout() {
+      // Clear local storage
+      localStorage.clear();
+      // Redirect to login page
+      window.location.href = '/login.html';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrackPoint - Altis Tactical Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css">
+  <link rel="stylesheet" href="mapUtils.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      font-family: Arial, sans-serif;
+    }
+
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0, 0, 0, 0.9);
+      color: white;
+      padding: 10px 20px;
+      z-index: 1000;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #3498db;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background 0.3s;
+    }
+
+    .btn:hover {
+      background: #2980b9;
+    }
+
+    .btn.cities {
+      background: #27ae60;
+    }
+
+    .btn.cities:hover {
+      background: #229954;
+    }
+
+    .btn.danger {
+      background: #e74c3c;
+    }
+
+    .btn.danger:hover {
+      background: #c0392b;
+    }
+
+    .map-container {
+      width: 100%;
+      height: 100vh;
+      padding-top: 60px; /* Account for header */
+    }
+
+    #map {
+      width: 100%;
+      height: calc(100vh - 60px);
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🗺️ TrackPoint - Altis Tactical Map</h1>
+    <div class="header-controls">
+      <button class="btn cities" onclick="toggleCities()">Toggle Cities</button>
+      <button class="btn" onclick="toggleBorder()">Toggle Border</button>
+      <button class="btn" onclick="centerMap()">Center Map</button>
+      <button class="btn danger" onclick="goBack()">← Back to Dashboard</button>
+    </div>
+  </div>
+
+  <div class="map-container">
+    <div id="map"></div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.6.0/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="mapUtils.js"></script>
+  <script src="tileDetector.js"></script>
+  <script src="defaultMap.js"></script>
+  <script src="altis.js"></script>
+  <script>
+    let citiesVisible = false;
+    let cityMarkers = [];
+
+    // Initialize the map using the loaded configuration
+    $(async function () {
+      console.log('🚀 TrackPoint initializing with enhanced tile detection...');
+      console.log('📍 Current URL:', window.location.href);
+      console.log('🔍 Leaflet version:', L.version);
+      console.log('💰 jQuery version:', $.fn.jquery);
+      
+      // Check if required functions are loaded
+      console.log('🔧 InitMap function available:', typeof InitMap === 'function');
+      console.log('🔧 MGRS_CRS function available:', typeof MGRS_CRS === 'function');
+      console.log('🔧 Arma3Map available:', typeof Arma3Map !== 'undefined');
+      console.log('🔧 TileDetector available:', typeof TileDetector !== 'undefined');
+      
+      // Check if Arma3Map is loaded
+      if (typeof Arma3Map === 'undefined' || !Arma3Map.Maps.altis) {
+        console.error('❌ Arma3Map.Maps.altis not found! Check if altis.js loaded correctly.');
+        console.error('   Arma3Map type:', typeof Arma3Map);
+        if (typeof Arma3Map !== 'undefined') {
+          console.error('   Arma3Map.Maps:', Arma3Map.Maps);
+        }
+        return;
+      }
+      
+      console.log('✅ Arma3Map configuration loaded:', Arma3Map.Maps.altis);
+      
+      // Check if InitMap function exists
+      if (typeof InitMap !== 'function') {
+        console.error('❌ InitMap function not found! Check if defaultMap.js loaded correctly.');
+        return;
+      }
+      
+      // Initialize map using the proper configuration with tile detection
+      console.log('🎯 Calling InitMap with configuration and tile detection...');
+      console.log('📊 Initial map config details:', {
+        minZoom: Arma3Map.Maps.altis.minZoom,
+        maxZoom: Arma3Map.Maps.altis.maxZoom,
+        defaultZoom: Arma3Map.Maps.altis.defaultZoom,
+        tilePattern: Arma3Map.Maps.altis.tilePattern,
+        center: Arma3Map.Maps.altis.center,
+        bounds: Arma3Map.Maps.altis.bounds
+      });
+      
+      try {
+        // Initialize map with async tile detection
+        await InitMap(Arma3Map.Maps.altis);
+        console.log('✅ Map initialization completed');
+        
+        // Listen for map ready event
+        $(document).on('mapReady', function(event, data) {
+          console.log('🎉 Map ready event received:', data);
+          console.log('🗺️ Map is ready for free navigation - no borders or constraints');
+        });
+        
+      } catch (error) {
+        console.error('❌ Map initialization failed:', error);
+      }
+    });
+
+
+
+    function addCities() {
+      if (!window.map) {
+        console.error('❌ Map not available for adding cities');
+        return;
+      }
+      
+      // Clear existing city markers
+      cityMarkers.forEach(marker => window.map.removeLayer(marker));
+      cityMarkers = [];
+      
+      // Use cities from Arma3Map configuration
+      if (Arma3Map && Arma3Map.Maps.altis && Arma3Map.Maps.altis.cities) {
+        Arma3Map.Maps.altis.cities.forEach(city => {
+          const marker = L.marker([city.y, city.x]).addTo(window.map);
+          marker.bindPopup(`<b>${city.name}</b><br>Coords: [${city.x}, ${city.y}]`);
+          cityMarkers.push(marker);
+        });
+        
+        console.log('✅ Added ' + Arma3Map.Maps.altis.cities.length + ' city markers');
+      } else {
+        console.error('❌ City data not found in Arma3Map configuration');
+      }
+    }
+
+    function removeCities() {
+      if (!window.map) return;
+      cityMarkers.forEach(marker => window.map.removeLayer(marker));
+      cityMarkers = [];
+      console.log('🗑️ Removed all city markers');
+    }
+
+    function toggleCities() {
+      if (citiesVisible) {
+        removeCities();
+        window.location.hash = '';
+        citiesVisible = false;
+        console.log('🏙️ Cities hidden');
+      } else {
+        addCities();
+        window.location.hash = '#cities';
+        citiesVisible = true;
+        console.log('🏙️ Cities shown');
+      }
+    }
+
+    function centerMap() {
+      if (!window.map) {
+        console.warn('⚠️ Map not available for centering');
+        return;
+      }
+      
+      // Use detected center and zoom if available
+      let center, zoom;
+      
+      if (window.detectedTileInfo) {
+        center = window.detectedTileInfo.recommendedCenter || window.mapInfos.center;
+        zoom = window.detectedTileInfo.recommendedZoom || window.mapInfos.defaultZoom;
+        console.log('📍 Using detected center and zoom:', center, zoom);
+      } else if (window.mapInfos) {
+        center = window.mapInfos.center;
+        zoom = window.mapInfos.defaultZoom;
+        console.log('📍 Using configured center and zoom:', center, zoom);
+      } else if (Arma3Map && Arma3Map.Maps.altis) {
+        center = Arma3Map.Maps.altis.center;
+        zoom = Arma3Map.Maps.altis.defaultZoom;
+        console.log('📍 Using fallback center and zoom:', center, zoom);
+      } else {
+        center = [32, 32];
+        zoom = 2;
+        console.log('📍 Using default center and zoom:', center, zoom);
+      }
+      
+      try {
+        window.map.setView(center, zoom);
+        console.log('✅ Map centered successfully');
+      } catch (error) {
+        console.error('❌ Failed to center map:', error);
+      }
+    }
+
+    function toggleBorder() {
+      if (!mapBorder || !window.map) return;
+      
+      if (borderVisible) {
+        window.map.removeLayer(mapBorder);
+        borderVisible = false;
+        console.log('🔲 Map border hidden');
+
+      } else {
+        mapBorder.addTo(window.map);
+        borderVisible = true;
+        console.log('🔲 Map border shown');
+      }
+    }
+
+    function goBack() {
+      if (confirm('Are you sure you want to leave TrackPoint?')) {
+        window.location.href = '/admin-dashboard.html';
+      }
+    }
+
+    function toggleBorder() {
+      console.log('🗺️ Map borders have been disabled for free navigation');
+      alert('Map borders have been disabled. You can now scroll and zoom freely anywhere on the map!');
+    }
+
+    // Check if cities should be visible on load
+    if (window.location.hash === '#cities') {
+      citiesVisible = true;
+    }
+  </script>
+</body>
+</html>

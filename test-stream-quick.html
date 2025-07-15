@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Stream Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #1e1e1e;
+            color: white;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .step {
+            margin: 20px 0;
+            padding: 20px;
+            background: #2a2a2a;
+            border-radius: 8px;
+            border-left: 4px solid #22c55e;
+        }
+        button {
+            background: #22c55e;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #28dd6c;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            background: #333;
+        }
+        .success { background: #22c55e; }
+        .error { background: #ef4444; }
+        .warning { background: #ff9800; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Quick Stream Test</h1>
+        <p>Follow these steps to test the streaming functionality:</p>
+        
+        <div class="step">
+            <h3>Step 1: Login</h3>
+            <p>First, let's log you in with test credentials:</p>
+            <button onclick="quickLogin()">Login as Test Student</button>
+            <div id="loginStatus" class="status">Not logged in</div>
+        </div>
+        
+        <div class="step">
+            <h3>Step 2: Create Test Class</h3>
+            <p>Create a test class for streaming:</p>
+            <button onclick="createTestClass()">Create Test Class</button>
+            <div id="classStatus" class="status">No class created</div>
+        </div>
+        
+        <div class="step">
+            <h3>Step 3: Open Stream</h3>
+            <p>Open the stream page:</p>
+            <button onclick="openStream()">Open Stream (with Class ID)</button>
+            <button onclick="openStreamAuto()">🚀 Open Stream (Auto-Detect Class)</button>
+            <button onclick="openStreamDebug()">Open with Debug Tools</button>
+            <div id="streamStatus" class="status">Stream not opened</div>
+        </div>
+        
+        <div class="step">
+            <h3>Step 4: Debug Tools</h3>
+            <p>Use these tools to diagnose issues:</p>
+            <button onclick="openDebugTool()">Open Debug Tool</button>
+            <button onclick="checkServerStatus()">Check Server Status</button>
+            <button onclick="viewConsole()">View Browser Console</button>
+        </div>
+        
+        <div class="step">
+            <h3>Current Status</h3>
+            <div id="overallStatus" class="status">
+                <div>Token: <span id="tokenStatus">Checking...</span></div>
+                <div>Class ID: <span id="classIdStatus">None</span></div>
+                <div>Server: <span id="serverStatus">Checking...</span></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let testClassId = null;
+        
+        async function quickLogin() {
+            const statusDiv = document.getElementById('loginStatus');
+            statusDiv.textContent = 'Logging in...';
+            statusDiv.className = 'status warning';
+            
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: 'student',
+                        password: 'student123'
+                    })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('role', data.user.role);
+                    localStorage.setItem('userName', data.user.name);
+                    
+                    statusDiv.textContent = `✅ Logged in as ${data.user.name} (${data.user.role})`;
+                    statusDiv.className = 'status success';
+                    
+                    updateStatus();
+                } else {
+                    const error = await response.json();
+                    statusDiv.textContent = `❌ Login failed: ${error.error}`;
+                    statusDiv.className = 'status error';
+                }
+            } catch (error) {
+                statusDiv.textContent = `❌ Network error: ${error.message}`;
+                statusDiv.className = 'status error';
+            }
+        }
+        
+        async function createTestClass() {
+            const statusDiv = document.getElementById('classStatus');
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                statusDiv.textContent = '❌ Please login first';
+                statusDiv.className = 'status error';
+                return;
+            }
+            
+            statusDiv.textContent = 'Creating test class...';
+            statusDiv.className = 'status warning';
+            
+            try {
+                const response = await fetch('/api/classes', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        name: 'Quick Test Stream Class',
+                        description: 'Test class for stream debugging',
+                        streamKey: 'quick-test-' + Date.now()
+                    })
+                });
+                
+                if (response.ok) {
+                    const newClass = await response.json();
+                    testClassId = newClass._id;
+                    localStorage.setItem('currentClassId', testClassId);
+                    
+                    statusDiv.textContent = `✅ Test class created: ${newClass.name}`;
+                    statusDiv.className = 'status success';
+                    
+                    updateStatus();
+                } else {
+                    const error = await response.json();
+                    statusDiv.textContent = `❌ Failed to create class: ${error.error}`;
+                    statusDiv.className = 'status error';
+                }
+            } catch (error) {
+                statusDiv.textContent = `❌ Network error: ${error.message}`;
+                statusDiv.className = 'status error';
+            }
+        }
+        
+        function openStream() {
+            const classId = testClassId || localStorage.getItem('currentClassId');
+            const statusDiv = document.getElementById('streamStatus');
+            
+            if (!classId) {
+                statusDiv.textContent = '❌ Please create a test class first';
+                statusDiv.className = 'status error';
+                return;
+            }
+            
+            const streamUrl = `/SMXStream-new.html?classId=${classId}`;
+            window.open(streamUrl, '_blank');
+            
+            statusDiv.textContent = `✅ Opened stream with class ID: ${classId}`;
+            statusDiv.className = 'status success';
+        }
+        
+        function openStreamDebug() {
+            const classId = testClassId || localStorage.getItem('currentClassId');
+            
+            if (!classId) {
+                alert('Please create a test class first');
+                return;
+            }
+            
+            // Open both the stream and debug tool
+            const streamUrl = `/SMXStream-new.html?classId=${classId}`;
+            const debugUrl = `/debug-stream.html`;
+            
+            window.open(streamUrl, '_blank');
+            window.open(debugUrl, '_blank');
+            
+            document.getElementById('streamStatus').textContent = '✅ Opened stream with debug tool';
+            document.getElementById('streamStatus').className = 'status success';
+        }
+        
+        function openStreamAuto() {
+            const statusDiv = document.getElementById('streamStatus');
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                statusDiv.textContent = '❌ Please login first to test auto-detection';
+                statusDiv.className = 'status error';
+                return;
+            }
+            
+            // Clear stored class ID to force auto-detection
+            localStorage.removeItem('currentClassId');
+            
+            // Open stream page without class ID parameter
+            const streamUrl = `/SMXStream-new.html`;
+            window.open(streamUrl, '_blank');
+            
+            statusDiv.textContent = '🔍 Testing automatic class detection...';
+            statusDiv.className = 'status warning';
+            
+            setTimeout(() => {
+                statusDiv.textContent = '✅ Auto-detection test started - check the new tab';
+                statusDiv.className = 'status success';
+            }, 1000);
+        }
+        
+        function openDebugTool() {
+            window.open('/debug-stream.html', '_blank');
+        }
+        
+        async function checkServerStatus() {
+            const statusDiv = document.getElementById('serverStatus');
+            
+            try {
+                const response = await fetch('/api/auth/verify', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    statusDiv.textContent = '✅ Online';
+                    statusDiv.style.color = '#22c55e';
+                } else {
+                    statusDiv.textContent = '⚠️ Issues detected';
+                    statusDiv.style.color = '#ff9800';
+                }
+            } catch (error) {
+                statusDiv.textContent = '❌ Offline';
+                statusDiv.style.color = '#ef4444';
+            }
+        }
+        
+        function viewConsole() {
+            alert('Press F12 to open Developer Tools and check the Console tab for error messages.');
+        }
+        
+        function updateStatus() {
+            const token = localStorage.getItem('token');
+            const classId = localStorage.getItem('currentClassId');
+            
+            document.getElementById('tokenStatus').textContent = token ? '✅ Present' : '❌ Missing';
+            document.getElementById('tokenStatus').style.color = token ? '#22c55e' : '#ef4444';
+            
+            document.getElementById('classIdStatus').textContent = classId ? `✅ ${classId}` : '❌ None';
+            document.getElementById('classIdStatus').style.color = classId ? '#22c55e' : '#ef4444';
+        }
+        
+        // Initialize status on page load
+        window.addEventListener('load', function() {
+            updateStatus();
+            checkServerStatus();
+        });
+    </script>
+</body>
+</html>

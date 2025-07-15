@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpsLog Calls Styled</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="calloutContainer">
+        <!-- Callout Information -->
+        <div id="calloutInfo">
+            <!-- Existing callout layout remains unchanged -->
+            <!-- SLANT and IA Notes remain at the bottom -->
+        </div>
+
+        <!-- Create Follow Button -->
+        <button id="createFollowBtn">Create Follow</button>
+
+        <!-- Follow Container dynamically added here -->
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const createFollowBtn = document.getElementById('createFollowBtn');
+            let followContainer;
+
+            createFollowBtn.addEventListener('click', function() {
+                if (followContainer) {
+                    // If the container is already open, close it and revert the button text
+                    followContainer.remove();
+                    followContainer = null;
+                    createFollowBtn.textContent = 'Create Follow';
+                    console.log('Follow container closed');
+                } else {
+                    // Create the follow container
+                    followContainer = document.createElement('div');
+                    followContainer.className = 'follow-section';
+                    followContainer.dataset.followSection = 'true';
+                    followContainer.style.marginTop = '10px';
+
+                    // Follow Name
+                    const nameRow = document.createElement('div');
+                    nameRow.style.marginBottom = '10px';
+                    const nameLabel = document.createElement('label');
+                    nameLabel.textContent = 'Follow Name:';
+                    nameLabel.style.marginRight = '10px';
+                    const nameInput = document.createElement('input');
+                    nameInput.type = 'text';
+                    nameInput.id = 'followName';
+                    nameInput.placeholder = 'Enter follow name';
+                    nameRow.appendChild(nameLabel);
+                    nameRow.appendChild(nameInput);
+
+                    // Follow ID (auto-generated)
+                    const idRow = document.createElement('div');
+                    idRow.style.marginBottom = '10px';
+                    const idLabel = document.createElement('label');
+                    idLabel.textContent = 'Follow ID:';
+                    idLabel.style.marginRight = '10px';
+                    const idDisplay = document.createElement('span');
+                    idDisplay.id = 'followIdDisplay';
+                    idDisplay.textContent = `ID-${Date.now()}`;
+                    idRow.appendChild(idLabel);
+                    idRow.appendChild(idDisplay);
+
+                    // Follow Stage
+                    const stageRow = document.createElement('div');
+                    stageRow.style.marginBottom = '10px';
+                    const stageLabel = document.createElement('label');
+                    stageLabel.textContent = 'Follow Stage:';
+                    stageLabel.style.marginRight = '10px';
+                    const stageBtn = document.createElement('button');
+                    stageBtn.type = 'button';
+                    stageBtn.id = 'followStageBtn';
+                    stageBtn.className = 'submit-btn';
+                    stageBtn.textContent = 'START';
+                    stageBtn.style.padding = '8px 12px';
+                    stageBtn.style.minWidth = '100px';
+                    stageBtn.style.backgroundColor = 'var(--qc-orange)';
+
+                    const stageSelect = document.createElement('select');
+                    stageSelect.id = 'stageSelector';
+                    stageSelect.style.marginLeft = '10px';
+
+                    ['START', 'CONT.', 'ADV.', 'END'].forEach(stage => {
+                        const option = document.createElement('option');
+                        option.value = stage;
+                        option.textContent = stage;
+                        stageSelect.appendChild(option);
+                    });
+
+                    stageSelect.addEventListener('change', function() {
+                        stageBtn.textContent = this.value;
+                        if (!window.followState) window.followState = {};
+                        window.followState.stage = this.value;
+                        window.followState.ended = this.value === 'END';
+                    });
+
+                    stageRow.appendChild(stageLabel);
+                    stageRow.appendChild(stageBtn);
+                    stageRow.appendChild(stageSelect);
+
+                    followContainer.appendChild(nameRow);
+                    followContainer.appendChild(idRow);
+                    followContainer.appendChild(stageRow);
+
+                    window.followState = {
+                        followId: idDisplay.textContent,
+                        stage: 'START',
+                        ended: false
+                    };
+
+                    createFollowBtn.parentNode.insertBefore(followContainer, createFollowBtn.nextSibling);
+                    createFollowBtn.textContent = 'Cancel Follow';
+                    console.log('Follow container created with ID:', idDisplay.textContent);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+{
+  "name": "nextjs-calendar-open-source",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "server": "node server-with-upload.js",
+    "basic-server": "node server.js"
+  },
+  "dependencies": {
+    "@daypilot/daypilot-lite-react": "^3.20.0",
+    "express": "^4.21.2",
+    "multer": "^1.4.5-lts.1",
+    "next": "14.0.4",
+    "react": "^18",
+    "react-dom": "^18"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "14.0.4",
+    "typescript": "^5"
+  }
+}

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Basic Streaming Test</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #1a1a2e; color: white; }
+    .section { margin: 20px 0; padding: 15px; background: #333; border-radius: 5px; }
+    button { background: #ff6b35; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin: 5px; }
+    .log { background: #222; padding: 10px; border-radius: 5px; margin: 10px 0; font-family: monospace; max-height: 200px; overflow-y: auto; }
+    input, select { padding: 8px; margin: 5px; border-radius: 3px; border: 1px solid #555; background: #444; color: white; }
+  </style>
+</head>
+<body>
+  <h1>🎥 Basic Streaming Test</h1>
+  
+  <div class="section">
+    <h3>1. Setup</h3>
+    <input type="text" id="classId" placeholder="Enter Class ID (e.g., test123)" value="test123">
+    <button onclick="connectSocket()">Connect Socket</button>
+    <div id="connectionStatus">❌ Not Connected</div>
+  </div>
+
+  <div class="section">
+    <h3>2. Instructor Actions</h3>
+    <button onclick="joinAsInstructor()">Join as Instructor</button>
+    <button onclick="startStream()">Start Stream</button>
+    <button onclick="playStream()">Play Stream</button>
+    <button onclick="pauseStream()">Pause Stream</button>
+  </div>
+
+  <div class="section">
+    <h3>3. Student Actions</h3>
+    <button onclick="joinAsStudent()">Join as Student</button>
+  </div>
+
+  <div class="section">
+    <h3>4. Logs</h3>
+    <button onclick="clearLogs()">Clear Logs</button>
+    <div id="logs" class="log"></div>
+  </div>
+
+  <script>
+    let socket = null;
+    let currentClassId = null;
+    let isInstructor = false;
+
+    function log(message) {
+      const logs = document.getElementById('logs');
+      const timestamp = new Date().toLocaleTimeString();
+      logs.innerHTML += `<div>${timestamp}: ${message}</div>`;
+      logs.scrollTop = logs.scrollHeight;
+      console.log(message);
+    }
+
+    function clearLogs() {
+      document.getElementById('logs').innerHTML = '';
+    }
+
+    function connectSocket() {
+      currentClassId = document.getElementById('classId').value;
+      if (!currentClassId) {
+        log('❌ Please enter a Class ID');
+        return;
+      }
+
+      socket = io();
+      
+      socket.on('connect', () => {
+        log('✅ Socket connected: ' + socket.id);
+        document.getElementById('connectionStatus').innerHTML = '✅ Connected: ' + socket.id;
+      });
+
+      socket.on('disconnect', () => {
+        log('❌ Socket disconnected');
+        document.getElementById('connectionStatus').innerHTML = '❌ Disconnected';
+      });
+
+      // Instructor events
+      socket.on('stream:instructor-ready', (data) => {
+        log('👨‍🏫 Instructor ready: ' + JSON.stringify(data));
+      });
+
+      socket.on('viewerCount', (data) => {
+        log('👥 Viewer count: ' + data.count);
+      });
+
+      // Student events
+      socket.on('stream:student-ready', (data) => {
+        log('👤 Student ready: ' + JSON.stringify(data));
+      });
+
+      socket.on('stream:init', (data) => {
+        log('🎬 Stream initialized: ' + JSON.stringify(data));
+      });
+
+      socket.on('stream:play', (data) => {
+        log('▶️ Stream play: ' + JSON.stringify(data));
+      });
+
+      socket.on('stream:pause', (data) => {
+        log('⏸️ Stream pause: ' + JSON.stringify(data));
+      });
+
+      socket.on('stream:current-state', (data) => {
+        log('📥 Current stream state: ' + JSON.stringify(data));
+      });
+
+      socket.on('stream:no-state', (data) => {
+        log('📭 No stream state available');
+      });
+
+      socket.on('error', (data) => {
+        log('❌ Error: ' + JSON.stringify(data));
+      });
+    }
+
+    function joinAsInstructor() {
+      if (!socket || !currentClassId) {
+        log('❌ Connect socket first');
+        return;
+      }
+      
+      isInstructor = true;
+      log('👨‍🏫 Joining as instructor for class: ' + currentClassId);
+      socket.emit('instructor-join-class', { classId: currentClassId });
+    }
+
+    function joinAsStudent() {
+      if (!socket || !currentClassId) {
+        log('❌ Connect socket first');
+        return;
+      }
+      
+      isInstructor = false;
+      log('👤 Joining as student for class: ' + currentClassId);
+      socket.emit('student-join-class', { classId: currentClassId });
+    }
+
+    function startStream() {
+      if (!socket || !currentClassId || !isInstructor) {
+        log('❌ Must be connected as instructor');
+        return;
+      }
+
+      const streamData = {
+        classId: currentClassId,
+        streamUrl: 'https://www.w3schools.com/html/mov_bbb.mp4', // Test video
+        filename: 'test_video.mp4',
+        startTime: new Date().toISOString(),
+        currentTime: 0,
+        playing: false
+      };
+
+      log('🎬 Starting stream: ' + JSON.stringify(streamData));
+      socket.emit('stream:init', streamData);
+    }
+
+    function playStream() {
+      if (!socket || !currentClassId || !isInstructor) {
+        log('❌ Must be connected as instructor');
+        return;
+      }
+
+      const playData = {
+        classId: currentClassId,
+        time: 0,
+        timestamp: new Date().toISOString()
+      };
+
+      log('▶️ Playing stream: ' + JSON.stringify(playData));
+      socket.emit('stream:play', playData);
+    }
+
+    function pauseStream() {
+      if (!socket || !currentClassId || !isInstructor) {
+        log('❌ Must be connected as instructor');
+        return;
+      }
+
+      const pauseData = {
+        classId: currentClassId,
+        time: 5,
+        timestamp: new Date().toISOString()
+      };
+
+      log('⏸️ Pausing stream: ' + JSON.stringify(pauseData));
+      socket.emit('stream:pause', pauseData);
+    }
+  </script>
+</body>
+</html>

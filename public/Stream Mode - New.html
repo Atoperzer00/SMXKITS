@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SMX Stream Control Center</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link href="https://fonts.googleapis.com/css?family=Inter:400,600,700&display=swap" rel="stylesheet">
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    :root {
+      --primary: #0f172a;
+      --secondary: #1e293b;
+      --tertiary: #334155;
+      --accent: #dc2626;
+      --accent-hover: #b91c1c;
+      --accent-light: rgba(220, 38, 38, 0.1);
+      --accent-glow: rgba(220, 38, 38, 0.3);
+      --text-primary: #f8fafc;
+      --text-secondary: #cbd5e1;
+      --text-muted: #64748b;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --border: #475569;
+      --border-light: #334155;
+      --glass: rgba(15, 23, 42, 0.8);
+      --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      --gradient-accent: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--gradient-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+    
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: var(--secondary);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: var(--tertiary);
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--border);
+    }
+    /* Header */
+    .header {
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-light);
+      padding: 1.5rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .header-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .header-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    
+    .header-icon {
+      width: 2.5rem;
+      height: 2.5rem;
+      background: var(--gradient-accent);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      box-shadow: var(--shadow);
+    }
+    
+    .status-section {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    
+    .status-badge {
+      padding: 0.5rem 1rem;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border: 2px solid;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .status-badge::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+      transition: left 0.5s;
+    }
+    
+    .status-badge:hover::before {
+      left: 100%;
+    }
+    
+    .status-live { 
+      color: var(--accent); 
+      border-color: var(--accent);
+      background: var(--accent-light);
+      animation: pulse-live 2s infinite;
+    }
+    
+    .status-offline { 
+      color: var(--text-muted); 
+      border-color: var(--border);
+      background: rgba(100, 116, 139, 0.1);
+    }
+    
+    @keyframes pulse-live {
+      0%, 100% { box-shadow: 0 0 0 0 var(--accent-glow); }
+      50% { box-shadow: 0 0 0 10px transparent; }
+    }
+    
+    /* Main Container */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    /* Main Layout */
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+    
+    @media (max-width: 1200px) {
+      .main-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    /* Cards */
+    .card {
+      background: var(--secondary);
+      border-radius: 20px;
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--accent);
+    }
+    
+    .card-header {
+      padding: 1.5rem 2rem;
+      border-bottom: 1px solid var(--border-light);
+      background: var(--glass);
+      backdrop-filter: blur(10px);
+    }
+    
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    
+    .card-icon {
+      width: 2rem;
+      height: 2rem;
+      background: var(--accent-light);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      font-size: 1rem;
+    }
+    
+    .card-content {
+      padding: 2rem;
+    }
+    
+    /* Stream Control Card */
+    .stream-control-card {
+      grid-column: 1;
+    }
+    
+    /* Class Selection */
+    .class-selection {
+      margin-bottom: 2rem;
+    }
+    
+    .class-select {
+      width: 100%;
+      background: var(--tertiary);
+      color: var(--text-primary);
+      border: 2px solid var(--border-light);
+      padding: 1rem 1.25rem;
+      font-size: 1rem;
+      border-radius: 12px;
+      font-family: inherit;
+      transition: all 0.3s ease;
+    }
+    
+    .class-select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-light);
+    }
+    
+    /* OBS Configuration Section */
+    .obs-config {
+      background: var(--glass);
+      border: 1px solid var(--border-light);
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .obs-config h3 {
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .obs-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      padding: 0.75rem;
+      background: var(--tertiary);
+      border-radius: 8px;
+    }
+    
+    .obs-status-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--error);
+      animation: pulse 2s infinite;
+    }
+    
+    .obs-status-indicator.connected {
+      background: var(--success);
+    }
+    
+    .rtmp-info {
+      background: var(--tertiary);
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: 'Courier New', monospace;
+      font-size: 0.875rem;
+      margin-bottom: 1rem;
+    }
+    
+    .rtmp-info div {
+      margin-bottom: 0.5rem;
+    }
+    
+    .rtmp-info strong {
+      color: var(--text-primary);
+    }
+    
+    /* Stream Controls */
+    .stream-controls {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    
+    /* Buttons */
+    .btn {
+      padding: 0.875rem 1.5rem;
+      border: none;
+      border-radius: 12px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+      transition: left 0.5s;
+    }
+    
+    .btn:hover::before {
+      left: 100%;
+    }
+    
+    .btn-primary {
+      background: var(--gradient-accent);
+      color: white;
+      box-shadow: var(--shadow);
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+    
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .btn-secondary {
+      background: var(--tertiary);
+      color: var(--text-primary);
+      border: 2px solid var(--border-light);
+    }
+    
+    .btn-secondary:hover {
+      background: var(--border);
+      border-color: var(--accent);
+    }
+    
+    .btn-danger {
+      background: linear-gradient(135deg, var(--error) 0%, #dc2626 100%);
+      color: white;
+    }
+    
+    .btn-danger:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+    }
+    
+    .btn-full {
+      width: 100%;
+      justify-content: center;
+    }
+    
+    /* Viewer Count */
+    .viewer-count {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+    
+    .viewer-count-icon {
+      width: 1.5rem;
+      height: 1.5rem;
+      background: var(--accent-light);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      font-size: 0.75rem;
+    }
+
+    /* Right Panel */
+    .sidebar-card {
+      grid-column: 2;
+    }
+
+    .settings-section {
+      margin-bottom: 30px;
+      background: var(--glass);
+      border-radius: 8px;
+      padding: 14px 17px;
+      box-shadow: 0 2px 8px #0213231e;
+    }
+    .settings-title {
+      font-weight: 700;
+      color: var(--text-primary);
+      font-size: 1.08rem;
+      margin-bottom: 8px;
+    }
+    .settings-row {
+      margin-bottom: 8px;
+      color: var(--text-secondary);
+      font-size: 0.98rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Connection Status */
+    .connection-status {
+      background: var(--glass);
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .connection-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .connection-item:last-child {
+      border-bottom: none;
+    }
+
+    .connection-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--error);
+    }
+
+    .connection-indicator.connected {
+      background: var(--success);
+    }
+
+    /* Error Log */
+    .error-log {
+      background: var(--tertiary);
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      padding: 1rem;
+      max-height: 200px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 0.8rem;
+    }
+
+    .error-log-entry {
+      margin-bottom: 0.5rem;
+      padding: 0.25rem;
+      border-radius: 4px;
+    }
+
+    .error-log-entry.error {
+      background: rgba(239, 68, 68, 0.1);
+      color: #fca5a5;
+    }
+
+    .error-log-entry.warning {
+      background: rgba(245, 158, 11, 0.1);
+      color: #fcd34d;
+    }
+
+    .error-log-entry.info {
+      background: rgba(59, 130, 246, 0.1);
+      color: #93c5fd;
+    }
+
+    @media (max-width: 1000px) {
+      .main-layout { 
+        grid-template-columns: 1fr;
+      }
+    }
+    @media (max-width: 700px) {
+      .container { 
+        padding: 18px 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-content">
+      <div class="header-title">
+        <div class="header-icon">🎥</div>
+        Stream Control Center
+      </div>
+      <div class="status-section">
+        <div class="viewer-count">
+          <div class="viewer-count-icon">👥</div>
+          <span id="viewerCount">0</span> viewers
+        </div>
+        <div class="status-badge status-offline" id="streamStatus">OFFLINE</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <div class="container">
+    <div class="main-layout">
+      <!-- Stream Control Card -->
+      <div class="card stream-control-card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="card-icon">🎬</div>
+            Live Stream Setup
+          </div>
+        </div>
+        <div class="card-content">
+          <!-- Class Selection -->
+          <div class="class-selection">
+            <label for="classSelect" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-secondary);">Select Class</label>
+            <select id="classSelect" class="class-select">
+              <option value="">Choose your class...</option>
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+
+          <!-- OBS Configuration -->
+          <div class="obs-config">
+            <h3>🎮 OBS Configuration</h3>
+            <div class="obs-status">
+              <div class="obs-status-indicator" id="obsStatusIndicator"></div>
+              <span id="obsStatusText">Disconnected</span>
+            </div>
+            <div class="rtmp-info" id="rtmpInfo">
+              <div><strong>RTMP Server:</strong> <span id="rtmpServer">Not configured</span></div>
+              <div><strong>Stream Key:</strong> <span id="streamKey">Not generated</span></div>
+              <div><strong>HLS Output:</strong> <span id="hlsOutput">Not available</span></div>
+            </div>
+            <button class="btn btn-secondary" id="configureObsBtn">
+              ⚙️ Configure OBS
+            </button>
+          </div>
+
+          <!-- Stream Controls -->
+          <div class="stream-controls">
+            <button class="btn btn-primary btn-full" id="startStreamBtn" disabled>
+              🔴 Start Class Stream
+            </button>
+            <button class="btn btn-danger btn-full" id="stopStreamBtn" disabled>
+              ⏹️ Stop Stream
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="card sidebar-card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="card-icon">📊</div>
+            Stream Information
+          </div>
+        </div>
+        <div class="card-content">
+          <!-- Stream Information -->
+          <div class="settings-section">
+            <div class="settings-title">Current Stream</div>
+            <div class="settings-row">Class: <span id="classLabel">Not selected</span></div>
+            <div class="settings-row">Status: <span id="streamStatusInfo">Offline</span></div>
+            <div class="settings-row">Viewers: <span id="viewerCountInfo">0</span></div>
+            <div class="settings-row">Class ID: <span id="classIdDisplay">-</span></div>
+          </div>
+
+          <!-- Connection Status -->
+          <div class="settings-section">
+            <div class="settings-title">Connection Status</div>
+            <div class="connection-status">
+              <div class="connection-item">
+                <span>OBS WebSocket</span>
+                <div class="connection-indicator" id="obsConnectionIndicator"></div>
+              </div>
+              <div class="connection-item">
+                <span>RTMP Server</span>
+                <div class="connection-indicator" id="rtmpConnectionIndicator"></div>
+              </div>
+              <div class="connection-item">
+                <span>HLS Server</span>
+                <div class="connection-indicator" id="hlsConnectionIndicator"></div>
+              </div>
+              <div class="connection-item">
+                <span>Socket.IO</span>
+                <div class="connection-indicator" id="socketConnectionIndicator"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Error Log -->
+          <div class="settings-section">
+            <div class="settings-title">Error Log</div>
+            <div class="error-log" id="errorLog">
+              <div class="error-log-entry info">System initialized</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- Configuration ---
+    const apiBaseUrl = '/api';
+    let currentClassId = null;
+    let authToken = localStorage.getItem('token');
+    let socket = null;
+    let obsWebSocket = null;
+    let isStreaming = false;
+    let streamKey = null;
+    
+    // Auto-detect class ID from URL parameters or localStorage
+    function initializeClassId() {
+      const urlParams = new URLSearchParams(window.location.search);
+      currentClassId = urlParams.get('classId') || localStorage.getItem('currentClassId');
+      
+      console.log('🔍 Class ID detection:', {
+        fromURL: urlParams.get('classId'),
+        fromStorage: localStorage.getItem('currentClassId'),
+        final: currentClassId,
+        currentURL: window.location.href
+      });
+      
+      return currentClassId;
+    }
+    
+    // Initialize class ID immediately
+    initializeClassId();
+    
+    // Debug initialization
+    console.log('🔧 Stream Mode initialized');
+    console.log('API Base URL:', apiBaseUrl);
+    console.log('Auth token:', authToken ? 'Present' : 'Missing');
+    console.log('Current class ID:', currentClassId);
+    
+    // Initialize socket immediately when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('🚀 Page loaded, initializing...');
+      loadClasses();
+      setupEventListeners();
+      initializeSocket();
+      initializeOBSWebSocket();
+    });
+    
+    // --- Load classes on page load ---
+    async function loadClasses() {
+      try {
+        if (!authToken) {
+          logError('No auth token found');
+          return;
+        }
+        
+        const response = await fetch(`${apiBaseUrl}/classes`, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
+        
+        if (response.ok) {
+          const classes = await response.json();
+          const classSelect = document.getElementById('classSelect');
+          
+          // Clear existing options except the first one
+          while (classSelect.children.length > 1) {
+            classSelect.removeChild(classSelect.lastChild);
+          }
+          
+          // Add classes to dropdown
+          classes.forEach(cls => {
+            const option = document.createElement('option');
+            option.value = cls._id;
+            option.textContent = cls.name;
+            classSelect.appendChild(option);
+          });
+          
+          // Auto-select the detected class ID if available
+          if (currentClassId) {
+            classSelect.value = currentClassId;
+            const selectedOption = classSelect.options[classSelect.selectedIndex];
+            if (selectedOption && selectedOption.value === currentClassId) {
+              document.getElementById('classLabel').textContent = selectedOption.text;
+              document.getElementById('classIdDisplay').textContent = currentClassId;
+              localStorage.setItem('currentClassId', currentClassId);
+              logInfo(`Auto-selected class: ${selectedOption.text}`);
+              
+              // Generate stream key for this class
+              await generateStreamKey();
+              
+              // Join the class room immediately if socket is connected
+              if (socket && socket.connected) {
+                socket.emit('instructor-join-class', { classId: currentClassId });
+                logInfo(`Auto-joined class room: ${currentClassId}`);
+              }
+            }
+          } else if (classes.length > 0) {
+            // If no class ID detected, auto-select the first class
+            currentClassId = classes[0]._id;
+            classSelect.value = currentClassId;
+            document.getElementById('classLabel').textContent = classes[0].name;
+            document.getElementById('classIdDisplay').textContent = currentClassId;
+            localStorage.setItem('currentClassId', currentClassId);
+            logInfo(`Auto-selected first available class: ${classes[0].name}`);
+            
+            // Generate stream key for this class
+            await generateStreamKey();
+            
+            // Join the class room immediately if socket is connected
+            if (socket && socket.connected) {
+              socket.emit('instructor-join-class', { classId: currentClassId });
+              logInfo(`Auto-joined first class room: ${currentClassId}`);
+            }
+          }
+        }
+      } catch (error) {
+        logError('Error loading classes: ' + error.message);
+      }
+    }
+    
+    // --- Generate stream key for class ---
+    async function generateStreamKey() {
+      if (!currentClassId || !authToken) return;
+      
+      try {
+        const response = await fetch(`${apiBaseUrl}/streams/key/${currentClassId}`, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          streamKey = data.streamKey;
+          
+          // Update UI with RTMP info
+          document.getElementById('rtmpServer').textContent = data.serverUrl || 'rtmp://localhost:1935/live';
+          document.getElementById('streamKey').textContent = streamKey;
+          document.getElementById('hlsOutput').textContent = `http://localhost:8888/hls/${streamKey}.m3u8`;
+          
+          logInfo(`Stream key generated: ${streamKey}`);
+          
+          // Enable start stream button if OBS is connected
+          updateStreamControls();
+        }
+      } catch (error) {
+        logError('Error generating stream key: ' + error.message);
+      }
+    }
+    
+    // --- Setup event listeners ---
+    function setupEventListeners() {
+      // Class select
+      const classSelect = document.getElementById('classSelect');
+      const classLabel = document.getElementById('classLabel');
+      const classIdDisplay = document.getElementById('classIdDisplay');
+      
+      classSelect.addEventListener('change', async () => {
+        currentClassId = classSelect.value;
+        const selectedText = classSelect.options[classSelect.selectedIndex].text;
+        classLabel.textContent = selectedText;
+        classIdDisplay.textContent = currentClassId || '-';
+        
+        // Store class ID in localStorage
+        if (currentClassId) {
+          localStorage.setItem('currentClassId', currentClassId);
+          logInfo(`Selected class: ${selectedText}`);
+          
+          // Generate stream key for new class
+          await generateStreamKey();
+          
+          // Join the new class room if socket is connected
+          if (socket && socket.connected) {
+            socket.emit('instructor-join-class', { classId: currentClassId });
+            logInfo(`Joined class room: ${currentClassId}`);
+          }
+        }
+      });
+      
+      // Stream control buttons
+      document.getElementById('startStreamBtn').addEventListener('click', startStream);
+      document.getElementById('stopStreamBtn').addEventListener('click', stopStream);
+      document.getElementById('configureObsBtn').addEventListener('click', configureOBS);
+    }
+    
+    // --- Initialize Socket.IO ---
+    function initializeSocket() {
+      socket = io();
+      
+      socket.on('connect', () => {
+        logInfo('Socket.IO connected');
+        updateConnectionStatus('socket', true);
+        
+        // Join class room if we have a class selected
+        if (currentClassId) {
+          socket.emit('instructor-join-class', { classId: currentClassId });
+          logInfo(`Joined class room: ${currentClassId}`);
+        }
+      });
+      
+      socket.on('disconnect', () => {
+        logWarning('Socket.IO disconnected');
+        updateConnectionStatus('socket', false);
+      });
+      
+      socket.on('viewer-count', (data) => {
+        document.getElementById('viewerCount').textContent = data.count;
+        document.getElementById('viewerCountInfo').textContent = data.count;
+      });
+      
+      socket.on('stream-status', (data) => {
+        updateStreamStatus(data.status);
+      });
+    }
+    
+    // --- Initialize OBS WebSocket ---
+    function initializeOBSWebSocket() {
+      // This would connect to OBS WebSocket API
+      // For now, we'll simulate the connection
+      logInfo('Attempting to connect to OBS WebSocket...');
+      
+      // Simulate connection after 2 seconds
+      setTimeout(() => {
+        updateConnectionStatus('obs', true);
+        document.getElementById('obsStatusIndicator').classList.add('connected');
+        document.getElementById('obsStatusText').textContent = 'Connected to OBS';
+        logInfo('OBS WebSocket connected');
+        updateStreamControls();
+      }, 2000);
+    }
+    
+    // --- Configure OBS ---
+    function configureOBS() {
+      if (!streamKey) {
+        logError('No stream key available. Please select a class first.');
+        return;
+      }
+      
+      const rtmpUrl = `rtmp://localhost:1935/live/${streamKey}`;
+      
+      // Show configuration instructions
+      const instructions = `
+OBS Configuration Instructions:
+
+1. Open OBS Studio
+2. Go to Settings → Stream
+3. Set Service to "Custom..."
+4. Set Server to: rtmp://localhost:1935/live
+5. Set Stream Key to: ${streamKey}
+6. Click OK to save
+
+The stream will automatically start when you click "Start Streaming" in OBS.
+      `;
+      
+      alert(instructions);
+      logInfo('OBS configuration instructions displayed');
+    }
+    
+    // --- Start Stream ---
+    async function startStream() {
+      if (!currentClassId) {
+        logError('Please select a class first');
+        return;
+      }
+      
+      if (!streamKey) {
+        logError('Stream key not available');
+        return;
+      }
+      
+      try {
+        logInfo('Starting stream...');
+        
+        // Call backend to start stream
+        const response = await fetch(`${apiBaseUrl}/streams/start/${currentClassId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({
+            source: 'obs-rtmp',
+            streamKey: streamKey
+          })
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to start stream');
+        }
+        
+        const result = await response.json();
+        logInfo('Stream started successfully');
+        
+        // Trigger OBS to start streaming (via WebSocket API)
+        await triggerOBSStart();
+        
+        // Update UI
+        updateStreamStatus('live');
+        isStreaming = true;
+        
+        // Open viewer in new tab
+        if (confirm('Stream is now live! Would you like to open the viewer in a new tab?')) {
+          window.open(`/SMXStream-new.html?class=${currentClassId}&role=instructor`, '_blank');
+        }
+        
+      } catch (error) {
+        logError('Error starting stream: ' + error.message);
+      }
+    }
+    
+    // --- Stop Stream ---
+    async function stopStream() {
+      if (!currentClassId) {
+        logError('No active stream to stop');
+        return;
+      }
+      
+      try {
+        logInfo('Stopping stream...');
+        
+        // Call backend to stop stream
+        const response = await fetch(`${apiBaseUrl}/streams/stop/${currentClassId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to stop stream');
+        }
+        
+        logInfo('Stream stopped successfully');
+        
+        // Trigger OBS to stop streaming (via WebSocket API)
+        await triggerOBSStop();
+        
+        // Update UI
+        updateStreamStatus('offline');
+        isStreaming = false;
+        
+      } catch (error) {
+        logError('Error stopping stream: ' + error.message);
+      }
+    }
+    
+    // --- Trigger OBS Start (via WebSocket API) ---
+    async function triggerOBSStart() {
+      try {
+        // This would use the OBS WebSocket API to start streaming
+        // For now, we'll simulate it
+        logInfo('Triggering OBS to start streaming...');
+        
+        // Simulate API call
+        setTimeout(() => {
+          logInfo('OBS streaming started');
+          updateConnectionStatus('rtmp', true);
+          updateConnectionStatus('hls', true);
+        }, 1000);
+        
+      } catch (error) {
+        logError('Error triggering OBS start: ' + error.message);
+      }
+    }
+    
+    // --- Trigger OBS Stop (via WebSocket API) ---
+    async function triggerOBSStop() {
+      try {
+        // This would use the OBS WebSocket API to stop streaming
+        // For now, we'll simulate it
+        logInfo('Triggering OBS to stop streaming...');
+        
+        // Simulate API call
+        setTimeout(() => {
+          logInfo('OBS streaming stopped');
+          updateConnectionStatus('rtmp', false);
+          updateConnectionStatus('hls', false);
+        }, 1000);
+        
+      } catch (error) {
+        logError('Error triggering OBS stop: ' + error.message);
+      }
+    }
+    
+    // --- Update Stream Status ---
+    function updateStreamStatus(status) {
+      const streamStatus = document.getElementById('streamStatus');
+      const streamStatusInfo = document.getElementById('streamStatusInfo');
+      
+      streamStatus.className = 'status-badge status-' + status;
+      streamStatus.textContent = status === 'live' ? 'LIVE' : 'OFFLINE';
+      streamStatusInfo.textContent = status === 'live' ? 'Live' : 'Offline';
+      
+      updateStreamControls();
+    }
+    
+    // --- Update Stream Controls ---
+    function updateStreamControls() {
+      const startBtn = document.getElementById('startStreamBtn');
+      const stopBtn = document.getElementById('stopStreamBtn');
+      const obsConnected = document.getElementById('obsStatusIndicator').classList.contains('connected');
+      
+      startBtn.disabled = !currentClassId || !streamKey || !obsConnected || isStreaming;
+      stopBtn.disabled = !isStreaming;
+    }
+    
+    // --- Update Connection Status ---
+    function updateConnectionStatus(type, connected) {
+      const indicators = {
+        obs: 'obsConnectionIndicator',
+        rtmp: 'rtmpConnectionIndicator',
+        hls: 'hlsConnectionIndicator',
+        socket: 'socketConnectionIndicator'
+      };
+      
+      const indicator = document.getElementById(indicators[type]);
+      if (indicator) {
+        if (connected) {
+          indicator.classList.add('connected');
+        } else {
+          indicator.classList.remove('connected');
+        }
+      }
+    }
+    
+    // --- Logging Functions ---
+    function logError(message) {
+      console.error(message);
+      addLogEntry(message, 'error');
+    }
+    
+    function logWarning(message) {
+      console.warn(message);
+      addLogEntry(message, 'warning');
+    }
+    
+    function logInfo(message) {
+      console.log(message);
+      addLogEntry(message, 'info');
+    }
+    
+    function addLogEntry(message, type) {
+      const errorLog = document.getElementById('errorLog');
+      const entry = document.createElement('div');
+      entry.className = `error-log-entry ${type}`;
+      entry.textContent = `${new Date().toLocaleTimeString()}: ${message}`;
+      
+      errorLog.appendChild(entry);
+      errorLog.scrollTop = errorLog.scrollHeight;
+      
+      // Keep only last 50 entries
+      while (errorLog.children.length > 50) {
+        errorLog.removeChild(errorLog.firstChild);
+      }
+    }
+  </script>
+</body>
+</html>

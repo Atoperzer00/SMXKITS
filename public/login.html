@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Key Intelligence Training System - Login</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Original SMX logo in top left -->
+  <img id="logo" src="SE66806_logo_orig.png" alt="SMX Logo" />
+  
+  <!-- Main login screen with original design -->
+  <section id="screen-login" class="screen active">
+    <div class="login-card">
+      <img src="images/Key Intelligence Training System Logo.png" alt="Key Intelligence Training System" class="logo" style="width: 350px; margin-bottom: 2rem;" />
+      
+      <!-- Login form with your original styling -->
+      <form id="loginForm">
+        <div class="form-group">
+          <input type="text" id="username" placeholder="Username" required />
+        </div>
+        <div class="form-group">
+          <input type="password" id="password" placeholder="Password" required />
+        </div>
+        <div class="form-group">
+          <select id="role" required>
+            <option value="">Select Role</option>
+            <option value="admin">Admin</option>
+            <option value="instructor">Instructor</option>
+            <option value="student">Student</option>
+          </select>
+        </div>
+        <button type="submit" class="login-btn">Login</button>
+      </form>
+      
+      <div id="login-error" class="error-message"></div>
+    </div>
+  </section>
+
+  <!-- Bottom bar with Kit and Contact -->
+  <footer>
+    Kit and Contact
+  </footer>
+
+  <style>
+    /* Additional styles to ensure login form works with your glass-morphism design */
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    #username, #password, #role {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: rgba(240, 240, 240, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      color: #333;
+      box-sizing: border-box;
+      margin-bottom: 1.5rem;
+      outline: none;
+      transition: all 0.3s ease;
+    }
+    
+    #username::placeholder, #password::placeholder {
+      color: #888;
+    }
+    
+    #username:focus, #password:focus, #role:focus {
+      outline: none;
+      border-color: rgba(255, 140, 66, 0.6);
+      background: rgba(255, 255, 255, 0.98);
+      box-shadow: 0 0 20px rgba(255, 107, 53, 0.2);
+    }
+    
+    .login-btn {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 600;
+      background: #ff6b35;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+    }
+    
+    .login-btn:hover {
+      background: #f7931e;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+    }
+    
+    .error-message {
+      color: #ff6b6b;
+      margin-top: 15px;
+      padding: 10px;
+      background: rgba(255, 107, 107, 0.1);
+      border-radius: 5px;
+      border: 1px solid rgba(255, 107, 107, 0.3);
+      backdrop-filter: blur(10px);
+      display: none;
+    }
+    
+    .error-message.show {
+      display: block;
+    }
+    
+    /* Full viewport height for login screen */
+    #screen-login {
+      display: flex; /* Flexbox for centering content */
+      justify-content: center; /* Center horizontally */
+      align-items: center; /* Center vertically */
+      height: calc(100% - 50px); /* Adjust height to account for bottom bar */
+      width: 100%; /* Match viewport width */
+      background: none; /* Ensure no background conflicts */
+    }
+    
+    html, body {
+      height: 100%;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      background: url('Sign in Screen.jpg') no-repeat center center fixed;
+      background-size: cover;
+      background-color: black; /* fallback */
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+    }
+
+    .login-card {
+      /* Clean semi-transparent dark gray background */
+      background: rgba(30, 30, 30, 0.85);
+      padding: 3rem 3.5rem;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      width: 450px;
+      text-align: center;
+      animation: fadeIn 0.8s ease-in-out;
+    }
+    
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Bottom bar styling */
+    footer {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      height: 50px;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 14px;
+    }
+  </style>
+
+  <script>
+    // Login form handling
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const role = document.getElementById('role').value;
+      const errorEl = document.getElementById('login-error');
+      
+      // Clear previous errors
+      errorEl.classList.remove('show');
+      errorEl.textContent = '';
+      
+      if (!role) {
+        errorEl.textContent = 'Please select a role';
+        errorEl.classList.add('show');
+        return;
+      }
+      
+      try {
+        console.log('🔄 Attempting login for:', username, 'as', role);
+        
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ username, password, role })
+        });
+        
+        console.log('📡 Response status:', response.status);
+        
+        const data = await response.json();
+        console.log('📦 Response data:', data);
+        
+        if (response.ok) {
+          console.log('✅ Login successful!');
+          // Store token and user info
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('role', data.role);
+          localStorage.setItem('userName', data.name);
+          localStorage.setItem('classId', data.classId);
+          
+          // Redirect based on role
+          if (data.role === 'admin' || data.role === 'instructor') {
+            console.log('🔄 Redirecting to admin dashboard...');
+            window.location.href = '/admin-dashboard.html';
+          } else {
+            console.log('🔄 Redirecting to student dashboard...');
+            window.location.href = '/dashboard.html';
+          }
+        } else {
+          console.log('❌ Login failed:', data.error);
+          errorEl.textContent = data.error || 'Login failed';
+          errorEl.classList.add('show');
+        }
+      } catch (error) {
+        console.error('❌ Connection error:', error);
+        errorEl.textContent = `Connection error: ${error.message}. Server may be starting up...`;
+        errorEl.classList.add('show');
+      }
+    });
+  </script>
+</body>
+</html>
