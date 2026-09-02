@@ -1,43 +1,63 @@
 # -----------------------------------------------------------------------------
-# This Compose file sets up:
-# - A Node.js app container listening on port 5000
-# - An Nginx container acting as a reverse proxy on port 80
-#
-# Nginx forwards incoming HTTP requests to the Node.js app.
-#
-# Make sure MongoDB is running on the same Docker network externally.
+# Self-contained hosting stack for SMX KITS:
+# - mongo: MongoDB with a named volume for persistent data
+# - kits:  the Node.js app (built from the root Dockerfile), port 5000
+# - nginx: reverse proxy exposing the app on port 80
 #
 # Start everything with:
-#     docker-compose up
+#     docker compose up -d --build
+#
+# Then open http://localhost (or http://<server-ip>).
+# Set JWT_SECRET in a .env file next to this compose file before deploying
+# anywhere real, e.g.:  JWT_SECRET=$(openssl rand -hex 32)
 # -----------------------------------------------------------------------------
 
-version: "3.8"
-
 services:
+  mongo:
+    image: mongo:7
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - kits-network
+    restart: unless-stopped
+
   kits:
-    image: 533267336775.dkr.ecr.us-east-1.amazonaws.com/kits:v0.0.1
+    image: smxkits:latest
     build: .
     ports:
-      - 5000:5000
+      - "5000:5000"
     environment:
-      - MONGO_URI=mongodb://host.docker.internal:27017/smxkits
+      - MONGO_URI=mongodb://mongo:27017/smxkits
       - NODE_ENV=production
+      - PORT=5000
+      - JWT_SECRET=${JWT_SECRET:-change-me-in-production}
+    volumes:
+      - uploads-data:/app/uploads
+      - submissions-data:/app/submissions
+    depends_on:
+      - mongo
     networks:
       - kits-network
     restart: unless-stopped
 
   nginx:
-    image: 533267336775.dkr.ecr.us-east-1.amazonaws.com/kits-proxy:latest
+    image: smxkits-proxy:latest
     container_name: kits-proxy
     build:
       context: ./config/nginx/
       dockerfile: Dockerfile
     ports:
-      - 80:80
+      - "80:80"
     depends_on:
       - kits
     networks:
       - kits-network
+    restart: unless-stopped
 
 networks:
   kits-network:
+
+volumes:
+  mongo-data:
+  uploads-data:
+  submissions-data:

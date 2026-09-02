@@ -1,0 +1,39 @@
+# VCS / environment
+.git
+.gitignore
+.env
+.env.*
+!/.env.example
+
+# Dependencies (reinstalled inside the image)
+node_modules
+**/node_modules
+
+# Separate sub-projects not served by server.js
+backend
+client
+react-frontend
+boltstream-master
+node-stream-master
+config/boltstream-master
+config/node-stream-master
+
+# Runtime data (mounted as volumes instead)
+uploads
+submissions
+
+# Dev/test scratch files
+test-*.js
+test-*.html
+debug-*.js
+debug-*.html
+*.md
+*.pdf
+*.jpg
+*.png
+*.bat
+*.ps1
+
+# Docker files themselves
+Dockerfile
+docker-compose*.yml

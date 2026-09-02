@@ -30,6 +30,18 @@ app.use((req, res, next) => {
   next();
 });
 
+// Health check endpoint for hosting platforms (Render, Docker, load balancers).
+// Must return 200 even when MongoDB is down, since the app falls back to an
+// in-memory store — the db field reports which mode is active.
+app.get('/health', (req, res) => {
+  const dbConnected = mongoose.connection.readyState === 1;
+  res.status(200).json({
+    status: 'ok',
+    uptime: process.uptime(),
+    db: dbConnected ? 'mongodb' : (global.usingInMemory ? 'in-memory' : 'connecting')
+  });
+});
+
 // Define root route before static middleware to ensure it takes precedence
 app.get('/', (req, res) => {
   console.log('Root route accessed - redirecting to login page');

@@ -19,6 +19,13 @@ SMX KITS Training Management System - A comprehensive training management system
 - **Authentication**: JWT tokens with bcrypt password hashing
 - **Frontend**: HTML5, CSS3, JavaScript
 
+## Hosting / Deployment
+
+See [HOSTING.md](HOSTING.md) for ready-to-use deployment options: Docker
+Compose (app + MongoDB + nginx in one command), Render via the included
+`render.yaml` Blueprint, or bare Node.js on a VPS. A `GET /health` endpoint
+is available for load balancers and uptime checks.
+
 ## Installation
 
 1. **Prerequisites**:

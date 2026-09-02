@@ -44,13 +44,19 @@ router.post('/login', async (req, res) => {
     }
     
     let user = null;
-    
+
     // Wait for mongoose connection before querying
     if (require('mongoose').connection.readyState !== 1) {
-      console.log('❌ Mongoose not connected, cannot query users');
-      return res.status(503).json({ error: 'Database not connected. Please try again later.' });
+      if (global.usingInMemory) {
+        console.log('⚠️ Using in-memory user store (MongoDB unavailable)');
+        user = global.inMemoryUsers.find(u => u.username === username) || null;
+      } else {
+        console.log('❌ Mongoose not connected, cannot query users');
+        return res.status(503).json({ error: 'Database not connected. Please try again later.' });
+      }
+    } else {
+      user = await User.findOne({ username });
     }
-    user = await User.findOne({ username });
     
     console.log('👤 User found:', user ? 'Yes' : 'No');
     
